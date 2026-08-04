@@ -80,11 +80,13 @@ async function fetchForeignKeys(): Promise<FkRow[]> {
     `select
        c.relname as table_name,
        a.attname as column_name,
-       r.relname as ref_table
+       case when rn.nspname = 'public' then r.relname
+            else rn.nspname || '.' || r.relname end as ref_table
      from pg_constraint con
      join pg_class c on c.oid = con.conrelid
      join pg_namespace n on n.oid = c.relnamespace
      join pg_class r on r.oid = con.confrelid
+     join pg_namespace rn on rn.oid = r.relnamespace
      join lateral unnest(con.conkey) with ordinality as k(attnum, ord) on true
      join pg_attribute a on a.attrelid = con.conrelid and a.attnum = k.attnum
      where con.contype = 'f'
@@ -98,7 +100,7 @@ async function fetchUniques(): Promise<UniqueRow[]> {
   const res = await pool!.query(
     `select
        tc.table_name,
-       array_agg(kcu.column_name order by kcu.ordinal_position) as columns
+       array_agg(kcu.column_name order by kcu.ordinal_position)::text[] as columns
      from information_schema.table_constraints tc
      join information_schema.key_column_usage kcu
        on tc.constraint_name = kcu.constraint_name
@@ -180,7 +182,9 @@ async function fetchFunctions(): Promise<Set<string>> {
 
 async function fetchTriggers(): Promise<Array<{ name: string; table: string }>> {
   const res = await pool!.query(
-    `select tg.tgname, c.relname
+    `select tg.tgname,
+       case when n.nspname = 'public' then c.relname
+            else n.nspname || '.' || c.relname end as table_name
      from pg_trigger tg
      join pg_class c on c.oid = tg.tgrelid
      join pg_namespace n on n.oid = c.relnamespace
@@ -190,7 +194,7 @@ async function fetchTriggers(): Promise<Array<{ name: string; table: string }>> 
   );
   return res.rows.map((r) => ({
     name: r.tgname as string,
-    table: r.relname as string,
+    table: r.table_name as string,
   }));
 }
 
@@ -443,10 +447,10 @@ describe.skipIf(noDbUrl)("live Supabase database (pg)", () => {
     it("rejects duplicate NIK on supplier_profiles (UNIQUE)", async () => {
       const code = await expectViolation(
         `insert into public.supplier_profiles
-           (user_id, business_name, address, latitude, longitude, nik)
+           (user_id, business_name, address, latitude, longitude, nik, ktp_photo_url)
          values
-           (gen_random_uuid(), 'A', 'addr', 1, 1, '0000000000000001'),
-           (gen_random_uuid(), 'B', 'addr', 2, 2, '0000000000000001')`,
+           (gen_random_uuid(), 'A', 'addr', 1, 1, '0000000000000001', 'https://x/a.jpg'),
+           (gen_random_uuid(), 'B', 'addr', 2, 2, '0000000000000001', 'https://x/b.jpg')`,
       );
       expect(code).toBe("23505");
     });
@@ -466,9 +470,9 @@ describe.skipIf(noDbUrl)("live Supabase database (pg)", () => {
       const code = await expectViolation(
         `with reg as (select gen_random_uuid() as registration_id)
          insert into public.payments (id, registration_id, midtrans_order_id, gross_amount, status)
-         select gen_random_uuid(), registration_id, 'o1', 100, 'pending' from reg
+         select gen_random_uuid(), registration_id, 'o1', 100, 'pending'::public.payment_status from reg
          union all
-         select gen_random_uuid(), registration_id, 'o2', 100, 'pending' from reg`,
+         select gen_random_uuid(), registration_id, 'o2', 100, 'pending'::public.payment_status from reg`,
       );
       expect(code).toBe("23505");
     });
@@ -491,15 +495,20 @@ describe.skipIf(noDbUrl)("live Supabase database (pg)", () => {
 
     it("blocks UPDATE on admin_audit_logs (immutable trigger)", async () => {
       const code = await expectViolation(
-        `with ins as (
-           insert into public.admin_audit_logs
-             (id, admin_id, action_type, target_type, target_id)
-           values
-             (gen_random_uuid(), gen_random_uuid(), 'verify_supplier', 'supplier_profiles', gen_random_uuid())
-           returning id
-         )
-         update public.admin_audit_logs set target_type = 'tampered'
-         where id in (select id from ins)`,
+        `do $$
+         declare
+           u uuid;
+           a uuid;
+         begin
+           insert into auth.users (id, instance_id, aud, role, email, encrypted_password)
+           values (gen_random_uuid(), '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'immutable-test@example.com', 'x')
+           returning id into u;
+           insert into public.admin_audit_logs (admin_id, action_type, target_type, target_id)
+           values (u, 'verify_supplier', 'supplier_profiles', gen_random_uuid())
+           returning id into a;
+           update public.admin_audit_logs set target_type = 'tampered' where id = a;
+         end;
+         $$`,
       );
       expect(code).toBe("P0001");
     });
