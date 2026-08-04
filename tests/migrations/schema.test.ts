@@ -5,12 +5,10 @@ import { parse } from "pgsql-ast-parser";
 import {
   ColumnDef,
   EXPECTED_ENUMS,
-  EXPECTED_TABLE_NAMES,
   EXPECTED_TABLES,
   CRITICAL_INDEXES,
   REQUIRED_FUNCTIONS,
   REQUIRED_TRIGGERS,
-  ExpectedTable,
 } from "../helpers/schema-contract";
 
 const MIGRATIONS_DIR = join(process.cwd(), "supabase", "migrations");
