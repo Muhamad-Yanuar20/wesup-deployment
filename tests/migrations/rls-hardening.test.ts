@@ -45,6 +45,24 @@ describe("auth & RLS hardening migration", () => {
     );
   });
 
+  it("restricts supplier_profiles writes to safe columns only", () => {
+    expect(allSql).toMatch(
+      /revoke\s+insert,\s*update\s+on\s+public\.supplier_profiles/i,
+    );
+    expect(allSql).toMatch(
+      /grant\s+insert\s+\(user_id,\s*business_name,\s*address,\s*latitude,\s*longitude,\s*business_photo_url,\s*ktp_photo_url,\s*nik\)\s*on\s+public\.supplier_profiles/i,
+    );
+    expect(allSql).toMatch(
+      /grant\s+update\s+\(business_name,\s*address,\s*latitude,\s*longitude,\s*business_photo_url,\s*ktp_photo_url,\s*nik,\s*updated_at\)\s*on\s+public\.supplier_profiles/i,
+    );
+  });
+
+  it("gates supplier approval behind an active-admin rpc", () => {
+    const body = functionBody(allSql, "approve_supplier");
+    expect(body).toMatch(/public\.is_admin\(\)/i);
+    expect(body).toMatch(/verification_status\s*=\s*'approved'/i);
+  });
+
   it("gates admin and supplier privileges on active status", () => {
     for (const fn of ["is_admin", "is_supplier"]) {
       const body = functionBody(allSql, fn);

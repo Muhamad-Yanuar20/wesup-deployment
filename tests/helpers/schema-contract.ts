@@ -626,6 +626,7 @@ export const REQUIRED_FUNCTIONS = [
   "handle_new_user",
   "prevent_admin_audit_logs_mutation",
   "promote_supplier_on_approval",
+  "approve_supplier",
 ];
 
 export const REQUIRED_TRIGGERS = [
