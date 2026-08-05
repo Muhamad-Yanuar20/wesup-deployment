@@ -91,7 +91,7 @@ describe("requireRole", () => {
     });
     await expect(requireRole(client, ["admin"])).rejects.toMatchObject({
       status: 403,
-      message: "Account is not active",
+      message: "Insufficient permissions",
     });
   });
 
@@ -148,7 +148,7 @@ describe("requireActive", () => {
   it("resolves the context when the account is active", async () => {
     const { client } = fakeClient({
       user: { id: "user-1" },
-      profile: { role: "umkm", status: "active", full_name: "Test Supplier" },
+      profile: { role: "supplier", status: "active", full_name: "Test Supplier" },
     });
     await expect(requireActive(client)).resolves.toEqual(ACTIVE_CONTEXT);
   });
