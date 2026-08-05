@@ -13,13 +13,14 @@ export class AuthError extends Error {
 
 export interface AuthContext {
   userId: string;
+  email: string;
   role: UserRole;
   status: AccountStatus;
   fullName: string;
 }
 
 interface GetUserResponse {
-  data: { user: { id: string } | null };
+  data: { user: { id: string; email?: string } | null };
   error: Error | null;
 }
 
@@ -63,6 +64,7 @@ export async function getCurrentUser(client: AuthClient): Promise<AuthContext | 
 
   return {
     userId: data.user.id,
+    email: data.user.email ?? "",
     role: profile.role,
     status: profile.status,
     fullName: profile.full_name,

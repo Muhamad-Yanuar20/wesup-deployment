@@ -180,6 +180,23 @@ describe("POST /api/auth/signup", () => {
       error: "User already registered",
     });
   });
+
+  it("returns 500 for an unexpected signup error", async () => {
+    const auth = {
+      signUp: vi.fn(async () => ({
+        data: { user: null },
+        error: { code: "over_email_send_rate_limit", message: "Too many requests" },
+      })),
+    };
+    mockClient(auth);
+    const res = await signup(postJson("/api/auth/signup", {
+      email: "buyer@example.com",
+      password: "password123",
+      full_name: "Budi Buyer",
+    }));
+    expect(res.status).toBe(500);
+    await expect(res.json()).resolves.toEqual({ error: "Internal server error" });
+  });
 });
 
 describe("POST /api/auth/login", () => {
@@ -357,6 +374,7 @@ describe("POST /api/auth/reset-password", () => {
         error: { message: "Invalid code" },
       })),
       updateUser: vi.fn(),
+      signOut: vi.fn(),
     };
     mockClient(auth);
     const res = await resetPassword(postJson("/api/auth/reset-password", {
@@ -366,9 +384,10 @@ describe("POST /api/auth/reset-password", () => {
     expect(res.status).toBe(400);
     await expect(res.json()).resolves.toEqual({ error: "Invalid or expired reset code" });
     expect(auth.updateUser).not.toHaveBeenCalled();
+    expect(auth.signOut).not.toHaveBeenCalled();
   });
 
-  it("returns 400 when the password update fails", async () => {
+  it("returns 400 and signs out when the password update fails", async () => {
     const auth = {
       exchangeCodeForSession: vi.fn(async () => ({
         data: { session: { user: { id: "u-1" } } },
@@ -378,6 +397,7 @@ describe("POST /api/auth/reset-password", () => {
         data: { user: null },
         error: { message: "Password update failed" },
       })),
+      signOut: vi.fn(async () => ({ error: null })),
     };
     mockClient(auth);
     const res = await resetPassword(postJson("/api/auth/reset-password", {
@@ -386,6 +406,7 @@ describe("POST /api/auth/reset-password", () => {
     }));
     expect(res.status).toBe(400);
     await expect(res.json()).resolves.toEqual({ error: "Invalid or expired reset code" });
+    expect(auth.signOut).toHaveBeenCalled();
   });
 
   it("returns 400 when the code is missing", async () => {

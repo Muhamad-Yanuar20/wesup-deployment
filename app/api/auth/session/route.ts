@@ -21,10 +21,8 @@ export async function GET() {
     );
   }
 
-  const { data } = await client.auth.getUser();
-
   return NextResponse.json({
-    user: { email: data.user?.email ?? null },
+    user: { email: context.email },
     profile: {
       role: context.role,
       status: context.status,

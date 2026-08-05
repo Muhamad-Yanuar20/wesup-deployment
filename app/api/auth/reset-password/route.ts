@@ -34,6 +34,7 @@ export async function POST(request: NextRequest) {
 
   const { error: updateError } = await client.auth.updateUser({ password });
   if (updateError) {
+    await client.auth.signOut();
     return NextResponse.json({ error: "Invalid or expired reset code" }, { status: 400 });
   }
 

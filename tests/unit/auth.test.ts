@@ -38,13 +38,14 @@ describe("real supabase client compatibility", () => {
 
 const ACTIVE_CONTEXT = {
   userId: "user-1",
+  email: "test-supplier@example.com",
   role: "supplier" as UserRole,
   status: "active" as AccountStatus,
   fullName: "Test Supplier",
 };
 
 interface FakeClientOptions {
-  user?: { id: string } | null;
+  user?: { id: string; email?: string } | null;
   getUserError?: Error | null;
   profile?: { role: UserRole; status: AccountStatus; full_name: string } | null;
   profileError?: Error | null;
@@ -91,10 +92,28 @@ describe("getCurrentUser", () => {
 
   it("returns the auth context for an active session", async () => {
     const { client } = fakeClient({
-      user: { id: "user-1" },
+      user: { id: "user-1", email: "test-supplier@example.com" },
       profile: { role: "supplier", status: "active", full_name: "Test Supplier" },
     });
     await expect(getCurrentUser(client)).resolves.toEqual(ACTIVE_CONTEXT);
+  });
+
+  it("carries the user email into the context", async () => {
+    const { client } = fakeClient({
+      user: { id: "user-1", email: "buyer@example.com" },
+      profile: { role: "umkm", status: "active", full_name: "Budi Buyer" },
+    });
+    await expect(getCurrentUser(client)).resolves.toMatchObject({
+      email: "buyer@example.com",
+    });
+  });
+
+  it("defaults the email to an empty string when the user has none", async () => {
+    const { client } = fakeClient({
+      user: { id: "user-1" },
+      profile: { role: "umkm", status: "active", full_name: "Budi Buyer" },
+    });
+    await expect(getCurrentUser(client)).resolves.toMatchObject({ email: "" });
   });
 });
 
@@ -142,7 +161,7 @@ describe("requireRole", () => {
 
   it("resolves the context when the role is allowed and the account is active", async () => {
     const { client } = fakeClient({
-      user: { id: "user-1" },
+      user: { id: "user-1", email: "test-supplier@example.com" },
       profile: { role: "supplier", status: "active", full_name: "Test Supplier" },
     });
     await expect(requireRole(client, ["supplier"])).resolves.toEqual(ACTIVE_CONTEXT);
@@ -182,7 +201,7 @@ describe("requireActive", () => {
 
   it("resolves the context when the account is active", async () => {
     const { client } = fakeClient({
-      user: { id: "user-1" },
+      user: { id: "user-1", email: "test-supplier@example.com" },
       profile: { role: "supplier", status: "active", full_name: "Test Supplier" },
     });
     await expect(requireActive(client)).resolves.toEqual(ACTIVE_CONTEXT);
