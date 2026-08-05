@@ -5,7 +5,7 @@ const KEY = "sb_publishable_test";
 
 const cookieStore = vi.hoisted(() => ({
   store: {
-    getAll: vi.fn(() => []),
+    getAll: vi.fn<() => Array<{ name: string; value: string }>>(() => []),
     set: vi.fn(),
   },
 }));
