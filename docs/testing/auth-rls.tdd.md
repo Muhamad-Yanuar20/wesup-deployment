@@ -59,7 +59,7 @@ All RED/GREEN checkpoint commits are on `main` and reachable from `HEAD`.
 | 15 | `POST /api/auth/forgot-password` → 200 always (no user enumeration), redirect targets `NEXT_PUBLIC_SITE_URL` (fallback `http://localhost:3000`) | `tests/unit/api-auth.test.ts` | unit | PASS |
 | 16 | `POST /api/auth/reset-password` → 200 after code exchange + password update; 400 on invalid/expired code or short password; signs out before 400 when the update fails (no half-signed-in state) | `tests/unit/api-auth.test.ts` | unit | PASS |
 | 17 | `GET /api/auth/session` → 200 with user email + profile role/status/full_name; 401 unauthenticated; 403 with status as `reason` when not active | `tests/unit/api-auth.test.ts` | unit | PASS |
-| 18 | Live RLS behavior against the remote project (env-gated): role escalation blocked, own-row updates allowed, KYC self-approval blocked, non-admin RPC rejected, banned user sees only own row | `tests/live/auth-rls.integration.test.ts` | integration (env-gated) | SKIPPED on this remote project (see gaps) |
+| 18 | Live RLS behavior against the remote project (env-gated): role escalation blocked, own-row updates allowed, KYC self-approval blocked, non-admin RPC rejected, banned user sees only own row | `tests/live/auth-rls.integration.test.ts` | integration (env-gated) | PASS — 9/9 on 2026-08-05 (see Live verification) |
 
 ## Coverage
 
@@ -75,9 +75,27 @@ Command: `npm run test:coverage` (vitest v8 provider; include `lib/**/*.ts`, `te
 
 First run flagged `server.ts` at 63.63% lines (uncovered: the `setAll` cookie-write path, lines 24–29) — this was the RED trigger. Four unit tests were added to `tests/unit/server.test.ts` (cookie read pass-through, `setAll` write wiring, write-failure swallow, and the genuinely-unset env var path) and the suite went from 418 → 422 tests with 100% coverage on all instrumented files.
 
+## Live verification (2026-08-05)
+
+To exercise the previously env-skipped authenticated RLS assertions end-to-end, email auto-confirm was temporarily enabled on the remote project (`PATCH /v1/projects/woxgghuoeljagnkldqtf/config/auth` → `mailer_autoconfirm: true`), the suite was run, and the setting was restored to `false` immediately after.
+
+`npm test tests/live/auth-rls.integration.test.ts` → **9/9 passed** (431/431 with the full suite):
+
+- blocks role escalation via REST PATCH (`{"role":"admin"}` → ≥400, column grant)
+- allows own `full_name` update and persists it (own-row policy)
+- blocks self-approval via REST POST with `verification_status` (column insert grant)
+- blocks `verification_status` PATCH on own row (column update grant)
+- allows legitimate KYC editing (`business_name` PATCH)
+- rejects non-admin `approve_supplier` RPC call
+- promotes a fresh user via pool insert of an approved supplier profile (trigger on INSERT)
+- shows only own row once banned (`is_admin` requires `status='active'`)
+- cleans up created test users
+
+Restored `mailer_autoconfirm` to `false` afterwards — the authenticated block env-skips again until a session-capable setup is permanent.
+
 ## Known gaps
 
-- **Live authenticated RLS assertions env-skipped on this project.** `tests/live/auth-rls.integration.test.ts` could not obtain a session: the remote project has email confirmation enabled and signup is rate-limited, so `signUp` returns no session and `signInWithPassword` also fails. The authenticated block is `describe.skipIf`-gated and reported 0 tests (its hooks, including `afterAll` cleanup, are skipped with it). `tests/live/database.integration.test.ts` (201 tests) exercised the same project live. The RLS assertions are designed to run against a session-capable project where email confirmation is disabled.
+- **Live authenticated RLS assertions are env-gated again.** They were verified 9/9 on 2026-08-05 by temporarily enabling email auto-confirm on the remote project (see Live verification) and restoring it afterwards; with `mailer_autoconfirm=false` restored, `signUp` returns no session and the authenticated block in `tests/live/auth-rls.integration.test.ts` env-skips (its hooks, including `afterAll` cleanup, are skipped with it). Run it on a session-capable project (auto-confirm enabled) for continuous regression coverage.
 - **`proxy.ts` has no unit test.** It is validated by `npm run build` (compiled, exported as `ƒ Proxy (Middleware)` with the expected matcher config) and manual smoke; session-refresh behavior against a live cookie flow is untested.
 - **Static grant/revoke regexes do not pin the grantee** — the static contract tests assert the grant statements' presence and column lists, not that they target only `authenticated`.
 - **`approve_supplier` is a silent no-op on a missing `user_id`** — no row matched means no error, just zero updates; callers cannot distinguish "not found" from "updated".
