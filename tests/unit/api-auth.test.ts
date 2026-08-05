@@ -281,6 +281,7 @@ describe("POST /api/auth/forgot-password", () => {
   });
 
   it("returns 200 and redirects to the reset page", async () => {
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "");
     const auth = {
       resetPasswordForEmail: vi.fn(async () => ({ error: null })),
     };
