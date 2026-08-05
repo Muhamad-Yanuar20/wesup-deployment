@@ -36,17 +36,19 @@
 - Create: `tests/migrations/rls-hardening.test.ts` (static assertions)
 - Create: `tests/live/auth-rls.integration.test.ts` (live behavior, `describe.skipIf` env-gated)
 
-**Interfaces:** Produces SQL objects: `handle_new_user()` (role always `'umkm'`), `is_admin()`/`is_supplier()` (require `status='active'`), `promote_supplier_on_approval()` + trigger on `supplier_profiles` (`after insert or update of verification_status`), column grants on `profiles`.
+**Interfaces:** Produces SQL objects: `handle_new_user()` (role always `'umkm'`), `is_admin()`/`is_supplier()` (require `status='active'`), `approve_supplier(uuid)` RPC (admin-gated, security definer), `promote_supplier_on_approval()` + trigger on `supplier_profiles` (`after insert or update of verification_status`), column grants on `profiles` and `supplier_profiles`.
 
 - [ ] **RED** — Add to `schema-contract.ts`:
   ```ts
-  REQUIRED_FUNCTIONS.push("promote_supplier_on_approval");
+  REQUIRED_FUNCTIONS.push("promote_supplier_on_approval", "approve_supplier");
   REQUIRED_TRIGGERS.push({ name: "promote_supplier_on_approval", table: "supplier_profiles" });
   ```
   New `tests/migrations/rls-hardening.test.ts` (reads raw migration SQL via regex):
   - `handle_new_user` body contains `'umkm'` and does **not** match `raw_user_meta_data ->> 'role'`
   - file contains `REVOKE UPDATE ON public.profiles` and `GRANT UPDATE (full_name, phone, updated_at) ON public.profiles`
   - `is_admin` and `is_supplier` bodies contain `status = 'active'`
+  - file contains `REVOKE INSERT, UPDATE ON public.supplier_profiles` and the column-level `GRANT INSERT (user_id, business_name, address, latitude, longitude, business_photo_url, ktp_photo_url, nik)` and `GRANT UPDATE (business_name, address, latitude, longitude, business_photo_url, ktp_photo_url, nik, updated_at)`
+  - `approve_supplier` body contains `public.is_admin()` and `verification_status = 'approved'`
   - Run: `npm test` → expect these to FAIL (RED: assertions on missing SQL)
 - [ ] **Commit** `test: assert rls hardening requirements in schema contract`
 - [ ] **GREEN** — Write the migration (exact content):
@@ -65,6 +67,30 @@
 
   revoke update on public.profiles from authenticated;
   grant update (full_name, phone, updated_at) on public.profiles to authenticated;
+
+  revoke insert, update on public.supplier_profiles from authenticated;
+  grant insert (user_id, business_name, address, latitude, longitude, business_photo_url, ktp_photo_url, nik)
+    on public.supplier_profiles to authenticated;
+  grant update (business_name, address, latitude, longitude, business_photo_url, ktp_photo_url, nik, updated_at)
+    on public.supplier_profiles to authenticated;
+
+  create or replace function public.approve_supplier(p_user_id uuid) returns void
+    language plpgsql security definer as $$
+  begin
+    if not public.is_admin() then
+      raise exception 'only an active admin may approve suppliers';
+    end if;
+    update public.supplier_profiles
+       set verification_status = 'approved',
+           verified_by = auth.uid(),
+           verified_at = now(),
+           updated_at = now()
+     where user_id = p_user_id;
+  end;
+  $$;
+
+  revoke execute on function public.approve_supplier(uuid) from public, anon;
+  grant execute on function public.approve_supplier(uuid) to authenticated;
 
   create or replace function public.is_admin() returns boolean
     language sql stable security definer as $$
@@ -91,11 +117,13 @@
     for each row execute function public.promote_supplier_on_approval();
   ```
 - [ ] **GREEN check** — `npm test` → all pass (static + parse + no-destructive)
-- [ ] **Live behavior tests** (`tests/live/auth-rls.integration.test.ts`, skipIf no env): using `createClient(url, publishableKey)` signUp a random email; then:
+- [ ] **Live behavior tests** (`tests/live/auth-rls.integration.test.ts`, skipIf no env): using `createClient(url, publishableKey)` signUp a random email; if `signUp` returns no session (email confirmation enabled), retry `signInWithPassword`; if still no session, skip the authenticated block via `describe.skipIf`. Then:
   - PATCH `/rest/v1/profiles?id=eq.<uid>` `{"role":"admin"}` with user token → expect status ≥ 400 (column grant blocks escalation)
-  - PATCH `{"full_name":"Updated"}` → expect 200/204
-  - via `pg` pool: insert `supplier_profiles` row with `verification_status='approved'` → query `profiles.role` = `'supplier'`
-  - promote to admin + set `status='banned'` via pool → REST `GET /rest/v1/profiles` with that user's token → expect `[]` (is_admin now false)
+  - PATCH `{"full_name":"Updated"}` → expect status < 300, then verify via GET that `full_name` = `"Updated"` (own-row update allowed)
+  - POST `/rest/v1/supplier_profiles` with own `user_id` + business payload only → expect 201 (own KYC submission allowed); then POST again with `"verification_status":"approved"` in payload → expect status ≥ 400 (column insert grant blocks self-approval); then PATCH `{"verification_status":"approved"}` on own row → expect status ≥ 400 (column update grant blocks self-approval); then PATCH `{"business_name":"...2"}` → expect status < 300 (legitimate KYC editing preserved)
+  - RPC `approve_supplier` with own uid as non-admin → expect error (`only an active admin may approve suppliers`)
+  - via `pg` pool: insert `supplier_profiles` row (fresh user) with `verification_status='approved'` → query `profiles.role` = `'supplier'` (trigger fires on INSERT as service role)
+  - promote to admin + set `status='banned'` via pool → REST `GET /rest/v1/profiles` with that user's token → expect exactly 1 row and it is the user's own id (own-row policy still applies; `is_admin()` now false so no other user is visible)
   - cleanup: delete test auth users via pool
   - Run `npm test tests/live/auth-rls.integration.test.ts` (needs env; if env absent, document as skipped)
 - [ ] **Apply to remote** (with user confirmation): `npx supabase db push`
@@ -125,8 +153,8 @@
 
 **Interfaces:**
 - `class AuthError extends Error { constructor(public status: 401 | 403, message: string) }`
-- `interface AuthContext { userId: string; role: UserRole; status: AccountStatus; fullName: string }`
-- `getCurrentUser(client): Promise<AuthContext | null>` — `client.auth.getUser()` + `client.from("profiles").select("role,status,full_name").eq("id", userId).single()`
+- `interface AuthContext { userId: string; email: string; role: UserRole; status: AccountStatus; fullName: string }`
+- `getCurrentUser(client): Promise<AuthContext | null>` — `client.auth.getUser()` (carry `user.email` into the context) + `client.from("profiles").select("role,status,full_name").eq("id", userId).single()`
 - `requireRole(client, roles: UserRole[]): Promise<AuthContext>` — throws `AuthError(401)` no session, `AuthError(403)` role not in `roles` or `status !== "active"`
 - `requireActive(client): Promise<AuthContext>` — throws `AuthError(401)` no session, `AuthError(403)` if `status !== "active"` (message includes the status)
 - `toAuthResponse(err: unknown): NextResponse` — maps `AuthError` → `{ error }` JSON with status; else 500
@@ -149,8 +177,8 @@
 | `POST /api/auth/login` | `{email,password}` → 200 `{user}`; 401 invalid credentials |
 | `POST /api/auth/logout` | → 200 `{ok:true}` |
 | `POST /api/auth/forgot-password` | `{email}` → 200 always (no user enumeration); uses `resetPasswordForEmail(email, { redirectTo: (env NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000") + "/reset-password" })` |
-| `POST /api/auth/reset-password` | `{code,password}` → `exchangeCodeForSession(code)` then `updateUser({password})` → 200; 400 on invalid/expired |
-| `GET /api/auth/session` | 200 `{user: {email}, profile: {role,status,full_name}}`; 401 unauthenticated; 403 `{error, reason: status}` when not active |
+| `POST /api/auth/reset-password` | `{code,password}` → `exchangeCodeForSession(code)` then `updateUser({password})` → 200; 400 on invalid/expired; on `updateUser` failure, `signOut()` before returning 400 (no half-signed-in state) |
+| `GET /api/auth/session` | 200 `{user: {email}, profile: {role,status,full_name}}` (email from `AuthContext.email`, single `getUser`); 401 unauthenticated; 403 `{error, reason: status}` when not active |
 
 - [ ] **RED** — `tests/unit/api-auth.test.ts`: mock server client; per route: validation failures, success shapes, error mapping (login 401, signup 409, session 401/403/200). Call handlers directly with `new NextRequest("http://localhost/api/auth/login", { method: "POST", body: JSON.stringify(...) })`. Run → FAIL
 - [ ] **Commit** `test: auth api route contracts`
