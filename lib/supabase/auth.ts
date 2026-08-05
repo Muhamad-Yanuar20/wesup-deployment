@@ -35,11 +35,11 @@ interface SingleResponse {
 }
 
 export interface AuthClient {
-  auth: { getUser: () => Promise<GetUserResponse> };
+  auth: { getUser: () => PromiseLike<GetUserResponse> };
   from: (table: "profiles") => {
     select: (columns: string) => {
       eq: (column: string, value: string) => {
-        single: () => Promise<SingleResponse>;
+        single: () => PromiseLike<SingleResponse>;
       };
     };
   };

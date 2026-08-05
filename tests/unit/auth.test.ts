@@ -1,6 +1,40 @@
+import { createClient } from "@supabase/supabase-js";
 import { describe, expect, it, vi } from "vitest";
 import { AuthError, getCurrentUser, requireRole, requireActive, toAuthResponse } from "@/lib/supabase/auth";
-import type { AccountStatus, UserRole } from "@/types/database";
+import type { AuthClient } from "@/lib/supabase/auth";
+import type { AccountStatus, Database, UserRole } from "@/types/database";
+
+type IsAssignable<S, T> = S extends T ? true : false;
+
+const realClient = createClient<Database>("https://example.supabase.co", "test-key");
+
+function realProfileQuery(client: typeof realClient) {
+  return client.from("profiles").select("role,status,full_name").eq("id", "user-1").single();
+}
+
+const realAuthGetUserFits: IsAssignable<
+  ReturnType<typeof realClient.auth.getUser>,
+  ReturnType<AuthClient["auth"]["getUser"]>
+> = true;
+const realSingleFits: IsAssignable<
+  ReturnType<typeof realProfileQuery>,
+  ReturnType<ReturnType<ReturnType<ReturnType<AuthClient["from"]>["select"]>["eq"]>["single"]>
+> = true;
+
+describe("real supabase client compatibility", () => {
+  it("creates a real client without network access", () => {
+    expect(realClient).toBeDefined();
+    expect(realProfileQuery).toBeDefined();
+  });
+
+  it("satisfies the AuthClient getUser contract", () => {
+    expect(realAuthGetUserFits).toBe(true);
+  });
+
+  it("satisfies the AuthClient profile query contract", () => {
+    expect(realSingleFits).toBe(true);
+  });
+});
 
 const ACTIVE_CONTEXT = {
   userId: "user-1",
@@ -102,6 +136,7 @@ describe("requireRole", () => {
     });
     await expect(requireRole(client, ["supplier"])).rejects.toMatchObject({
       status: 403,
+      message: "Insufficient permissions",
     });
   });
 
