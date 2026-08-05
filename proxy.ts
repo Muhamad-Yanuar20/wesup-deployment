@@ -44,6 +44,10 @@ export async function updateSession(
   return refreshed ? supabaseResponse : undefined;
 }
 
+export default async function proxy(request: NextRequest) {
+  return updateSession(request);
+}
+
 export const config = {
   matcher: [
     "/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)",
