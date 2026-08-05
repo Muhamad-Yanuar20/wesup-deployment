@@ -20,10 +20,10 @@ function readAllSql(): string {
 function functionBody(sql: string, name: string): string {
   const re = new RegExp(
     `create\\s+(?:or\\s+replace\\s+)?function\\s+public\\.${name}[\\s\\S]*?\\$\\$;`,
-    "i",
+    "ig",
   );
-  const m = sql.match(re);
-  return m ? m[0] : "";
+  const matches = [...sql.matchAll(re)];
+  return matches.length ? matches[matches.length - 1][0] : "";
 }
 
 describe("auth & RLS hardening migration", () => {
