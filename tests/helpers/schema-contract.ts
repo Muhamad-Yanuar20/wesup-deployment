@@ -625,11 +625,13 @@ export const REQUIRED_FUNCTIONS = [
   "is_supplier",
   "handle_new_user",
   "prevent_admin_audit_logs_mutation",
+  "promote_supplier_on_approval",
 ];
 
 export const REQUIRED_TRIGGERS = [
   { name: "on_auth_user_created", table: "auth.users" },
   { name: "admin_audit_logs_immutable", table: "admin_audit_logs" },
+  { name: "promote_supplier_on_approval", table: "supplier_profiles" },
 ];
 
 export const EXPECTED_TABLE_NAMES = Object.keys(EXPECTED_TABLES);
