@@ -31,6 +31,8 @@ function stripUnsupported(sql: string): string {
     .replace(/CREATE\s+(?:OR\s+REPLACE\s+)?FUNCTION[\s\S]*?\$\$\s*;/gi, "")
     .replace(/CREATE\s+TRIGGER[^;]+;/gi, "")
     .replace(/CREATE\s+POLICY[^;]+;/gi, "")
+    .replace(/GRANT\s+[^;]+;/gi, "")
+    .replace(/REVOKE\s+[^;]+;/gi, "")
     .replace(/ALTER\s+TABLE[^;]*ENABLE\s+ROW\s+LEVEL\s+SECURITY[^;]*;/gi, "")
     .replace(/ALTER\s+TABLE[^;]*FORCE\s+ROW\s+LEVEL\s+SECURITY[^;]*;/gi, "");
 }
@@ -54,7 +56,9 @@ function loadSchema(): ParsedSchema {
   };
   for (const file of files) {
     const sql = readFileSync(join(MIGRATIONS_DIR, file), "utf8");
-    const ast = parse(stripUnsupported(sql));
+    const clean = stripUnsupported(sql);
+    if (clean.trim().length === 0) continue;
+    const ast = parse(clean);
     for (const stmt of ast) {
       if (stmt.type === "create table") {
         const name = stmt.name.name;
@@ -174,6 +178,7 @@ describe("migration files", () => {
     for (const file of files) {
       const sql = readFileSync(join(MIGRATIONS_DIR, file), "utf8");
       const clean = stripUnsupported(sql);
+      if (clean.trim().length === 0) continue;
       expect(() => parse(clean), `syntax error in ${file}`).not.toThrow();
     }
   });
