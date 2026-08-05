@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/supabase/auth";
+import type { AuthClient } from "@/lib/supabase/auth";
 import { getServerClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -7,7 +8,7 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   const client = await getServerClient();
 
-  const context = await getCurrentUser(client);
+  const context = await getCurrentUser(client as unknown as AuthClient);
 
   if (!context) {
     return NextResponse.json({ error: "Sign in required" }, { status: 401 });

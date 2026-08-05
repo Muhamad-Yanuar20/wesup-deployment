@@ -242,7 +242,7 @@ describe("POST /api/auth/logout", () => {
   it("returns 200 with ok true", async () => {
     const auth = { signOut: vi.fn(async () => ({ error: null })) };
     mockClient(auth);
-    const res = await logout(new NextRequest("http://localhost/api/auth/logout", { method: "POST" }));
+    const res = await logout();
     expect(res.status).toBe(200);
     await expect(res.json()).resolves.toEqual({ ok: true });
     expect(auth.signOut).toHaveBeenCalled();
@@ -251,7 +251,7 @@ describe("POST /api/auth/logout", () => {
   it("still returns 200 when signOut fails", async () => {
     const auth = { signOut: vi.fn(async () => ({ error: new Error("boom") })) };
     mockClient(auth);
-    const res = await logout(new NextRequest("http://localhost/api/auth/logout", { method: "POST" }));
+    const res = await logout();
     expect(res.status).toBe(200);
     await expect(res.json()).resolves.toEqual({ ok: true });
   });
@@ -428,7 +428,7 @@ describe("GET /api/auth/session", () => {
       user: { id: "u-1", email: "buyer@example.com" },
       profile: { role: "supplier", status: "active", full_name: "Budi Supplier" },
     });
-    const res = await getSession(new NextRequest("http://localhost/api/auth/session"));
+    const res = await getSession();
     expect(res.status).toBe(200);
     await expect(res.json()).resolves.toEqual({
       user: { email: "buyer@example.com" },
@@ -438,21 +438,21 @@ describe("GET /api/auth/session", () => {
 
   it("returns 401 when there is no session", async () => {
     mockSessionClient({ user: null });
-    const res = await getSession(new NextRequest("http://localhost/api/auth/session"));
+    const res = await getSession();
     expect(res.status).toBe(401);
     await expect(res.json()).resolves.toEqual({ error: "Sign in required" });
   });
 
   it("returns 401 when getUser fails", async () => {
     mockSessionClient({ getUserError: new Error("boom") });
-    const res = await getSession(new NextRequest("http://localhost/api/auth/session"));
+    const res = await getSession();
     expect(res.status).toBe(401);
     await expect(res.json()).resolves.toEqual({ error: "Sign in required" });
   });
 
   it("returns 401 when the profile lookup fails", async () => {
     mockSessionClient({ user: { id: "u-1" }, profileError: new Error("boom") });
-    const res = await getSession(new NextRequest("http://localhost/api/auth/session"));
+    const res = await getSession();
     expect(res.status).toBe(401);
     await expect(res.json()).resolves.toEqual({ error: "Sign in required" });
   });
@@ -462,7 +462,7 @@ describe("GET /api/auth/session", () => {
       user: { id: "u-1", email: "suspended@example.com" },
       profile: { role: "supplier", status: "suspended_temporary", full_name: "Suspended" },
     });
-    const res = await getSession(new NextRequest("http://localhost/api/auth/session"));
+    const res = await getSession();
     expect(res.status).toBe(403);
     await expect(res.json()).resolves.toEqual({
       error: "Account is suspended_temporary",
@@ -475,7 +475,7 @@ describe("GET /api/auth/session", () => {
       user: { id: "u-1", email: "banned@example.com" },
       profile: { role: "supplier", status: "banned", full_name: "Banned" },
     });
-    const res = await getSession(new NextRequest("http://localhost/api/auth/session"));
+    const res = await getSession();
     expect(res.status).toBe(403);
     await expect(res.json()).resolves.toEqual({
       error: "Account is banned",
