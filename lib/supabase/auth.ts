@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import type { SupabaseClient } from "@supabase/supabase-js";
-import type { AccountStatus, Database, UserRole } from "@/types/database";
+import type { AccountStatus, UserRole } from "@/types/database";
 
 export class AuthError extends Error {
   constructor(
@@ -19,7 +18,32 @@ export interface AuthContext {
   fullName: string;
 }
 
-type AuthClient = Pick<SupabaseClient<Database>, "auth" | "from">;
+interface GetUserResponse {
+  data: { user: { id: string } | null };
+  error: Error | null;
+}
+
+interface ProfileRow {
+  role: UserRole;
+  status: AccountStatus;
+  full_name: string;
+}
+
+interface SingleResponse {
+  data: ProfileRow | null;
+  error: Error | null;
+}
+
+export interface AuthClient {
+  auth: { getUser: () => Promise<GetUserResponse> };
+  from: (table: "profiles") => {
+    select: (columns: string) => {
+      eq: (column: string, value: string) => {
+        single: () => Promise<SingleResponse>;
+      };
+    };
+  };
+}
 
 export async function getCurrentUser(client: AuthClient): Promise<AuthContext | null> {
   const { data, error } = await client.auth.getUser();
