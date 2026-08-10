@@ -1,8 +1,10 @@
 import {
   CompressionError,
+  SUPPORTED_OUTPUT_MIME_TYPES,
   type CompressionErrorCode,
   type CompressionOptions,
   type CompressionResult,
+  type OutputMimeType,
 } from "./types";
 
 export interface CompressionWorkerRequest {
@@ -38,11 +40,7 @@ const COMPRESSION_ERROR_CODES = new Set<CompressionErrorCode>([
   "ABORTED",
 ]);
 
-const OUTPUT_TYPES = new Set<NonNullable<CompressionOptions["outputType"]>>([
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-]);
+const OUTPUT_TYPES = new Set<OutputMimeType>(SUPPORTED_OUTPUT_MIME_TYPES);
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
@@ -81,7 +79,7 @@ function isCompressionOptions(value: unknown): value is CompressionOptions {
       (typeof quality === "number" && Number.isFinite(quality) && quality >= 0 && quality <= 1)) &&
     (outputType === undefined ||
       (typeof outputType === "string" &&
-        OUTPUT_TYPES.has(outputType as NonNullable<CompressionOptions["outputType"]>)))
+        OUTPUT_TYPES.has(outputType as OutputMimeType)))
   );
 }
 

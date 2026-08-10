@@ -140,6 +140,68 @@ describe("processCompressionWorkerRequest", () => {
     expect(close).toHaveBeenCalledOnce();
   });
 
+  it("does not upscale an image smaller than the maximum dimension", async () => {
+    const createCanvas = vi.fn().mockReturnValue({
+      getContext: () => ({ drawImage: vi.fn() }),
+      convertToBlob: vi.fn().mockResolvedValue(new Blob(["compressed"], { type: "image/jpeg" })),
+    });
+    const response = await processCompressionWorkerRequest(
+      createCompressionWorkerRequest("no-upscale-id", imageFile(), { maxDimension: 2_000 }),
+      successfulRuntime({
+        createImageBitmap: vi.fn().mockResolvedValue({ width: 640, height: 480, close: vi.fn() }),
+        createCanvas,
+      }),
+    );
+
+    expect(response).toEqual(expect.objectContaining({
+      ok: true,
+      result: expect.objectContaining({ width: 640, height: 480 }),
+    }));
+    expect(createCanvas).toHaveBeenCalledWith(640, 480);
+  });
+
+  it("resizes portrait images proportionally", async () => {
+    const createCanvas = vi.fn().mockReturnValue({
+      getContext: () => ({ drawImage: vi.fn() }),
+      convertToBlob: vi.fn().mockResolvedValue(new Blob(["compressed"], { type: "image/jpeg" })),
+    });
+    const response = await processCompressionWorkerRequest(
+      createCompressionWorkerRequest("portrait-id", imageFile(), { maxDimension: 1_000 }),
+      successfulRuntime({
+        createImageBitmap: vi.fn().mockResolvedValue({ width: 1_200, height: 2_400, close: vi.fn() }),
+        createCanvas,
+      }),
+    );
+
+    expect(response).toEqual(expect.objectContaining({
+      ok: true,
+      result: expect.objectContaining({ width: 500, height: 1_000 }),
+    }));
+    expect(createCanvas).toHaveBeenCalledWith(500, 1_000);
+  });
+
+  it("returns ENCODE_FAILED when the browser falls back to a different output MIME", async () => {
+    const close = vi.fn();
+    const response = await processCompressionWorkerRequest(
+      createCompressionWorkerRequest("mime-fallback-id", imageFile(), { outputType: "image/webp" }),
+      successfulRuntime({
+        createImageBitmap: vi.fn().mockResolvedValue({ width: 800, height: 600, close }),
+        createCanvas: vi.fn().mockReturnValue({
+          getContext: () => ({ drawImage: vi.fn() }),
+          convertToBlob: vi.fn().mockResolvedValue(new Blob(["fallback"], { type: "image/png" })),
+        }),
+      }),
+    );
+
+    expect(response).toEqual({
+      id: "mime-fallback-id",
+      ok: false,
+      code: "ENCODE_FAILED",
+      message: "Browser returned image/png instead of requested image/webp",
+    });
+    expect(close).toHaveBeenCalledOnce();
+  });
+
   it("returns DECODE_FAILED when image decoding fails", async () => {
     const response = await processCompressionWorkerRequest(
       createCompressionWorkerRequest("decode-id", imageFile(), {}),

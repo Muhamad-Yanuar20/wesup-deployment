@@ -4,7 +4,7 @@
 
 **Goal:** Menyediakan modul kompresi gambar berbasis Web Worker yang menerima unggahan foto maksimal 10 MB, memprosesnya secara asynchronous/non-blocking, dan mengembalikan hasil yang dapat dipakai untuk foto KTP, lokasi Supplier, serta produk.
 
-**Architecture:** Pisahkan kontrak/validasi yang murni dan mudah dites dari runtime Worker yang memakai `createImageBitmap` dan `OffscreenCanvas`/`HTMLCanvasElement` fallback. Client memanggil satu API `compressImage(file, options?)`; bridge mengelola lifecycle Worker, request ID, error, timeout, dan pembatalan tanpa membuat komponen React bergantung langsung pada protocol Worker.
+**Architecture:** Pisahkan kontrak/validasi yang murni dan mudah dites dari runtime Worker yang memakai `createImageBitmap` dan `OffscreenCanvas` sebagai baseline browser yang didukung. Kompresi tetap Worker-only dan non-blocking; tidak ada fallback `HTMLCanvasElement` atau pemrosesan canvas di main thread. Client memanggil satu API `compressImage(file, options?)`; bridge mengelola lifecycle Worker, request ID, error, timeout, dan pembatalan tanpa membuat komponen React bergantung langsung pada protocol Worker.
 
 **Tech Stack:** TypeScript 5, Next.js 16.2 App Router, browser Web Worker API, `createImageBitmap`, Canvas API, Vitest 4. Tidak menambah package eksternal.
 
@@ -73,7 +73,7 @@
 
 - [ ] **Step 3: Implement Worker runtime**
 
-  In the Worker, validate the input again, decode with `createImageBitmap(file)`, calculate a proportional target size capped by `maxDimension`, draw to `OffscreenCanvas` when available, call `convertToBlob({ type: outputType, quality })`, and post a typed result. Revoke/close disposable bitmap resources and return structured failures for decode, canvas, and encode errors. Keep the Worker module free of React/Next imports.
+  In the Worker, validate the input again, decode with `createImageBitmap(file)`, calculate a proportional target size capped by `maxDimension`, draw to `OffscreenCanvas` as the supported browser baseline, call `convertToBlob({ type: outputType, quality })`, verify that the returned blob MIME exactly matches `outputType`, and post a typed result. Do not add an `HTMLCanvasElement`/main-thread fallback. Revoke/close disposable bitmap resources and return structured failures for decode, canvas, and encode errors. Keep the Worker module free of React/Next imports.
 
 - [ ] **Step 4: Run the protocol test to verify it passes**
 

@@ -32,6 +32,26 @@ describe("normalizeCompressionOptions", () => {
     });
   });
 
+  it("applies defaults to fields that are explicitly undefined", () => {
+    expect(
+      normalizeCompressionOptions({
+        maxDimension: undefined,
+        quality: undefined,
+        outputType: undefined,
+      }),
+    ).toEqual({
+      maxDimension: 2000,
+      quality: 0.82,
+      outputType: "image/jpeg",
+    });
+  });
+
+  it("rejects an unsupported output MIME supplied at runtime", () => {
+    expect(() => normalizeCompressionOptions({ outputType: "image/gif" } as never)).toThrow(
+      expect.objectContaining({ code: "INVALID_OPTIONS" }),
+    );
+  });
+
   it.each([-0.01, 1.01])("rejects quality outside the 0 through 1 range: %s", (quality) => {
     expect(() => normalizeCompressionOptions({ quality })).toThrow();
   });

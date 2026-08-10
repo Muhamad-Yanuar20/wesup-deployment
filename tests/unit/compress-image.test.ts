@@ -90,6 +90,12 @@ describe("compressImage", () => {
       options: { quality: Number.NaN },
       code: "INVALID_OPTIONS",
     },
+    {
+      name: "unsupported runtime output MIME",
+      file: imageFile(),
+      options: { outputType: "image/gif" } as never,
+      code: "INVALID_OPTIONS",
+    },
   ] as const)("rejects $name before constructing a Worker", async ({ file, options, code }) => {
     await expect(compressImage(file, options)).rejects.toEqual(expect.objectContaining({ code }));
 
@@ -129,6 +135,35 @@ describe("compressImage", () => {
 
     controller.abort();
     expect(worker.terminate).toHaveBeenCalledOnce();
+  });
+
+  it("posts defaults for compression fields that are explicitly undefined", async () => {
+    const promise = compressImage(imageFile(), {
+      maxDimension: undefined,
+      quality: undefined,
+      outputType: undefined,
+    });
+    const worker = FakeWorker.instances[0];
+    const request = postedRequest(worker);
+    const result = compressionResult("defaults");
+
+    expect(request.options).toEqual({ maxDimension: 2_000, quality: 0.82, outputType: "image/jpeg" });
+
+    worker.emit("message", new MessageEvent("message", { data: { id: request.id, ok: true, result } }));
+    await expect(promise).resolves.toEqual(result);
+  });
+
+  it("converts a Worker-constructor failure into WORKER_FAILED", async () => {
+    class ConstructorFailureWorker {
+      constructor() {
+        throw new Error("Worker construction failed");
+      }
+    }
+    vi.stubGlobal("Worker", ConstructorFailureWorker);
+
+    await expect(compressImage(imageFile())).rejects.toEqual(
+      expect.objectContaining({ code: "WORKER_FAILED", message: "Worker construction failed" }),
+    );
   });
 
   it("rejects a matching worker failure with its typed code and cleans up", async () => {
@@ -183,6 +218,21 @@ describe("compressImage", () => {
 
     await vi.advanceTimersByTimeAsync(1);
 
+    await rejection;
+    expect(worker.terminate).toHaveBeenCalledOnce();
+    expect(worker.listenerCount()).toBe(0);
+  });
+
+  it("honors a valid custom timeout", async () => {
+    vi.useFakeTimers();
+    const promise = compressImage(imageFile(), { timeoutMs: 1_234 });
+    const rejection = expect(promise).rejects.toEqual(expect.objectContaining({ code: "WORKER_TIMEOUT" }));
+    const worker = FakeWorker.instances[0];
+
+    await vi.advanceTimersByTimeAsync(1_233);
+    expect(worker.terminate).not.toHaveBeenCalled();
+
+    await vi.advanceTimersByTimeAsync(1);
     await rejection;
     expect(worker.terminate).toHaveBeenCalledOnce();
     expect(worker.listenerCount()).toBe(0);

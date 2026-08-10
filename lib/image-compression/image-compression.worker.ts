@@ -106,13 +106,21 @@ export async function processCompressionWorkerRequest(
       return createCompressionWorkerFailure(request.id, "ENCODE_FAILED", messageFrom(error, "Image encoding failed"));
     }
 
+    if (blob.type !== options.outputType) {
+      return createCompressionWorkerFailure(
+        request.id,
+        "ENCODE_FAILED",
+        `Browser returned ${blob.type || "an unknown MIME type"} instead of requested ${options.outputType}`,
+      );
+    }
+
     return createCompressionWorkerSuccess(request.id, {
       blob,
       originalSize: request.file.size,
       compressedSize: blob.size,
       width: dimensions.width,
       height: dimensions.height,
-      mimeType: blob.type || options.outputType,
+      mimeType: options.outputType,
     });
   } finally {
     try {

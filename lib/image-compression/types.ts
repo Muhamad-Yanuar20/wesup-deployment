@@ -1,7 +1,10 @@
+export const SUPPORTED_OUTPUT_MIME_TYPES = ["image/jpeg", "image/png", "image/webp"] as const;
+export type OutputMimeType = (typeof SUPPORTED_OUTPUT_MIME_TYPES)[number];
+
 export interface CompressionOptions {
   maxDimension?: number;
   quality?: number;
-  outputType?: "image/jpeg" | "image/png" | "image/webp";
+  outputType?: OutputMimeType;
 }
 
 export interface CompressionResult {
