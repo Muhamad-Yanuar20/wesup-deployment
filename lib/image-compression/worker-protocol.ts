@@ -56,8 +56,17 @@ function isPositiveFiniteNumber(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value) && value > 0;
 }
 
-function isFileLike(value: unknown): value is File {
-  return isRecord(value) && isNonNegativeFiniteNumber(value.size) && typeof value.type === "string";
+function isBlob(value: unknown): value is Blob {
+  return typeof Blob !== "undefined" && value instanceof Blob;
+}
+
+function isFile(value: unknown): value is File {
+  if (!isBlob(value)) {
+    return false;
+  }
+
+  const candidate = value as Blob & { name?: unknown; lastModified?: unknown };
+  return typeof candidate.name === "string" && isNonNegativeFiniteNumber(candidate.lastModified);
 }
 
 function isCompressionOptions(value: unknown): value is CompressionOptions {
@@ -77,7 +86,7 @@ function isCompressionOptions(value: unknown): value is CompressionOptions {
 }
 
 function isCompressionResult(value: unknown): value is CompressionResult {
-  if (!isRecord(value) || !isFileLike(value.blob)) {
+  if (!isRecord(value) || !isBlob(value.blob)) {
     return false;
   }
 
@@ -118,7 +127,7 @@ export function isCompressionWorkerRequest(value: unknown): value is Compression
   return (
     isRecord(value) &&
     typeof value.id === "string" &&
-    isFileLike(value.file) &&
+    isFile(value.file) &&
     isCompressionOptions(value.options)
   );
 }

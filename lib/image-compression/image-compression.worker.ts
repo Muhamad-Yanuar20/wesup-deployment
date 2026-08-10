@@ -28,6 +28,8 @@ export interface CompressionWorkerRuntime {
   createCanvas(width: number, height: number): CompressionCanvas;
 }
 
+type PostCompressionWorkerResponse = (message: CompressionWorkerResponse) => void;
+
 function messageFrom(error: unknown, fallback: string): string {
   return error instanceof Error && error.message ? error.message : fallback;
 }
@@ -73,14 +75,15 @@ export async function processCompressionWorkerRequest(
   let bitmap: BitmapResource;
   try {
     bitmap = await runtime.createImageBitmap(request.file);
-    if (!Number.isFinite(bitmap.width) || !Number.isFinite(bitmap.height) || bitmap.width <= 0 || bitmap.height <= 0) {
-      throw new Error("Decoded image has invalid dimensions");
-    }
   } catch (error) {
     return createCompressionWorkerFailure(request.id, "DECODE_FAILED", messageFrom(error, "Image decoding failed"));
   }
 
   try {
+    if (!Number.isFinite(bitmap.width) || !Number.isFinite(bitmap.height) || bitmap.width <= 0 || bitmap.height <= 0) {
+      return createCompressionWorkerFailure(request.id, "DECODE_FAILED", "Decoded image has invalid dimensions");
+    }
+
     const dimensions = targetDimensions(bitmap.width, bitmap.height, options.maxDimension);
     let canvas: CompressionCanvas;
     let context: Canvas2DContext | null;
@@ -120,6 +123,32 @@ export async function processCompressionWorkerRequest(
   }
 }
 
+function requestIdFrom(value: unknown): string {
+  return typeof value === "object" && value !== null && "id" in value && typeof value.id === "string"
+    ? value.id
+    : "unknown";
+}
+
+export async function handleCompressionWorkerMessage(
+  data: unknown,
+  postMessage: PostCompressionWorkerResponse,
+  runtime: CompressionWorkerRuntime = browserRuntime,
+): Promise<void> {
+  const id = requestIdFrom(data);
+  if (!isCompressionWorkerRequest(data)) {
+    postMessage(createCompressionWorkerFailure(id, "WORKER_FAILED", "Worker received an invalid request"));
+    return;
+  }
+
+  try {
+    postMessage(await processCompressionWorkerRequest(data, runtime));
+  } catch (error) {
+    postMessage(
+      createCompressionWorkerFailure(id, "WORKER_FAILED", messageFrom(error, "Image compression worker failed")),
+    );
+  }
+}
+
 interface WorkerMessageEvent {
   data: unknown;
 }
@@ -140,26 +169,6 @@ if (
   typeof workerScope.postMessage === "function"
 ) {
   workerScope.addEventListener("message", (event) => {
-    if (!isCompressionWorkerRequest(event.data)) {
-      const id =
-        typeof event.data === "object" && event.data !== null && "id" in event.data && typeof event.data.id === "string"
-          ? event.data.id
-          : "unknown";
-      workerScope.postMessage(createCompressionWorkerFailure(id, "WORKER_FAILED", "Worker received an invalid request"));
-      return;
-    }
-
-    const request = event.data;
-    void processCompressionWorkerRequest(request)
-      .then((response) => workerScope.postMessage(response))
-      .catch((error: unknown) => {
-        workerScope.postMessage(
-          createCompressionWorkerFailure(
-            request.id,
-            "WORKER_FAILED",
-            messageFrom(error, "Image compression worker failed"),
-          ),
-        );
-      });
+    void handleCompressionWorkerMessage(event.data, (message) => workerScope.postMessage(message));
   });
 }

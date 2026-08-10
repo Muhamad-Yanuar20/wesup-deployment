@@ -1,5 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 import {
+  handleCompressionWorkerMessage,
+  processCompressionWorkerRequest,
+  type CompressionWorkerRuntime,
+} from "@/lib/image-compression/image-compression.worker";
+import {
   createCompressionWorkerFailure,
   createCompressionWorkerRequest,
   createCompressionWorkerSuccess,
@@ -8,10 +13,21 @@ import {
   parseCompressionWorkerResponse,
   workerErrorToFailure,
 } from "@/lib/image-compression/worker-protocol";
-import { processCompressionWorkerRequest } from "@/lib/image-compression/image-compression.worker";
+import { MAX_INPUT_BYTES } from "@/lib/image-compression/validation";
 
 function imageFile(size = 1_024, type = "image/png") {
-  return { size, type } as File;
+  return new File([new Uint8Array(size)], "source.png", { type });
+}
+
+function successfulRuntime(overrides: Partial<CompressionWorkerRuntime> = {}): CompressionWorkerRuntime {
+  return {
+    createImageBitmap: vi.fn().mockResolvedValue({ width: 800, height: 600, close: vi.fn() }),
+    createCanvas: vi.fn().mockReturnValue({
+      getContext: () => ({ drawImage: vi.fn() }),
+      convertToBlob: vi.fn().mockResolvedValue(new Blob(["compressed"], { type: "image/jpeg" })),
+    }),
+    ...overrides,
+  };
 }
 
 describe("image compression worker protocol", () => {
@@ -28,11 +44,7 @@ describe("image compression worker protocol", () => {
     };
 
     expect(request).toEqual({ id: "request-17", file, options: { quality: 0.6 } });
-    expect(createCompressionWorkerSuccess(request.id, result)).toEqual({
-      id: "request-17",
-      ok: true,
-      result,
-    });
+    expect(createCompressionWorkerSuccess(request.id, result)).toEqual({ id: "request-17", ok: true, result });
     expect(isCompressionWorkerRequest(request)).toBe(true);
     expect(isCompressionWorkerResponse(createCompressionWorkerSuccess(request.id, result))).toBe(true);
   });
@@ -40,12 +52,7 @@ describe("image compression worker protocol", () => {
   it("preserves the request ID and typed code in failure messages", () => {
     const failure = createCompressionWorkerFailure("request-18", "ENCODE_FAILED", "Encoding failed");
 
-    expect(failure).toEqual({
-      id: "request-18",
-      ok: false,
-      code: "ENCODE_FAILED",
-      message: "Encoding failed",
-    });
+    expect(failure).toEqual({ id: "request-18", ok: false, code: "ENCODE_FAILED", message: "Encoding failed" });
     expect(isCompressionWorkerResponse(failure)).toBe(true);
   });
 
@@ -69,6 +76,32 @@ describe("image compression worker protocol", () => {
       false,
     );
   });
+
+  it("rejects plain objects masquerading as structured-clone File and Blob values", () => {
+    const fakeSuccess = {
+      id: "request-22",
+      ok: true,
+      result: {
+        blob: { size: 10, type: "image/webp" },
+        originalSize: 1_024,
+        compressedSize: 10,
+        width: 800,
+        height: 600,
+        mimeType: "image/webp",
+      },
+    };
+
+    expect(isCompressionWorkerRequest({ id: "request-22", file: { size: 1_024, type: "image/png" }, options: {} })).toBe(
+      false,
+    );
+    expect(isCompressionWorkerResponse(fakeSuccess)).toBe(false);
+    expect(parseCompressionWorkerResponse(fakeSuccess, "request-22")).toEqual({
+      id: "request-22",
+      ok: false,
+      code: "WORKER_FAILED",
+      message: "Worker returned an invalid response",
+    });
+  });
 });
 
 describe("processCompressionWorkerRequest", () => {
@@ -77,18 +110,16 @@ describe("processCompressionWorkerRequest", () => {
     const drawImage = vi.fn();
     const convertToBlob = vi.fn().mockResolvedValue(new Blob(["compressed"], { type: "image/webp" }));
     const createCanvas = vi.fn().mockReturnValue({ getContext: () => ({ drawImage }), convertToBlob });
-    const file = imageFile(4_096, "image/png");
-
     const response = await processCompressionWorkerRequest(
-      createCompressionWorkerRequest("request-21", file, {
+      createCompressionWorkerRequest("request-21", imageFile(4_096), {
         maxDimension: 1_000,
         quality: 0.7,
         outputType: "image/webp",
       }),
-      {
+      successfulRuntime({
         createImageBitmap: vi.fn().mockResolvedValue({ width: 4_000, height: 2_000, close }),
         createCanvas,
-      },
+      }),
     );
 
     expect(response).toEqual({
@@ -110,20 +141,67 @@ describe("processCompressionWorkerRequest", () => {
   });
 
   it("returns DECODE_FAILED when image decoding fails", async () => {
-    const response = await processCompressionWorkerRequest(createCompressionWorkerRequest("decode-id", imageFile(), {}), {
-      createImageBitmap: vi.fn().mockRejectedValue(new Error("corrupt image")),
-      createCanvas: vi.fn(),
-    });
+    const response = await processCompressionWorkerRequest(
+      createCompressionWorkerRequest("decode-id", imageFile(), {}),
+      successfulRuntime({ createImageBitmap: vi.fn().mockRejectedValue(new Error("corrupt image")) }),
+    );
 
     expect(response).toEqual({ id: "decode-id", ok: false, code: "DECODE_FAILED", message: "corrupt image" });
   });
 
+  it("closes an acquired bitmap whose decoded dimensions are invalid", async () => {
+    const close = vi.fn();
+    const response = await processCompressionWorkerRequest(
+      createCompressionWorkerRequest("invalid-dimensions-id", imageFile(), {}),
+      successfulRuntime({ createImageBitmap: vi.fn().mockResolvedValue({ width: 0, height: 600, close }) }),
+    );
+
+    expect(response).toEqual({
+      id: "invalid-dimensions-id",
+      ok: false,
+      code: "DECODE_FAILED",
+      message: "Decoded image has invalid dimensions",
+    });
+    expect(close).toHaveBeenCalledOnce();
+  });
+
+  it.each([
+    {
+      name: "oversized input",
+      id: "oversized-id",
+      file: imageFile(MAX_INPUT_BYTES + 1),
+      options: {},
+      code: "INPUT_TOO_LARGE",
+      message: "Image must not exceed 10 MiB",
+    },
+    {
+      name: "invalid options",
+      id: "invalid-options-id",
+      file: imageFile(),
+      options: { quality: Number.NaN },
+      code: "INVALID_OPTIONS",
+      message: "Quality must be between 0 and 1",
+    },
+  ] as const)("rejects $name before decoding", async ({ id, file, options, code, message }) => {
+    const createImageBitmap = vi.fn();
+    const response = await processCompressionWorkerRequest(
+      createCompressionWorkerRequest(id, file, options),
+      successfulRuntime({ createImageBitmap }),
+    );
+
+    expect(response).toEqual({ id, ok: false, code, message });
+    expect(createImageBitmap).not.toHaveBeenCalled();
+  });
+
   it("returns CANVAS_FAILED and closes the bitmap when a 2D context is unavailable", async () => {
     const close = vi.fn();
-    const response = await processCompressionWorkerRequest(createCompressionWorkerRequest("canvas-id", imageFile(), {}), {
-      createImageBitmap: vi.fn().mockResolvedValue({ width: 800, height: 600, close }),
-      createCanvas: vi.fn().mockReturnValue({ getContext: () => null, convertToBlob: vi.fn() }),
-    });
+    const response = await processCompressionWorkerRequest(
+      createCompressionWorkerRequest("canvas-id", imageFile(), {}),
+      successfulRuntime({
+        createImageBitmap: vi.fn().mockResolvedValue({ width: 800, height: 600, close }),
+        createCanvas: vi.fn().mockReturnValue({ getContext: () => null, convertToBlob: vi.fn() }),
+      }),
+    );
 
     expect(response).toEqual({
       id: "canvas-id",
@@ -136,20 +214,102 @@ describe("processCompressionWorkerRequest", () => {
 
   it("returns ENCODE_FAILED and closes the bitmap when encoding fails", async () => {
     const close = vi.fn();
-    const response = await processCompressionWorkerRequest(createCompressionWorkerRequest("encode-id", imageFile(), {}), {
-      createImageBitmap: vi.fn().mockResolvedValue({ width: 800, height: 600, close }),
-      createCanvas: vi.fn().mockReturnValue({
-        getContext: () => ({ drawImage: vi.fn() }),
-        convertToBlob: vi.fn().mockRejectedValue(new Error("codec unavailable")),
+    const response = await processCompressionWorkerRequest(
+      createCompressionWorkerRequest("encode-id", imageFile(), {}),
+      successfulRuntime({
+        createImageBitmap: vi.fn().mockResolvedValue({ width: 800, height: 600, close }),
+        createCanvas: vi.fn().mockReturnValue({
+          getContext: () => ({ drawImage: vi.fn() }),
+          convertToBlob: vi.fn().mockRejectedValue(new Error("codec unavailable")),
+        }),
       }),
-    });
+    );
 
-    expect(response).toEqual({
-      id: "encode-id",
-      ok: false,
-      code: "ENCODE_FAILED",
-      message: "codec unavailable",
-    });
+    expect(response).toEqual({ id: "encode-id", ok: false, code: "ENCODE_FAILED", message: "codec unavailable" });
+    expect(close).toHaveBeenCalledOnce();
+  });
+});
+
+describe("handleCompressionWorkerMessage", () => {
+  it("posts a typed rejection that preserves the ID from an invalid request", async () => {
+    const posted: unknown[] = [];
+    await handleCompressionWorkerMessage(
+      { id: "invalid-request-id", file: { size: 1_024, type: "image/png" }, options: {} },
+      (message) => posted.push(structuredClone(message)),
+    );
+
+    expect(posted).toEqual([
+      {
+        id: "invalid-request-id",
+        ok: false,
+        code: "WORKER_FAILED",
+        message: "Worker received an invalid request",
+      },
+    ]);
+    expect(isCompressionWorkerResponse(posted[0])).toBe(true);
+  });
+
+  it("posts a structured-clone success response through the Worker boundary", async () => {
+    const posted: unknown[] = [];
+    await handleCompressionWorkerMessage(
+      createCompressionWorkerRequest("boundary-success-id", imageFile(100), {}),
+      (message) => posted.push(structuredClone(message)),
+      successfulRuntime({
+        createImageBitmap: vi.fn().mockResolvedValue({ width: 400, height: 200, close: vi.fn() }),
+        createCanvas: vi.fn().mockReturnValue({
+          getContext: () => ({ drawImage: vi.fn() }),
+          convertToBlob: vi.fn().mockResolvedValue(new Blob(["done"], { type: "image/jpeg" })),
+        }),
+      }),
+    );
+
+    expect(posted).toEqual([
+      {
+        id: "boundary-success-id",
+        ok: true,
+        result: {
+          blob: expect.any(Blob),
+          originalSize: 100,
+          compressedSize: 4,
+          width: 400,
+          height: 200,
+          mimeType: "image/jpeg",
+        },
+      },
+    ]);
+    expect(isCompressionWorkerResponse(posted[0])).toBe(true);
+  });
+
+  it("posts WORKER_FAILED when an unexpected terminal error escapes processing", async () => {
+    const posted: unknown[] = [];
+    const close = vi.fn();
+    const invalidBlob = {
+      get size() {
+        throw new Error("unexpected serialization failure");
+      },
+      type: "image/jpeg",
+    } as unknown as Blob;
+
+    await handleCompressionWorkerMessage(
+      createCompressionWorkerRequest("terminal-error-id", imageFile(), {}),
+      (message) => posted.push(message),
+      successfulRuntime({
+        createImageBitmap: vi.fn().mockResolvedValue({ width: 400, height: 200, close }),
+        createCanvas: vi.fn().mockReturnValue({
+          getContext: () => ({ drawImage: vi.fn() }),
+          convertToBlob: vi.fn().mockResolvedValue(invalidBlob),
+        }),
+      }),
+    );
+
+    expect(posted).toEqual([
+      {
+        id: "terminal-error-id",
+        ok: false,
+        code: "WORKER_FAILED",
+        message: "unexpected serialization failure",
+      },
+    ]);
     expect(close).toHaveBeenCalledOnce();
   });
 });
