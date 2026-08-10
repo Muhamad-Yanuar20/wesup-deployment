@@ -23,11 +23,11 @@ export function validateImageInput(file: ImageInput): void {
 export function normalizeCompressionOptions(options: CompressionOptions = {}): Required<CompressionOptions> {
   const normalized = { ...DEFAULT_OPTIONS, ...options };
 
-  if (normalized.quality < 0 || normalized.quality > 1) {
+  if (!Number.isFinite(normalized.quality) || normalized.quality < 0 || normalized.quality > 1) {
     throw new CompressionError("INVALID_OPTIONS", "Quality must be between 0 and 1");
   }
 
-  if (normalized.maxDimension <= 0) {
+  if (!Number.isFinite(normalized.maxDimension) || normalized.maxDimension <= 0) {
     throw new CompressionError("INVALID_OPTIONS", "Maximum dimension must be positive");
   }
 

@@ -36,7 +36,22 @@ describe("normalizeCompressionOptions", () => {
     expect(() => normalizeCompressionOptions({ quality })).toThrow();
   });
 
+  it("rejects a NaN quality with a typed invalid-options error", () => {
+    expect(() => normalizeCompressionOptions({ quality: Number.NaN })).toThrow(
+      expect.objectContaining({ code: "INVALID_OPTIONS" }),
+    );
+  });
+
   it.each([0, -1])("rejects a non-positive max dimension: %s", (maxDimension) => {
     expect(() => normalizeCompressionOptions({ maxDimension })).toThrow();
   });
+
+  it.each([Number.NaN, Number.POSITIVE_INFINITY])(
+    "rejects a non-finite max dimension with a typed invalid-options error: %s",
+    (maxDimension) => {
+      expect(() => normalizeCompressionOptions({ maxDimension })).toThrow(
+        expect.objectContaining({ code: "INVALID_OPTIONS" }),
+      );
+    },
+  );
 });
