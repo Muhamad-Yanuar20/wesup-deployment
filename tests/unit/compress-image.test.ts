@@ -96,6 +96,19 @@ describe("compressImage", () => {
     expect(FakeWorker.instances).toHaveLength(0);
   });
 
+  it.each([
+    { name: "zero", timeoutMs: 0 },
+    { name: "negative", timeoutMs: -1 },
+    { name: "NaN", timeoutMs: Number.NaN },
+    { name: "infinite", timeoutMs: Number.POSITIVE_INFINITY },
+  ])("rejects a $name timeout before constructing a Worker", async ({ timeoutMs }) => {
+    await expect(compressImage(imageFile(), { timeoutMs })).rejects.toEqual(
+      expect.objectContaining({ code: "INVALID_OPTIONS" }),
+    );
+
+    expect(FakeWorker.instances).toHaveLength(0);
+  });
+
   it("resolves a matching success response and posts normalized options to a module Worker", async () => {
     const controller = new AbortController();
     const promise = compressImage(imageFile(), { quality: 0.7, signal: controller.signal });

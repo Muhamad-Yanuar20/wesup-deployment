@@ -27,6 +27,10 @@ export async function compressImage(
   validateImageInput(file);
   const normalizedOptions = normalizeCompressionOptions(compressionOptions);
 
+  if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) {
+    throw new CompressionError("INVALID_OPTIONS", "Worker timeout must be a finite positive number");
+  }
+
   if (signal?.aborted) {
     throw new CompressionError("ABORTED", "Image compression was aborted");
   }
