@@ -32,7 +32,7 @@ Arsitektur Wesup didesain dengan batasan-batasan teknis yang kaku untuk memastik
 
 Sistem Wesup dipecah menjadi 10 modul bisnis agar arsitektur terukur dan pembagian tanggung jawab pengembangan menjadi jelas:
 
-1. **Modul Identity & Access Management (IAM)**: Fondasi keamanan yang mengelola autentikasi berbasis role, penyimpanan dokumen KTP dan lokasi usaha, serta penyimpanan informasi Pengaturan Rekening (Disbursement Setup) untuk pencairan dana Supplier dan pengembalian dana (refund) UMKM.
+1. **Modul Identity & Access Management (IAM)**: Fondasi keamanan yang mengelola autentikasi berbasis role, verifikasi profil dasar (Nama, Email, No. WA), bukti foto fisik dan koordinat lokasi tempat usaha, serta data Pengaturan Rekening (Disbursement Setup) untuk pencairan dana Supplier dan pengembalian dana (refund) UMKM.
 
 2. **Modul Catalog & Campaign**: Menangani pembuatan batch penawaran dari Supplier, pengaturan koordinat pin map yang presisi, validasi timeline absolut (waktu buka, tutup, bayar, siap), pembagian harga tier, serta recurring post yang otomatis menggeser parameter waktu absolut pada batch berikutnya berdasarkan interval waktu yang ditentukan.
 
@@ -76,21 +76,26 @@ Berikut adalah spesifikasi mendalam untuk fitur-fitur yang dikelola oleh role Su
 
 ### **2.1.1 Registrasi & Pengaturan Akun (Identity & Access Management)**
 
-* **Detail Fungsional & Subfitur**: Pendaftaran akun baru dengan nama dan email, unggah foto fisik lokasi usaha. Termasuk subfitur Pengaturan Rekening (Disbursement Setup) untuk penarikan dana dari sistem Escrow. Fitur ini dilengkapi sistem Kompresi Gambar Otomatis melalui front-end(dengan batas ukuran fail mentah maksimal 10MB) agar resolusi foto tidak membebani storage basis data.
+* **Detail Fungsional & Subfitur**: Pendaftaran akun baru dengan mengisi formulir esensial (Nama Lengkap, Email, Nomor WhatsApp, Nama Usaha, Alamat Lengkap Teks, dan Pin Map lokasi usaha) serta mengunggah Foto Fisik Tempat Usaha. Dilengkapi fitur Pengaturan Rekening (Disbursement Setup) untuk penarikan dana dari sistem Escrow.
 
-* **Validasi Input**: Pengecekan Nomor Induk Kependudukan (NIK) pada KTP ganda; sistem menolak pembuatan akun jika NIK sudah terdaftar pada akun manapun secara global (baik aktif maupun ditangguhkan/banned).
+* **Kompresi Gambar Client-Side (WebP)**: Seluruh foto yang diunggah dari client (dengan batas ukuran fail mentah maksimal 10MB) wajib dikompresi dan dikonversi otomatis ke format .webp di frontend (menggunakan Canvas API / Web Worker) sebelum diunggah ke Supabase Storage agar tidak membebani komputasi backend dan storage.
 
-* Business Rules: Akun Supplier ditahan dengan status Pending (tidak bisa memposting penawaran) hingga Admin melakukan validasi Quality Control melalui survei fisik langsung ke lapangan pada tahap MVP.
+* Business Rules: Akun Supplier baru berstatus Pending (tidak bisa memposting penawaran) hingga Admin melakukan validasi melalui pengecekan foto tempat usaha dan verifikasi fisik/survei lokasi pada tahap MVP.
 
-* **Dependencies**: Membutuhkan integrasi dengan modul autentikasi dasar dan basis data pengguna.
+* **Dependencies**: Membutuhkan integrasi dengan modul autentikasi Supabase Auth dan modul penyimpanan Supabase Storage.
 
-* **Kondisi Eksekusi**: Sukses jika mendapat persetujuan (approval) Admin; Gagal secara sistem jika NIK terdeteksi ganda atau dokumen tidak valid.
+* **Kondisi Eksekusi**: Sukses jika mendapat persetujuan (approval) Admin; Gagal secara sistem jika formulir esensial tidak lengkap atau koordinat lokasi tidak terdeteksi.
 
 ## 
 
 ### **2.1.2 Manajemen Penawaran (Catalog & Campaign)**
 
-* **Detail Fungsional & Subfitur**: Pembuatan penawaran barang (nama, kategori, kuantitas minimum), fitur Simpan Draft jika pengisian terhenti, unggah foto produk (beserta kompresi otomatis dengan batas ukuran maksimal 10MB), dan penentuan titik kumpul. Penentuan titik kumpul dipecah menjadi input teks alamat dan Pin Peta Presisi (Maps).
+* **Detail Fungsional & Subfitur**: Pembuatan penawaran barang (nama, kategori, kuantitas minimum), fitur Simpan Draft, unggah foto produk (kompresi .webp di frontend maksimal 10MB). Penentuan titik kumpul dipecah menjadi input teks alamat dan Pin Peta Presisi (Maps) serta Fitur Hapus Katalog/Postingan.
+
+* Aturan Hapus Katalog & Notifikasi:
+  1. Supplier diizinkan untuk menghapus postingan katalog yang sedang aktif.
+  2. Edge Case (Sudah ada pendaftar): Jika katalog dihapus saat sudah memiliki pendaftar (UMKM), sistem akan mengubah status batch menjadi CANCELLED_BY_SUPPLIER, serta memicu pengiriman Notifikasi Pembatalan Otomatis (via WhatsApp API dan In-App Notification) kepada seluruh UMKM terdaftar.
+  3. Jika ada UMKM yang sudah melakukan pembayaran di Payment Window, sistem secara otomatis memasukkan transaksi tersebut ke Antrean Full Refund di Panel Admin.
 
 * **Validasi Input**: Seluruh kolom wajib diisi (mandatory). Khusus lokasi, koordinat lintang-bujur dari Pin Peta tidak boleh kosong dan harus terdeteksi di dalam batas geografi wilayah Bandung.
 
@@ -186,11 +191,11 @@ Berikut adalah spesifikasi mendalam untuk fitur-fitur yang digunakan oleh role U
 
 ### **2.2.1 Pencarian & Etalase (Marketplace & Discovery)**
 
-* **Detail Fungsional & Subfitur:** Fitur pencarian barang berbasis teks, filter postingan berdasarkan kategori item, filter rentang harga, dan pencarian berdasarkan radius/jarak dari lokasi UMKM. Modul ini dilengkapi dengan Paginasi & Data Fetching Limit untuk membatasi beban query, antarmuka Empty State jika pencarian tidak membuahkan hasil, dan Skeleton Loading saat menunggu respon sistem. Terdapat fitur Bagikan Tautan (Share Link) via WhatsApp berslogan FOMO dengan dukungan pelacakan referal unik. Penambahan fitur debouncer di pencarian agar meringankan Back-end.
+* **Detail Fungsional & Subfitur:** Fitur pencarian barang berbasis teks dengan Fitur Debouncer (300ms–500ms) untuk menahan kueri ke backend, filter postingan berdasarkan kategori item, filter rentang harga, dan pencarian berdasarkan radius/jarak dari lokasi UMKM. Modul dilengkapi Paginasi, Empty State, dan Skeleton Loading. Terdapat fitur Bagikan Tautan (Share Link) via WhatsApp berslogan menarik menggunakan URL umum (direct link) tanpa mekanisme pelacakan referral unik.
 
-* **Validasi Input:** Pencarian teks dan slider radius divalidasi agar tidak menghasilkan kueri yang terlalu berat ke basis data (rate limiting).
+* **Validasi Input:** Teks pencarian ditahan oleh fungsi Debounce sebelum mengeksekusi kueri API. Slider radius divalidasi dengan rate limiting untuk mencegah kelebihan beban kueri basis data.
 
-* **Business Rules:** Sistem otomatis mengkalkulasi dan menampilkan jarak absolut beserta estimasi waktu dari lokasi UMKM ke titik kumpul Supplier secara langsung di kartu penawaran.
+* **Business Rules:** Sistem otomatis mengkalkulasi dan menampilkan jarak absolut beserta estimasi waktu dari lokasi UMKM ke titik kumpul Supplier secara langsung pada kartu penawaran.
 
 * **Dependencies:** Membutuhkan data penawaran yang berstatus aktif dari Modul Catalog.
 
@@ -388,11 +393,11 @@ Bagian ini memuat spesifikasi fitur-fitur implisit dan pendukung sistem yang ber
 
 ### **2.4.2 Manajemen Unggahan Media (Image Compression)**
 
-* **Detail Fungsional:** Modul kompresi dan pengubahan ukuran (resizing) gambar secara otomatis.
+* **Detail Fungsional:** Modul kompresi, ubah ukuran (resizing), dan konversi format gambar secara otomatis di client-side.
 
-* **Requirement:** Seluruh fail media berupa foto (KTP, Foto Lokasi Usaha, Foto Produk, dan Bukti Sengketa) yang diunggah langsung dari kamera smartphone (dengan batas ukuran fail mentah maksimal 10MB) wajib dikompresi di sisi frontend (klien) sebelum dikirim ke server. Kompresi ini wajib diproses secara asinkron (menggunakan *asynchronous module* atau *Web Worker*) agar tidak memblokir *Main Thread* antarmuka dan mencegah aplikasi mengalami *freeze* (*non-blocking UI*).
+* **Requirement:** Seluruh fail media berupa foto (Foto Lokasi Usaha, Foto Produk, dan Bukti Sengketa) yang diunggah pengguna (maksimal 10MB) wajib dikonversi menjadi format .webp dan dikompresi di sisi frontend (klien) sebelum dikirim ke server. Pemrosesan dilakukan secara asinkron (Web Worker / Canvas) agar Main Thread UI tidak terganggu (non-blocking UI).
 
-* **Business Rules:** Fitur ini diwajibkan untuk mencegah pengurasan kuota Storage Supabase secara drastis akibat ukuran foto mentah yang terlalu besar.
+* **Business Rules:** Memindahkan beban kompresi dari server backend ke perangkat klien untuk menghemat sumber daya komputasi serverless serta menekan konsumsi kapasitas Supabase Storage.
 
 ### **2.4.3 Penanganan Status Antarmuka (Global UI/UX States & Error Handling)**
 
@@ -518,7 +523,7 @@ Untuk mencegah anomali basis data, backend secara mutlak mengimplementasikan val
 
 2. **Tier Inversion & Overlap Prevention:** Logika pengkondisian akan mengeblok pembuatan batch apabila nilai nominal parameter harga Tier N+1 (kuota lebih banyak) ≥ Tier N (kuota lebih sedikit), serta memastikan bahwa rentang kuota (volume) antar tier tidak boleh saling tumpang tindih (overlap).
 
-3. **NIK Duplication Check:** Saat eksekusi endpoint pendaftaran/verifikasi Supplier, backend wajib melakukan kueri silang nomor KTP untuk mendeteksi apabila KTP tersebut sudah terdaftar pada profil akun manapun secara global (baik yang berstatus aktif maupun yang ditangguhkan/banned).
+3. **Pengecekan Keaslian Supplier:** Saat registrasi Supplier, backend memvalidasi kelengkapan data esensial (Nama, Email, No. WA, Nama Usaha, Alamat Teks, Koordinat Pin Map, dan Foto Tempat Usaha). Transaksi postingan ditahan (blocked) hingga Admin mengonfirmasi persetujuan status akun.
 
 # **4\. Alur End-to-End (End-to-End Flow)**
 
@@ -526,7 +531,7 @@ Berikut adalah alur bisnis komprehensif dari awal hingga akhir (end-to-end), yan
 
 **Fase 1: Registrasi & Verifikasi Identitas (Onboarding)**
 
-1. SUPPLIER mendaftar ke platform dengan mengunggah identitas KTP dan foto lokasi usaha. (Sistem memvalidasi NIK untuk mencegah pendaftaran akun ganda pada akun manapun secara global, baik yang aktif maupun yang telah ditangguhkan).
+1. SUPPLIER mendaftar ke platform dengan mengisi data profil esensial (Nama, Email, No. WA, Nama Usaha, Alamat Teks, dan Pin Map) serta mengunggah Foto Fisik Tempat Usaha yang dikompresi otomatis ke format .webp di frontend.
 
 2. SUPPLIER mengatur Pengaturan Rekening untuk keperluan pencairan dana Escrow.
 
