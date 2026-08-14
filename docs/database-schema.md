@@ -121,7 +121,26 @@ RLS: user sees only own row; admin sees all (`is_admin()` helper).
 
 **`notifications`** — in-app center (WhatsApp fallback): `type`, `title`, `message`, `data jsonb`, `read_at`, `sent_via_whatsapp`.
 
-**`admin_audit_logs`** — append-only (trigger blocks UPDATE/DELETE): `action_type`, `target_type/id`, `details jsonb`, `ip_address`, `user_agent`. Written by service role.
+**`admin_audit_logs`** — append-only (triggers block UPDATE/DELETE/TRUNCATE): `action_type`, `target_type/id`, `details jsonb`, `ip_address`, `user_agent`. Written exclusively by the server-side `write_audit_log()` security-definer function (no client INSERT policy — dropped in migration 0009), which asserts the caller is an admin and the admin id matches `auth.uid()`.
+
+### Module 11 — Admin Action RPCs (migration 0009)
+
+Admin actions are executed through **security-definer SQL functions** (`app/api/admin/*` routes call them via `.rpc()`). Each function performs the state transition and appends an `admin_audit_logs` row **in the same transaction**, so an action is never recorded unless it succeeded. All functions assert `public.is_admin()` and validate inputs; timestamps are set server-side with `now()` (audit records cannot be backdated by the client) — the one exception is `suspend_user`, whose `suspended_until` is a client-supplied absolute timestamp validated by the API Gatekeeper (`isIsoTimestamp` + future check in the function).
+
+| Function | Effect | Audit action |
+|---|---|---|
+| `approve_supplier(p_supplier_id, p_admin_id, p_ip, p_user_agent, p_details)` | `supplier_profiles.verification_status → 'approved'` | `verify_supplier` |
+| `reject_supplier(p_supplier_id, p_reason, ...)` | `→ 'rejected'` + `verification_notes` | `reject_supplier` |
+| `takedown_batch(p_batch_id, p_reason, ...)` | `batches.status → 'takedown'` (not from takedown/completed/cancelled) + `takedown_reason/by/at` | `takedown_batch` |
+| `resolve_dispute(p_dispute_id, p_winner, p_notes, ...)` | `disputes.status → resolved_supplier / resolved_umkm` + `admin_id/admin_notes/decided_at`; escrow hold `→ 'released'` with `release_destination` + `dispute_id` (refund flow continues via refund queue) | `resolve_dispute` |
+| `approve_refund(p_refund_id, ...)` | `refund_requests.status → 'waiting_bank_account'` (no bank account on file) or `'processing'` | `approve_refund` |
+| `complete_refund(p_refund_id, p_transfer_proof_url, ...)` | `→ 'completed'` + `transfer_proof_url` | `complete_refund` |
+| `suspend_user(p_user_id, p_suspended_until, ...)` | `profiles.status → 'suspended_temporary'` + `umkm_profiles.suspended_until` (only from active/suspended_temporary) | `suspend_user` |
+| `ban_user(p_user_id, ...)` | `profiles.status → 'banned'` | `ban_user` |
+| `unban_user(p_user_id, ...)` | `profiles.status → 'active'` (only from banned) | `unban_user` |
+| `write_audit_log(...)` | appends a row (no state change) | as supplied |
+
+Grant model: EXECUTE on all of the above is revoked from `public`/`anon` and granted only to `authenticated`; `write_audit_log` additionally requires the caller to be an admin. `admin_audit_logs` keeps FORCE RLS with client access read-only (SELECT for admins); the INSERT policy was dropped so client-side rows cannot be forged.
 
 ## 3. How Tables Relate — The Transaction Spine
 
