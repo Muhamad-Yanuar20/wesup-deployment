@@ -174,6 +174,23 @@ describe.skipIf(noDbUrl || noRestUrl)("live auth & RLS hardening", () => {
       expect(res.status).toBeGreaterThanOrEqual(400);
     });
 
+    it("blocks non-admin INSERT into admin_audit_logs (no insert policy)", async () => {
+      const res = await rest("/rest/v1/admin_audit_logs", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Prefer: "return=minimal",
+        },
+        body: JSON.stringify({
+          admin_id: uid,
+          action_type: "ban_user",
+          target_type: "profiles",
+          target_id: uid,
+        }),
+      });
+      expect(res.status).toBeGreaterThanOrEqual(400);
+    });
+
     it.skipIf(!freshUser?.uid)(
       "promotes fresh user via pool insert of approved supplier profile",
       async () => {
