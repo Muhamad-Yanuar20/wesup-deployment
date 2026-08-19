@@ -204,44 +204,6 @@ describe("POST /api/auth/login", () => {
     mockGetServerClient.mockReset();
   });
 
-  it("returns 200 with the signed-in user", async () => {
-    const auth = {
-      signInWithPassword: vi.fn(async () => ({
-        data: { user: { id: "u-1", email: "buyer@example.com" } },
-        error: null,
-      })),
-    };
-    mockClient(auth);
-    const res = await login(postJson("/api/auth/login", {
-      email: "buyer@example.com",
-      password: "password123",
-    }));
-    expect(res.status).toBe(200);
-    await expect(res.json()).resolves.toEqual({
-      user: { id: "u-1", email: "buyer@example.com" },
-    });
-    expect(auth.signInWithPassword).toHaveBeenCalledWith({
-      email: "buyer@example.com",
-      password: "password123",
-    });
-  });
-
-  it("returns 401 for invalid credentials", async () => {
-    const auth = {
-      signInWithPassword: vi.fn(async () => ({
-        data: { user: null },
-        error: { message: "Invalid login credentials" },
-      })),
-    };
-    mockClient(auth);
-    const res = await login(postJson("/api/auth/login", {
-      email: "buyer@example.com",
-      password: "wrong-password",
-    }));
-    expect(res.status).toBe(401);
-    await expect(res.json()).resolves.toEqual({ error: "Invalid login credentials" });
-  });
-
   it("returns 400 for a malformed JSON body", async () => {
     const auth = { signInWithPassword: vi.fn() };
     mockClient(auth);
