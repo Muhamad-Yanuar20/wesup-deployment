@@ -2,24 +2,38 @@ name: Sync upstream main
 
 on:
   schedule:
-    - cron: "*/30 * * * *"
+    - cron: "0 */12 * * *"
   workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-upstream-main
+  cancel-in-progress: false
 
 jobs:
   sync:
     name: Merge upstream into main
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - name: Sync and merge upstream repository with your current repository
-  # You may pin to the exact commit or the version.
-  # uses: dabreadman/sync-upstream-repo@fc5fe9952946b1daaafd9abd7fcd7e260b81ddbe
-        uses: dabreadman/sync-upstream-repo@v1.3.0
+      - name: Check out fork main
+        uses: actions/checkout@v6
         with:
-          # URL of gitHub public upstream repo
-          upstream_repo: https://github.com/ryan-gabriel/wesup
-          # Branch to merge from upstream (defaults to downstream branch)
-          upstream_branch: main
-          # Branch to merge into downstream
-          downstream_branch: main
-          token: ${{ secrets.GITHUB_TOKEN }}
+          ref: main
+          fetch-depth: 0
+
+      - name: Merge upstream main into fork
+        run: |
+          git remote add upstream https://github.com/ryan-gabriel/wesup.git
+          git fetch --no-tags upstream main
+
+          if git merge-base --is-ancestor upstream/main HEAD; then
+            echo "Fork main already contains upstream main."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git merge --no-edit upstream/main
+          git push origin HEAD:main
