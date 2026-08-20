@@ -1,39 +1,33 @@
-name: Sync upstream main
+steps:
+    - name: Check out fork main
+    uses: actions/checkout@v6
+    with:
+      repository: Muhamad-Yanuar20/wesup-deployment
+      ref: main
+      fetch-depth: 0
+      path: fork
 
-on:
-  schedule:
-    - cron: "0 */12 * * *"
-  workflow_dispatch:
+    - name: Check out private upstream main
+    uses: actions/checkout@v6
+    with:
+      repository: ryan-gabriel/wesup
+      ref: main
+      fetch-depth: 0
+      path: upstream
+      token: ${{ secrets.UPSTREAM_TOKEN }}
+      persist-credentials: false
 
-permissions:
-  contents: write
+    - name: Merge upstream main into fork
+    working-directory: fork
+    run: |
+      git fetch ../upstream main:refs/remotes/upstream/main
 
-concurrency:
-  group: sync-upstream-main
-  cancel-in-progress: false
+      if git merge-base --is-ancestor upstream/main HEAD; then
+        echo "Fork main already contains upstream main."
+        exit 0
+      fi
 
-jobs:
-  sync:
-    name: Merge upstream into main
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check out fork main
-        uses: actions/checkout@v6
-        with:
-          ref: main
-          fetch-depth: 0
-
-      - name: Merge upstream main into fork
-        run: |
-          git remote add upstream https://github.com/ryan-gabriel/wesup.git
-          git fetch --no-tags upstream main
-
-          if git merge-base --is-ancestor upstream/main HEAD; then
-            echo "Fork main already contains upstream main."
-            exit 0
-          fi
-
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git merge --no-edit upstream/main
-          git push origin HEAD:main
+      git config user.name "github-actions[bot]"
+      git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      git merge --no-edit upstream/main
+      git push origin HEAD:main
