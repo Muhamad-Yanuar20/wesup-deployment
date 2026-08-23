@@ -1,12 +1,17 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database";
 import { GET as listRefunds } from "@/app/api/admin/refunds/route";
 import { getServerClient } from "@/lib/supabase/server";
+import { enforceRateLimit } from "@/lib/rate-limit";
 
 vi.mock("@/lib/supabase/server", () => ({
   getServerClient: vi.fn(),
+}));
+
+vi.mock("@/lib/rate-limit", () => ({
+  enforceRateLimit: vi.fn(),
 }));
 
 const mockGetServerClient = vi.mocked(getServerClient);
@@ -39,6 +44,19 @@ function mockRefundsClient(rows: unknown[] = []) {
 describe("GET /api/admin/refunds", () => {
   beforeEach(() => {
     mockGetServerClient.mockReset();
+    vi.mocked(enforceRateLimit).mockReset();
+    vi.mocked(enforceRateLimit).mockResolvedValue(null);
+  });
+
+  it("returns 429 when the rate limiter blocks the request", async () => {
+    mockRefundsClient([]);
+    vi.mocked(enforceRateLimit).mockResolvedValueOnce(
+      NextResponse.json({ error: "rate_limited" }, { status: 429 }),
+    );
+    const res = await listRefunds(
+      new NextRequest("http://localhost/api/admin/refunds"),
+    );
+    expect(res.status).toBe(429);
   });
 
   it("returns 200 with refunds ordered by requested_at desc and paginated", async () => {

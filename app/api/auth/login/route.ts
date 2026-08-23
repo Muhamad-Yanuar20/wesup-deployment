@@ -9,10 +9,14 @@ import {
 import { getCurrentUser } from "@/lib/supabase/auth";
 import type { AuthClient } from "@/lib/supabase/auth";
 import { getServerClient } from "@/lib/supabase/server";
+import { enforceRateLimit } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
+  const limited = await enforceRateLimit(request, "login");
+  if (limited) return limited;
+
   const client = await getServerClient();
 
   let body: unknown;

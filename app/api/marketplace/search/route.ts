@@ -16,6 +16,7 @@ import {
   isBatchCategory,
 } from "@/lib/catalog/categories";
 import { parsePositiveInt } from "@/lib/admin/validation";
+import { enforceRateLimit } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -64,6 +65,12 @@ async function resolveSearchOrigin(
 }
 
 export async function GET(req: Request) {
+  const client = await getServerClient();
+  const ctx = await getCurrentUser(client as unknown as AuthClient);
+
+  const limited = await enforceRateLimit(req, "search", ctx?.userId);
+  if (limited) return limited;
+
   const url = new URL(req.url);
 
   const query = (url.searchParams.get("q") ?? "").trim();
@@ -168,8 +175,6 @@ export async function GET(req: Request) {
   }
   const offset = (page - 1) * limit;
 
-  const client = await getServerClient();
-  const ctx = await getCurrentUser(client as unknown as AuthClient);
   const origin =
     lat !== null && lng !== null
       ? { lat, lng }

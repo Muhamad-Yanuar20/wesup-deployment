@@ -1,12 +1,17 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database";
 import { GET as searchBatches } from "@/app/api/marketplace/search/route";
 import { getServerClient } from "@/lib/supabase/server";
+import { enforceRateLimit } from "@/lib/rate-limit";
 
 vi.mock("@/lib/supabase/server", () => ({
   getServerClient: vi.fn(),
+}));
+
+vi.mock("@/lib/rate-limit", () => ({
+  enforceRateLimit: vi.fn(),
 }));
 
 const mockGetServerClient = vi.mocked(getServerClient);
@@ -78,6 +83,17 @@ function getReq(query: string): NextRequest {
 describe("GET /api/marketplace/search", () => {
   beforeEach(() => {
     mockGetServerClient.mockReset();
+    vi.mocked(enforceRateLimit).mockReset();
+    vi.mocked(enforceRateLimit).mockResolvedValue(null);
+  });
+
+  it("returns 429 when the rate limiter blocks the request", async () => {
+    mockSearchClient({ rows: [], user: null });
+    vi.mocked(enforceRateLimit).mockResolvedValueOnce(
+      NextResponse.json({ error: "rate_limited" }, { status: 429 }),
+    );
+    const res = await searchBatches(getReq(""));
+    expect(res.status).toBe(429);
   });
 
   it("returns 200 with anonymous defaults: bandung center, radius 10, page 1", async () => {

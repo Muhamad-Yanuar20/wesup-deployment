@@ -9,6 +9,8 @@ import {
     LayoutGrid
 } from 'lucide-react';
 
+export const dynamic = 'force-dynamic';
+
 export default function MarketplacePage() {
     return (
         <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-sans">
