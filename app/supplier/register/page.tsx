@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import "leaflet/dist/leaflet.css";
 import SupplierRegistrationForm from "@/components/supplier/SupplierRegistrationForm";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Pendaftaran Pemasok | Wesup",
   description: "Daftar sebagai mitra pemasok bahan baku UMKM di Wesup.",

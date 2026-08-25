@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import LoginForm from "@/components/auth/LoginForm";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Masuk",
   description: "Masuk ke akun Wesup sebagai Admin, UMKM, atau Supplier.",

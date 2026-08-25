@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database";
 import { POST as signup } from "@/app/api/auth/signup/route";
@@ -9,9 +9,14 @@ import { POST as forgotPassword } from "@/app/api/auth/forgot-password/route";
 import { POST as resetPassword } from "@/app/api/auth/reset-password/route";
 import { GET as getSession } from "@/app/api/auth/session/route";
 import { getServerClient } from "@/lib/supabase/server";
+import { enforceRateLimit } from "@/lib/rate-limit";
 
 vi.mock("@/lib/supabase/server", () => ({
   getServerClient: vi.fn(),
+}));
+
+vi.mock("@/lib/rate-limit", () => ({
+  enforceRateLimit: vi.fn(),
 }));
 
 const mockGetServerClient = vi.mocked(getServerClient);
@@ -68,6 +73,23 @@ describe("POST /api/auth/signup", () => {
   beforeEach(() => {
     vi.unstubAllEnvs();
     mockGetServerClient.mockReset();
+    vi.mocked(enforceRateLimit).mockReset();
+    vi.mocked(enforceRateLimit).mockResolvedValue(null);
+  });
+
+  it("returns 429 when the rate limiter blocks the request", async () => {
+    const auth = { signUp: vi.fn() };
+    mockClient(auth);
+    vi.mocked(enforceRateLimit).mockResolvedValueOnce(
+      NextResponse.json({ error: "rate_limited" }, { status: 429 }),
+    );
+    const res = await signup(postJson("/api/auth/signup", {
+      email: "buyer@example.com",
+      password: "password123",
+      full_name: "Budi Buyer",
+    }));
+    expect(res.status).toBe(429);
+    expect(auth.signUp).not.toHaveBeenCalled();
   });
 
   it("returns 201 with the created user", async () => {
