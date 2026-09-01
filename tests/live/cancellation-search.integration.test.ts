@@ -108,15 +108,30 @@ async function createRegistration(
   status: "registered" | "paid" | "pending_payment",
   finalAmount?: number,
 ): Promise<string> {
-  const [reg] = await sql<{ id: string }>(
-    `insert into public.registrations
-       (batch_id, umkm_id, quantity, consented_at, status, locked_tier_number,
-        locked_price_per_unit, final_amount)
-     values ($1, $2, 25, now(), $3, 1, 25000, $4)
-     returning id`,
-    [batchId, umkmId, status, finalAmount ?? null],
-  );
-  return reg.id;
+  // Fixtures model historical batches whose registration window has
+  // already closed (pre-registration-gatekeeper data). Bypass triggers
+  // and FK checks for the fixture insert only.
+  const client = await pool!.connect();
+  try {
+    await client.query("begin");
+    await client.query("set session_replication_role = replica");
+    const res = await client.query<{ id: string }>(
+      `insert into public.registrations
+         (batch_id, umkm_id, quantity, consented_at, status, locked_tier_number,
+          locked_price_per_unit, final_amount)
+       values ($1, $2, 25, now(), $3, 1, 25000, $4)
+       returning id`,
+      [batchId, umkmId, status, finalAmount ?? null],
+    );
+    await client.query("set session_replication_role = default");
+    await client.query("commit");
+    return res.rows[0].id;
+  } catch (err) {
+    await client.query("rollback").catch(() => {});
+    throw err;
+  } finally {
+    client.release();
+  }
 }
 
 async function actAs(userId: string, fn: () => Promise<void>) {
