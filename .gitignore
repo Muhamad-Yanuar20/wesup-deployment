@@ -32,6 +32,11 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env
+.env.local
+.env.*.local
+
+# generated data backups (public schema snapshots)
+scripts/backups/
 
 # supabase local/link artifacts
 supabase/.temp/
