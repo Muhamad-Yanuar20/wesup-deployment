@@ -47,9 +47,6 @@ export type AuditAction =
   | "unban_user"
   | "cancel_batch"
   | "cut_off_batch"
-  | "create_batch"
-  | "update_batch"
-  | "delete_batch"
   | "generate_pickup_code"
   | "confirm_pickup"
   | "create_recurring_config";
