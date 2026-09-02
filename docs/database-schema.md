@@ -19,7 +19,7 @@ Defined in migration `20260731000100_core_types_profiles.sql`. Every status colu
 | `refund_trigger` | `takedown`, `force_majeure`, `dispute_won` | `refund_requests.trigger_type` |
 | `refund_status` | `pending`, `waiting_bank_account`, `processing`, `completed`, `failed` | `refund_requests.status` |
 | `notification_type` | `payment_due`, `payment_success`, `pickup_ready`, `dispute`, `refund`, `suspension`, `referral`, `batch_update` | `notifications.type` |
-| `audit_action` | `verify_supplier`, `reject_supplier`, `takedown_batch`, `resolve_dispute`, `approve_refund`, `complete_refund`, `suspend_user`, `ban_user`, `unban_user`, `cancel_batch`, `cut_off_batch` | `admin_audit_logs.action_type` |
+| `audit_action` | `verify_supplier`, `reject_supplier`, `takedown_batch`, `resolve_dispute`, `approve_refund`, `complete_refund`, `suspend_user`, `ban_user`, `unban_user`, `cancel_batch`, `cut_off_batch`, `generate_pickup_code`, `confirm_pickup` | `admin_audit_logs.action_type` |
 
 ## 2. Tables by Module
 
