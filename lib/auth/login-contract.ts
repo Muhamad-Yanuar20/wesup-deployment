@@ -44,7 +44,7 @@ export interface LoginErrorResponse {
 export const LOGIN_REDIRECT_BY_ROLE: Record<LoginRole, string> = {
   admin: "/",
   umkm: "/",
-  supplier: "/",
+  supplier: "/supplier",
 };
 
 export type ParseLoginPayloadResult =

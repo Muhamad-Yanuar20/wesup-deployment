@@ -46,11 +46,20 @@ function IconUser() {
     );
 }
 
+function IconSupplier() {
+    return (
+        <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+        </svg>
+    );
+}
+
 // ── Nav items definition ───────────────────────────────────────────────────
 
 const navItems = [
     { href: "/", label: "Beranda", icon: <IconHome /> },
     { href: "/marketplace", label: "Marketplace", icon: <IconStore /> },
+    { href: "/supplier", label: "Supplier", icon: <IconSupplier /> },
     { href: "/pesanan", label: "Pesanan", icon: <IconClipboard /> },
     { href: "/notifikasi", label: "Notifikasi", icon: <IconBell /> },
     { href: "/akun", label: "Akun", icon: <IconUser /> },
