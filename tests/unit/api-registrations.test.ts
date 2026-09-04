@@ -45,7 +45,14 @@ const TIMELINE = {
   estimated_ready_at: "2026-09-04T00:00:00.000Z",
 };
 
-const TIERS = [
+interface TierLike {
+  tier_number: number;
+  min_volume: number;
+  max_volume: number | null;
+  price_per_unit: number;
+}
+
+const TIERS: TierLike[] = [
   { tier_number: 1, min_volume: 1, max_volume: 49, price_per_unit: 10000 },
   { tier_number: 2, min_volume: 50, max_volume: 99, price_per_unit: 9000 },
 ];
@@ -61,8 +68,8 @@ function postJson(body: unknown): NextRequest {
 interface ClientOpts {
   batchStatus?: string;
   timeline?: typeof TIMELINE | null;
-  tiers?: typeof TIERS | null;
-  tiersOverride?: typeof TIERS;
+  tiers?: TierLike[] | null;
+  tiersOverride?: TierLike[];
   insertError?: { code?: string; message?: string } | null;
 }
 
