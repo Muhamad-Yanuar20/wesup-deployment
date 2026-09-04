@@ -48,6 +48,28 @@ const STATUS_BADGE: Record<AccountOrderStatus, { label: string; className: strin
   cancelled: { label: "Dibatalkan", className: "bg-slate-100 text-slate-600", dot: "bg-slate-400" },
 };
 
+function PaymentAction({ order }: { order: AccountOrder }) {
+  if (!order.paymentUrl) return null;
+  const isPending = order.status === "pending_payment";
+  return (
+    <Link
+      href={order.paymentUrl}
+      className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-emerald-700"
+    >
+      {isPending ? "Bayar Sekarang" : "Jadwal Bayar"}
+    </Link>
+  );
+}
+
+function WaitingNote({ order }: { order: AccountOrder }) {
+  if (order.status !== "registered") return null;
+  return (
+    <p className="mt-1 text-xs text-slate-400">
+      Menunggu jendela pembayaran dibuka.
+    </p>
+  );
+}
+
 export default function OrderCenterClient() {
   // Simulate a short load to exercise skeleton/empty states like the rest of the app.
   const [filter, setFilter] = useState<Filter>("ALL");
@@ -197,21 +219,25 @@ function OrderRow({ order }: { order: AccountOrder }) {
         <p className="text-xs text-slate-400">{dates.format(new Date(order.createdAt))}</p>
       </td>
       <td className="px-4 py-3">
-        {order.quantity} {order.unit}
-        {order.lockedTier ? <span className="ml-1 text-xs text-slate-400">· T{order.lockedTier}</span> : null}
+        <p className="font-semibold text-slate-900">{order.quantity} {order.unit}</p>
+        <WaitingNote order={order} />
       </td>
       <td className="px-4 py-3 font-semibold text-slate-900">{money.format(order.finalAmount)}</td>
       <td className="px-4 py-3">
         <StatusBadge status={order.status} />
       </td>
       <td className="px-4 py-3 text-right">
-        {order.pickupUrl ? (
-          <Link href={order.pickupUrl} className="inline-flex items-center gap-1 rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 transition hover:bg-blue-100">
-            Serah Terima
-          </Link>
-        ) : (
-          <span className="text-xs text-slate-300">—</span>
-        )}
+        <div className="flex justify-end gap-1.5">
+          {order.status === "pending_payment" && <PaymentAction order={order} />}
+          {order.status === "registered" && <PaymentAction order={order} />}
+          {order.pickupUrl ? (
+            <Link href={order.pickupUrl} className="inline-flex items-center gap-1 rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 transition hover:bg-blue-100">
+              Serah Terima
+            </Link>
+          ) : (
+            <span className="text-xs text-slate-300">—</span>
+          )}
+        </div>
       </td>
     </tr>
   );
@@ -236,15 +262,21 @@ function OrderCard({ order }: { order: AccountOrder }) {
         <span>Total: <strong className="text-slate-900">{money.format(order.finalAmount)}</strong></span>
         <span>Daftar: <strong className="text-slate-900">{dates.format(new Date(order.createdAt))}</strong></span>
       </div>
-      {order.pickupUrl ? (
-        <Link href={order.pickupUrl} className="mt-3 inline-flex items-center gap-1 rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 transition hover:bg-blue-100">
-          Serah Terima
-        </Link>
-      ) : (
-        <span className="mt-3 inline-flex items-center gap-1 text-xs text-slate-300">
-          <XCircle className="h-3.5 w-3.5" aria-hidden="true" /> Belum ada aksi
-        </span>
-      )}
+      <WaitingNote order={order} />
+      <div className="mt-3 flex flex-wrap gap-2">
+        {(order.status === "pending_payment" || order.status === "registered") && (
+          <PaymentAction order={order} />
+        )}
+        {order.pickupUrl ? (
+          <Link href={order.pickupUrl} className="inline-flex items-center gap-1 rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 transition hover:bg-blue-100">
+            Serah Terima
+          </Link>
+        ) : (
+          <span className="inline-flex items-center gap-1 text-xs text-slate-300">
+            <XCircle className="h-3.5 w-3.5" aria-hidden="true" /> Belum ada aksi
+          </span>
+        )}
+      </div>
     </div>
   );
 }

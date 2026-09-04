@@ -21,4 +21,5 @@ export interface AccountOrder {
   lockedTier: number | null;
   createdAt: string;
   pickupUrl?: string;
+  paymentUrl?: string;
 }

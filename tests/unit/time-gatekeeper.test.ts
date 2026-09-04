@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import {
   isUuid,
   type BatchTimeline,
+  type PaymentGateResult,
   type RegistrationGateResult,
+  evaluatePaymentWindow,
   evaluateRegistrationWindow,
   resolveTierForVolume,
 } from "@/lib/orders/time-gatekeeper";
@@ -100,6 +102,39 @@ describe("resolveTierForVolume (price locking at cutoff)", () => {
 
   it("returns Tier 1 for an empty set (no tiers configured)", () => {
     expect(() => resolveTierForVolume([], 10)).toThrow("no tiers");
+  });
+});
+
+describe("evaluatePaymentWindow (Payment Window timestamp gate)", () => {
+  const PAY_OPEN = "2026-09-02T01:00:00.000Z";
+  const PAY_CLOSE = "2026-09-03T00:00:00.000Z";
+
+  it("blocks before the payment window opens", () => {
+    const result: PaymentGateResult = evaluatePaymentWindow(timeline, "2026-09-02T00:59:59.000Z");
+    expect(result.allowed).toBe(false);
+    expect(result.reason).toBe("not_open");
+  });
+
+  it("allows at the exact opens timestamp (inclusive lower bound)", () => {
+    const result: PaymentGateResult = evaluatePaymentWindow(timeline, PAY_OPEN);
+    expect(result.allowed).toBe(true);
+  });
+
+  it("allows strictly inside the payment window", () => {
+    const result: PaymentGateResult = evaluatePaymentWindow(timeline, "2026-09-02T12:00:00.000Z");
+    expect(result.allowed).toBe(true);
+  });
+
+  it("blocks at the exact closes timestamp (deadline, exclusive upper bound)", () => {
+    const result: PaymentGateResult = evaluatePaymentWindow(timeline, PAY_CLOSE);
+    expect(result.allowed).toBe(false);
+    expect(result.reason).toBe("expired");
+  });
+
+  it("blocks after the payment window closes", () => {
+    const result: PaymentGateResult = evaluatePaymentWindow(timeline, "2026-09-03T00:00:01.000Z");
+    expect(result.allowed).toBe(false);
+    expect(result.reason).toBe("expired");
   });
 });
 

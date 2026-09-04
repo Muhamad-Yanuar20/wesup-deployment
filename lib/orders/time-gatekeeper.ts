@@ -26,6 +26,14 @@ export interface RegistrationGateResult {
   reason?: "not_open" | "closed" | "not_published";
 }
 
+export type PaymentGateState = "waiting" | "open" | "expired";
+
+export interface PaymentGateResult {
+  allowed: boolean;
+  reason?: "not_open" | "expired";
+  state: PaymentGateState;
+}
+
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -71,4 +79,27 @@ export function resolveTierForVolume(
     }
   }
   return chosen;
+}
+
+/**
+ * Payment Window Gatekeeper (pure time check) — the UI blocks the pay button
+ * outside the [payment_opens_at, payment_closes_at) window. Unlike the
+ * registration gate it does NOT depend on `batch.status` because a batch is
+ * already transiting to `closed` when the payment window opens.
+ */
+export function evaluatePaymentWindow(
+  timeline: BatchTimeline,
+  nowIso: string,
+): PaymentGateResult {
+  const now = Date.parse(nowIso);
+  const opens = Date.parse(timeline.payment_opens_at);
+  const closes = Date.parse(timeline.payment_closes_at);
+
+  if (now < opens) {
+    return { allowed: false, reason: "not_open", state: "waiting" };
+  }
+  if (now >= closes) {
+    return { allowed: false, reason: "expired", state: "expired" };
+  }
+  return { allowed: true, state: "open" };
 }
