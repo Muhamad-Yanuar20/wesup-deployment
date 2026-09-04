@@ -17,6 +17,9 @@ export interface MarketplaceItem {
   targetQuantity: number;
   status: MarketplaceItemStatus;
   registrationClosesAt: string;
+  pickupLatitude: number;
+  pickupLongitude: number;
+  pickupAddress: string;
 }
 
 export interface MarketplaceFilterValue {

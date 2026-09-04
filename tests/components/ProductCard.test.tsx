@@ -21,6 +21,9 @@ const DEFAULT_ITEM: MarketplaceItem = {
   targetQuantity: 50,
   status: "ACTIVE",
   registrationClosesAt: "2026-09-15T10:00:00.000Z",
+  pickupLatitude: -6.9175,
+  pickupLongitude: 107.6191,
+  pickupAddress: "Jl. Asia Afrika No. 123, Bandung",
 };
 
 function makeItem(overrides: Partial<MarketplaceItem> = {}): MarketplaceItem {

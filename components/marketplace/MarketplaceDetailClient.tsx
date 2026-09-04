@@ -1,9 +1,14 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { MapPin, Clock, Tag, Users, Share2, ArrowLeft } from "lucide-react";
 import type { MarketplaceItem } from "@/lib/marketplace/types";
+import { useToast } from "@/components/ui/GlobalToast";
+import PickupLocationMapClient from "./PickupLocationMapClient";
+import LocationConsentCheckbox from "./LocationConsentCheckbox";
 
 const rupiahFormatter = new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 });
 const closingTimeFormatter = new Intl.DateTimeFormat("id-ID", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Jakarta" });
@@ -23,9 +28,19 @@ export interface MarketplaceDetailClientProps {
 }
 
 export default function MarketplaceDetailClient({ item }: MarketplaceDetailClientProps) {
+  const router = useRouter();
+  const { toast } = useToast();
+  const [consentGiven, setConsentGiven] = useState(false);
+
   const progress = item.targetQuantity <= 0 ? 0 : Math.min(100, Math.round((item.registeredQuantity / item.targetQuantity) * 100));
   const absoluteUrl = typeof window !== "undefined" ? window.location.href : `/marketplace/${item.slug}`;
   const shareUrl = buildWhatsAppShareUrl(item, absoluteUrl);
+
+  function handleJoin() {
+    if (!consentGiven) return;
+    toast("Pendaftaran berhasil! Silakan selesaikan pembayaran di menu Pesanan.", "success");
+    router.push("/pesanan");
+  }
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] font-sans">
@@ -58,7 +73,7 @@ export default function MarketplaceDetailClient({ item }: MarketplaceDetailClien
                 <MapPin aria-hidden="true" className="w-5 h-5 text-slate-400 mt-0.5" />
                 <div>
                   <p className="text-sm font-semibold text-slate-800">Titik kumpul Supplier</p>
-                  <p className="text-sm text-slate-500">Lokasi pengambilan di Bandung</p>
+                  <p className="text-sm text-slate-500">{item.pickupAddress}</p>
                 </div>
               </div>
               <div className="flex items-start gap-3 p-4 bg-slate-50 rounded-xl border border-slate-100">
@@ -70,6 +85,18 @@ export default function MarketplaceDetailClient({ item }: MarketplaceDetailClien
                   </p>
                 </div>
               </div>
+            </div>
+
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500">
+                <MapPin aria-hidden="true" className="w-4 h-4" />
+                <span>Lokasi Titik Kumpul</span>
+              </div>
+              <PickupLocationMapClient
+                latitude={item.pickupLatitude}
+                longitude={item.pickupLongitude}
+                address={item.pickupAddress}
+              />
             </div>
 
             <div className="flex flex-col gap-2 p-4 bg-slate-50 rounded-xl border border-slate-100">
@@ -97,8 +124,19 @@ export default function MarketplaceDetailClient({ item }: MarketplaceDetailClien
               <p className="text-xs font-medium text-slate-500">Tutup pendaftaran: {formatClosingTime(item.registrationClosesAt)}</p>
             </div>
 
+            <LocationConsentCheckbox onChange={(checked) => setConsentGiven(checked)} />
+
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2">
-              <button type="button" disabled className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-slate-200 px-4 py-3 text-sm font-bold text-slate-500 cursor-not-allowed">
+              <button
+                type="button"
+                onClick={handleJoin}
+                disabled={!consentGiven}
+                className={`flex-1 inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold transition-colors ${
+                  consentGiven
+                    ? "bg-blue-600 text-white hover:bg-blue-700"
+                    : "bg-slate-200 text-slate-500 cursor-not-allowed"
+                }`}
+              >
                 Daftar Sekarang
               </button>
               <a href={shareUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors">
@@ -106,6 +144,12 @@ export default function MarketplaceDetailClient({ item }: MarketplaceDetailClien
                 Bagikan via WhatsApp
               </a>
             </div>
+
+            {!consentGiven && (
+              <p className="text-xs text-slate-400 -mt-3">
+                Centang persetujuan lokasi pengambilan untuk mengaktifkan tombol daftar.
+              </p>
+            )}
           </div>
         </article>
       </main>

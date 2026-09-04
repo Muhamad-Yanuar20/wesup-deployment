@@ -20,3 +20,20 @@ vi.mock("next/link", () => ({
   default: ({ children, href, ...rest }: { children: React.ReactNode; href: string; [key: string]: unknown }) =>
     createElement("a", { href, ...rest }, children),
 }));
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    back: vi.fn(),
+    prefetch: vi.fn(),
+  }),
+  usePathname: () => "/",
+  useSearchParams: () => new URLSearchParams(),
+}));
+
+vi.mock("@/components/marketplace/PickupLocationMapClient", () => ({
+  __esModule: true,
+  default: ({ address }: { address: string }) =>
+    createElement("div", { "data-testid": "pickup-location-map" }, address),
+}));

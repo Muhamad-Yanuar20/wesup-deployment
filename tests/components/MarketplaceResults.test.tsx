@@ -22,6 +22,9 @@ const MOCK_ITEMS: MarketplaceItem[] = [
     targetQuantity: 20,
     status: "ACTIVE",
     registrationClosesAt: "2026-09-10T10:00:00.000Z",
+    pickupLatitude: -6.9175,
+    pickupLongitude: 107.6191,
+    pickupAddress: "Jl. Asia Afrika No. 43, Bandung",
   },
   {
     id: "item-2",
@@ -38,6 +41,9 @@ const MOCK_ITEMS: MarketplaceItem[] = [
     targetQuantity: 15,
     status: "ACTIVE",
     registrationClosesAt: "2026-09-12T10:00:00.000Z",
+    pickupLatitude: -6.8917,
+    pickupLongitude: 107.6026,
+    pickupAddress: "Jl. Dago No. 45, Bandung",
   },
 ];
 
