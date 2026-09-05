@@ -8,10 +8,13 @@ import {
   Clock,
   PackageCheck,
   QrCode,
+  ShieldAlert,
+  ShieldCheck,
   ShoppingBag,
   User,
 } from "lucide-react";
 import { ACCOUNT_ORDER_MOCKS } from "@/lib/orders/mock-data";
+import { getComplaintScenario } from "@/lib/dispute/mock-data";
 import type { AccountOrder, AccountOrderStatus } from "@/lib/orders/types";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Skeleton } from "@/components/ui/SkeletonLoading";
@@ -96,6 +99,34 @@ function PickupAction({ order }: { order: AccountOrder }) {
       Serah Terima
     </Link>
   );
+}
+
+function ComplaintAction({ order }: { order: AccountOrder }) {
+  if (order.status !== "picked_up") return null;
+  const scenario = getComplaintScenario(order.id);
+  if (scenario?.kind === "filed") {
+    return (
+      <Link
+        href={`/pesanan/${order.id}/sengketa`}
+        className="inline-flex items-center gap-1 rounded-lg bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700 transition hover:bg-amber-100"
+      >
+        <ShieldCheck aria-hidden="true" className="h-3.5 w-3.5" />
+        Lacak Sengketa
+      </Link>
+    );
+  }
+  if (scenario?.kind === "window_open") {
+    return (
+      <Link
+        href={`/pesanan/${order.id}/komplain`}
+        className="inline-flex items-center gap-1 rounded-lg bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700 transition hover:bg-red-100"
+      >
+        <ShieldAlert aria-hidden="true" className="h-3.5 w-3.5" />
+        Ajukan Komplain
+      </Link>
+    );
+  }
+  return null;
 }
 
 export default function OrderCenterClient() {
@@ -259,6 +290,7 @@ function OrderRow({ order }: { order: AccountOrder }) {
           {order.status === "pending_payment" && <PaymentAction order={order} />}
           {order.status === "registered" && <PaymentAction order={order} />}
           <PickupAction order={order} />
+          <ComplaintAction order={order} />
         </div>
       </td>
     </tr>
@@ -290,6 +322,7 @@ function OrderCard({ order }: { order: AccountOrder }) {
           <PaymentAction order={order} />
         )}
         <PickupAction order={order} />
+        <ComplaintAction order={order} />
       </div>
     </div>
   );

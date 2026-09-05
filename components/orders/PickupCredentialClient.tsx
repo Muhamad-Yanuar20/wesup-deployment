@@ -14,6 +14,8 @@ import {
   MapPin,
   PackageCheck,
   QrCode,
+  ShieldAlert,
+  ShieldCheck,
   ShoppingBag,
   Store,
   XCircle,
@@ -22,7 +24,11 @@ import type {
   AccountOrderStatus,
   PickupCredential,
 } from "@/lib/orders/types";
+import { getComplaintScenario } from "@/lib/dispute/mock-data";
 import PickupQrBlock from "./PickupQrBlock";
+import EscrowCountdown from "@/components/disputes/EscrowCountdown";
+
+const ESCROW_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 const money = new Intl.NumberFormat("id-ID", {
   style: "currency",
@@ -139,6 +145,9 @@ export default function PickupCredentialClient({
                   Bayar Sekarang
                 </Link>
               )}
+              {credential.status === "picked_up" && (
+                <PickupCompletedSection credential={credential} />
+              )}
             </div>
           </div>
         </section>
@@ -176,6 +185,40 @@ function StatusIcon({ status }: { status: AccountOrderStatus }) {
     default:
       return null;
   }
+}
+
+function PickupCompletedSection({ credential }: { credential: PickupCredential }) {
+  const deadlineAt = credential.pickedUpAt
+    ? new Date(new Date(credential.pickedUpAt).getTime() + ESCROW_WINDOW_MS).toISOString()
+    : null;
+  const scenario = getComplaintScenario(credential.orderId);
+
+  return (
+    <div className="mt-4 space-y-3 border-t border-slate-100 pt-3">
+      {deadlineAt && <EscrowCountdown deadlineAt={deadlineAt} />}
+      <p className="text-xs leading-relaxed text-slate-500">
+        Hitung mundur escrow 1×24 jam berjalan sejak pengambilan. Ajukan komplain sebelum batas
+        waktu ini untuk membekukan pencairan dana ke Supplier.
+      </p>
+      {scenario?.kind === "filed" ? (
+        <Link
+          href={`/pesanan/${credential.orderId}/sengketa`}
+          className="inline-flex items-center gap-1.5 rounded-lg bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-700 transition hover:bg-amber-100"
+        >
+          <ShieldCheck aria-hidden="true" size={16} />
+          Lacak Sengketa
+        </Link>
+      ) : scenario?.kind === "window_open" ? (
+        <Link
+          href={`/pesanan/${credential.orderId}/komplain`}
+          className="inline-flex items-center gap-1.5 rounded-lg bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-100"
+        >
+          <ShieldAlert aria-hidden="true" size={16} />
+          Ajukan Komplain
+        </Link>
+      ) : null}
+    </div>
+  );
 }
 
 function PaidCredential({ credential }: { credential: PickupCredential }) {
