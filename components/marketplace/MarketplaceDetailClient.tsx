@@ -9,6 +9,7 @@ import type { MarketplaceItem } from "@/lib/marketplace/types";
 import { useToast } from "@/components/ui/GlobalToast";
 import PickupLocationMapClient from "./PickupLocationMapClient";
 import LocationConsentCheckbox from "./LocationConsentCheckbox";
+import SupplierRatingBadge from "./SupplierRatingBadge";
 
 const rupiahFormatter = new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 });
 const closingTimeFormatter = new Intl.DateTimeFormat("id-ID", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Jakarta" });
@@ -66,6 +67,9 @@ export default function MarketplaceDetailClient({ item }: MarketplaceDetailClien
             <div>
               <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 leading-tight">{item.title}</h1>
               <p className="mt-2 text-base font-medium text-slate-500">{item.supplierName}</p>
+              <div className="mt-1.5">
+                <SupplierRatingBadge rating={item.supplierRating ?? null} />
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

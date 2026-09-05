@@ -11,10 +11,12 @@ import {
   ShieldAlert,
   ShieldCheck,
   ShoppingBag,
+  Star,
   User,
 } from "lucide-react";
 import { ACCOUNT_ORDER_MOCKS } from "@/lib/orders/mock-data";
 import { getComplaintScenario } from "@/lib/dispute/mock-data";
+import { getRatingScenarioForOrder } from "@/lib/ratings/mock-data";
 import type { AccountOrder, AccountOrderStatus } from "@/lib/orders/types";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Skeleton } from "@/components/ui/SkeletonLoading";
@@ -97,6 +99,26 @@ function PickupAction({ order }: { order: AccountOrder }) {
     >
       <QrCode aria-hidden="true" className="h-3.5 w-3.5" />
       Serah Terima
+    </Link>
+  );
+}
+
+/**
+ * CTA penilaian mengikuti aturan PRD 2.2.6: hanya dirender untuk UMKM (buyer)
+ * dengan status serah terima rampung (picked_up) dan belum pernah menilai.
+ * No-Show & sudah dinilai sengaja tidak menampilkan entri yang bisa diklik.
+ */
+function RatingAction({ order }: { order: AccountOrder }) {
+  if (order.role !== "buyer" || order.status !== "picked_up") return null;
+  const scenario = getRatingScenarioForOrder(order.id);
+  if (scenario.kind !== "unlocked") return null;
+  return (
+    <Link
+      href={`/pesanan/${order.id}/nilai`}
+      className="inline-flex items-center gap-1 rounded-lg bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700 transition hover:bg-amber-100"
+    >
+      <Star aria-hidden="true" className="h-3.5 w-3.5 fill-current" />
+      Nilai & Ulas
     </Link>
   );
 }
@@ -291,6 +313,7 @@ function OrderRow({ order }: { order: AccountOrder }) {
           {order.status === "registered" && <PaymentAction order={order} />}
           <PickupAction order={order} />
           <ComplaintAction order={order} />
+          <RatingAction order={order} />
         </div>
       </td>
     </tr>
@@ -323,6 +346,7 @@ function OrderCard({ order }: { order: AccountOrder }) {
         )}
         <PickupAction order={order} />
         <ComplaintAction order={order} />
+        <RatingAction order={order} />
       </div>
     </div>
   );

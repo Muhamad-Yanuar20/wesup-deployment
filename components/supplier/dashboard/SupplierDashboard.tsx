@@ -13,8 +13,10 @@ import {
   TrendingUp,
   Users,
   Wallet,
+  Star,
 } from "lucide-react";
 import { SUPPLIER_BATCH_MOCKS } from "@/lib/supplier-batch/mock-data";
+import { getSupplierRatings } from "@/lib/supplier-ratings/mock-data";
 
 const money = new Intl.NumberFormat("id-ID", {
   style: "currency",
@@ -32,6 +34,31 @@ const MOCK_SUPPLIER = {
   name: "Koperasi Pangan Bandung",
   isApproved: true,
 };
+
+const supplierRating = getSupplierRatings(MOCK_SUPPLIER.name);
+
+function formatRating(average: number): string {
+  return new Intl.NumberFormat("id-ID", {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  }).format(average);
+}
+
+function StarRow({ average }: { average: number }) {
+  const filled = Math.round(average);
+  return (
+    <span className="flex gap-0" aria-label={`Rating rata-rata ${formatRating(average)} dari 5`}>
+      {[1, 2, 3, 4, 5].map((value) => (
+        <Star
+          key={value}
+          aria-hidden="true"
+          className={value <= filled ? "h-4 w-4 text-amber-500" : "h-4 w-4 text-slate-200"}
+          fill={value <= filled ? "currentColor" : "none"}
+        />
+      ))}
+    </span>
+  );
+}
 
 const activeBatches = SUPPLIER_BATCH_MOCKS.filter(
   (b) => b.status === "PUBLISHED",
@@ -119,6 +146,43 @@ export default function SupplierDashboard() {
             value={money.format(totalRevenue)}
           />
         </div>
+      </section>
+
+      {/* Reputasi & Penilaian */}
+      <section>
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg font-bold text-slate-900">Reputasi & Penilaian</h2>
+          <Link
+            href="/supplier/akun/ulasan"
+            className="inline-flex items-center gap-1 text-sm font-semibold text-blue-600 hover:text-blue-800"
+          >
+            Lihat Ulasan
+            <ChevronRight aria-hidden="true" size={16} />
+          </Link>
+        </div>
+        <Link
+          href="/supplier/akun/ulasan"
+          className="flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-blue-200 hover:shadow-md sm:gap-6 sm:p-5"
+        >
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-amber-100">
+            <Star aria-hidden="true" className="h-6 w-6 fill-amber-500 text-amber-500" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-semibold text-slate-900">
+              Rating aktif dari pembeli UMKM
+            </p>
+            <div className="mt-1 flex items-center gap-2">
+              <span className="text-xl font-extrabold text-slate-900">
+                {supplierRating ? formatRating(supplierRating.average) : "—"}
+              </span>
+              <StarRow average={supplierRating?.average ?? 0} />
+              <span className="text-sm text-slate-500">
+                dari {supplierRating ? supplierRating.total : "0"} ulasan
+              </span>
+            </div>
+          </div>
+          <ChevronRight aria-hidden="true" className="h-5 w-5 shrink-0 text-slate-300" />
+        </Link>
       </section>
 
       {/* Recent Catalogs */}

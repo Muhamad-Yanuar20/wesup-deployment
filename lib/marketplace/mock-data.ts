@@ -37,5 +37,9 @@ export const marketplaceMockItems: MarketplaceItem[] = Array.from({ length: 30 }
     pickupLatitude: location.lat + (index * 0.002),
     pickupLongitude: location.lng + (index * 0.001),
     pickupAddress: location.address,
+    supplierRating: {
+      average: 3 + (index % 4) * 0.5,
+      total: 5 + number * 2,
+    },
   };
 });

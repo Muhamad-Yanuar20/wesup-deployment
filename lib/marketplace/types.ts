@@ -20,6 +20,8 @@ export interface MarketplaceItem {
   pickupLatitude: number;
   pickupLongitude: number;
   pickupAddress: string;
+  /** Reputasi supplier berbasis penilaian UMKM (PRD 2.2.6). Absen = belum dinilai. */
+  supplierRating?: { average: number; total: number } | null;
 }
 
 export interface MarketplaceFilterValue {
