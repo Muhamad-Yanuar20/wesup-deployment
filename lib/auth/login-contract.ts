@@ -43,7 +43,7 @@ export interface LoginErrorResponse {
 
 export const LOGIN_REDIRECT_BY_ROLE: Record<LoginRole, string> = {
   admin: "/",
-  umkm: "/",
+  umkm: "/marketplace",
   supplier: "/supplier",
 };
 

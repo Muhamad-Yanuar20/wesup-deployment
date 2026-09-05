@@ -18,6 +18,7 @@ import { ACCOUNT_ORDER_MOCKS } from "@/lib/orders/mock-data";
 import { getComplaintScenario } from "@/lib/dispute/mock-data";
 import { getRatingScenarioForOrder } from "@/lib/ratings/mock-data";
 import type { AccountOrder, AccountOrderStatus } from "@/lib/orders/types";
+import type { UserRole } from "@/types/database";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Skeleton } from "@/components/ui/SkeletonLoading";
 
@@ -53,7 +54,8 @@ const STATUS_BADGE: Record<AccountOrderStatus, { label: string; className: strin
   cancelled: { label: "Dibatalkan", className: "bg-slate-100 text-slate-600", dot: "bg-slate-400" },
 };
 
-function PaymentAction({ order }: { order: AccountOrder }) {
+function PaymentAction({ order, canPay }: { order: AccountOrder; canPay: boolean }) {
+  if (!canPay) return null;
   if (!order.paymentUrl) return null;
   const isPending = order.status === "pending_payment";
   return (
@@ -151,23 +153,33 @@ function ComplaintAction({ order }: { order: AccountOrder }) {
   return null;
 }
 
-export default function OrderCenterClient() {
+export interface OrderCenterClientProps {
+  /** Active viewer's role from the server session. */
+  viewerRole: UserRole;
+}
+
+export default function OrderCenterClient({ viewerRole }: OrderCenterClientProps) {
   // Simulate a short load to exercise skeleton/empty states like the rest of the app.
   const [filter, setFilter] = useState<Filter>("ALL");
   const [loading] = useState(false);
 
+  const belongsToViewer = useMemo(() => {
+    if (viewerRole === "umkm") return (order: AccountOrder) => order.role === "buyer";
+    if (viewerRole === "supplier") return (order: AccountOrder) => order.role === "supplier";
+    return () => true;
+  }, [viewerRole]);
+
   const visibleOrders = useMemo(() => {
-    if (filter === "ALL") return ACCOUNT_ORDER_MOCKS;
-    return ACCOUNT_ORDER_MOCKS.filter((o) => o.status === filter);
-  }, [filter]);
+    const pool = ACCOUNT_ORDER_MOCKS.filter(belongsToViewer);
+    if (filter === "ALL") return pool;
+    return pool.filter((o) => o.status === filter);
+  }, [filter, belongsToViewer]);
 
   const counts = useMemo(() => {
-    const count = (key: Filter) =>
-      key === "ALL"
-        ? ACCOUNT_ORDER_MOCKS.length
-        : ACCOUNT_ORDER_MOCKS.filter((o) => o.status === key).length;
-    return count;
-  }, []);
+    const pool = ACCOUNT_ORDER_MOCKS.filter(belongsToViewer);
+    return (key: Filter) =>
+      key === "ALL" ? pool.length : pool.filter((o) => o.status === key).length;
+  }, [belongsToViewer]);
 
   const paidCount = counts("paid");
   const pickedUpCount = counts("picked_up");
@@ -216,14 +228,14 @@ export default function OrderCenterClient() {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {visibleOrders.map((o) => (
-                  <OrderRow key={o.id} order={o} />
+                  <OrderRow key={o.id} order={o} viewerRole={viewerRole} />
                 ))}
               </tbody>
             </table>
           </div>
           <div className="divide-y divide-slate-100 md:hidden">
             {visibleOrders.map((o) => (
-              <OrderCard key={o.id} order={o} />
+              <OrderCard key={o.id} order={o} viewerRole={viewerRole} />
             ))}
           </div>
         </section>
@@ -285,13 +297,15 @@ function RoleTag({ role }: { role: AccountOrder["role"] }) {
   );
 }
 
-function OrderRow({ order }: { order: AccountOrder }) {
+function OrderRow({ order, viewerRole }: { order: AccountOrder; viewerRole: UserRole }) {
+  const canPay = viewerRole === "umkm";
+  const showRoleTag = viewerRole === "admin";
   return (
     <tr className="transition hover:bg-slate-50">
       <td className="px-4 py-3">
         <div className="flex items-center gap-2">
           <p className="font-semibold text-slate-900">{order.batchTitle}</p>
-          <RoleTag role={order.role} />
+          {showRoleTag && <RoleTag role={order.role} />}
         </div>
         <p className="font-mono text-xs text-slate-400">{order.batchDisplayCode}</p>
       </td>
@@ -309,8 +323,8 @@ function OrderRow({ order }: { order: AccountOrder }) {
       </td>
       <td className="px-4 py-3 text-right">
         <div className="flex justify-end gap-1.5">
-          {order.status === "pending_payment" && <PaymentAction order={order} />}
-          {order.status === "registered" && <PaymentAction order={order} />}
+          {order.status === "pending_payment" && <PaymentAction order={order} canPay={canPay} />}
+          {order.status === "registered" && <PaymentAction order={order} canPay={canPay} />}
           <PickupAction order={order} />
           <ComplaintAction order={order} />
           <RatingAction order={order} />
@@ -320,14 +334,16 @@ function OrderRow({ order }: { order: AccountOrder }) {
   );
 }
 
-function OrderCard({ order }: { order: AccountOrder }) {
+function OrderCard({ order, viewerRole }: { order: AccountOrder; viewerRole: UserRole }) {
+  const canPay = viewerRole === "umkm";
+  const showRoleTag = viewerRole === "admin";
   return (
     <div className="p-4">
       <div className="flex items-start justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
             <p className="font-semibold text-slate-900">{order.batchTitle}</p>
-            <RoleTag role={order.role} />
+            {showRoleTag && <RoleTag role={order.role} />}
           </div>
           <p className="font-mono text-xs text-slate-400">{order.batchDisplayCode}</p>
         </div>
@@ -342,7 +358,7 @@ function OrderCard({ order }: { order: AccountOrder }) {
       <WaitingNote order={order} />
       <div className="mt-3 flex flex-wrap gap-2">
         {(order.status === "pending_payment" || order.status === "registered") && (
-          <PaymentAction order={order} />
+          <PaymentAction order={order} canPay={canPay} />
         )}
         <PickupAction order={order} />
         <ComplaintAction order={order} />

@@ -30,33 +30,36 @@ function makeItem(overrides: Partial<MarketplaceItem> = {}): MarketplaceItem {
   return { ...DEFAULT_ITEM, ...overrides };
 }
 
+function renderDetail(itemOverrides: Partial<MarketplaceItem> = {}, viewerRole: "umkm" | "supplier" | "admin" | null = "umkm") {
+  return render(<MarketplaceDetailClient item={makeItem(itemOverrides)} viewerRole={viewerRole} />);
+}
+
 describe("MarketplaceDetailClient", () => {
   describe("navigation", () => {
-    it("renders a back link to marketplace list", () => {
-      render(<MarketplaceDetailClient item={makeItem()} />);
-      const backLink = screen.getByRole("link", { name: /kembali ke marketplace/i });
-      expect(backLink).toHaveAttribute("href", "/marketplace");
+    it("does not render its own back link (handled by the page-level breadcrumb)", () => {
+      renderDetail();
+      expect(screen.queryByRole("link", { name: /kembali ke marketplace/i })).not.toBeInTheDocument();
     });
   });
 
   describe("product information", () => {
     it("renders the product title as heading", () => {
-      render(<MarketplaceDetailClient item={makeItem()} />);
+      renderDetail();
       expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Cabai Merah Premium");
     });
 
     it("renders the supplier name", () => {
-      render(<MarketplaceDetailClient item={makeItem()} />);
+      renderDetail();
       expect(screen.getByText("Mitra Tani Bandung")).toBeInTheDocument();
     });
 
     it("renders the category badge", () => {
-      render(<MarketplaceDetailClient item={makeItem()} />);
+      renderDetail();
       expect(screen.getByText("Sayur & Buah")).toBeInTheDocument();
     });
 
     it("renders product image with descriptive alt text", () => {
-      render(<MarketplaceDetailClient item={makeItem()} />);
+      renderDetail();
       const img = screen.getByRole("img", { name: /foto produk cabai merah premium/i });
       expect(img).toBeInTheDocument();
     });
@@ -64,48 +67,48 @@ describe("MarketplaceDetailClient", () => {
 
   describe("location & distance", () => {
     it("shows the Titik kumpul Supplier section", () => {
-      render(<MarketplaceDetailClient item={makeItem()} />);
+      renderDetail();
       expect(screen.getByText("Titik kumpul Supplier")).toBeInTheDocument();
       expect(screen.getAllByText("Jl. Asia Afrika No. 123, Bandung").length).toBeGreaterThan(0);
     });
 
     it("shows absolute distance with Indonesian decimal formatting", () => {
-      render(<MarketplaceDetailClient item={makeItem()} />);
+      renderDetail();
       expect(screen.getByText("3,5 km • 25 mnt (Pickup)")).toBeInTheDocument();
     });
   });
 
   describe("pricing", () => {
     it("displays currentTierPrice in IDR format", () => {
-      render(<MarketplaceDetailClient item={makeItem()} />);
+      renderDetail();
       expect(screen.getByText(/Rp\s*22\.000/)).toBeInTheDocument();
     });
 
     it("displays basePrice with strikethrough", () => {
-      render(<MarketplaceDetailClient item={makeItem()} />);
+      renderDetail();
       const strikeEl = screen.getByText(/Rp\s*25\.000/);
       expect(strikeEl.className).toContain("line-through");
     });
 
     it("renders Tier Diskon label", () => {
-      render(<MarketplaceDetailClient item={makeItem()} />);
+      renderDetail();
       expect(screen.getByText("Tier Diskon")).toBeInTheDocument();
     });
   });
 
   describe("progress & registration", () => {
     it("shows correct progress percentage (60%)", () => {
-      render(<MarketplaceDetailClient item={makeItem()} />);
+      renderDetail();
       expect(screen.getByText("60%")).toBeInTheDocument();
     });
 
     it("shows target kelompok count", () => {
-      render(<MarketplaceDetailClient item={makeItem()} />);
+      renderDetail();
       expect(screen.getByText("Target Kelompok: 30/50 Porsi")).toBeInTheDocument();
     });
 
     it("has a progress bar with correct aria attributes", () => {
-      render(<MarketplaceDetailClient item={makeItem()} />);
+      renderDetail();
       const bar = screen.getByRole("progressbar", { name: /progres target kelompok/i });
       expect(bar).toHaveAttribute("aria-valuenow", "60");
       expect(bar).toHaveAttribute("aria-valuemin", "0");
@@ -115,13 +118,13 @@ describe("MarketplaceDetailClient", () => {
 
   describe("call-to-action buttons", () => {
     it("renders a disabled Daftar Sekarang button", () => {
-      render(<MarketplaceDetailClient item={makeItem()} />);
+      renderDetail();
       const btn = screen.getByRole("button", { name: /daftar sekarang/i });
       expect(btn).toBeDisabled();
     });
 
     it("renders a WhatsApp share link with correct href", () => {
-      render(<MarketplaceDetailClient item={makeItem()} />);
+      renderDetail();
       const shareLink = screen.getByRole("link", { name: /bagikan via whatsapp/i });
       expect(shareLink).toHaveAttribute("target", "_blank");
       expect(shareLink).toHaveAttribute("rel", "noopener noreferrer");
@@ -129,7 +132,7 @@ describe("MarketplaceDetailClient", () => {
     });
 
     it("encodes the product title into the WhatsApp message", () => {
-      render(<MarketplaceDetailClient item={makeItem()} />);
+      renderDetail();
       const shareLink = screen.getByRole("link", { name: /bagikan via whatsapp/i });
       const href = shareLink.getAttribute("href")!;
       const decoded = decodeURIComponent(href);
@@ -139,19 +142,19 @@ describe("MarketplaceDetailClient", () => {
 
   describe("location consent", () => {
     it("shows the location consent section heading", () => {
-      render(<MarketplaceDetailClient item={makeItem()} />);
+      renderDetail();
       expect(screen.getByText("Persetujuan Lokasi Pengambilan")).toBeInTheDocument();
     });
 
     it("shows the consent text about self-pickup", () => {
-      render(<MarketplaceDetailClient item={makeItem()} />);
+      renderDetail();
       expect(screen.getByText(/self-pickup/i)).toBeInTheDocument();
       expect(screen.getByText(/secara mandiri/i)).toBeInTheDocument();
     });
 
     it("keeps Daftar button disabled until consent is given", async () => {
       const user = userEvent.setup();
-      render(<MarketplaceDetailClient item={makeItem()} />);
+      renderDetail();
       const btn = screen.getByRole("button", { name: /daftar sekarang/i });
       const checkbox = screen.getByRole("checkbox", { name: /saya menyetujui lokasi pengambilan/i });
 
@@ -165,7 +168,7 @@ describe("MarketplaceDetailClient", () => {
 
     it("shows a consent timestamp after checking the checkbox", async () => {
       const user = userEvent.setup();
-      render(<MarketplaceDetailClient item={makeItem()} />);
+      renderDetail();
       const checkbox = screen.getByRole("checkbox", { name: /saya menyetujui lokasi pengambilan/i });
 
       expect(screen.queryByText(/disetujui:/i)).not.toBeInTheDocument();
@@ -176,8 +179,48 @@ describe("MarketplaceDetailClient", () => {
     });
 
     it("renders the pickup location map", () => {
-      render(<MarketplaceDetailClient item={makeItem()} />);
+      renderDetail();
       expect(screen.getByTestId("pickup-location-map")).toBeInTheDocument();
+    });
+  });
+
+  describe("role & auth gating", () => {
+    it("shows a login CTA instead of the join flow for anonymous viewers", () => {
+      renderDetail({}, null);
+      const loginCta = screen.getByRole("link", { name: /masuk sebagai umkm untuk mendaftar/i });
+      expect(loginCta).toHaveAttribute("href", "/login");
+      expect(screen.queryByRole("button", { name: /daftar sekarang/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
+    });
+
+    it("keeps the WhatsApp share link for anonymous viewers", () => {
+      renderDetail({}, null);
+      expect(screen.getByRole("link", { name: /bagikan via whatsapp/i })).toBeInTheDocument();
+    });
+
+    it("shows a buyer-only notice for supplier viewers", () => {
+      renderDetail({}, "supplier");
+      expect(screen.getByText(/pendaftaran hanya untuk akun umkm/i)).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: /daftar sekarang/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
+    });
+
+    it("shows the same buyer-only notice for admin viewers", () => {
+      renderDetail({}, "admin");
+      expect(screen.getByText(/pendaftaran hanya untuk akun umkm/i)).toBeInTheDocument();
+      expect(screen.queryByRole("link", { name: /daftar sekarang/i })).not.toBeInTheDocument();
+    });
+
+    it("hides the consent hint for non-UMKM viewers", () => {
+      renderDetail({}, null);
+      expect(screen.queryByText(/centang persetujuan lokasi/i)).not.toBeInTheDocument();
+    });
+
+    it("renders the join flow for UMKM viewers", () => {
+      renderDetail({}, "umkm");
+      expect(screen.getByRole("checkbox", { name: /saya menyetujui lokasi pengambilan/i })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /daftar sekarang/i })).toBeDisabled();
+      expect(screen.queryByText(/pendaftaran hanya untuk akun umkm/i)).not.toBeInTheDocument();
     });
   });
 });

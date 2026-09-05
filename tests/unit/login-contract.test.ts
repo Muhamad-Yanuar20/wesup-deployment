@@ -69,8 +69,8 @@ describe("post-login redirect destination", () => {
     expect(LOGIN_REDIRECT_BY_ROLE.supplier).toBe("/supplier");
   });
 
-  it("keeps admin and umkm on the home page", () => {
+  it("keeps admin on home and sends umkm to the marketplace", () => {
     expect(LOGIN_REDIRECT_BY_ROLE.admin).toBe("/");
-    expect(LOGIN_REDIRECT_BY_ROLE.umkm).toBe("/");
+    expect(LOGIN_REDIRECT_BY_ROLE.umkm).toBe("/marketplace");
   });
 });

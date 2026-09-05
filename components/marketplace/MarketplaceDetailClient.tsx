@@ -4,7 +4,8 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { MapPin, Clock, Tag, Users, Share2, ArrowLeft } from "lucide-react";
+import { LogIn, MapPin, Clock, Tag, Users, Share2 } from "lucide-react";
+import type { UserRole } from "@/types/database";
 import type { MarketplaceItem } from "@/lib/marketplace/types";
 import { useToast } from "@/components/ui/GlobalToast";
 import PickupLocationMapClient from "./PickupLocationMapClient";
@@ -26,9 +27,11 @@ function buildWhatsAppShareUrl(item: MarketplaceItem, absoluteUrl: string): stri
 
 export interface MarketplaceDetailClientProps {
   item: MarketplaceItem;
+  /** Current viewer's role from the server session; `null` when not signed in. */
+  viewerRole: UserRole | null;
 }
 
-export default function MarketplaceDetailClient({ item }: MarketplaceDetailClientProps) {
+export default function MarketplaceDetailClient({ item, viewerRole }: MarketplaceDetailClientProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [consentGiven, setConsentGiven] = useState(false);
@@ -37,6 +40,8 @@ export default function MarketplaceDetailClient({ item }: MarketplaceDetailClien
   const absoluteUrl = typeof window !== "undefined" ? window.location.href : `/marketplace/${item.slug}`;
   const shareUrl = buildWhatsAppShareUrl(item, absoluteUrl);
 
+  const isUmkm = viewerRole === "umkm";
+
   function handleJoin() {
     if (!consentGiven) return;
     toast("Pendaftaran berhasil! Silakan selesaikan pembayaran di menu Pesanan.", "success");
@@ -44,18 +49,7 @@ export default function MarketplaceDetailClient({ item }: MarketplaceDetailClien
   }
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] font-sans">
-      <header className="sticky top-0 z-40 w-full bg-white border-b border-slate-200 shadow-sm h-16">
-        <div className="max-w-[1024px] mx-auto w-full h-full px-4 md:px-6 flex items-center gap-3">
-          <Link href="/marketplace" className="inline-flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-colors">
-            <ArrowLeft aria-hidden="true" className="w-5 h-5" />
-            <span className="text-sm font-semibold">Kembali ke Marketplace</span>
-          </Link>
-        </div>
-      </header>
-
-      <main className="max-w-[1024px] mx-auto w-full p-4 md:p-6 lg:p-8">
-        <article className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+    <article className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
           <div className="relative w-full aspect-[16/9] bg-slate-100">
             <Image src={item.imageUrl} alt={`Foto produk ${item.title}`} fill sizes="(min-width: 1024px) 768px, 100vw" className="object-cover" />
             <div className="absolute top-4 left-4 bg-white/95 backdrop-blur-sm px-3 py-1.5 rounded-full text-xs font-semibold text-blue-700 shadow-sm border border-white">
@@ -128,35 +122,47 @@ export default function MarketplaceDetailClient({ item }: MarketplaceDetailClien
               <p className="text-xs font-medium text-slate-500">Tutup pendaftaran: {formatClosingTime(item.registrationClosesAt)}</p>
             </div>
 
-            <LocationConsentCheckbox onChange={(checked) => setConsentGiven(checked)} />
+            {isUmkm ? <LocationConsentCheckbox onChange={(checked) => setConsentGiven(checked)} /> : null}
 
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2">
-              <button
-                type="button"
-                onClick={handleJoin}
-                disabled={!consentGiven}
-                className={`flex-1 inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold transition-colors ${
-                  consentGiven
-                    ? "bg-blue-600 text-white hover:bg-blue-700"
-                    : "bg-slate-200 text-slate-500 cursor-not-allowed"
-                }`}
-              >
-                Daftar Sekarang
-              </button>
+              {isUmkm ? (
+                <button
+                  type="button"
+                  onClick={handleJoin}
+                  disabled={!consentGiven}
+                  className={`flex-1 inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold transition-colors ${
+                    consentGiven
+                      ? "bg-blue-600 text-white hover:bg-blue-700"
+                      : "bg-slate-200 text-slate-500 cursor-not-allowed"
+                  }`}
+                >
+                  Daftar Sekarang
+                </button>
+              ) : viewerRole === null ? (
+                <Link
+                  href="/login"
+                  className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-bold text-white shadow-sm shadow-blue-600/20 transition-all hover:bg-blue-700 active:scale-[0.98] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                >
+                  <LogIn aria-hidden="true" className="w-4 h-4" />
+                  Masuk sebagai UMKM untuk Mendaftar
+                </Link>
+              ) : (
+                <div className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-600">
+                  Pendaftaran hanya untuk akun UMKM.
+                </div>
+              )}
               <a href={shareUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors">
                 <Share2 aria-hidden="true" className="w-4 h-4" />
                 Bagikan via WhatsApp
               </a>
             </div>
 
-            {!consentGiven && (
+            {isUmkm && !consentGiven && (
               <p className="text-xs text-slate-400 -mt-3">
                 Centang persetujuan lokasi pengambilan untuk mengaktifkan tombol daftar.
               </p>
             )}
           </div>
         </article>
-      </main>
-    </div>
   );
 }
