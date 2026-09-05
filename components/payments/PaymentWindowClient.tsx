@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, Clock, CreditCard, CheckCircle2, CalendarClock } from "lucide-react";
+import { ArrowLeft, Clock, CreditCard, CheckCircle2, CalendarClock, QrCode } from "lucide-react";
 import type { PaymentInvoice } from "@/lib/payments/types";
 import { evaluatePaymentWindow } from "@/lib/orders/time-gatekeeper";
 import PaymentCountdown from "./PaymentCountdown";
@@ -95,9 +95,16 @@ export default function PaymentWindowClient({
               Pembayaran terkonfirmasi lunas
             </h2>
             <p className="mt-1 text-xs leading-relaxed text-emerald-700">
-              Webhook Midtrans telah diterima. Kode QR pengambilan akan tersedia
-              di halaman pesanan saat barang estimasi siap.
+              Webhook Midtrans telah diterima. Kode QR pengambilan dan PIN
+              4 digit sudah diterbitkan di halaman serah terima.
             </p>
+            <Link
+              href={`/pesanan/${invoice.orderId}/serah-terima`}
+              className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700"
+            >
+              <QrCode aria-hidden="true" className="h-4 w-4" />
+              Lihat Kode QR Pengambilan
+            </Link>
           </div>
         </section>
       ) : (

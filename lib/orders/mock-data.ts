@@ -14,7 +14,7 @@ export const ACCOUNT_ORDER_MOCKS: readonly AccountOrder[] = [
     status: "paid",
     lockedTier: 2,
     createdAt: "2026-08-26T09:30:00.000Z",
-    pickupUrl: "/supplier/batch/batch-active-001/pickup",
+    pickupUrl: "/pesanan/ord-umkm-001/serah-terima",
   },
   {
     id: "ord-umkm-002",

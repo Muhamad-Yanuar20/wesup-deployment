@@ -65,7 +65,7 @@ export const NOTIFICATION_MOCKS: readonly AppNotification[] = [
       "Pesanan Anda di batch 'Kentang Granola Segar' sudah lunas dan siap diambil di lokasi supplier sampai 25 Sep 2026.",
     createdAt: "2026-09-04T08:05:00.000Z",
     readAt: null,
-    href: "/pesanan",
+    href: "/pesanan/ord-umkm-001/serah-terima",
   },
   {
     id: "ntf-002",

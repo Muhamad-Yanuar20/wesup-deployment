@@ -7,9 +7,9 @@ import {
   CheckCircle2,
   Clock,
   PackageCheck,
+  QrCode,
   ShoppingBag,
   User,
-  XCircle,
 } from "lucide-react";
 import { ACCOUNT_ORDER_MOCKS } from "@/lib/orders/mock-data";
 import type { AccountOrder, AccountOrderStatus } from "@/lib/orders/types";
@@ -67,6 +67,34 @@ function WaitingNote({ order }: { order: AccountOrder }) {
     <p className="mt-1 text-xs text-slate-400">
       Menunggu jendela pembayaran dibuka.
     </p>
+  );
+}
+
+/**
+ * CTA serah terima mengikuti role & status (PRD 2.2.4): UMKM (buyer) melihat
+ * kredensial pengambilan (QR + PIN) di halaman pesanannya sendiri, hanya
+ * setelah tagihan lunas. Supplier tetap diarahkan ke pemindai batch.
+ */
+function pickupHref(order: AccountOrder): string | null {
+  if (order.status !== "paid") return null;
+  return order.role === "buyer"
+    ? `/pesanan/${order.id}/serah-terima`
+    : (order.pickupUrl ?? null);
+}
+
+function PickupAction({ order }: { order: AccountOrder }) {
+  const href = pickupHref(order);
+  if (!href) {
+    return <span className="text-xs text-slate-300">—</span>;
+  }
+  return (
+    <Link
+      href={href}
+      className="inline-flex items-center gap-1 rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 transition hover:bg-blue-100"
+    >
+      <QrCode aria-hidden="true" className="h-3.5 w-3.5" />
+      Serah Terima
+    </Link>
   );
 }
 
@@ -230,13 +258,7 @@ function OrderRow({ order }: { order: AccountOrder }) {
         <div className="flex justify-end gap-1.5">
           {order.status === "pending_payment" && <PaymentAction order={order} />}
           {order.status === "registered" && <PaymentAction order={order} />}
-          {order.pickupUrl ? (
-            <Link href={order.pickupUrl} className="inline-flex items-center gap-1 rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 transition hover:bg-blue-100">
-              Serah Terima
-            </Link>
-          ) : (
-            <span className="text-xs text-slate-300">—</span>
-          )}
+          <PickupAction order={order} />
         </div>
       </td>
     </tr>
@@ -267,15 +289,7 @@ function OrderCard({ order }: { order: AccountOrder }) {
         {(order.status === "pending_payment" || order.status === "registered") && (
           <PaymentAction order={order} />
         )}
-        {order.pickupUrl ? (
-          <Link href={order.pickupUrl} className="inline-flex items-center gap-1 rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 transition hover:bg-blue-100">
-            Serah Terima
-          </Link>
-        ) : (
-          <span className="inline-flex items-center gap-1 text-xs text-slate-300">
-            <XCircle className="h-3.5 w-3.5" aria-hidden="true" /> Belum ada aksi
-          </span>
-        )}
+        <PickupAction order={order} />
       </div>
     </div>
   );
