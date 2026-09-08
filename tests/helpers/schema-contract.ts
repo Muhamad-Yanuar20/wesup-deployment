@@ -650,6 +650,7 @@ export const REQUIRED_FUNCTIONS = [
   "confirm_pickup",
   "create_escrow",
   "list_batch_orders",
+  "get_supplier_dashboard_summary",
 ];
 
 export const REQUIRED_TRIGGERS = [

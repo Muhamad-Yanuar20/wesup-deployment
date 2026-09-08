@@ -900,6 +900,20 @@ export interface Database {
           created_at: string;
         }[];
       };
+      get_supplier_dashboard_summary: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          supplier_name: string;
+          supplier_status: VerificationStatus;
+          active_batch_count: number;
+          total_participant_count: number;
+          collected_revenue: number;
+          ready_to_disburse: number;
+          average_rating: number;
+          rating_count: number;
+          recent_batches: unknown;
+        }[];
+      };
       search_batches: {
         Args: {
           p_query?: string | null;
