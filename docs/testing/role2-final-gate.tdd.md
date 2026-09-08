@@ -11,6 +11,9 @@ Tests       689 passed | 244 skipped (933)
 
 npm run lint
 0 errors; 10 warnings yang sudah ada di baseline proyek
+
+npm run build
+Compiled successfully; TypeScript selesai; route generation selesai.
 ```
 
 Zero-reference check pada `app/`, `components/`, `hooks/`, `lib/`, dan `store/`
@@ -23,5 +26,5 @@ database Supabase yang dipakai environment belum menerapkan migration
 `20260908000000_marketplace_dynamic_read_model.sql`; UI menampilkan retryable
 error state seperti yang dirancang. Tidak ada journey mutatif yang dijalankan.
 
-`npm run build` berhasil compile dan type-check, tetapi page-data collection
-tidak dapat selesai pada environment tanpa credential Supabase yang valid.
+Build dijalankan dengan environment lokal yang tersedia; nilai credential tidak
+ditampilkan dan tidak disimpan di branch.
