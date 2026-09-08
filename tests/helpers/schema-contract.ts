@@ -81,6 +81,9 @@ export const EXPECTED_ENUMS: Record<string, string[]> = {
     "cut_off_batch",
     "generate_pickup_code",
     "confirm_pickup",
+    "create_batch",
+    "update_batch",
+    "delete_batch",
   ],
 };
 

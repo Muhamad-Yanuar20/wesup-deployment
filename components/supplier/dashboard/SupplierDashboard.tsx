@@ -81,8 +81,6 @@ export default function SupplierDashboard() {
 
   useEffect(() => {
     const controller = new AbortController();
-    setPhase("loading");
-    setError(null);
     void supplierDashboardRepository
       .get({ signal: controller.signal })
       .then((next) => {
@@ -106,7 +104,11 @@ export default function SupplierDashboard() {
         <p className="mt-1 text-sm text-red-700">{error ?? "Coba lagi beberapa saat."}</p>
         <button
           type="button"
-          onClick={() => setRetry((value) => value + 1)}
+          onClick={() => {
+            setPhase("loading");
+            setError(null);
+            setRetry((value) => value + 1);
+          }}
           className="mt-4 inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
         >
           <RefreshCw aria-hidden="true" size={16} />

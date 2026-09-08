@@ -30,4 +30,27 @@ This checkpoint wires supplier catalog persistence to Supabase and connects the 
 5. Edit the draft and publish it. Confirm the API response has an absolute `product_photo_url` and the item appears in `/marketplace` without a server refresh.
 6. Cancel a published batch; confirm it disappears from Marketplace. Delete an empty draft from its detail page.
 
-The migration file is intentionally committed as source; applying it to a remote Supabase project remains an explicit deployment step.
+The migration file is intentionally committed as source; the configured Supabase project has now received the migrations listed above.
+## Final live verification — 2026-09-09
+
+The target Supabase project was migrated with the supplier catalog persistence,
+ownership/atomic publish, audit enum, and authentication-order migrations. No
+seed data was added.
+
+```text
+npx vitest run tests/live/database.integration.test.ts tests/live/auth-rls.integration.test.ts --reporter=dot
+Test Files  2 passed (2)
+Tests       238 passed (238)
+
+npx vitest run tests/live/cancellation-search.integration.test.ts --reporter=dot
+Test Files  1 passed (1)
+Tests       12 passed (12)
+
+npm test
+Test Files  74 passed (74)
+Tests       1016 passed (1016)
+
+npx tsc --noEmit — pass
+npm run lint — pass (9 pre-existing warnings in test fixtures)
+npm run build — pass
+```
