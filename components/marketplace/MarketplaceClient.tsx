@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef } from "react";
 import { ListFilter, Search } from "lucide-react";
 import { SEARCH_DEFAULT_RADIUS_KM } from "@/lib/catalog/categories";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
-import { marketplaceMockRepository } from "@/lib/marketplace/mock-repository";
+import { marketplaceApiRepository } from "@/lib/marketplace/api-repository";
 import { validateMarketplaceFilters } from "@/lib/marketplace/query";
 import type { MarketplaceFilterValue } from "@/lib/marketplace/types";
 import { MarketplaceStoreProvider, useMarketplaceStore } from "@/store/marketplace-provider";
@@ -77,12 +77,12 @@ function MarketplaceController() {
 
     const controller = new AbortController();
     const requestId = beginRequest();
-    void marketplaceMockRepository
+    void marketplaceApiRepository
       .search({ query: debouncedQuery, ...filters, page: currentPage, pageSize: PAGE_SIZE }, { signal: controller.signal })
       .then((result) => resolveRequest(requestId, result))
       .catch((reason: unknown) => {
         if (reason instanceof DOMException && reason.name === "AbortError") return;
-        rejectRequest(requestId, reason instanceof Error ? reason.message : "Gagal memuat penawaran mock.");
+        rejectRequest(requestId, reason instanceof Error ? reason.message : "Gagal memuat penawaran.");
       });
     return () => controller.abort();
   }, [debouncedQuery, filters, currentPage, retryRevision, beginRequest, blockRequest, resolveRequest, rejectRequest]);

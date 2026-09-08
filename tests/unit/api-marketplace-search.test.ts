@@ -23,6 +23,7 @@ interface SearchRow {
   id: string;
   title: string;
   total_count?: number;
+  [key: string]: unknown;
 }
 
 function mockSearchClient(options: {
@@ -104,11 +105,23 @@ describe("GET /api/marketplace/search", () => {
     const res = await searchBatches(getReq(""));
     expect(res.status).toBe(200);
     const json = await res.json();
-    expect(json).toEqual({
-      items: [{ id: "b1", title: "Cabai" }],
+    expect(json.items[0]).toMatchObject({
+      id: "b1",
+      title: "Cabai",
+      status: "ACTIVE",
+      distanceKm: null,
+      estimatedPickupMinutes: null,
+    });
+    expect(json).toMatchObject({
       total: 1,
       page: 1,
-      limit: 12,
+      pageSize: 12,
+      totalPages: 1,
+      origin: {
+        latitude: BANDUNG.latitude,
+        longitude: BANDUNG.longitude,
+        source: "bandung_default",
+      },
     });
     expect(rpc).toHaveBeenCalledWith("search_batches", {
       p_query: null,
@@ -116,6 +129,8 @@ describe("GET /api/marketplace/search", () => {
       p_lat: BANDUNG.latitude,
       p_lng: BANDUNG.longitude,
       p_radius_km: 10,
+      p_min_price: null,
+      p_max_price: null,
       p_limit: 12,
       p_offset: 0,
     });
@@ -129,11 +144,13 @@ describe("GET /api/marketplace/search", () => {
       ),
     );
     expect(res.status).toBe(200);
-    await expect(res.json()).resolves.toEqual({
+    await expect(res.json()).resolves.toMatchObject({
       items: [],
       total: 0,
       page: 3,
-      limit: 12,
+      pageSize: 12,
+      totalPages: 0,
+      origin: { source: "request" },
     });
     expect(rpc).toHaveBeenCalledWith("search_batches", {
       p_query: "cabai",
@@ -141,6 +158,8 @@ describe("GET /api/marketplace/search", () => {
       p_lat: -6.9,
       p_lng: 107.6,
       p_radius_km: 25,
+      p_min_price: null,
+      p_max_price: null,
       p_limit: 12,
       p_offset: 24,
     });
@@ -152,6 +171,67 @@ describe("GET /api/marketplace/search", () => {
     expect((rpc.mock.calls[0][1] as Record<string, unknown>).p_radius_km).toBe(50);
     await searchBatches(getReq("?radius=0"));
     expect((rpc.mock.calls[1][1] as Record<string, unknown>).p_radius_km).toBe(1);
+  });
+
+  it("passes validated price bounds and maps a live RPC row to the canonical DTO", async () => {
+    const rows: SearchRow[] = [
+      {
+        id: "b1",
+        title: "Cabai",
+        supplier_name: "Supplier Bandung",
+        category: "Sayur & Buah",
+        min_quantity: 50,
+        product_photo_url: null,
+        pickup_address: "Jl. Asia Afrika",
+        latitude: -6.95,
+        longitude: 107.7,
+        tiers: [
+          { tier_number: 1, min_volume: 1, max_volume: 49, price_per_unit: 25000 },
+          { tier_number: 2, min_volume: 50, max_volume: null, price_per_unit: 22000 },
+        ],
+        registered_quantity: 30,
+        current_price_per_unit: 25000,
+        registration_closes_at: "2026-09-15T10:00:00.000Z",
+        distance_km: 2.5,
+        total_count: 1,
+      },
+    ];
+    const { rpc } = mockSearchClient({ rows, user: null });
+    const res = await searchBatches(getReq("?minPrice=20000&maxPrice=30000"));
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(json).toMatchObject({
+      total: 1,
+      pageSize: 12,
+      totalPages: 1,
+      origin: { source: "bandung_default" },
+    });
+    expect(json.items[0]).toMatchObject({
+      id: "b1",
+      supplierName: "Supplier Bandung",
+      registeredQuantity: 30,
+      registrationClosesAt: "2026-09-15T10:00:00.000Z",
+      targetQuantity: 50,
+      currentTierPrice: 25000,
+      imageUrl: "/file.svg",
+      estimatedPickupMinutes: 8,
+    });
+    expect(rpc).toHaveBeenCalledWith(
+      "search_batches",
+      expect.objectContaining({ p_min_price: 20000, p_max_price: 30000 }),
+    );
+  });
+
+  it.each(["-1", "nope"])("rejects invalid minPrice %s", async (value) => {
+    mockSearchClient({ rows: [], user: null });
+    const res = await searchBatches(getReq(`?minPrice=${value}`));
+    expect(res.status).toBe(400);
+  });
+
+  it("rejects an inverted price range", async () => {
+    mockSearchClient({ rows: [], user: null });
+    const res = await searchBatches(getReq("?minPrice=30000&maxPrice=20000"));
+    expect(res.status).toBe(400);
   });
 
   it("falls back to the signed-in UMKM's stored business coordinates", async () => {

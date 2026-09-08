@@ -65,7 +65,7 @@ export interface MarketplaceSearchResult {
   items: MarketplaceItem[];
   total: number;
   page: number;
-  pageSize: 12;
+  pageSize: number;
   totalPages: number;
 }
 
@@ -76,5 +76,5 @@ export interface MarketplaceSearchResponse extends MarketplaceSearchResult {
 export type MarketplaceMockScenario = "success" | "empty" | "error";
 
 export interface MarketplaceRepository {
-  search(criteria: MarketplaceSearchCriteria, options?: { signal?: AbortSignal }): Promise<MarketplaceSearchResult>;
+  search(criteria: MarketplaceSearchCriteria, options?: { signal?: AbortSignal }): Promise<MarketplaceSearchResponse>;
 }

@@ -795,12 +795,14 @@ export interface Database {
           p_lat?: number | null;
           p_lng?: number | null;
           p_radius_km?: number | null;
+          p_min_price?: number | null;
+          p_max_price?: number | null;
           p_limit?: number | null;
           p_offset?: number | null;
         };
         Returns: {
           id: string;
-          supplier_id: string;
+          supplier_name: string;
           title: string;
           description: string | null;
           category: string;
@@ -810,6 +812,34 @@ export interface Database {
           latitude: number;
           longitude: number;
           tiers: unknown;
+          registered_quantity: number;
+          current_price_per_unit: number;
+          registration_closes_at: string | null;
+          distance_km: number | null;
+          total_count: number;
+        }[];
+      };
+      get_marketplace_batch: {
+        Args: {
+          p_batch_id: string;
+          p_lat?: number | null;
+          p_lng?: number | null;
+        };
+        Returns: {
+          id: string;
+          supplier_name: string;
+          title: string;
+          description: string | null;
+          category: string;
+          min_quantity: number;
+          product_photo_url: string | null;
+          pickup_address: string;
+          latitude: number;
+          longitude: number;
+          tiers: unknown;
+          registered_quantity: number;
+          current_price_per_unit: number;
+          registration_closes_at: string | null;
           distance_km: number | null;
           total_count: number;
         }[];

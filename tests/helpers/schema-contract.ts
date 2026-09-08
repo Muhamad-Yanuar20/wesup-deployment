@@ -643,6 +643,7 @@ export const REQUIRED_FUNCTIONS = [
   "cancel_batch",
   "handle_batch_cancellation",
   "search_batches",
+  "get_marketplace_batch",
   "cut_off_batch",
   "prevent_registration_outside_window",
   "generate_pickup_code",
