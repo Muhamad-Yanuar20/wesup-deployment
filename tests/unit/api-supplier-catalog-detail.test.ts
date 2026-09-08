@@ -10,7 +10,7 @@ const mockGetServerClient = vi.mocked(getServerClient);
 const BATCH_ID = "44444444-4444-4444-8444-444444444444";
 const row = {
   id: BATCH_ID, supplier_name: "Supplier Bandung", title: "Beras Rojolele", description: "Beras untuk UMKM", category: "Makanan Siap Saji", min_quantity: 50,
-  product_photo_url: "https://example.supabase.co/storage/v1/object/public/wesup-public/products/44444444-4444-4444-8444-444444444444/old.webp", pickup_name: "Gudang Bandung", pickup_address: "Jl. Asia Afrika No. 1", latitude: -6.9175, longitude: 107.6191, status: "published",
+  product_photo_url: "https://example.supabase.co/storage/v1/object/public/wesup-public/products/44444444-4444-4444-8444-444444444444/old.webp" as string | null, pickup_name: "Gudang Bandung", pickup_address: "Jl. Asia Afrika No. 1", latitude: -6.9175, longitude: 107.6191, status: "published",
   registration_opens_at: "2099-01-01T01:00:00.000Z", registration_closes_at: "2099-01-02T01:00:00.000Z", payment_opens_at: "2099-01-02T02:00:00.000Z", payment_closes_at: "2099-01-03T02:00:00.000Z", estimated_ready_at: "2099-01-04T02:00:00.000Z",
   tiers: [{ tier_number: 1, min_volume: 1, max_volume: 49, price_per_unit: 75000 }, { tier_number: 2, min_volume: 50, max_volume: null, price_per_unit: 68000 }], registered_quantity: 0, participant_count: 0, paid_participant_count: 0, cancelled_reason: null, updated_at: "2098-01-01T00:00:00.000Z", created_at: "2098-01-01T00:00:00.000Z",
 };
