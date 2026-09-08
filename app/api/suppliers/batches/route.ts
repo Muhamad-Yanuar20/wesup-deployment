@@ -160,8 +160,8 @@ async function uploadPhoto(client: CatalogClient, batchId: string, photo: File) 
 }
 
 async function removePhoto(client: CatalogClient, path: string | null) {
-  if (!path) return;
-  await Promise.resolve(client.storage.from("wesup-public").remove([path])).catch(() => undefined);
+  if (!path) return null;
+  try { return (await client.storage.from("wesup-public").remove([path])).error; } catch (error) { return error; }
 }
 
 export async function POST(request: Request) {
@@ -210,10 +210,13 @@ export async function POST(request: Request) {
     if (!row) throw new CatalogApiError(500, "Katalog berhasil diproses tetapi detailnya belum tersedia.");
     return NextResponse.json({ item: responseItem(row) }, { status: 201 });
   } catch (error) {
+    const cleanupFailures: unknown[] = [];
     if (!published) {
-      await removePhoto(client, uploadedPath);
-      if (createdId) await Promise.resolve(client.rpc("delete_supplier_batch", { p_batch_id: createdId })).catch(() => undefined);
+      const storageFailure = await removePhoto(client, uploadedPath);
+      if (storageFailure) cleanupFailures.push(storageFailure);
+      if (createdId) { try { const result = await client.rpc("delete_supplier_batch", { p_batch_id: createdId }); if (result.error) cleanupFailures.push(result.error); } catch (cleanupError) { cleanupFailures.push(cleanupError); } }
     }
+    if (cleanupFailures.length) { console.error("[suppliers/batches] cleanup failed", { batchId: createdId, path: uploadedPath, failures: cleanupFailures }); return NextResponse.json({ error: "Katalog belum dapat diproses.", code: "SUPPLIER_CATALOG_CLEANUP_FAILED" }, { status: 500 }); }
     return jsonError(error);
   }
 }
