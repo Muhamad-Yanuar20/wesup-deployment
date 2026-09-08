@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { AlertCircle, ArrowLeft, LoaderCircle } from "lucide-react";
 import Link from "next/link";
-import { supplierBatchMockRepository } from "@/lib/supplier-batch/mock-repository";
-import type { SupplierBatchDetail } from "@/lib/supplier-batch/types";
+import { supplierBatchApiRepository } from "@/lib/supplier-catalog/api-repository";
+import type { SupplierBatchDetail, SupplierBatchStatus } from "@/lib/supplier-batch/types";
 import type { CatalogDraft } from "@/lib/supplier-catalog/types";
 import { isTierSchemeLocked } from "@/lib/supplier-catalog/lock";
 import CreateCatalogForm from "@/components/supplier/catalog/CreateCatalogForm";
@@ -15,7 +15,9 @@ function batchToDraft(batch: SupplierBatchDetail): CatalogDraft {
     title: batch.title,
     category: batch.category,
     description: batch.description,
+    targetQuantity: batch.targetQuantity,
     productPhoto: null,
+    productPhotoUrl: batch.imageUrl.startsWith("http") ? batch.imageUrl : null,
     tiers: batch.tiers.map((t) => ({
       tierNumber: t.tierNumber,
       minimumQuantity: t.minimumQuantity,
@@ -49,6 +51,7 @@ export default function EditCatalogForm() {
 
   const [phase, setPhase] = useState<LoadPhase>("loading");
   const [initialDraft, setInitialDraft] = useState<CatalogDraft | null>(null);
+  const [batchStatus, setBatchStatus] = useState<SupplierBatchStatus | null>(null);
   const [locationLocked, setLocationLocked] = useState(false);
   const [tiersLocked, setTiersLocked] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -56,7 +59,7 @@ export default function EditCatalogForm() {
   useEffect(() => {
     const controller = new AbortController();
 
-    supplierBatchMockRepository
+    supplierBatchApiRepository
       .getById(batchId, { signal: controller.signal })
       .then((batch) => {
         if (!batch) {
@@ -69,6 +72,7 @@ export default function EditCatalogForm() {
           return;
         }
         setInitialDraft(batchToDraft(batch));
+        setBatchStatus(batch.status);
         setLocationLocked(batch.participantCount > 0);
         setTiersLocked(isTierSchemeLocked(batch.participantCount));
         setPhase("success");
@@ -165,10 +169,12 @@ export default function EditCatalogForm() {
 
       <CreateCatalogForm
         initialDraft={initialDraft}
+        batchId={batchId}
+        submitAction={batchStatus === "DRAFT" ? "publish" : "draft"}
         locationLocked={locationLocked}
         tiersLocked={tiersLocked}
         productPhotoRequired={false}
-        submitLabel="Simpan Perubahan"
+        submitLabel={batchStatus === "DRAFT" ? "Terbitkan Penawaran" : "Simpan Perubahan"}
       />
     </>
   );
