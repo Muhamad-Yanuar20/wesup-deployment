@@ -146,4 +146,13 @@ describe("supplier catalog API", () => {
     expect(rpc).toHaveBeenCalledWith("delete_supplier_batch", { p_batch_id: BATCH_ID });
     expect(remove).not.toHaveBeenCalled();
   });
-});
+
+  it("rejects separate multipart supplierId", async () => {
+    const { rpc } = mockSupplierClient(); const form = new FormData(); form.set("action", "draft"); form.set("payload", JSON.stringify(payload())); form.set("supplierId", "attacker");
+    expect((await createBatch(new NextRequest("http://localhost/api/suppliers/batches", { method: "POST", body: form }))).status).toBe(400); expect(rpc).not.toHaveBeenCalled();
+  });
+
+  it("accepts CANCELLED_BY_SUPPLIER filter compatibility", async () => {
+    const response = await listBatches(new NextRequest("http://localhost/api/suppliers/batches?status=cancelled_by_supplier"));
+    expect(response.status).toBe(200); expect((await response.json()).items).toEqual([]);
+  });});
