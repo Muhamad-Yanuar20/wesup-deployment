@@ -26,8 +26,6 @@ export interface TierProgress {
 
 export interface MarketplaceItem {
   id: string;
-  /** Compatibility field for the static route; dynamic URLs use id. */
-  slug?: string;
   title: string;
   supplierName: string;
   category: BatchCategory;

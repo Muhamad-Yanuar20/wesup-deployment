@@ -21,7 +21,6 @@ export const marketplaceMockItems: MarketplaceItem[] = Array.from({ length: 30 }
   const location = BANDUNG_SUPPLIER_LOCATIONS[index % BANDUNG_SUPPLIER_LOCATIONS.length];
   return {
     id: `marketplace-${String(number).padStart(2, "0")}`,
-    slug: `bandung-${category.toLocaleLowerCase("id-ID").replaceAll(" ", "-")}-${number}`,
     title: `${category} Bandung ${number}`,
     supplierName: `Mitra UMKM Bandung ${number}`,
     category,

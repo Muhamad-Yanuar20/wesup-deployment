@@ -8,7 +8,6 @@ import { renderComponent as render } from "./test-utils";
 
 const DEFAULT_ITEM: MarketplaceItem = {
   id: "item-1",
-  slug: "test-slug-1",
   title: "Cabai Merah Premium",
   supplierName: "Mitra Tani Bandung",
   category: "Sayur & Buah",
@@ -31,7 +30,13 @@ function makeItem(overrides: Partial<MarketplaceItem> = {}): MarketplaceItem {
 }
 
 function renderDetail(itemOverrides: Partial<MarketplaceItem> = {}, viewerRole: "umkm" | "supplier" | "admin" | null = "umkm") {
-  return render(<MarketplaceDetailClient item={makeItem(itemOverrides)} viewerRole={viewerRole} />);
+  return render(
+    <MarketplaceDetailClient
+      item={makeItem(itemOverrides)}
+      canonicalUrl="https://wesup.id/marketplace/item-1"
+      viewerRole={viewerRole}
+    />,
+  );
 }
 
 describe("MarketplaceDetailClient", () => {

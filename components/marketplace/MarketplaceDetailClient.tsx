@@ -8,6 +8,7 @@ import { LogIn, MapPin, Clock, Tag, Users, Share2 } from "lucide-react";
 import type { UserRole } from "@/types/database";
 import type { MarketplaceItem } from "@/lib/marketplace/types";
 import { useToast } from "@/components/ui/GlobalToast";
+import { buildWhatsAppShareUrl } from "@/lib/marketplace/share-link";
 import PickupLocationMapClient from "./PickupLocationMapClient";
 import LocationConsentCheckbox from "./LocationConsentCheckbox";
 import SupplierRatingBadge from "./SupplierRatingBadge";
@@ -20,25 +21,20 @@ function formatClosingTime(value: string): string {
   return Number.isNaN(date.getTime()) ? "Waktu tutup belum tersedia" : closingTimeFormatter.format(date);
 }
 
-function buildWhatsAppShareUrl(item: MarketplaceItem, absoluteUrl: string): string {
-  const message = `${item.title} — Rp${item.currentTierPrice.toLocaleString("id-ID")}\nLihat penawaran: ${absoluteUrl}`;
-  return `https://wa.me/?text=${encodeURIComponent(message)}`;
-}
-
 export interface MarketplaceDetailClientProps {
   item: MarketplaceItem;
+  canonicalUrl: string;
   /** Current viewer's role from the server session; `null` when not signed in. */
   viewerRole: UserRole | null;
 }
 
-export default function MarketplaceDetailClient({ item, viewerRole }: MarketplaceDetailClientProps) {
+export default function MarketplaceDetailClient({ item, canonicalUrl, viewerRole }: MarketplaceDetailClientProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [consentGiven, setConsentGiven] = useState(false);
 
   const progress = item.targetQuantity <= 0 ? 0 : Math.min(100, Math.round((item.registeredQuantity / item.targetQuantity) * 100));
-  const absoluteUrl = typeof window !== "undefined" ? window.location.href : `/marketplace/${item.slug}`;
-  const shareUrl = buildWhatsAppShareUrl(item, absoluteUrl);
+  const shareUrl = buildWhatsAppShareUrl(item, canonicalUrl);
 
   const isUmkm = viewerRole === "umkm";
 

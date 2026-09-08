@@ -16,7 +16,7 @@ function formatClosingTime(value: string): string {
 export default function ProductCard({ item }: ProductCardProps) {
   const progress = item.targetQuantity <= 0 ? 0 : Math.min(100, Math.round((item.registeredQuantity / item.targetQuantity) * 100));
   return (
-    <Link href={`/marketplace/${item.slug}`} className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md hover:border-blue-300 transition-all group flex flex-col h-full focus:outline-none focus:ring-2 focus:ring-blue-500/30">
+    <Link href={`/marketplace/${encodeURIComponent(item.id)}`} className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md hover:border-blue-300 transition-all group flex flex-col h-full focus:outline-none focus:ring-2 focus:ring-blue-500/30">
       <div className="relative w-full h-48 bg-slate-100 overflow-hidden">
         <Image src={item.imageUrl} alt={`Foto produk ${item.title}`} fill sizes="(min-width: 1280px) 25vw, (min-width: 768px) 33vw, 100vw" className="object-cover" />
         <div className="absolute top-3 left-3 bg-white/95 backdrop-blur-sm px-3 py-1.5 rounded-full text-xs font-semibold text-blue-700 shadow-sm border border-white">{item.category}</div>

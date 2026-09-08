@@ -38,3 +38,22 @@ Tests       203 passed (203)
   kumulatif.
 - RPC bersifat security-definer karena RLS registrasi melarang pembaca publik
   melihat baris UMKM lain. Respons hanya agregat.
+
+## Tahap 4 — Detail UUID dan Share WhatsApp canonical
+
+### RED/GREEN
+
+Test baru membuktikan UUID invalid → 400, item read model kosong → 404,
+kesalahan RPC → 500, serta forwarding koordinat viewer. Test share membuktikan
+URL absolut memakai origin deployment dan menghapus query/hash termasuk `ref`
+dan `utm_*` sebelum masuk ke pesan WhatsApp.
+
+```text
+npm test -- tests/unit/api-marketplace-detail.test.ts tests/unit/marketplace-share-link.test.ts tests/components/MarketplaceDetailClient.test.tsx tests/components/ProductCard.test.tsx
+Test Files  4 passed (4)
+Tests       47 passed (47)
+```
+
+Halaman detail kini memakai `/marketplace/[id]`, kartu memakai UUID batch, dan
+mock detail/slug tidak lagi menjadi fallback production. `NEXT_PUBLIC_SITE_URL`
+menjadi sumber canonical URL; hanya development/test yang memakai localhost.
