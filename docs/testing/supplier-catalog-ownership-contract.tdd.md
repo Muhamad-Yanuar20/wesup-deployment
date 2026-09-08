@@ -53,3 +53,29 @@ exit 0
 git diff --check
 exit 0
 ```
+
+## Scoped re-review round 1
+
+The new regression assertions first exposed that a null or missing
+`tier_number` could bypass the nullable SQL comparison and fail later at the
+column constraint, while JSON scalar casts could raise native PostgreSQL
+errors. The validator now checks JSON types and integer/decimal representations
+before casting, catches range/text conversion failures as `22023`, and remains
+before every catalog-table insert or update. The source contracts also assert
+all five timeline-null guards and require the dispute exclusion to remain
+inside the ready-to-disburse aggregate's `NOT EXISTS` predicate.
+
+```text
+npx vitest run tests/migrations/supplier-catalog-ownership-contract.test.ts tests/migrations/supplier-catalog-persistence.test.ts tests/migrations/schema.test.ts --reporter=verbose
+Test Files  3 passed (3)
+Tests       203 passed (203)
+
+npx tsc --noEmit
+exit 0
+
+git diff --check
+exit 0
+```
+
+Local PostgreSQL remains unavailable, so these are precise source-contract
+assertions rather than executable migration/RLS checks.

@@ -313,9 +313,16 @@ set search_path = public
 as $$
 declare
   v_count integer;
-  v_tier record;
-  v_previous record;
+  v_raw jsonb;
   v_index integer := 0;
+  v_tier_number integer;
+  v_min_volume integer;
+  v_max_volume integer;
+  v_price_per_unit numeric;
+  v_previous_min integer;
+  v_previous_max integer;
+  v_previous_price numeric;
+  v_has_previous boolean := false;
 begin
   if jsonb_typeof(p_tiers) <> 'array' then
     raise exception using errcode = '22023', message = 'tiers must be an array';
@@ -324,28 +331,61 @@ begin
   if v_count < 2 then
     raise exception using errcode = '22023', message = 'at least two tiers are required';
   end if;
-  for v_tier in select * from jsonb_to_recordset(p_tiers) as t(tier_number integer, min_volume integer, max_volume integer, price_per_unit numeric)
+
+  for v_raw in select value from jsonb_array_elements(p_tiers)
   loop
+    if jsonb_typeof(v_raw) <> 'object' then
+      raise exception using errcode = '22023', message = 'each tier must be an object';
+    end if;
+    if jsonb_typeof(v_raw -> 'tier_number') <> 'number'
+       or (v_raw ->> 'tier_number') !~ '^[0-9]+$' then
+      raise exception using errcode = '22023', message = 'tier number is required and must be an integer';
+    end if;
+    if jsonb_typeof(v_raw -> 'min_volume') <> 'number'
+       or (v_raw ->> 'min_volume') !~ '^[0-9]+$' then
+      raise exception using errcode = '22023', message = 'tier minimum quantity is required and must be an integer';
+    end if;
+    if jsonb_typeof(v_raw -> 'price_per_unit') <> 'number'
+       or (v_raw ->> 'price_per_unit') !~ '^-?[0-9]+(\.[0-9]+)?$' then
+      raise exception using errcode = '22023', message = 'tier price is required and must be numeric';
+    end if;
+    if v_raw ? 'max_volume' and jsonb_typeof(v_raw -> 'max_volume') <> 'null'
+       and (jsonb_typeof(v_raw -> 'max_volume') <> 'number' or (v_raw ->> 'max_volume') !~ '^[0-9]+$') then
+      raise exception using errcode = '22023', message = 'tier maximum quantity must be an integer or null';
+    end if;
+
+    begin
+      v_tier_number := (v_raw ->> 'tier_number')::integer;
+      v_min_volume := (v_raw ->> 'min_volume')::integer;
+      v_max_volume := case when v_raw ? 'max_volume' and jsonb_typeof(v_raw -> 'max_volume') <> 'null' then (v_raw ->> 'max_volume')::integer else null end;
+      v_price_per_unit := (v_raw ->> 'price_per_unit')::numeric;
+    exception when invalid_text_representation or numeric_value_out_of_range then
+      raise exception using errcode = '22023', message = 'tier values are out of range';
+    end;
+
     v_index := v_index + 1;
-    if v_tier.tier_number <> v_index then
+    if v_tier_number <> v_index then
       raise exception using errcode = '22023', message = 'tier numbers must be sequential';
     end if;
-    if v_tier.min_volume is null or v_tier.min_volume <= 0 then
+    if v_min_volume <= 0 then
       raise exception using errcode = '22023', message = 'tier minimum quantity must be positive';
     end if;
-    if v_tier.max_volume is not null and v_tier.max_volume < v_tier.min_volume then
+    if v_max_volume is not null and v_max_volume < v_min_volume then
       raise exception using errcode = '22023', message = 'tier maximum quantity is invalid';
     end if;
-    if v_tier.price_per_unit is null or v_tier.price_per_unit <= 0 then
+    if v_price_per_unit <= 0 then
       raise exception using errcode = '22023', message = 'tier price must be positive';
     end if;
-    if v_previous is not null and (v_tier.min_volume <= v_previous.min_volume or (v_previous.max_volume is not null and v_tier.min_volume <= v_previous.max_volume)) then
+    if v_has_previous and (v_min_volume <= v_previous_min or (v_previous_max is not null and v_min_volume <= v_previous_max)) then
       raise exception using errcode = '22023', message = 'tier ranges overlap';
     end if;
-    if v_previous is not null and v_tier.price_per_unit >= v_previous.price_per_unit then
+    if v_has_previous and v_price_per_unit >= v_previous_price then
       raise exception using errcode = '22023', message = 'tier prices must decrease';
     end if;
-    v_previous := v_tier;
+    v_previous_min := v_min_volume;
+    v_previous_max := v_max_volume;
+    v_previous_price := v_price_per_unit;
+    v_has_previous := true;
   end loop;
 end;
 $$;
