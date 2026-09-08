@@ -28,6 +28,7 @@ interface SearchRow {
 
 function mockSearchClient(options: {
   rows?: SearchRow[];
+  rpcError?: { code?: string; message?: string; details?: string; hint?: string } | null;
   user?:
     | { id: string; email?: string }
     | null;
@@ -56,7 +57,7 @@ function mockSearchClient(options: {
   }));
   const rpc = vi.fn(async (_method: string, _params: Record<string, unknown>) => ({
     data: (options.rows ?? []) as unknown[],
-    error: null,
+    error: options.rpcError ?? null,
   }));
   const from = vi.fn((table: string) => {
     if (table === "profiles") {
@@ -305,14 +306,46 @@ describe("GET /api/marketplace/search", () => {
   });
 
   it("returns 500 when the rpc fails", async () => {
-    const { rpc } = mockSearchClient({ rows: [] });
-    rpc.mockResolvedValue({
-      data: null as unknown as unknown[],
-      error: { message: "boom" } as unknown as null,
-    });
-    const res = await searchBatches(getReq(""));
-    expect(res.status).toBe(500);
-    await expect(res.json()).resolves.toEqual({ error: "Internal server error" });
+    const log = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    try {
+      const { rpc } = mockSearchClient({ rows: [], rpcError: { message: "boom" } });
+      const res = await searchBatches(getReq(""));
+      expect(res.status).toBe(500);
+      await expect(res.json()).resolves.toEqual({
+        error: "Penawaran belum dapat dimuat. Coba lagi.",
+        code: "MARKETPLACE_QUERY_FAILED",
+      });
+      expect(log).toHaveBeenCalledWith(
+        "[marketplace/search] search_batches failed",
+        expect.objectContaining({ message: "boom" }),
+      );
+      expect(rpc).toHaveBeenCalled();
+    } finally {
+      log.mockRestore();
+    }
+  });
+
+  it("returns 503 with a safe code when the deployed RPC signature is outdated", async () => {
+    const log = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    try {
+      const { rpc } = mockSearchClient({
+        rows: [],
+        rpcError: {
+          code: "PGRST202",
+          message: "Could not find the function public.search_batches(...) in the schema cache",
+          hint: "Perhaps you meant search_batches(p_categories, p_lat, p_limit, p_lng, p_offset, p_query, p_radius_km)",
+        },
+      });
+      const res = await searchBatches(getReq(""));
+      expect(res.status).toBe(503);
+      await expect(res.json()).resolves.toEqual({
+        error: "Marketplace sedang disiapkan. Coba lagi sebentar.",
+        code: "MARKETPLACE_SCHEMA_OUTDATED",
+      });
+      expect(rpc).toHaveBeenCalled();
+    } finally {
+      log.mockRestore();
+    }
   });
 
   it("accepts every allow-listed category", async () => {

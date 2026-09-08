@@ -40,6 +40,22 @@ interface SearchOrigin {
   source: "umkm_profile" | "request" | "bandung_default";
 }
 
+interface MarketplaceRpcError {
+  code?: unknown;
+  message?: unknown;
+  details?: unknown;
+  hint?: unknown;
+}
+
+function isMarketplaceRpcError(error: unknown): error is MarketplaceRpcError {
+  return typeof error === "object" && error !== null;
+}
+
+function isMarketplaceSchemaOutdated(error: unknown): boolean {
+  if (!isMarketplaceRpcError(error)) return false;
+  return error.code === "PGRST202" && /search_batches/i.test(String(error.message ?? ""));
+}
+
 async function resolveSearchOrigin(
   client: { from: (table: string) => unknown },
   ctx: AuthContext | null,
@@ -228,7 +244,26 @@ export async function GET(req: Request) {
     p_offset: offset,
   });
   if (error) {
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    const rpcError: MarketplaceRpcError = isMarketplaceRpcError(error) ? error : {};
+    console.error("[marketplace/search] search_batches failed", {
+      code: rpcError.code,
+      message: rpcError.message,
+      details: rpcError.details,
+      hint: rpcError.hint,
+    });
+    if (isMarketplaceSchemaOutdated(error)) {
+      return NextResponse.json(
+        {
+          error: "Marketplace sedang disiapkan. Coba lagi sebentar.",
+          code: "MARKETPLACE_SCHEMA_OUTDATED",
+        },
+        { status: 503 },
+      );
+    }
+    return NextResponse.json(
+      { error: "Penawaran belum dapat dimuat. Coba lagi.", code: "MARKETPLACE_QUERY_FAILED" },
+      { status: 500 },
+    );
   }
 
   const rows = (data ?? []) as MarketplaceRpcRow[];
