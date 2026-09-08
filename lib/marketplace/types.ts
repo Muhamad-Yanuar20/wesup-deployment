@@ -81,8 +81,9 @@ export interface MarketplaceSearchResponse extends MarketplaceSearchResult {
   origin: MarketplaceOrigin;
 }
 
-export type MarketplaceMockScenario = "success" | "empty" | "error";
-
 export interface MarketplaceRepository {
-  search(criteria: MarketplaceSearchCriteria, options?: { signal?: AbortSignal }): Promise<MarketplaceSearchResponse>;
+  search(
+    criteria: MarketplaceSearchCriteria,
+    options?: { signal?: AbortSignal },
+  ): Promise<MarketplaceSearchResponse>;
 }
