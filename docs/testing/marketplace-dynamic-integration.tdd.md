@@ -30,8 +30,8 @@ Tests       203 passed (203)
 ## Keputusan desain
 
 - `origin` memakai koordinat eksplisit request jika diberikan, profil UMKM jika
-  tersedia, atau Bandung sebagai fallback; listing dan peta nantinya memakai
-  sumber yang sama.
+  tersedia, atau Bandung sebagai fallback; listing dan peta memakai sumber yang
+  sama.
 - Jarak dan estimasi pickup yang tidak valid menjadi `null`, bukan angka palsu.
 - `current_price_per_unit` memakai tier dengan `min_volume` tertinggi yang
   sudah tercapai dan fallback Tier 1; tier adalah threshold harga, bukan kuota
@@ -54,6 +54,63 @@ Test Files  4 passed (4)
 Tests       47 passed (47)
 ```
 
-Halaman detail kini memakai `/marketplace/[id]`, kartu memakai UUID batch, dan
-mock detail/slug tidak lagi menjadi fallback production. `NEXT_PUBLIC_SITE_URL`
-menjadi sumber canonical URL; hanya development/test yang memakai localhost.
+Halaman detail memakai `/marketplace/[id]`, kartu memakai UUID batch, dan route
+slug statis tidak lagi menjadi jalur production. `NEXT_PUBLIC_SITE_URL` menjadi
+sumber canonical URL; hanya development/test yang memakai localhost.
+
+## Tahap 5 — Join Batch dan progress tier real-time
+
+### RED
+
+Kontrak komponen pada `tests/components/JoinBatchForm.test.tsx`,
+`tests/components/TierProgressBar.test.tsx`, dan `tests/unit/use-tier-progress.test.ts`
+mengharuskan POST quantity + consent coordinates, error 409/network yang bisa
+diulang, progress ARIA, polling visible empat detik, refetch focus, serta
+retensi snapshot terakhir saat API gagal.
+
+### GREEN
+
+`JoinBatchForm` sekarang memanggil `POST /api/registrations` dengan UUID batch,
+jumlah porsi, dan koordinat consent opsional. Respons sukses langsung
+memanggil callback detail dan menampilkan tautan Pesanan; tidak ada lagi
+redirect palsu. `useTierProgress` mengambil `/api/batches/:id/progress`,
+membersihkan AbortController/listener, berhenti saat status batch tertutup atau
+cutoff terlewati, dan menghitung ulang tier setelah registrasi sukses.
+
+```text
+npm test -- tests/components/MarketplaceDetailClient.test.tsx tests/components/MarketplaceDetailLiveJoin.test.tsx tests/components/JoinBatchForm.test.tsx tests/components/TierProgressBar.test.tsx tests/unit/use-tier-progress.test.ts
+Test Files  5 passed (5)
+Tests       38 passed (38)
+```
+
+## Tahap 6 — Peta radius tersinkron
+
+`MarketplaceRadiusMap` merender pusat pencarian, lingkaran radius dalam meter,
+dan marker pickup yang koordinatnya valid. `MarketplaceRadiusMapClient` memakai
+dynamic import `ssr: false`; radius pencarian didebounce 400 ms sebelum request
+API, sementara lingkaran peta mengikuti nilai slider yang sedang dipilih.
+
+```text
+npm test -- tests/components/MarketplaceRadiusMap.test.tsx
+Test Files  1 passed (1)
+Tests       2 passed (2)
+```
+
+## Tahap 7 — Loading, empty, error dan gate verifikasi
+
+Route marketplace dan detail memiliki skeleton boundary; error boundary
+menyediakan pesan aman dan tombol retry. `MarketplaceResults` mempertahankan
+kontrak empty/error state dan `aria-busy` untuk pembaca layar.
+
+```text
+npm test
+Test Files  55 passed | 4 skipped (59)
+Tests       688 passed | 244 skipped (932)
+
+npm run lint
+0 errors; 10 pre-existing warnings
+```
+
+`npm run build` berhasil compile dan type-check, tetapi pengumpulan page data di
+environment ini berhenti karena credential Supabase tidak tersedia
+(`NEXT_PUBLIC_SUPABASE_URL` dan `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`).

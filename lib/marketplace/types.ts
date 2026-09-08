@@ -24,6 +24,16 @@ export interface TierProgress {
   progressPercent: number;
 }
 
+export interface MarketplaceProgressResponse {
+  batchId: string;
+  status: string;
+  registeredQuantity: number;
+  tiers: readonly MarketplaceTier[];
+  tierProgress: TierProgress;
+  registrationClosesAt: string;
+  serverTime: string;
+}
+
 export interface MarketplaceItem {
   id: string;
   title: string;
