@@ -90,6 +90,7 @@ function payloadArgs(payload: SupplierCatalogPayload) {
 async function parseForm(request: Request, fallback: CatalogAction) {
   let form: FormData;
   try { form = await request.formData(); } catch { throw new CatalogDetailError(400, "Payload katalog tidak valid.", "SUPPLIER_CATALOG_INVALID"); }
+  if (form.has("supplierId")) throw new CatalogDetailError(400, "supplierId tidak boleh dikirim.", "SUPPLIER_CATALOG_INVALID");
   const raw = form.get("payload");
   if (typeof raw !== "string") throw new CatalogDetailError(400, "Payload katalog wajib diisi.", "SUPPLIER_CATALOG_INVALID");
   let decoded: unknown;
@@ -147,6 +148,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const { id } = await params;
   if (!isUuid(id)) return NextResponse.json({ error: "Invalid batch id" }, { status: 400 });
   let uploadedPath: string | null = null;
+  let mutationCommitted = false;
   try {
     const existing = await readBatch(auth.client!, id);
     if (!existing) return NextResponse.json({ error: "Katalog tidak ditemukan." }, { status: 404 });
@@ -162,12 +164,13 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const mutation = action === "publish" && existingStatus === "draft" ? "update_and_publish_supplier_batch" : "update_supplier_batch";
     const update = await auth.client!.rpc(mutation, { ...payloadArgs(payload), p_batch_id: id, p_product_photo_url: uploaded?.url ?? (typeof existing.product_photo_url === "string" ? existing.product_photo_url : null) });
     if (update.error) throw toError(update.error);
+    mutationCommitted = true;
     if (uploaded && existing.product_photo_url !== uploaded.url) await remove(auth.client!, pathFromUrl(existing.product_photo_url));
     const row = await readBatch(auth.client!, id);
     if (!row) throw new CatalogDetailError(500, "Detail katalog belum tersedia.");
     return NextResponse.json({ item: mapSupplierBatchRow(row) });
   } catch (error) {
-    if (uploadedPath) await remove(auth.client!, uploadedPath);
+    if (uploadedPath && !mutationCommitted) await remove(auth.client!, uploadedPath);
     return errorResponse(error);
   }
 }

@@ -19,7 +19,7 @@ export async function POST(
   }
 
   const body = await parseJsonBody(req);
-  if (!body || typeof body.reason !== "string" || body.reason.trim() === "") {
+  if (!body || "supplierId" in body || typeof body.reason !== "string" || body.reason.trim() === "") {
     return NextResponse.json(
       { error: "Cancellation reason is required" },
       { status: 400 },

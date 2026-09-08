@@ -83,6 +83,7 @@ async function parseCatalogForm(request: Request, fallbackAction: CatalogAction)
   } catch {
     throw new CatalogApiError(400, "Payload katalog tidak valid.", "SUPPLIER_CATALOG_INVALID");
   }
+  if (form.has("supplierId")) throw new CatalogApiError(400, "supplierId tidak boleh dikirim.", "SUPPLIER_CATALOG_INVALID");
   const rawPayload = form.get("payload");
   if (typeof rawPayload !== "string") {
     throw new CatalogApiError(400, "Payload katalog wajib diisi.", "SUPPLIER_CATALOG_INVALID");
@@ -224,8 +225,9 @@ export async function GET(request: Request) {
     const url = new URL(request.url);
     const query = (url.searchParams.get("q") ?? "").trim();
     const requestedStatus = (url.searchParams.get("status") ?? "").toLowerCase();
-    const status = ["draft", "published", "closed", "cancelled", "takedown", "completed"].includes(requestedStatus)
-      ? requestedStatus as BatchStatus
+    const normalizedStatus = requestedStatus === "cancelled_by_supplier" ? "cancelled" : requestedStatus;
+    const status = ["draft", "published", "closed", "cancelled", "takedown", "completed"].includes(normalizedStatus)
+      ? normalizedStatus as BatchStatus
       : null;
     const { data, error } = await auth.client!.rpc("list_supplier_batches", { p_status: null, p_query: query || null });
     if (error) throw rpcError(error);

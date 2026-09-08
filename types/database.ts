@@ -817,6 +817,7 @@ export interface Database {
         Args: { p_batch_id: string; p_product_photo_url: string };
         Returns: void;
       };
+      update_and_publish_supplier_batch: { Args: { p_batch_id: string; p_title: string; p_description: string; p_category: string; p_min_quantity: number; p_product_photo_url: string; p_pickup_name: string; p_pickup_address: string; p_latitude: number; p_longitude: number; p_registration_opens_at: string; p_registration_closes_at: string; p_payment_opens_at: string; p_payment_closes_at: string; p_estimated_ready_at: string; p_tiers: unknown; }; Returns: void; };
       update_supplier_batch: {
         Args: {
           p_batch_id: string;
