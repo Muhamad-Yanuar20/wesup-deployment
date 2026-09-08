@@ -66,4 +66,44 @@ describe("supplier catalog ownership contract migration", () => {
     expect(body).toMatch(/collected_revenue/i);
     expect(body).not.toMatch(/\b(phone|email|nik|ktp_photo_url)\b/i);
   });
+  it("accepts normal .webp storage URLs without a doubled regex escape", () => {
+    const publish = functionBody("publish_supplier_batch");
+    expect(publish).toContain("/[^/]+\\.webp$')");
+    expect(publish).not.toContain("\\\\.webp");
+  });
+
+  it("lists only the caller's batches through a valid lateral detail query", () => {
+    const list = functionBody("list_supplier_batches");
+    expect(list).toMatch(/assert_active_approved_supplier\(\)/i);
+    expect(list).toMatch(/cross\s+join\s+lateral\s+public\.get_supplier_batch\(b\.id\)/i);
+    expect(list).toMatch(/b\.supplier_id\s*=\s*auth\.uid\(\)/i);
+  });
+
+  it("normalizes tier and null-timeline validation before DML", () => {
+    const validator = functionBody("validate_catalog_tiers");
+    const timeline = functionBody("validate_catalog_timeline");
+    const update = functionBody("update_supplier_batch");
+    expect(validator).toMatch(/errcode\s*=\s*'22023'/i);
+    expect(timeline).toMatch(/p_registration_opens_at\s+is\s+null/i);
+    expect(timeline).toMatch(/errcode\s*=\s*'22023'/i);
+    expect(update).toMatch(/perform\s+public\.validate_catalog_timeline/i);
+  });
+
+  it("removes direct catalog DML grants while retaining RPC-only mutation", () => {
+    const source = sql();
+    expect(source).toMatch(/revoke\s+insert,\s*update,\s*delete\s+on\s+public\.batches,\s*public\.batch_tiers,\s*public\.batch_timeline\s+from\s+public,\s*anon,\s*authenticated/i);
+    const policy = source.match(/create\s+policy\s+"batches_supplier_approved_all"[\s\S]*?with\s+check\s*\([\s\S]*?\);/i)?.[0] ?? "";
+    expect(policy).toMatch(/supplier_id\s*=\s*auth\.uid\(\)/i);
+    expect(policy).toMatch(/p\.status\s*=\s*'active'/i);
+    expect(policy).toMatch(/sp\.verification_status\s*=\s*'approved'/i);
+  });
+
+  it("uses registration quantities and only lifecycle-eligible supplier escrow in the dashboard", () => {
+    const dashboard = functionBody("get_supplier_dashboard_summary");
+    expect(dashboard).toMatch(/sum\(r\.quantity\).*registered_quantity/i);
+    expect(dashboard).toMatch(/e\.status\s*=\s*'held'/i);
+    expect(dashboard).toMatch(/e\.auto_release_at\s*<=\s*now\(\)/i);
+    expect(dashboard).toMatch(/coalesce\(e\.release_destination,\s*'supplier'\)\s*=\s*'supplier'/i);
+    expect(dashboard).toMatch(/d\.status\s+in\s*\('pending',\s*'under_review'\)/i);
+  });
 });

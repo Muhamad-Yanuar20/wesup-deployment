@@ -34,3 +34,22 @@ exit 0
 ```
 
 No Supabase project was migrated as part of this task.
+
+## Review-fix cycle
+
+The expanded migration-contract assertions initially failed for five review
+regressions (URL regex, list RPC, tier/timeline SQLSTATEs, direct DML, and
+summary arithmetic). A final dispute-freeze assertion also failed before the
+escrow eligibility guard was added.
+
+```text
+npx vitest run tests/migrations/supplier-catalog-ownership-contract.test.ts tests/migrations/supplier-catalog-persistence.test.ts tests/migrations/schema.test.ts --reporter=verbose
+Test Files  3 passed (3)
+Tests       201 passed (201)
+
+npx tsc --noEmit
+exit 0
+
+git diff --check
+exit 0
+```
