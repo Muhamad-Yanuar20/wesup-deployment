@@ -79,7 +79,13 @@ export default function MarketplaceDetailClient({ item, viewerRole }: Marketplac
                 <div>
                   <p className="text-sm font-semibold text-slate-800">Estimasi & Jarak</p>
                   <p className="text-sm text-slate-500">
-                    {item.distanceKm.toLocaleString("id-ID", { maximumFractionDigits: 1 })} km • {item.estimatedPickupMinutes} mnt (Pickup)
+                    {item.distanceKm === null
+                      ? "Jarak belum tersedia"
+                      : `${item.distanceKm.toLocaleString("id-ID", { maximumFractionDigits: 1 })} km`}
+                    {" • "}
+                    {item.estimatedPickupMinutes === null
+                      ? "Estimasi belum tersedia"
+                      : `${item.estimatedPickupMinutes} mnt (Pickup)`}
                   </p>
                 </div>
               </div>
