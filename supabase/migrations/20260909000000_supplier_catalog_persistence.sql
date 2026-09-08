@@ -461,8 +461,8 @@ security definer
 set search_path = public
 as $$
   select d.*
-    from public.get_supplier_batch(b.id) d
-    join public.batches b on b.id = d.id
+    from public.batches b
+    cross join lateral public.get_supplier_batch(b.id) d
    where (p_status is null or d.status = p_status)
      and (p_query is null or p_query = '' or d.title ilike '%' || p_query || '%' or d.category ilike '%' || p_query || '%')
    order by d.created_at desc;
