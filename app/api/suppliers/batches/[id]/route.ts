@@ -165,12 +165,15 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const update = await auth.client!.rpc(mutation, { ...payloadArgs(payload), p_batch_id: id, p_product_photo_url: uploaded?.url ?? (typeof existing.product_photo_url === "string" ? existing.product_photo_url : null) });
     if (update.error) throw toError(update.error);
     mutationCommitted = true;
-    if (uploaded && existing.product_photo_url !== uploaded.url) await remove(auth.client!, pathFromUrl(existing.product_photo_url));
+    if (uploaded && existing.product_photo_url !== uploaded.url) await cleanupPhoto(auth.client!, id, pathFromUrl(existing.product_photo_url), "old_photo");
     const row = await readBatch(auth.client!, id);
     if (!row) throw new CatalogDetailError(500, "Detail katalog belum tersedia.");
     return NextResponse.json({ item: mapSupplierBatchRow(row) });
   } catch (error) {
-    if (uploadedPath && !mutationCommitted) await remove(auth.client!, uploadedPath);
+    if (uploadedPath && !mutationCommitted) {
+      const cleanup = await cleanupPhoto(auth.client!, id, uploadedPath, "rollback");
+      if (!cleanup.ok) return NextResponse.json({ error: "Katalog belum dapat diproses.", code: "SUPPLIER_CATALOG_CLEANUP_FAILED" }, { status: 500 });
+    }
     return errorResponse(error);
   }
 }
@@ -186,7 +189,7 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
     if (String(existing.status ?? "").toLowerCase() !== "draft") throw new CatalogDetailError(409, "Hanya draft kosong yang dapat dihapus.", "SUPPLIER_CATALOG_CONFLICT");
     const result = await auth.client!.rpc("delete_supplier_batch", { p_batch_id: id });
     if (result.error) throw toError(result.error);
-    await remove(auth.client!, pathFromUrl(existing.product_photo_url));
+    await cleanupPhoto(auth.client!, id, pathFromUrl(existing.product_photo_url), "old_photo");
     return NextResponse.json({ ok: true });
   } catch (error) { return errorResponse(error); }
 }
