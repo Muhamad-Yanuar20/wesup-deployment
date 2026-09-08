@@ -126,8 +126,10 @@ function pathFromUrl(value: unknown): string | null {
   return index === -1 ? null : decodeURIComponent(value.slice(index + marker.length));
 }
 
-async function remove(client: CatalogClient, path: string | null) {
-  if (path) await Promise.resolve(client.storage.from("wesup-public").remove([path])).catch(() => undefined);
+async function cleanupPhoto(client: CatalogClient, batchId: string, path: string | null, phase: "old_photo" | "rollback" | "delete") {
+  if (!path) return { ok: true as const };
+  try { const { error } = await client.storage.from("wesup-public").remove([path]); if (!error) return { ok: true as const }; console.error("[suppliers/batches/id] storage cleanup failed", { batchId, path, phase, code: "STORAGE_REMOVE_FAILED", message: error.message ?? "storage removal failed" }); } catch (error) { console.error("[suppliers/batches/id] storage cleanup failed", { batchId, path, phase, code: "STORAGE_REMOVE_EXCEPTION", message: error instanceof Error ? error.message : String(error) }); }
+  return { ok: false as const };
 }
 
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
