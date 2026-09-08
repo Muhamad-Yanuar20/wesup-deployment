@@ -40,11 +40,26 @@ const message = (error: unknown, fallback: string) => error instanceof Error && 
 const progressFor = (registered: number, target: number) => target <= 0 ? 0 : Math.min(100, Math.max(0, registered / target * 100));
 const tierRange = (min: number, max: number | null) => max === null ? `${min}+ pcs` : `${min}–${max} pcs`;
 
+const statusLabel: Record<SupplierBatchDetail["status"], string> = {
+  DRAFT: "Draft",
+  PUBLISHED: "Aktif",
+  CLOSED: "Selesai",
+  CANCELLED_BY_SUPPLIER: "Dibatalkan pemasok",
+  TAKEDOWN: "Diturunkan admin",
+  COMPLETED: "Selesai",
+};
+
+const terminalStatusMessage: Partial<Record<SupplierBatchDetail["status"], string>> = {
+  CLOSED: "Pendaftaran batch ini sudah ditutup dan katalog tidak dapat diedit.",
+  CANCELLED_BY_SUPPLIER: "Katalog ini telah dibatalkan oleh pemasok.",
+  TAKEDOWN: "Katalog ini diturunkan oleh Admin dan hanya dapat dibaca.",
+  COMPLETED: "Batch ini sudah selesai dan hanya dapat dibaca.",
+};
+
 export function SupplierBatchHeader({ batch, deleteButtonRef, onDelete }: SupplierBatchHeaderProps) {
-  const cancelled = batch.status === "CANCELLED_BY_SUPPLIER";
   const canEdit = batch.status === "DRAFT" || batch.status === "PUBLISHED";
-  const StatusIcon = cancelled ? AlertCircle : CheckCircle2;
-  const statusClassName = cancelled
+  const StatusIcon = canEdit ? (batch.status === "DRAFT" ? Clock : CheckCircle2) : AlertCircle;
+  const statusClassName = !canEdit
     ? "inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700"
     : "inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700";
 
@@ -62,7 +77,7 @@ export function SupplierBatchHeader({ batch, deleteButtonRef, onDelete }: Suppli
           Hapus Katalog
         </button>
       </div>
-      {!canEdit ? (
+      {!canEdit && terminalStatusMessage[batch.status] ? (
         <p
           id="supplier-batch-status"
           role="status"
@@ -70,7 +85,7 @@ export function SupplierBatchHeader({ batch, deleteButtonRef, onDelete }: Suppli
           tabIndex={-1}
           className="rounded-lg border border-gray-200 bg-gray-100 px-4 py-3 text-sm font-semibold"
         >
-          CANCELLED_BY_SUPPLIER — katalog ini telah dibatalkan oleh pemasok.
+          {statusLabel[batch.status]} — {terminalStatusMessage[batch.status]}
         </p>
       ) : null}
       <section className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
@@ -79,7 +94,7 @@ export function SupplierBatchHeader({ batch, deleteButtonRef, onDelete }: Suppli
             <div className="mb-2 flex items-center gap-3">
               <span className={statusClassName}>
                 <StatusIcon aria-hidden="true" size={14} />
-                {cancelled ? "Dibatalkan Pemasok" : "Sedang Berjalan"}
+                {statusLabel[batch.status]}
               </span>
               <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-600">
                 <Package aria-hidden="true" size={14} />
@@ -90,7 +105,7 @@ export function SupplierBatchHeader({ batch, deleteButtonRef, onDelete }: Suppli
             <p className="mt-1 text-sm text-gray-500">ID: {batch.displayCode}</p>
           </div>
           <div className="w-full md:w-auto">
-            {!canEdit ? (
+            {!canEdit && terminalStatusMessage[batch.status] ? (
               <span className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-gray-300 px-5 py-2.5 text-sm font-medium text-gray-400 md:w-auto">
                 <Pencil aria-hidden="true" size={18} />
                 Edit Penawaran

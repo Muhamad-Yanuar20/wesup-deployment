@@ -42,7 +42,14 @@ function batchToDraft(batch: SupplierBatchDetail): CatalogDraft {
   };
 }
 
-type LoadPhase = "idle" | "loading" | "success" | "error" | "not-found";
+type LoadPhase = "idle" | "loading" | "success" | "error" | "not-found" | "read-only";
+
+const readOnlyStatusLabel: Partial<Record<SupplierBatchStatus, string>> = {
+  CLOSED: "Selesai",
+  CANCELLED_BY_SUPPLIER: "Dibatalkan pemasok",
+  TAKEDOWN: "Diturunkan Admin",
+  COMPLETED: "Selesai",
+};
 
 export default function EditCatalogForm() {
   const params = useParams<{ id: string }>();
@@ -66,9 +73,9 @@ export default function EditCatalogForm() {
           setPhase("not-found");
           return;
         }
-        if (batch.status === "CANCELLED_BY_SUPPLIER") {
-          setError("Katalog yang dibatalkan tidak dapat diedit.");
-          setPhase("error");
+        if (batch.status !== "DRAFT" && batch.status !== "PUBLISHED") {
+          setError(`${readOnlyStatusLabel[batch.status] ?? "Katalog"} tidak dapat diedit.`);
+          setPhase("read-only");
           return;
         }
         setInitialDraft(batchToDraft(batch));
@@ -106,6 +113,23 @@ export default function EditCatalogForm() {
         >
           <ArrowLeft size={16} />
           Kembali ke daftar katalog
+        </Link>
+      </div>
+    );
+  }
+
+  if (phase === "read-only") {
+    return (
+      <div className="rounded-xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+        <AlertCircle className="mx-auto h-6 w-6 text-slate-500" />
+        <h2 className="mt-3 text-lg font-bold text-slate-900">Katalog hanya dapat dibaca</h2>
+        <p className="mt-2 text-sm text-slate-600">{error ?? "Status katalog ini tidak mengizinkan perubahan."}</p>
+        <Link
+          href={`/supplier/batch/${batchId}`}
+          className="mt-4 inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+        >
+          <ArrowLeft size={16} />
+          Kembali ke detail katalog
         </Link>
       </div>
     );
