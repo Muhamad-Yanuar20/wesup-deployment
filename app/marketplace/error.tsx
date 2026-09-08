@@ -3,7 +3,6 @@
 import { AlertCircle, RefreshCw } from "lucide-react";
 
 export default function MarketplaceError({
-  error,
   reset,
 }: {
   error: Error & { digest?: string };
@@ -17,7 +16,7 @@ export default function MarketplaceError({
       <AlertCircle aria-hidden="true" className="mb-4 h-12 w-12 text-red-400" />
       <h2 className="text-xl font-bold text-slate-800">Marketplace belum bisa dimuat</h2>
       <p className="mt-2 max-w-sm text-sm font-medium text-slate-500">
-        {error.message || "Terjadi kesalahan saat mengambil penawaran."}
+        Terjadi kendala sementara saat mengambil penawaran. Silakan coba lagi.
       </p>
       <button
         type="button"
