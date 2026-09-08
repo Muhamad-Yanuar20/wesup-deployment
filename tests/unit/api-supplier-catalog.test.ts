@@ -153,6 +153,7 @@ describe("supplier catalog API", () => {
   });
 
   it("accepts CANCELLED_BY_SUPPLIER filter compatibility", async () => {
+    mockSupplierClient();
     const response = await listBatches(new NextRequest("http://localhost/api/suppliers/batches?status=cancelled_by_supplier"));
     expect(response.status).toBe(200); expect((await response.json()).items).toEqual([]);
   });});
