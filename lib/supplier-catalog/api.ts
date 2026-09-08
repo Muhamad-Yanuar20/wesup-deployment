@@ -78,6 +78,7 @@ export function payloadToMutation(payload: SupplierCatalogPayload, productPhotoU
 export function parseSupplierCatalogPayload(value: unknown): SupplierCatalogPayload | null {
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
   const record = value as Record<string, unknown>;
+  if ("supplierId" in record) return null;
   const stringValue = (key: string): string | null => typeof record[key] === "string" ? record[key] as string : null;
   const numberValue = (key: string): number | null => typeof record[key] === "number" && Number.isFinite(record[key]) ? record[key] as number : null;
   const category = stringValue("category");

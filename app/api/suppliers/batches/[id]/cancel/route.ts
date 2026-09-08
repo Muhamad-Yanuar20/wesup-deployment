@@ -40,6 +40,11 @@ export async function POST(
     p_user_agent: req.headers.get("user-agent"),
   });
   if (error) {
+    const code = typeof error === "object" && "code" in error ? String((error as { code?: unknown }).code ?? "") : "";
+    if (code === "42501") return NextResponse.json({ error: "Akses supplier ditolak.", code: "SUPPLIER_CATALOG_FORBIDDEN" }, { status: 403 });
+    if (code === "P0002") return NextResponse.json({ error: "Katalog tidak ditemukan.", code: "SUPPLIER_CATALOG_NOT_FOUND" }, { status: 404 });
+    if (code === "22023") return NextResponse.json({ error: "Permintaan pembatalan tidak valid.", code: "SUPPLIER_CATALOG_INVALID" }, { status: 400 });
+    if (code === "55000") return NextResponse.json({ error: "Batch tidak dapat dibatalkan pada status saat ini.", code: "SUPPLIER_CATALOG_CONFLICT" }, { status: 409 });
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 

@@ -52,6 +52,11 @@ function jsonError(error: unknown): NextResponse {
 }
 
 function rpcError(error: unknown): CatalogApiError {
+  const code = typeof error === "object" && error !== null && "code" in error ? String((error as { code?: unknown }).code ?? "") : "";
+  if (code === "42501") return new CatalogApiError(403, "Akses supplier ditolak.", "SUPPLIER_CATALOG_FORBIDDEN");
+  if (code === "P0002") return new CatalogApiError(404, "Katalog tidak ditemukan.", "SUPPLIER_CATALOG_NOT_FOUND");
+  if (code === "22023") return new CatalogApiError(400, "Data katalog tidak valid.", "SUPPLIER_CATALOG_INVALID");
+  if (code === "55000") return new CatalogApiError(409, "Perubahan katalog bertentangan dengan status saat ini.", "SUPPLIER_CATALOG_CONFLICT");
   const message = typeof error === "object" && error !== null && "message" in error
     ? String((error as { message?: unknown }).message ?? "")
     : "";

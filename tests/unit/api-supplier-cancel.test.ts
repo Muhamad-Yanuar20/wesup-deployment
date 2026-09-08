@@ -184,4 +184,15 @@ describe("POST /api/suppliers/batches/[id]/cancel", () => {
     expect(res.status).toBe(500);
     await expect(res.json()).resolves.toEqual({ error: "Internal server error" });
   });
+
+  it("maps an ownership SQLSTATE from cancel_batch to 403", async () => {
+    const { rpc } = mockSupplierClient({});
+    rpc.mockResolvedValue({ data: null, error: { code: "42501", message: "batch access denied" } } as never);
+    const res = await cancelBatch(
+      postJson("/api/suppliers/batches/x/cancel", { reason: "x" }),
+      routeParams(BATCH_ID),
+    );
+    expect(res.status).toBe(403);
+    await expect(res.json()).resolves.toEqual(expect.objectContaining({ code: "SUPPLIER_CATALOG_FORBIDDEN" }));
+  });
 });

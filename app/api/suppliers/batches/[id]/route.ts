@@ -42,6 +42,11 @@ async function authorize() {
 }
 
 function toError(error: unknown): CatalogDetailError {
+  const code = typeof error === "object" && error !== null && "code" in error ? String((error as { code?: unknown }).code ?? "") : "";
+  if (code === "42501") return new CatalogDetailError(403, "Akses supplier ditolak.", "SUPPLIER_CATALOG_FORBIDDEN");
+  if (code === "P0002") return new CatalogDetailError(404, "Katalog tidak ditemukan.", "SUPPLIER_CATALOG_NOT_FOUND");
+  if (code === "22023") return new CatalogDetailError(400, "Data katalog tidak valid.", "SUPPLIER_CATALOG_INVALID");
+  if (code === "55000") return new CatalogDetailError(409, "Perubahan katalog tidak dapat dilakukan.", "SUPPLIER_CATALOG_CONFLICT");
   const message = typeof error === "object" && error !== null && "message" in error
     ? String((error as { message?: unknown }).message ?? "")
     : "";
@@ -154,12 +159,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     }
     const uploaded = productPhoto ? await upload(auth.client!, id, productPhoto) : null;
     uploadedPath = uploaded?.path ?? null;
-    const update = await auth.client!.rpc("update_supplier_batch", { ...payloadArgs(payload), p_batch_id: id, p_product_photo_url: uploaded?.url ?? (typeof existing.product_photo_url === "string" ? existing.product_photo_url : null) });
+    const mutation = action === "publish" && existingStatus === "draft" ? "update_and_publish_supplier_batch" : "update_supplier_batch";
+    const update = await auth.client!.rpc(mutation, { ...payloadArgs(payload), p_batch_id: id, p_product_photo_url: uploaded?.url ?? (typeof existing.product_photo_url === "string" ? existing.product_photo_url : null) });
     if (update.error) throw toError(update.error);
-    if (action === "publish" && existingStatus === "draft") {
-      const publish = await auth.client!.rpc("publish_supplier_batch", { p_batch_id: id, p_product_photo_url: uploaded?.url ?? existing.product_photo_url });
-      if (publish.error) throw toError(publish.error);
-    }
     if (uploaded && existing.product_photo_url !== uploaded.url) await remove(auth.client!, pathFromUrl(existing.product_photo_url));
     const row = await readBatch(auth.client!, id);
     if (!row) throw new CatalogDetailError(500, "Detail katalog belum tersedia.");
@@ -179,9 +181,9 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
     const existing = await readBatch(auth.client!, id);
     if (!existing) return NextResponse.json({ error: "Katalog tidak ditemukan." }, { status: 404 });
     if (String(existing.status ?? "").toLowerCase() !== "draft") throw new CatalogDetailError(409, "Hanya draft kosong yang dapat dihapus.", "SUPPLIER_CATALOG_CONFLICT");
-    await remove(auth.client!, pathFromUrl(existing.product_photo_url));
     const result = await auth.client!.rpc("delete_supplier_batch", { p_batch_id: id });
     if (result.error) throw toError(result.error);
+    await remove(auth.client!, pathFromUrl(existing.product_photo_url));
     return NextResponse.json({ ok: true });
   } catch (error) { return errorResponse(error); }
 }
