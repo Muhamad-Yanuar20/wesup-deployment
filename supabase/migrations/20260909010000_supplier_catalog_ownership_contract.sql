@@ -337,16 +337,19 @@ begin
     if jsonb_typeof(v_raw) <> 'object' then
       raise exception using errcode = '22023', message = 'each tier must be an object';
     end if;
-    if jsonb_typeof(v_raw -> 'tier_number') <> 'number'
+    if not (v_raw ? 'tier_number')
+       or jsonb_typeof(v_raw -> 'tier_number') <> 'number'
        or (v_raw ->> 'tier_number') !~ '^[0-9]+$' then
       raise exception using errcode = '22023', message = 'tier number is required and must be an integer';
     end if;
-    if jsonb_typeof(v_raw -> 'min_volume') <> 'number'
+    if not (v_raw ? 'min_volume')
+       or jsonb_typeof(v_raw -> 'min_volume') <> 'number'
        or (v_raw ->> 'min_volume') !~ '^[0-9]+$' then
       raise exception using errcode = '22023', message = 'tier minimum quantity is required and must be an integer';
     end if;
-    if jsonb_typeof(v_raw -> 'price_per_unit') <> 'number'
-       or (v_raw ->> 'price_per_unit') !~ '^-?[0-9]+(\.[0-9]+)?$' then
+    if not (v_raw ? 'price_per_unit')
+       or jsonb_typeof(v_raw -> 'price_per_unit') <> 'number'
+       or (v_raw ->> 'price_per_unit') !~ '^-?[0-9]{1,10}(\.[0-9]{1,2})?$' then
       raise exception using errcode = '22023', message = 'tier price is required and must be numeric';
     end if;
     if v_raw ? 'max_volume' and jsonb_typeof(v_raw -> 'max_volume') <> 'null'

@@ -106,30 +106,41 @@ describe("supplier catalog ownership contract migration", () => {
     expect(dashboard).toMatch(/coalesce\(e\.release_destination,\s*'supplier'\)\s*=\s*'supplier'/i);
     expect(dashboard).toMatch(/d\.status\s+in\s*\('pending',\s*'under_review'\)/i);
   });
-  it("guards typed tier fields before casts and validates before catalog DML", () => {
+  it("requires explicit missing-key, type, and numeric(12,2) guards before tier casts", () => {
     const tiers = functionBody("validate_catalog_tiers");
+    for (const field of ["tier_number", "min_volume", "price_per_unit"]) {
+      expect(tiers).toMatch(new RegExp(`not\\s+\\(v_raw\\s*\\?\\s*'${field}'\\)`, "i"));
+      expect(tiers).toMatch(new RegExp(`jsonb_typeof\\(v_raw\\s*->\\s*'${field}'\\)\\s*<>\\s*'number'`, "i"));
+    }
+    expect(tiers).toMatch(/v_raw\s*\?\s*'max_volume'/i);
+    expect(tiers).toMatch(/price_per_unit'\)\s*!~\s*'\^-\?\[0-9\]\{1,10\}/i);
+    expect(tiers).toMatch(/\(\\\.\[0-9\]\{1,2\}\)\?\$'/i);
+    expect(tiers).toMatch(/exception\s+when\s+invalid_text_representation\s+or\s+numeric_value_out_of_range/i);
+    expect(tiers).toMatch(/errcode\s*=\s*'22023'/i);
+  });
+
+  it("validates every timeline input and tiers before catalog-table DML", () => {
     const timeline = functionBody("validate_catalog_timeline");
     const create = functionBody("create_supplier_batch");
     const update = functionBody("update_supplier_batch");
-    for (const field of ["tier_number", "min_volume", "price_per_unit"]) {
-      expect(tiers).toMatch(
-        new RegExp(`jsonb_typeof\\(v_raw\\s*->\\s*'${field}'\\)\\s*<>\\s*'number'`, "i"),
-      );
-    }
-    expect(tiers).toMatch(/v_raw\s*\?\s*'max_volume'/i);
-    expect(tiers).toMatch(/v_raw\s*->>\s*'tier_number'\).*~\s*'\^\[0-9\]\+\$'/i);
-    expect(tiers).toMatch(/tier number is required/i);
-    expect(tiers).toMatch(/exception\s+when\s+invalid_text_representation\s+or\s+numeric_value_out_of_range/i);
-    expect(tiers).toMatch(/errcode\s*=\s*'22023'/i);
     for (const field of ["p_registration_opens_at", "p_registration_closes_at", "p_payment_opens_at", "p_payment_closes_at", "p_estimated_ready_at"]) {
       expect(timeline).toMatch(new RegExp(`${field}\\s+is\\s+null`, "i"));
     }
-    expect(create.indexOf("perform public.validate_catalog_tiers")).toBeLessThan(create.indexOf("insert into public.batches"));
-    expect(update.indexOf("perform public.validate_catalog_tiers")).toBeLessThan(update.indexOf("update public.batches"));
+    for (const [body, dml] of [[create, "insert into public.batches"], [update, "update public.batches"]]) {
+      const validationIndex = body.indexOf("perform public.validate_catalog_tiers");
+      const dmlIndex = body.indexOf(dml);
+      expect(validationIndex).toBeGreaterThanOrEqual(0);
+      expect(dmlIndex).toBeGreaterThanOrEqual(0);
+      expect(validationIndex).toBeLessThan(dmlIndex);
+    }
   });
 
-  it("places the dispute exclusion inside the ready-to-disburse escrow filter", () => {
+  it("keeps the dispute exclusion nested in ready-to-disburse FILTER", () => {
     const dashboard = functionBody("get_supplier_dashboard_summary");
-    expect(dashboard).toMatch(/sum\(e\.amount\)\s+filter\s*\(\s*where[\s\S]*not\s+exists\s*\(select\s+1\s+from\s+public\.disputes\s+d[\s\S]*d\.status\s+in\s*\('pending',\s*'under_review'\)/i);
+    const readyFilter = dashboard.match(/coalesce\(sum\(e\.amount\)\s+filter\s*\(\s*where\s+(.+?)\),\s*0\)::numeric\s+as\s+ready_to_disburse/i)?.[1] ?? "";
+    expect(readyFilter).not.toBe("");
+    const disputeExclusion = readyFilter.match(/not\s+exists\s*\(\s*select\s+1\s+from\s+public\.disputes\s+d\s+where\s+(.+)\)\s*$/i)?.[1] ?? "";
+    expect(disputeExclusion).toMatch(/d\.registration_id\s*=\s*e\.registration_id/i);
+    expect(disputeExclusion).toMatch(/d\.status\s+in\s*\('pending',\s*'under_review'\)/i);
   });
 });

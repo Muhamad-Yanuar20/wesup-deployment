@@ -79,3 +79,29 @@ exit 0
 
 Local PostgreSQL remains unavailable, so these are precise source-contract
 assertions rather than executable migration/RLS checks.
+
+## Final scoped re-review
+
+The final source-contract pass first failed on the missing required-key guard
+and on the deliberately scoped ready-to-disburse FILTER extraction. The tier
+validator now explicitly requires `tier_number`, `min_volume`, and
+`price_per_unit` keys before type/cast checks, accepts only a value representable
+by `numeric(12,2)`, and continues to normalize validation errors to `22023`.
+The contract now rejects absent validation/DML anchors before comparing their
+order and extracts the dispute predicate from the escrow FILTER before asserting
+its `NOT EXISTS` contents.
+
+```text
+npx vitest run tests/migrations/supplier-catalog-ownership-contract.test.ts tests/migrations/supplier-catalog-persistence.test.ts tests/migrations/schema.test.ts --reporter=verbose
+Test Files  3 passed (3)
+Tests       204 passed (204)
+
+npx tsc --noEmit
+exit 0
+
+git diff --check
+exit 0
+```
+
+No local PostgreSQL instance is available, so validation, SQLSTATE, RLS, and
+aggregate behavior retain precise static-contract coverage only.
