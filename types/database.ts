@@ -691,6 +691,17 @@ export interface Database {
         Args: Record<PropertyKey, never>;
         Returns: boolean;
       };
+      create_supplier_registration: {
+        Args: {
+          p_user_id: string;
+          p_business_name: string;
+          p_address: string;
+          p_latitude: number;
+          p_longitude: number;
+          p_business_photo_url: string;
+        };
+        Returns: void;
+      };
       is_email_registered: {
         Args: { p_email: string };
         Returns: boolean;

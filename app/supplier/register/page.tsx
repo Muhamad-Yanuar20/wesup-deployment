@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import "leaflet/dist/leaflet.css";
+import { redirect } from "next/navigation";
+import { getViewerAccessState, resolveHomePath, type AccessStateClient } from "@/lib/auth/access-state";
+import { getServerClient } from "@/lib/supabase/server";
 import SupplierRegistrationForm from "@/components/supplier/SupplierRegistrationForm";
 
 export const dynamic = "force-dynamic";
@@ -9,7 +12,9 @@ export const metadata: Metadata = {
   description: "Daftar sebagai mitra pemasok bahan baku UMKM di Wesup.",
 };
 
-export default function SupplierRegistrationPage() {
+export default async function SupplierRegistrationPage() {
+  const viewer = await getViewerAccessState((await getServerClient()) as unknown as AccessStateClient);
+  if (viewer) redirect(resolveHomePath(viewer));
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,_#dbeafe,_transparent_38%),linear-gradient(180deg,_#f8fafc,_#eff6ff)] px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
       <div className="mx-auto w-full max-w-6xl">

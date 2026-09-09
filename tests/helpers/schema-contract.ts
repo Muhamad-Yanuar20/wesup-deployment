@@ -631,6 +631,7 @@ export const REQUIRED_FUNCTIONS = [
   "is_admin",
   "is_supplier",
   "is_approved_supplier",
+  "create_supplier_registration",
   "handle_new_user",
   "prevent_admin_audit_logs_mutation",
   "approve_supplier",
