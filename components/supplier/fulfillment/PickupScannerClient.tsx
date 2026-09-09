@@ -17,7 +17,7 @@ import {
   Users,
 } from "lucide-react";
 import { fulfillmentMockRepository } from "@/lib/supplier-fulfillment/mock-repository";
-import { supplierBatchMockRepository } from "@/lib/supplier-batch/mock-repository";
+import { supplierBatchApiRepository } from "@/lib/supplier-catalog/api-repository";
 import { pickupViewReducer, initialPickupViewState } from "@/lib/supplier-fulfillment/pickup-state";
 import type { FulfillmentError } from "@/lib/supplier-fulfillment/types";
 import { useToast } from "@/components/ui/GlobalToast";
@@ -45,7 +45,7 @@ export default function PickupScannerClient({ batchId }: { batchId: string }) {
 
   useEffect(() => {
     const controller = new AbortController();
-    void supplierBatchMockRepository
+    void supplierBatchApiRepository
       .getById(batchId, { signal: controller.signal })
       .then((batch) => {
         if (batch) setBatchTitle(batch.title);

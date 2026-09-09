@@ -4,9 +4,11 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Layout } from "@/components/layout/Layout";
 import MarketplaceDetailClient from "@/components/marketplace/MarketplaceDetailClient";
-import { marketplaceMockItems } from "@/lib/marketplace/mock-data";
+import { buildPublicMarketplaceUrl } from "@/lib/marketplace/share-link";
+import { fetchMarketplaceDetail } from "@/lib/marketplace/server-repository";
 import { getServerClient } from "@/lib/supabase/server";
 import { getCurrentUser, type AuthClient } from "@/lib/supabase/auth";
+import { isUuid } from "@/lib/admin/validation";
 
 export const dynamic = "force-dynamic";
 
@@ -18,17 +20,25 @@ export const metadata: Metadata = {
 export default async function MarketplaceDetailPage({
   params,
 }: {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ id: string }>;
 }) {
-  const { slug } = await params;
-  const item = marketplaceMockItems.find((candidate) => candidate.slug === slug) ?? marketplaceMockItems[0];
+  const { id } = await params;
+  if (!isUuid(id)) notFound();
 
-  if (!item) {
-    notFound();
-  }
+  const client = await getServerClient();
+  const item = await fetchMarketplaceDetail(client as never, id);
+  if (!item) notFound();
 
-  const viewer = await getCurrentUser((await getServerClient()) as unknown as AuthClient);
+  const viewer = await getCurrentUser(client as unknown as AuthClient);
   const viewerRole = viewer?.role ?? null;
+  const configuredSiteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+  if (!configuredSiteUrl && process.env.NODE_ENV === "production") {
+    throw new Error("NEXT_PUBLIC_SITE_URL must be configured for canonical marketplace links");
+  }
+  const canonicalUrl = buildPublicMarketplaceUrl(
+    id,
+    configuredSiteUrl ?? "http://localhost:3000",
+  );
 
   return (
     <Layout>
@@ -41,7 +51,11 @@ export default async function MarketplaceDetailPage({
           Kembali ke Marketplace
         </Link>
         <div className="mt-4">
-          <MarketplaceDetailClient item={item} viewerRole={viewerRole} />
+          <MarketplaceDetailClient
+            item={item}
+            canonicalUrl={canonicalUrl}
+            viewerRole={viewerRole}
+          />
         </div>
       </div>
     </Layout>

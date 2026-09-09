@@ -1,8 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const { incrMock, decrMock, getMock, setMock, evalMock, delMock } = vi.hoisted(() => ({
-  incrMock: vi.fn(),
-  decrMock: vi.fn(),
+const { incrbyMock, getMock, setMock, evalMock, delMock } = vi.hoisted(() => ({
+  incrbyMock: vi.fn(),
   getMock: vi.fn(),
   setMock: vi.fn(),
   evalMock: vi.fn(),
@@ -11,8 +10,7 @@ const { incrMock, decrMock, getMock, setMock, evalMock, delMock } = vi.hoisted((
 
 vi.mock("@/lib/redis", () => ({
   redis: {
-    incr: incrMock,
-    decr: decrMock,
+    incrby: incrbyMock,
     get: getMock,
     set: setMock,
     eval: evalMock,
@@ -23,7 +21,9 @@ vi.mock("@/lib/redis", () => ({
 import {
   incrementVolumeCounter,
   decrementVolumeCounter,
+  adjustVolumeCounter,
   getVolumeCounter,
+  restoreVolumeCounter,
   resetVolumeCounter,
   acquireCutoffLock,
   releaseCutoffLock,
@@ -33,28 +33,50 @@ const BATCH_ID = "44444444-4444-4444-8444-444444444444";
 
 describe("incrementVolumeCounter (Redis atomic INCR)", () => {
   beforeEach(() => {
-    incrMock.mockReset();
+    incrbyMock.mockReset();
   });
 
   it("increments the per-batch counter and returns the new count", async () => {
-    incrMock.mockResolvedValue(42);
+    incrbyMock.mockResolvedValue(42);
     const count = await incrementVolumeCounter(BATCH_ID);
     expect(count).toBe(42);
-    expect(incrMock).toHaveBeenCalledWith(`batch:${BATCH_ID}:count`);
+    expect(incrbyMock).toHaveBeenCalledWith(`batch:${BATCH_ID}:count`, 1);
   });
 });
 
 describe("decrementVolumeCounter (rollback on failed insert)", () => {
   beforeEach(() => {
-    decrMock.mockReset();
+    incrbyMock.mockReset();
   });
 
   it("decrements the per-batch counter and returns the new count", async () => {
-    decrMock.mockResolvedValue(8);
+    incrbyMock.mockResolvedValue(8);
     const count = await decrementVolumeCounter(BATCH_ID);
     expect(count).toBe(8);
-    expect(decrMock).toHaveBeenCalledWith(`batch:${BATCH_ID}:count`);
+    expect(incrbyMock).toHaveBeenCalledWith(`batch:${BATCH_ID}:count`, -1);
   });
+});
+
+describe("adjustVolumeCounter (quantity-aware atomic INCRBY)", () => {
+  beforeEach(() => {
+    incrbyMock.mockReset();
+  });
+
+  it("increments by the requested registration quantity", async () => {
+    incrbyMock.mockResolvedValue(17);
+    await expect(adjustVolumeCounter(BATCH_ID, 5)).resolves.toBe(17);
+    expect(incrbyMock).toHaveBeenCalledWith(`batch:${BATCH_ID}:count`, 5);
+  });
+
+  it.each([0, Number.MAX_SAFE_INTEGER + 1, Number.MIN_SAFE_INTEGER - 1])(
+    "rejects an invalid delta (%s) before touching Redis",
+    async (delta) => {
+      await expect(adjustVolumeCounter(BATCH_ID, delta)).rejects.toThrow(
+        "quantityDelta must be a non-zero safe integer",
+      );
+      expect(incrbyMock).not.toHaveBeenCalled();
+    },
+  );
 });
 
 describe("resetVolumeCounter (post-cutoff cleanup)", () => {
@@ -80,9 +102,21 @@ describe("getVolumeCounter", () => {
     expect(getMock).toHaveBeenCalledWith(`batch:${BATCH_ID}:count`);
   });
 
-  it("treats a missing key as zero volume", async () => {
+  it("returns null when the counter key is missing", async () => {
     getMock.mockResolvedValue(null);
-    await expect(getVolumeCounter(BATCH_ID)).resolves.toBe(0);
+    await expect(getVolumeCounter(BATCH_ID)).resolves.toBeNull();
+  });
+});
+
+describe("restoreVolumeCounter", () => {
+  beforeEach(() => {
+    setMock.mockReset();
+  });
+
+  it("hydrates a missing key from an authoritative aggregate", async () => {
+    setMock.mockResolvedValue("OK");
+    await restoreVolumeCounter(BATCH_ID, 23);
+    expect(setMock).toHaveBeenCalledWith(`batch:${BATCH_ID}:count`, 23);
   });
 });
 

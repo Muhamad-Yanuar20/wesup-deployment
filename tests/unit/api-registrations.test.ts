@@ -9,14 +9,13 @@ vi.mock("@/lib/supabase/server", () => ({
   getServerClient: vi.fn(),
 }));
 
-const { incrMock, decrMock, evalMock } = vi.hoisted(() => ({
-  incrMock: vi.fn(),
-  decrMock: vi.fn(),
+const { incrbyMock, evalMock } = vi.hoisted(() => ({
+  incrbyMock: vi.fn(),
   evalMock: vi.fn(),
 }));
 
 vi.mock("@/lib/redis", () => ({
-  redis: { incr: incrMock, decr: decrMock, eval: evalMock },
+  redis: { incrby: incrbyMock, eval: evalMock },
 }));
 
 vi.mock("@/lib/rate-limit", async () => {
@@ -102,10 +101,12 @@ function buildClient(opts: ClientOpts) {
   );
 
   const upsert = vi.fn(async () => ({ error: null }));
-  const insert = vi.fn(async () => ({
+  const insertSingle = vi.fn(async () => ({
     data: { id: "reg-1" },
     error: opts.insertError ?? null,
   }));
+  const selectInserted = vi.fn(() => ({ single: insertSingle }));
+  const insert = vi.fn(() => ({ select: selectInserted }));
 
   const rpc = vi.fn(async () => ({ data: null, error: null }));
 
@@ -137,7 +138,7 @@ function buildClient(opts: ClientOpts) {
 
   const client = { auth: { getUser }, from, rpc };
   mockGetServerClient.mockResolvedValue(client as unknown as SupabaseClient<Database>);
-  return { client, batchSingle, upsert, insert };
+  return { client, batchSingle, upsert, insert, insertSingle };
 }
 
 const validBody = {
@@ -154,9 +155,8 @@ describe("POST /api/registrations (atomic register)", () => {
     mockGetServerClient.mockReset();
     mockEnforceRateLimit.mockReset();
     mockEnforceRateLimit.mockResolvedValue(null as never);
-    incrMock.mockReset();
+    incrbyMock.mockReset();
     evalMock.mockReset();
-    decrMock.mockReset();
   });
 
   afterEach(() => {
@@ -165,14 +165,14 @@ describe("POST /api/registrations (atomic register)", () => {
 
   it("atomically increments the Redis counter and records the registration within the window", async () => {
     const { upsert, insert } = buildClient({});
-    incrMock.mockResolvedValue(17);
+    incrbyMock.mockResolvedValue(17);
 
     const res = await register(postJson(validBody) as unknown as Request);
     expect(res.status).toBe(201);
-    expect(incrMock).toHaveBeenCalledWith(`batch:${BATCH_ID}:count`);
+    expect(incrbyMock).toHaveBeenCalledWith(`batch:${BATCH_ID}:count`, 5);
     expect(upsert).not.toHaveBeenCalled();
     expect(insert).toHaveBeenCalled();
-    expect(decrMock).not.toHaveBeenCalled();
+    expect(incrbyMock).toHaveBeenCalledTimes(1);
   });
 
   it("rejects when called before registration opens", async () => {
@@ -180,7 +180,7 @@ describe("POST /api/registrations (atomic register)", () => {
     vi.setSystemTime(Date.parse("2026-08-31T23:00:00.000Z"));
     const res = await register(postJson(validBody) as unknown as Request);
     expect(res.status).toBe(403);
-    expect(incrMock).not.toHaveBeenCalled();
+    expect(incrbyMock).not.toHaveBeenCalled();
   });
 
   it.each([
@@ -191,14 +191,14 @@ describe("POST /api/registrations (atomic register)", () => {
     buildClient({});
     const res = await register(postJson(validBody) as unknown as Request);
     expect(res.status).toBe(403);
-    expect(incrMock).not.toHaveBeenCalled();
+    expect(incrbyMock).not.toHaveBeenCalled();
   });
 
   it("rejects a batch that is not published", async () => {
     buildClient({ batchStatus: "draft" });
     const res = await register(postJson(validBody) as unknown as Request);
     expect(res.status).toBe(403);
-    expect(incrMock).not.toHaveBeenCalled();
+    expect(incrbyMock).not.toHaveBeenCalled();
   });
 
   it("rejects when the batch does not exist", async () => {
@@ -213,7 +213,7 @@ describe("POST /api/registrations (atomic register)", () => {
       postJson({ ...validBody, quantity: 9999 }) as unknown as Request,
     );
     expect(res.status).toBe(400);
-    expect(incrMock).not.toHaveBeenCalled();
+    expect(incrbyMock).not.toHaveBeenCalled();
   });
 
   it("rejects a non-safe-integer quantity before touching Redis", async () => {
@@ -226,7 +226,7 @@ describe("POST /api/registrations (atomic register)", () => {
       postJson({ ...validBody, quantity: 9_007_199_254_740_993 }) as unknown as Request,
     );
     expect(res.status).toBe(400);
-    expect(incrMock).not.toHaveBeenCalled();
+    expect(incrbyMock).not.toHaveBeenCalled();
   });
 
   it("rejects invalid input", async () => {
@@ -237,7 +237,7 @@ describe("POST /api/registrations (atomic register)", () => {
 
   it("returns 503 (fail closed) when Redis is unavailable", async () => {
     buildClient({});
-    incrMock.mockRejectedValue(new Error("redis down"));
+    incrbyMock.mockRejectedValue(new Error("redis down"));
     const res = await register(postJson(validBody) as unknown as Request);
     expect(res.status).toBe(503);
     expect(evalMock).not.toHaveBeenCalled();
@@ -245,29 +245,29 @@ describe("POST /api/registrations (atomic register)", () => {
 
   it("decrements the Redis counter when the insert fails with a duplicate code 23505 (rolls back the INCR)", async () => {
     buildClient({ insertError: { code: "23505", message: "duplicate key value violates unique constraint" } });
-    incrMock.mockResolvedValue(9);
+    incrbyMock.mockResolvedValue(9);
 
     const res = await register(postJson(validBody) as unknown as Request);
     expect(res.status).toBe(409);
-    expect(decrMock).toHaveBeenCalledWith(`batch:${BATCH_ID}:count`);
+    expect(incrbyMock).toHaveBeenNthCalledWith(2, `batch:${BATCH_ID}:count`, -5);
   });
 
   it("decrements the Redis counter when the insert fails with a duplicate message and no code (legacy fallback)", async () => {
     buildClient({ insertError: { message: "duplicate key value violates unique constraint" } });
-    incrMock.mockResolvedValue(9);
+    incrbyMock.mockResolvedValue(9);
 
     const res = await register(postJson(validBody) as unknown as Request);
     expect(res.status).toBe(409);
-    expect(decrMock).toHaveBeenCalledWith(`batch:${BATCH_ID}:count`);
+    expect(incrbyMock).toHaveBeenNthCalledWith(2, `batch:${BATCH_ID}:count`, -5);
   });
 
   it("decrements the Redis counter when the insert fails for an unknown reason", async () => {
     buildClient({ insertError: { message: "db down" } });
-    incrMock.mockResolvedValue(9);
+    incrbyMock.mockResolvedValue(9);
 
     const res = await register(postJson(validBody) as unknown as Request);
     expect(res.status).toBe(500);
-    expect(decrMock).toHaveBeenCalledWith(`batch:${BATCH_ID}:count`);
+    expect(incrbyMock).toHaveBeenNthCalledWith(2, `batch:${BATCH_ID}:count`, -5);
   });
 
   it("returns 429 when the UMKM is rate limited", async () => {

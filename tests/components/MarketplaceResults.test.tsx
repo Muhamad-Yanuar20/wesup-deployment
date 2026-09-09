@@ -9,7 +9,6 @@ import { renderComponent as render } from "./test-utils";
 const MOCK_ITEMS: MarketplaceItem[] = [
   {
     id: "item-1",
-    slug: "slug-1",
     title: "Cabai Merah",
     supplierName: "Mitra 1",
     category: "Sayur & Buah",
@@ -28,7 +27,6 @@ const MOCK_ITEMS: MarketplaceItem[] = [
   },
   {
     id: "item-2",
-    slug: "slug-2",
     title: "Ikan Gurame",
     supplierName: "Mitra 2",
     category: "Daging & Ikan",

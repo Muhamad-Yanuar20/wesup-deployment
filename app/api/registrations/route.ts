@@ -13,7 +13,7 @@ import {
   type BatchTimeline,
   type Tier,
 } from "@/lib/orders/time-gatekeeper";
-import { incrementVolumeCounter, decrementVolumeCounter } from "@/lib/orders/registration-counter";
+import { adjustVolumeCounter } from "@/lib/orders/registration-counter";
 
 export const dynamic = "force-dynamic";
 
@@ -121,14 +121,18 @@ export async function POST(req: Request) {
 
   let newCount: number;
   try {
-    newCount = await incrementVolumeCounter(batchId);
+    newCount = await adjustVolumeCounter(batchId, quantity);
   } catch {
     return NextResponse.json({ error: "Service unavailable" }, { status: 503 });
   }
 
   const registrations = client.from("registrations");
   const { data: inserted, error: insertErr } = await (registrations as never as {
-    insert: (row: never) => PromiseLike<{ data: { id: string } | null; error: Error | null }>;
+    insert: (row: never) => {
+      select: (columns: string) => {
+        single: () => PromiseLike<{ data: { id: string } | null; error: Error | null }>;
+      };
+    };
   }).insert({
     batch_id: batchId,
     umkm_id: authCtx.userId,
@@ -137,17 +141,22 @@ export async function POST(req: Request) {
     consent_latitude: consentLat,
     consent_longitude: consentLng,
     status: "registered",
-  } as never);
+  } as never).select("id").single();
 
   if (insertErr && isDuplicateKeyError(insertErr)) {
-    await decrementVolumeCounter(batchId).catch(() => undefined);
+    await adjustVolumeCounter(batchId, -quantity).catch(() => undefined);
     return NextResponse.json(
       { error: "Anda sudah terdaftar pada penawaran ini" },
       { status: 409 },
     );
   }
   if (insertErr) {
-    await decrementVolumeCounter(batchId).catch(() => undefined);
+    await adjustVolumeCounter(batchId, -quantity).catch(() => undefined);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+
+  if (!inserted) {
+    await adjustVolumeCounter(batchId, -quantity).catch(() => undefined);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 

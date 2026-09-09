@@ -236,6 +236,7 @@ export interface Database {
           category: string;
           min_quantity: number;
           product_photo_url: string | null;
+          pickup_name: string;
           pickup_address: string;
           latitude: number;
           longitude: number;
@@ -256,6 +257,7 @@ export interface Database {
           category: string;
           min_quantity: number;
           product_photo_url?: string | null;
+          pickup_name?: string;
           pickup_address: string;
           latitude: number;
           longitude: number;
@@ -788,6 +790,131 @@ export interface Database {
         };
         Returns: void;
       };
+      catalog_supplier_approved: {
+        Args: Record<PropertyKey, never>;
+        Returns: boolean;
+      };
+      create_supplier_batch: {
+        Args: {
+          p_title: string;
+          p_description: string;
+          p_category: string;
+          p_min_quantity: number;
+          p_pickup_name: string;
+          p_pickup_address: string;
+          p_latitude: number;
+          p_longitude: number;
+          p_registration_opens_at: string;
+          p_registration_closes_at: string;
+          p_payment_opens_at: string;
+          p_payment_closes_at: string;
+          p_estimated_ready_at: string;
+          p_tiers: unknown;
+        };
+        Returns: string;
+      };
+      publish_supplier_batch: {
+        Args: { p_batch_id: string; p_product_photo_url: string };
+        Returns: void;
+      };
+      update_and_publish_supplier_batch: { Args: { p_batch_id: string; p_title: string; p_description: string; p_category: string; p_min_quantity: number; p_product_photo_url: string; p_pickup_name: string; p_pickup_address: string; p_latitude: number; p_longitude: number; p_registration_opens_at: string; p_registration_closes_at: string; p_payment_opens_at: string; p_payment_closes_at: string; p_estimated_ready_at: string; p_tiers: unknown; }; Returns: void; };
+      update_supplier_batch: {
+        Args: {
+          p_batch_id: string;
+          p_title: string;
+          p_description: string;
+          p_category: string;
+          p_min_quantity: number;
+          p_product_photo_url: string | null;
+          p_pickup_name: string;
+          p_pickup_address: string;
+          p_latitude: number;
+          p_longitude: number;
+          p_registration_opens_at: string;
+          p_registration_closes_at: string;
+          p_payment_opens_at: string;
+          p_payment_closes_at: string;
+          p_estimated_ready_at: string;
+          p_tiers: unknown;
+        };
+        Returns: void;
+      };
+      delete_supplier_batch: {
+        Args: { p_batch_id: string };
+        Returns: void;
+      };
+      get_supplier_batch: {
+        Args: { p_batch_id: string };
+        Returns: {
+          id: string;
+          supplier_name: string;
+          title: string;
+          description: string | null;
+          category: string;
+          min_quantity: number;
+          product_photo_url: string | null;
+          pickup_name: string;
+          pickup_address: string;
+          latitude: number;
+          longitude: number;
+          status: BatchStatus;
+          registration_opens_at: string;
+          registration_closes_at: string;
+          payment_opens_at: string;
+          payment_closes_at: string;
+          estimated_ready_at: string;
+          tiers: unknown;
+          registered_quantity: number;
+          participant_count: number;
+          paid_participant_count: number;
+          cancelled_reason: string | null;
+          updated_at: string;
+          created_at: string;
+        }[];
+      };
+      list_supplier_batches: {
+        Args: { p_status?: BatchStatus | null; p_query?: string | null };
+        Returns: {
+          id: string;
+          supplier_name: string;
+          title: string;
+          description: string | null;
+          category: string;
+          min_quantity: number;
+          product_photo_url: string | null;
+          pickup_name: string;
+          pickup_address: string;
+          latitude: number;
+          longitude: number;
+          status: BatchStatus;
+          registration_opens_at: string;
+          registration_closes_at: string;
+          payment_opens_at: string;
+          payment_closes_at: string;
+          estimated_ready_at: string;
+          tiers: unknown;
+          registered_quantity: number;
+          participant_count: number;
+          paid_participant_count: number;
+          cancelled_reason: string | null;
+          updated_at: string;
+          created_at: string;
+        }[];
+      };
+      get_supplier_dashboard_summary: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          supplier_name: string;
+          supplier_status: VerificationStatus;
+          active_batch_count: number;
+          total_participant_count: number;
+          collected_revenue: number;
+          ready_to_disburse: number;
+          average_rating: number;
+          rating_count: number;
+          recent_batches: unknown;
+        }[];
+      };
       search_batches: {
         Args: {
           p_query?: string | null;
@@ -795,12 +922,14 @@ export interface Database {
           p_lat?: number | null;
           p_lng?: number | null;
           p_radius_km?: number | null;
+          p_min_price?: number | null;
+          p_max_price?: number | null;
           p_limit?: number | null;
           p_offset?: number | null;
         };
         Returns: {
           id: string;
-          supplier_id: string;
+          supplier_name: string;
           title: string;
           description: string | null;
           category: string;
@@ -810,6 +939,34 @@ export interface Database {
           latitude: number;
           longitude: number;
           tiers: unknown;
+          registered_quantity: number;
+          current_price_per_unit: number;
+          registration_closes_at: string | null;
+          distance_km: number | null;
+          total_count: number;
+        }[];
+      };
+      get_marketplace_batch: {
+        Args: {
+          p_batch_id: string;
+          p_lat?: number | null;
+          p_lng?: number | null;
+        };
+        Returns: {
+          id: string;
+          supplier_name: string;
+          title: string;
+          description: string | null;
+          category: string;
+          min_quantity: number;
+          product_photo_url: string | null;
+          pickup_address: string;
+          latitude: number;
+          longitude: number;
+          tiers: unknown;
+          registered_quantity: number;
+          current_price_per_unit: number;
+          registration_closes_at: string | null;
           distance_km: number | null;
           total_count: number;
         }[];
