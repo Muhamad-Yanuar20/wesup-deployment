@@ -39,7 +39,7 @@ describe("supplier catalog UI states", () => {
     render(<CatalogListClient />);
     expect(screen.getByRole("region", { name: /daftar katalog/i })).toHaveAttribute("aria-busy", "true");
     await waitFor(() => expect(screen.getByText("Beras real")).toBeInTheDocument());
-    expect(screen.getByAltText("Beras real")).toHaveAttribute("src", ITEM.imageUrl);
+    expect(screen.getByAltText("Foto produk Beras real")).toHaveAttribute("src");
     expect(list).toHaveBeenCalledWith(expect.objectContaining({ query: "" }));
   });
   it("renders an empty state for an empty API response", async () => {
@@ -57,6 +57,13 @@ describe("supplier catalog UI states", () => {
   it("renders the real image and active status on a catalog card", () => {
     render(<CatalogCard batch={ITEM} />);
     expect(screen.getByText("Aktif")).toBeInTheDocument();
-    expect(screen.getByRole("img", { name: "Beras real" })).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "Foto produk Beras real" })).toBeInTheDocument();
+  });
+  it("falls back to the product placeholder when the image fails", async () => {
+    render(<CatalogCard batch={ITEM} />);
+    const image = screen.getByRole("img", { name: "Foto produk Beras real" });
+    image.dispatchEvent(new Event("error"));
+    await waitFor(() => expect(screen.queryByRole("img", { name: "Foto produk Beras real" })).not.toBeInTheDocument());
+    expect(screen.getByText("Aktif")).toBeInTheDocument();
   });
 });

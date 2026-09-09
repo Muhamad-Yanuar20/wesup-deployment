@@ -19,6 +19,7 @@ import TierPricingStep from "@/components/supplier/catalog/steps/TierPricingStep
 import TimelineStep from "@/components/supplier/catalog/steps/TimelineStep";
 import PickupLocationStep from "@/components/supplier/catalog/steps/PickupLocationStep";
 import CatalogReviewStep from "@/components/supplier/catalog/steps/CatalogReviewStep";
+import CatalogSuccessDialog, { successKindFor } from "@/components/supplier/catalog/CatalogSuccessDialog";
 
 type SubmitPhase = "idle" | "saving" | "saved";
 
@@ -116,6 +117,8 @@ export default function CreateCatalogForm({
   const [errors, setErrors] = useState<FieldErrors>({});
   const [globalError, setGlobalError] = useState<string>();
   const [submitPhase, setSubmitPhase] = useState<SubmitPhase>("idle");
+  const [activeAction, setActiveAction] = useState<CatalogMutationAction>(submitAction);
+  const [successfulAction, setSuccessfulAction] = useState<CatalogMutationAction | null>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const previousStepRef = useRef<CatalogDraftStep>(1);
   const pendingErrorFocusRef = useRef<FieldErrors | null>(null);
@@ -192,6 +195,8 @@ export default function CreateCatalogForm({
     const controller = new AbortController();
     submitControllerRef.current = controller;
     setGlobalError(undefined);
+    setActiveAction(action);
+    setSuccessfulAction(null);
     setSubmitPhase("saving");
     try {
       if (batchId) {
@@ -199,7 +204,10 @@ export default function CreateCatalogForm({
       } else {
         await supplierCatalogApiRepository.create(draft, action, { signal: controller.signal });
       }
-      if (!controller.signal.aborted) setSubmitPhase("saved");
+      if (!controller.signal.aborted) {
+        setSuccessfulAction(action);
+        setSubmitPhase("saved");
+      }
     } catch (error) {
       if (!controller.signal.aborted) {
         setSubmitPhase("idle");
@@ -295,21 +303,18 @@ export default function CreateCatalogForm({
             )}
             <button type="submit" disabled={submitting} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-60 sm:min-w-56">
               {submitPhase === "saving" ? <LoaderCircle className="h-5 w-5 animate-spin" aria-hidden="true" /> : submitPhase === "saved" ? <CheckCircle2 className="h-5 w-5" aria-hidden="true" /> : currentStep === 5 ? <CheckCircle2 className="h-5 w-5" aria-hidden="true" /> : <ArrowRight className="h-5 w-5" aria-hidden="true" />}
-              {submitPhase === "saving" ? (submitAction === "publish" ? "Menerbitkan..." : "Menyimpan...") : submitPhase === "saved" ? "Berhasil Disimpan!" : currentStep === 5 ? (submitLabel ?? (submitAction === "publish" ? "Terbitkan Penawaran" : "Simpan Perubahan")) : "Lanjut"}
+              {submitPhase === "saving" ? (activeAction === "publish" ? "Menerbitkan..." : "Menyimpan...") : submitPhase === "saved" ? "Berhasil Disimpan!" : currentStep === 5 ? (submitLabel ?? (submitAction === "publish" ? "Terbitkan Penawaran" : "Simpan Perubahan")) : "Lanjut"}
             </button>
           </div>
         </div>
         {currentStep === 5 && <p className="mt-4 text-center text-xs leading-5 text-slate-500">Dengan menerbitkan, Anda menyetujui bahwa data penawaran akan tayang di marketplace Wesup. Draft tetap tersimpan privat sampai diterbitkan.</p>}
       </form>
 
-      {submitPhase === "saved" && (
-        <div className="mt-6 rounded-xl border border-emerald-200 bg-emerald-50 p-6 text-center">
-          <CheckCircle2 size={40} className="mx-auto text-emerald-500" />
-          <h3 className="mt-3 text-lg font-bold text-emerald-900">{submitAction === "publish" ? (initialDraft ? "Penawaran berhasil diterbitkan!" : "Penawaran berhasil diterbitkan!") : "Perubahan berhasil disimpan!"}</h3>
-          <p className="mt-1 text-sm text-emerald-700">{submitAction === "publish" ? "Katalog Anda sekarang tayang di marketplace dan dapat dilihat oleh UMKM." : "Katalog Anda tersimpan sebagai draft dan belum tayang di marketplace."}</p>
-          <button type="button" onClick={() => router.push("/supplier/catalog")} className="mt-4 inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700">Lihat Katalog Saya</button>
-        </div>
-      )}
+      <CatalogSuccessDialog
+        open={submitPhase === "saved" && successfulAction !== null}
+        kind={successfulAction ? successKindFor(successfulAction, batchId) : "draft"}
+        onClose={() => router.push("/supplier/catalog")}
+      />
     </>
   );
 }
