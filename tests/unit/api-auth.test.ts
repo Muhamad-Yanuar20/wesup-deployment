@@ -104,14 +104,17 @@ describe("POST /api/auth/signup", () => {
       email: "buyer@example.com",
       password: "password123",
       full_name: "Budi Buyer",
+      phone: "081234567890",
     }));
     expect(res.status).toBe(201);
     await expect(res.json()).resolves.toEqual({
       user: { id: "u-1", email: "buyer@example.com" },
+      requiresEmailConfirmation: false,
     });
     expect(auth.signUp).toHaveBeenCalledWith({
       email: "buyer@example.com",
       password: "password123",
+      phone: "081234567890",
       options: { data: { full_name: "Budi Buyer" } },
     });
   });
@@ -195,11 +198,12 @@ describe("POST /api/auth/signup", () => {
       email: "taken@example.com",
       password: "password123",
       full_name: "Budi Buyer",
+      phone: "081234567890",
     }));
     expect(res.status).toBe(409);
     await expect(res.json()).resolves.toEqual({
-      code: "user_already_exists",
-      error: "User already registered",
+      code: "email_registered_other_role",
+      error: "Email ini sudah terdaftar untuk role lain. Silakan masuk menggunakan role akun sebelumnya.",
     });
   });
 
@@ -215,6 +219,7 @@ describe("POST /api/auth/signup", () => {
       email: "buyer@example.com",
       password: "password123",
       full_name: "Budi Buyer",
+      phone: "081234567890",
     }));
     expect(res.status).toBe(500);
     await expect(res.json()).resolves.toEqual({ error: "Internal server error" });
