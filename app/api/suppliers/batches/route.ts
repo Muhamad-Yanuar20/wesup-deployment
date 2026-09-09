@@ -22,8 +22,8 @@ interface CatalogClient {
   rpc: (name: string, args?: Record<string, unknown>) => PromiseLike<{ data: unknown; error: unknown }>;
   storage: {
     from: (bucket: "wesup-public") => {
-      upload: (path: string, file: File, options: { contentType: string; cacheControl: string; upsert: boolean }) => PromiseLike<{ data: { path: string } | null; error: { message?: string } | null }>;
-      remove: (paths: string[]) => PromiseLike<{ error: { message?: string } | null }>;
+      upload: (path: string, file: File, options: { contentType: string; cacheControl: string; upsert: boolean }) => PromiseLike<{ data: { path: string } | null; error: { message?: string; code?: string; statusCode?: number | string } | null }>;
+      remove: (paths: string[]) => PromiseLike<{ error: { message?: string; code?: string; statusCode?: number | string } | null }>;
       getPublicUrl: (path: string) => { data: { publicUrl: string } };
     };
   };
@@ -155,7 +155,17 @@ async function uploadPhoto(client: CatalogClient, batchId: string, photo: File) 
     cacheControl: "3600",
     upsert: false,
   });
-  if (error || !data) throw new CatalogApiError(500, "Foto produk belum dapat diunggah.", "SUPPLIER_CATALOG_UPLOAD_FAILED");
+  if (error || !data) {
+    console.error("[suppliers/batches] product photo upload failed", {
+      batchId,
+      path,
+      code: error?.code,
+      statusCode: error?.statusCode,
+      message: error?.message ?? "Storage upload returned no object",
+    });
+    throw new CatalogApiError(500, "Foto produk belum dapat diunggah.", "SUPPLIER_CATALOG_UPLOAD_FAILED");
+  }
+
   return { path: data.path, url: client.storage.from("wesup-public").getPublicUrl(data.path).data.publicUrl };
 }
 
