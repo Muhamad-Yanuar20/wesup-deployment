@@ -121,7 +121,7 @@ export default function PickupCredentialClient({
 
       {banner ? (
         <section
-          aria-label={`Statuts pesanan: ${banner.label}`}
+          aria-label={`Status pesanan: ${banner.label}`}
           className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
         >
           <div className="flex items-start gap-3">
@@ -250,7 +250,7 @@ function PaidCredential({ credential }: { credential: PickupCredential }) {
       <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
         <h2 className="mb-2 flex items-center gap-2 font-semibold text-slate-900">
           <KeyRound aria-hidden="true" size={18} className="text-blue-600" />
-          PIN 4 Digit Cadangan
+          PIN 4-digit Cadangan
         </h2>
         <p className="mb-4 text-xs text-slate-500">
           Gunakan PIN ini jika kamera Supplier bermasalah (fallback operasional).

@@ -19,6 +19,7 @@ function makeOrder(
     displayCode: "ORD-0000",
     umkmName: "UMKM A",
     quantity: 1,
+    unit: "kg",
     status: "paid",
     finalAmount: 100_000,
     lockedTier: 1,

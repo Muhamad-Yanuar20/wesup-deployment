@@ -16,6 +16,7 @@ export interface FulfillmentOrder {
   displayCode: string;
   umkmName: string;
   quantity: number;
+  unit: string;
   status: FulfillmentOrderStatus;
   finalAmount: number | null;
   lockedTier: number | null;

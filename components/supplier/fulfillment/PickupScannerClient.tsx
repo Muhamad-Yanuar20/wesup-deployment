@@ -313,7 +313,7 @@ export default function PickupScannerClient({ batchId }: { batchId: string }) {
                     <div className="flex justify-between">
                       <dt>Kuantitas</dt>
                       <dd className="font-semibold text-slate-900">
-                        {selectedOrder.quantity} pcs
+                        {selectedOrder.quantity} {selectedOrder.unit}
                       </dd>
                     </div>
                     <div className="flex justify-between">
@@ -382,7 +382,11 @@ export default function PickupScannerClient({ batchId }: { batchId: string }) {
 
           {state.method === "qr" ? (
             <div className="mt-4">
-              <div className="relative mx-auto flex aspect-square max-w-[220px] items-center justify-center overflow-hidden rounded-xl border-2 border-dashed border-slate-300 bg-slate-50">
+              <div
+                role="img"
+                aria-label="Area pemindaian QR"
+                className="relative mx-auto flex aspect-square max-w-[220px] items-center justify-center overflow-hidden rounded-xl border-2 border-dashed border-slate-300 bg-slate-50"
+              >
                 <div className="absolute left-3 top-3 h-7 w-7 rounded-tl-lg border-l-2 border-t-2 border-blue-400" />
                 <div className="absolute right-3 top-3 h-7 w-7 rounded-tr-lg border-r-2 border-t-2 border-blue-400" />
                 <div className="absolute bottom-3 left-3 h-7 w-7 rounded-bl-lg border-b-2 border-l-2 border-blue-400" />
@@ -410,7 +414,7 @@ export default function PickupScannerClient({ batchId }: { batchId: string }) {
           ) : (
             <div className="mt-4">
               <label htmlFor="pin-code" className="block text-sm font-semibold text-slate-800">
-                PIN 4 digit UMKM
+                PIN 4-digit UMKM
               </label>
               <input
                 id="pin-code"
