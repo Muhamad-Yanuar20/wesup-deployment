@@ -1,9 +1,12 @@
-"use client";
+﻿"use client";
 
-import { useState, type FormEvent } from "react";
+import { useCallback, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowRight, Eye, EyeOff, LoaderCircle, Mail, Phone, Store, UserRound } from "lucide-react";
+import { ArrowRight, Eye, EyeOff, LoaderCircle, MapPinned, Mail, Phone, Store, UserRound } from "lucide-react";
+import BusinessLocationPickerClient from "@/components/maps/BusinessLocationPickerClient";
+import type { MapCoordinate } from "@/lib/maps/leaflet-demo";
+import UmkmRegistrationSuccessDialog from "./UmkmRegistrationSuccessDialog";
 
 interface SignupFieldErrors {
   full_name?: string;
@@ -11,6 +14,7 @@ interface SignupFieldErrors {
   email?: string;
   password?: string;
   password_confirmation?: string;
+  location?: string;
 }
 
 interface UmkmSignupFormProps {
@@ -19,6 +23,8 @@ interface UmkmSignupFormProps {
 
 const PHONE_RE = /^\+?[0-9][0-9\s-]{7,19}$/;
 
+type SignupResponse = { error?: string; fieldErrors?: SignupFieldErrors; requiresEmailConfirmation?: boolean };
+
 export default function UmkmSignupForm({ returnTo = null }: UmkmSignupFormProps) {
   const router = useRouter();
   const [fullName, setFullName] = useState("");
@@ -26,12 +32,13 @@ export default function UmkmSignupForm({ returnTo = null }: UmkmSignupFormProps)
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmation, setConfirmation] = useState("");
+  const [coordinate, setCoordinate] = useState<MapCoordinate | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<SignupFieldErrors>({});
   const [globalError, setGlobalError] = useState<string>();
   const [submitting, setSubmitting] = useState(false);
-  const [confirmationSent, setConfirmationSent] = useState(false);
+  const [registrationSuccess, setRegistrationSuccess] = useState<boolean | null>(null);
 
   function validate(): SignupFieldErrors {
     const errors: SignupFieldErrors = {};
@@ -40,6 +47,7 @@ export default function UmkmSignupForm({ returnTo = null }: UmkmSignupFormProps)
     if (!/^\S+@\S+\.\S+$/.test(email.trim())) errors.email = "Masukkan alamat email yang valid.";
     if (password.length < 8) errors.password = "Password minimal 8 karakter.";
     if (confirmation !== password) errors.password_confirmation = "Konfirmasi password belum sama.";
+    if (!coordinate) errors.location = "Pilih titik lokasi usaha pada peta.";
     return errors;
   }
 
@@ -62,20 +70,17 @@ export default function UmkmSignupForm({ returnTo = null }: UmkmSignupFormProps)
           phone: phone.trim(),
           email: email.trim().toLowerCase(),
           password,
+          latitude: coordinate?.lat,
+          longitude: coordinate?.lng,
         }),
       });
-      const body = (await response.json()) as { error?: string; fieldErrors?: SignupFieldErrors; requiresEmailConfirmation?: boolean };
+      const body = (await response.json()) as SignupResponse;
       if (!response.ok) {
         setFieldErrors(body.fieldErrors ?? {});
         setGlobalError(body.error ?? "Pendaftaran belum dapat diproses.");
         return;
       }
-      if (body.requiresEmailConfirmation) {
-        setConfirmationSent(true);
-        return;
-      }
-      router.replace(returnTo ?? "/umkm");
-      router.refresh();
+      setRegistrationSuccess(Boolean(body.requiresEmailConfirmation));
     } catch {
       setGlobalError("Koneksi bermasalah. Periksa internet Anda lalu coba lagi.");
     } finally {
@@ -91,18 +96,11 @@ export default function UmkmSignupForm({ returnTo = null }: UmkmSignupFormProps)
     return fieldErrors[field] ? <p id={`${field}-error`} className="mt-1.5 text-xs font-medium text-red-600" role="alert">{fieldErrors[field]}</p> : null;
   }
 
-  if (confirmationSent) {
-    return (
-      <section className="rounded-3xl border border-emerald-200 bg-emerald-50 p-6 text-center sm:p-8" role="status" aria-live="polite">
-        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-emerald-600 shadow-sm">
-          <Mail className="h-7 w-7" aria-hidden="true" />
-        </div>
-        <h2 className="mt-5 text-xl font-extrabold text-slate-950">Cek email untuk mengaktifkan akun</h2>
-        <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-slate-600">Kami mengirim tautan konfirmasi ke <strong>{email}</strong>. Setelah dikonfirmasi, masuk sebagai UMKM untuk melanjutkan.</p>
-        <Link href={loginHref} className="mt-6 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-sm font-bold text-white hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2">Ke halaman masuk <ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>
-      </section>
-    );
-  }
+  const closeSuccessDialog = useCallback(() => {
+    setRegistrationSuccess(null);
+    router.push("/");
+    router.refresh();
+  }, [router]);
 
   return (
     <form onSubmit={handleSubmit} noValidate className="space-y-5">
@@ -144,11 +142,20 @@ export default function UmkmSignupForm({ returnTo = null }: UmkmSignupFormProps)
         {fieldError("password_confirmation")}
       </div>
 
+      <fieldset className="rounded-2xl border border-blue-100 bg-blue-50/50 p-4 sm:p-5">
+        <legend className="px-1 text-sm font-semibold text-slate-900"><span className="inline-flex items-center gap-2"><MapPinned className="h-4 w-4 text-blue-600" aria-hidden="true" />Lokasi UMKM</span></legend>
+        <p className="mt-1 text-sm leading-6 text-slate-600">Pilih lokasi usaha Anda agar kami dapat menampilkan batch supplier terdekat. Lokasi wajib berada maksimal 50 km dari pusat layanan Bandung.</p>
+        <div className="mt-4">
+          <BusinessLocationPickerClient value={coordinate} onChange={setCoordinate} error={fieldErrors.location} label="Lokasi UMKM" />
+        </div>
+      </fieldset>
+
       <button type="submit" disabled={submitting} className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-3.5 text-base font-bold text-white shadow-sm transition hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60">
         {submitting ? <LoaderCircle className="h-5 w-5 animate-spin" aria-hidden="true" /> : <ArrowRight className="h-5 w-5" aria-hidden="true" />}
         {submitting ? "Membuat akun…" : "Buat akun UMKM"}
       </button>
       <p className="text-center text-sm text-slate-500">Sudah punya akun? <Link href={loginHref} className="font-bold text-blue-700 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">Masuk di sini</Link></p>
+      <UmkmRegistrationSuccessDialog open={registrationSuccess !== null} requiresEmailConfirmation={registrationSuccess === true} loginHref={loginHref} onClose={closeSuccessDialog} />
     </form>
   );
 }
