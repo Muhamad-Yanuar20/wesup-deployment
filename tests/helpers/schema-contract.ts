@@ -172,9 +172,7 @@ export const EXPECTED_TABLES: Record<string, ExpectedTable> = {
     },
     notNull: [
       "user_id",
-      "business_name",
-      "address",
-      "latitude",
+       "latitude",
       "longitude",
       "strike_count",
       "created_at",
@@ -632,6 +630,7 @@ export const REQUIRED_FUNCTIONS = [
   "is_supplier",
   "is_approved_supplier",
   "create_supplier_registration",
+  "create_umkm_registration",
   "handle_new_user",
   "prevent_admin_audit_logs_mutation",
   "approve_supplier",

@@ -147,8 +147,8 @@ export interface Database {
       umkm_profiles: {
         Row: {
           user_id: string;
-          business_name: string;
-          address: string;
+          business_name: string | null;
+          address: string | null;
           latitude: number;
           longitude: number;
           strike_count: number;
@@ -158,8 +158,8 @@ export interface Database {
         };
         Insert: {
           user_id: string;
-          business_name: string;
-          address: string;
+          business_name?: string | null;
+          address?: string | null;
           latitude: number;
           longitude: number;
           strike_count?: number;
@@ -699,6 +699,14 @@ export interface Database {
           p_latitude: number;
           p_longitude: number;
           p_business_photo_url: string;
+        };
+        Returns: void;
+      };
+      create_umkm_registration: {
+        Args: {
+          p_user_id: string;
+          p_latitude: number;
+          p_longitude: number;
         };
         Returns: void;
       };

@@ -49,7 +49,7 @@ ik` unique (global NIK duplication check), `verification_status`, `verified_by/a
 
 **`supplier_bank_accounts`** / **`umkm_bank_accounts`** — disbursement (supplier payout) and refund destinations (UMKM). 1:N with profiles.
 
-**`umkm_profiles`** — consumer record: `strike_count` (Hit-and-Run), `suspended_until`, business address + coordinates.
+**`umkm_profiles`** — consumer record: `strike_count` (Hit-and-Run), `suspended_until`, optional business name/address during location-first signup, and Bandung-bounded coordinates. A row with only coordinates is intentionally incomplete until the UMKM finishes onboarding.
 
 ### Module 2 — Catalog & Campaign (migration 0002)
 
