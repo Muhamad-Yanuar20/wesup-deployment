@@ -1,38 +1,39 @@
 import { NextResponse } from "next/server";
-import {
-  requireRole,
-  toAuthResponse,
-  type AuthClient,
-} from "@/lib/supabase/auth";
-import { getServerClient } from "@/lib/supabase/server";
-import { isUuid } from "@/lib/admin/validation";
-
-export const dynamic = "force-dynamic";
+import { getAdminClient } from "@/lib/supabase/admin";
 
 export async function POST(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> },
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params;
-  if (!isUuid(id)) {
-    return NextResponse.json({ error: "Invalid supplier id" }, { status: 400 });
-  }
-
-  const client = await getServerClient();
   try {
-    await requireRole(client as unknown as AuthClient, ["admin"]);
-  } catch (err) {
-    return toAuthResponse(err);
-  }
+    const { id } = await params;
+    const supabase = getAdminClient();
 
-  const { error } = await client.rpc("approve_supplier", {
-    p_user_id: id,
-    p_ip_address: req.headers.get("x-forwarded-for") ?? null,
-    p_user_agent: req.headers.get("user-agent") ?? null,
-  });
-  if (error) {
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
+    const { error: updateError } = await supabase
+      .from("supplier_profiles")
+      .update({
+        verification_status: "approved",
+        verified_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq("user_id", id);
 
-  return NextResponse.json({ ok: true });
+    if (updateError) {
+      console.error("Gagal update supplier_profiles:", updateError);
+      return NextResponse.json({ error: updateError.message }, { status: 500 });
+    }
+
+    await supabase
+      .from("profiles")
+      .update({ role: "supplier", updated_at: new Date().toISOString() })
+      .eq("id", id);
+
+    return NextResponse.json({ success: true, message: "Supplier disetujui." });
+  } catch (err: any) {
+    console.error("Approve API Error:", err);
+    return NextResponse.json(
+      { error: err.message || "Gagal memproses persetujuan." },
+      { status: 500 }
+    );
+  }
 }

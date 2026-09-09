@@ -1,47 +1,39 @@
 import { NextResponse } from "next/server";
-import {
-  requireRole,
-  toAuthResponse,
-  type AuthClient,
-} from "@/lib/supabase/auth";
-import { getServerClient } from "@/lib/supabase/server";
-import { isUuid, parseJsonBody } from "@/lib/admin/validation";
-
-export const dynamic = "force-dynamic";
+import { getAdminClient } from "@/lib/supabase/admin";
 
 export async function POST(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> },
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params;
-  if (!isUuid(id)) {
-    return NextResponse.json({ error: "Invalid supplier id" }, { status: 400 });
-  }
+  try {
+    const { id } = await params;
+    const body = await request.json().catch(() => ({}));
+    const reason = body.reason || "Pendaftaran ditolak oleh admin.";
 
-  const body = await parseJsonBody(req);
-  if (!body || typeof body.reason !== "string" || body.reason.trim() === "") {
+    const supabase = getAdminClient();
+
+    // Update verification_status dan sertakan catatan penolakan
+    const { error: updateError } = await supabase
+      .from("supplier_profiles")
+      .update({
+        verification_status: "rejected",
+        verification_notes: reason,
+        verified_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq("user_id", id);
+
+    if (updateError) {
+      console.error("Gagal update supplier_profiles:", updateError);
+      return NextResponse.json({ error: updateError.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true, message: "Supplier ditolak." });
+  } catch (err: any) {
+    console.error("Reject API Error:", err);
     return NextResponse.json(
-      { error: "Rejection reason is required" },
-      { status: 400 },
+      { error: err.message || "Gagal memproses penolakan." },
+      { status: 500 }
     );
   }
-
-  const client = await getServerClient();
-  try {
-    await requireRole(client as unknown as AuthClient, ["admin"]);
-  } catch (err) {
-    return toAuthResponse(err);
-  }
-
-  const { error } = await client.rpc("reject_supplier", {
-    p_user_id: id,
-    p_reason: body.reason.trim(),
-    p_ip_address: req.headers.get("x-forwarded-for") ?? null,
-    p_user_agent: req.headers.get("user-agent") ?? null,
-  });
-  if (error) {
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
-
-  return NextResponse.json({ ok: true });
 }

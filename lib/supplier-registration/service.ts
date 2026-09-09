@@ -124,7 +124,7 @@ export async function registerSupplier(
     if (upload.error || !upload.data) throw new SupplierRegistrationError();
     uploaded = true;
 
-    const { error: insertError } = await adminClient.from("supplier_profiles").insert({
+  const { error: insertError } = await adminClient.from("supplier_profiles").insert({
       user_id: user.id,
       business_name: fields.businessName,
       address: fields.address,
@@ -134,7 +134,11 @@ export async function registerSupplier(
       ktp_photo_url: null,
       nik: null,
     });
-    if (insertError) throw new SupplierRegistrationError();
+    
+    if (insertError) {
+      console.error(">>> DETAIL INSERT DB ERROR:", insertError);
+      throw new SupplierRegistrationError();
+    }
 
     return {
       ok: true,
