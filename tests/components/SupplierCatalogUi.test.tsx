@@ -10,13 +10,15 @@ import CatalogCard from "@/components/supplier/catalog/CatalogCard";
 const { list } = vi.hoisted(() => ({ list: vi.fn() }));
 vi.mock("@/lib/supplier-catalog/api-repository", () => ({ supplierCatalogApiRepository: { list }, }));
 
+const PROJECT_SUPABASE_URL = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? "https://woxgghuoeljagnkldqtf.supabase.co").replace(/\/$/, "");
+
 const ITEM: SupplierBatchDetail = {
   id: "44444444-4444-4444-8444-444444444444",
   displayCode: "BATCH-44444444",
   title: "Beras real",
   supplierName: "Supplier Bandung",
   category: "Makanan Siap Saji",
-  imageUrl: "https://woxgghuoeljagnkldqtf.supabase.co/storage/v1/object/public/wesup-public/products/batch-444/beras.webp",
+  imageUrl: PROJECT_SUPABASE_URL + "/storage/v1/object/public/wesup-public/products/batch-444/beras.webp",
   description: "Beras untuk UMKM",
   status: "PUBLISHED",
   basePrice: 75_000,
@@ -69,7 +71,8 @@ describe("supplier catalog UI states", () => {
   it.each([
     "https://evil.example/products/beras.webp",
     "not-a-valid-image-url",
-    "https://woxgghuoeljagnkldqtf.supabase.co/storage/v1/object/public/other-bucket/beras.webp",
+    PROJECT_SUPABASE_URL + "/storage/v1/object/public/wesup-public/products/batch-444/beras.webp?download=1",
+    PROJECT_SUPABASE_URL + "/storage/v1/object/public/other-bucket/beras.webp",
   ])("uses the placeholder for a disallowed URL", (url) => {
     render(<CatalogCard batch={{ ...ITEM, imageUrl: url }} />);
     expect(screen.queryByRole("img", { name: "Foto produk Beras real" })).not.toBeInTheDocument();
