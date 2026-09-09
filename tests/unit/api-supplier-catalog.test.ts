@@ -147,6 +147,26 @@ describe("supplier catalog API", () => {
     expect(remove).not.toHaveBeenCalled();
   });
 
+  it("logs structured storage context when upload fails", async () => {
+    const { rpc } = mockSupplierClient(row, { uploadError: "storage unavailable" });
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    try {
+      const response = await createBatch(createRequest("publish"));
+      expect(response.status).toBe(500);
+      expect(consoleError).toHaveBeenCalledWith(
+        "[suppliers/batches] product photo upload failed",
+        expect.objectContaining({
+          batchId: BATCH_ID,
+          path: expect.stringMatching(new RegExp(`^products/${BATCH_ID}/`)),
+          message: "storage unavailable",
+        }),
+      );
+      expect(rpc).not.toHaveBeenCalledWith("publish_supplier_batch", expect.anything());
+    } finally {
+      consoleError.mockRestore();
+    }
+  });
+
   it("rejects separate multipart supplierId", async () => {
     const { rpc } = mockSupplierClient(); const form = new FormData(); form.set("action", "draft"); form.set("payload", JSON.stringify(payload())); form.set("supplierId", "attacker");
     expect((await createBatch(new NextRequest("http://localhost/api/suppliers/batches", { method: "POST", body: form }))).status).toBe(400); expect(rpc).not.toHaveBeenCalled();

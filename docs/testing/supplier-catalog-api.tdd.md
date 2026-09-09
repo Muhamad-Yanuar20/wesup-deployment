@@ -54,3 +54,37 @@ npx tsc --noEmit — pass
 npm run lint — pass (9 pre-existing warnings in test fixtures)
 npm run build — pass
 ```
+## Storage upload repair — 2026-09-09
+
+Diagnosis against the configured Supabase project found the `wesup-public`
+bucket and grants intact, but the applied historical migration no longer had
+the product-object `INSERT` and `DELETE` policies. The route therefore created
+a draft, received an RLS error while uploading, and rolled the draft back.
+
+The additive migration
+`20260909050000_restore_supplier_product_storage_policies.sql` restores those
+policies for `authenticated` users only, limits them to
+`wesup-public/products/{batchId}/...`, and checks batch ownership or Admin
+access. It also pins the `SECURITY DEFINER` helper search path to `public`.
+
+```text
+npx supabase db push --project-ref woxgghuoeljagnkldqtf --dry-run --yes
+Would push: 20260909050000_restore_supplier_product_storage_policies.sql
+
+npx supabase db push --project-ref woxgghuoeljagnkldqtf --yes
+Applied migration 20260909050000_restore_supplier_product_storage_policies.sql
+
+npx vitest run tests/migrations/supplier-catalog-storage-policies.test.ts tests/unit/api-supplier-catalog.test.ts tests/live/supplier-catalog-storage.integration.test.ts --reporter=verbose
+Test Files 3 passed (3)
+Tests 18 passed (18)
+```
+
+Remote `pg_policies` verification now reports `SELECT` for `public`, plus
+`INSERT` and `DELETE` for `authenticated`; the ownership/Admin predicates and
+`search_path=public` helper configuration are present. The live fixture proved
+that an approved owner can upload WebP, anonymous and other-supplier uploads
+are rejected, the owner can delete the object, and publishing makes the batch
+discoverable through `search_batches`. The fixture removes the object, batch,
+and temporary auth users during teardown.
+
+Final regression: npm test — 76 files / 1027 tests passed.
