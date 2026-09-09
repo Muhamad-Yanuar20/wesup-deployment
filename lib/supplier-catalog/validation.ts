@@ -1,6 +1,7 @@
-import { BANDUNG_CENTER, isBatchCategory, type BatchCategory } from "@/lib/catalog/categories";
+import { BANDUNG_SERVICE_CENTER, BANDUNG_SERVICE_RADIUS_KM, distanceKm } from "@/lib/geo/service-center";
+import { isBatchCategory, type BatchCategory } from "@/lib/catalog/categories";
 
-export const BANDUNG_CATALOG_RADIUS_KM = 50;
+export const BANDUNG_CATALOG_RADIUS_KM = BANDUNG_SERVICE_RADIUS_KM;
 
 export interface CatalogTierMutationInput {
   tierNumber: number;
@@ -66,7 +67,7 @@ export function validateCatalogMutation(
     pickupLongitude === null ||
     !Number.isFinite(pickupLatitude) ||
     !Number.isFinite(pickupLongitude) ||
-    distanceKm(BANDUNG_CENTER.lat, BANDUNG_CENTER.lng, pickupLatitude, pickupLongitude) > BANDUNG_CATALOG_RADIUS_KM
+    distanceKm(BANDUNG_SERVICE_CENTER.lat, BANDUNG_SERVICE_CENTER.lng, pickupLatitude, pickupLongitude) > BANDUNG_CATALOG_RADIUS_KM
   ) {
     fieldErrors.pickupCoordinate = `Lokasi pickup harus berada maksimal ${BANDUNG_CATALOG_RADIUS_KM} km dari Bandung.`;
   }
@@ -128,12 +129,4 @@ function validateTimeline(
   if (!allowPast && times.some((time) => time <= Date.now())) {
     fieldErrors.timelineOrder = "Waktu penawaran harus berada di masa depan.";
   }
-}
-
-export function distanceKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
-  const radians = (value: number) => (value * Math.PI) / 180;
-  const cosine =
-    Math.sin(radians(lat1)) * Math.sin(radians(lat2)) +
-    Math.cos(radians(lat1)) * Math.cos(radians(lat2)) * Math.cos(radians(lng2 - lng1));
-  return 6371 * Math.acos(Math.min(1, Math.max(-1, cosine)));
 }

@@ -12,6 +12,7 @@ describe("canonical UMKM routes", () => {
       "app/umkm/pesanan/page.tsx",
       "app/umkm/notifikasi/page.tsx",
       "app/umkm/akun/page.tsx",
+      "app/umkm/onboarding/page.tsx",
     ]) {
       expect(existsSync(join(root, route)), `missing ${route}`).toBe(true);
     }

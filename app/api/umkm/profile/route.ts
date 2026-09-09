@@ -1,0 +1,135 @@
+import { NextResponse } from "next/server";
+import { getCurrentUser, type AuthClient } from "@/lib/supabase/auth";
+import { getServerClient } from "@/lib/supabase/server";
+import { parseUmkmProfilePayload } from "@/lib/umkm/profile-contract";
+
+export const dynamic = "force-dynamic";
+
+interface ProfileRow {
+  user_id: string;
+  business_name: string;
+  address: string;
+  latitude: number | string;
+  longitude: number | string;
+  strike_count?: number;
+  suspended_until?: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
+interface ProfileQuery {
+  select: (columns: string) => {
+    eq: (column: string, value: string) => {
+      maybeSingle: () => PromiseLike<{ data: ProfileRow | null; error: unknown | null }>;
+    };
+  };
+}
+
+interface ProfileMutationQuery {
+  upsert: (
+    values: Record<string, unknown>,
+    options: { onConflict: string },
+  ) => {
+    select: (columns: string) => {
+      single: () => PromiseLike<{ data: ProfileRow | null; error: unknown | null }>;
+    };
+  };
+}
+
+interface ProfileClient {
+  from: (table: "umkm_profiles") => ProfileQuery & ProfileMutationQuery;
+}
+
+function toResponseProfile(profile: ProfileRow | null) {
+  if (!profile) return null;
+  return {
+    userId: profile.user_id,
+    businessName: profile.business_name,
+    address: profile.address,
+    latitude: Number(profile.latitude),
+    longitude: Number(profile.longitude),
+    strikeCount: profile.strike_count ?? 0,
+    suspendedUntil: profile.suspended_until ?? null,
+    createdAt: profile.created_at ?? null,
+    updatedAt: profile.updated_at ?? null,
+  };
+}
+
+async function resolveUmkmClient() {
+  const client = await getServerClient();
+  const context = await getCurrentUser(client as unknown as AuthClient);
+  if (!context) {
+    return {
+      client: null,
+      response: NextResponse.json({ error: "Sign in required", code: "unauthenticated" }, { status: 401 }),
+    };
+  }
+  if (context.role !== "umkm" || context.status !== "active") {
+    return {
+      client: null,
+      response: NextResponse.json(
+        { error: "Only active UMKM accounts can manage this profile", code: "role_forbidden" },
+        { status: 403 },
+      ),
+    };
+  }
+  return { client: client as unknown as ProfileClient, context, response: null };
+}
+
+export async function GET() {
+  const resolved = await resolveUmkmClient();
+  if (!resolved.client) return resolved.response;
+
+  const { data, error } = await resolved.client
+    .from("umkm_profiles")
+    .select("user_id,business_name,address,latitude,longitude,strike_count,suspended_until,created_at,updated_at")
+    .eq("user_id", resolved.context.userId)
+    .maybeSingle();
+
+  if (error) {
+    console.error("[umkm-profile] read failed", error);
+    return NextResponse.json({ error: "Unable to load UMKM profile" }, { status: 500 });
+  }
+  return NextResponse.json({ profile: toResponseProfile(data) });
+}
+
+export async function PUT(request: Request) {
+  const resolved = await resolveUmkmClient();
+  if (!resolved.client) return resolved.response;
+
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body", code: "validation_error" }, { status: 400 });
+  }
+
+  const parsed = parseUmkmProfilePayload(body);
+  if (!parsed.ok) {
+    return NextResponse.json(
+      { error: "Periksa kembali data profil usaha.", code: "validation_error", fieldErrors: parsed.fieldErrors },
+      { status: 400 },
+    );
+  }
+
+  const { data, error } = await resolved.client
+    .from("umkm_profiles")
+    .upsert(
+      {
+        user_id: resolved.context.userId,
+        business_name: parsed.value.businessName,
+        address: parsed.value.address,
+        latitude: parsed.value.latitude,
+        longitude: parsed.value.longitude,
+      },
+      { onConflict: "user_id" },
+    )
+    .select("user_id,business_name,address,latitude,longitude,strike_count,suspended_until,created_at,updated_at")
+    .single();
+
+  if (error || !data) {
+    console.error("[umkm-profile] write failed", error);
+    return NextResponse.json({ error: "Unable to save UMKM profile" }, { status: 500 });
+  }
+  return NextResponse.json({ profile: toResponseProfile(data) });
+}
