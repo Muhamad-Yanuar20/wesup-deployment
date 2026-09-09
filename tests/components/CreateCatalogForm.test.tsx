@@ -72,6 +72,8 @@ describe("CreateCatalogForm success flow", () => {
     expect(screen.getByRole("heading", { name: "Draft berhasil disimpan" })).toBeInTheDocument();
     expect(create).toHaveBeenCalledWith(DRAFT, "draft", expect.any(Object));
     expect(screen.queryByText("Perubahan berhasil disimpan!")).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Lihat Katalog Saya" }));
+    expect(push).toHaveBeenCalledWith("/supplier/catalog");
   });
 
   it("shows published copy for a create publish", async () => {

@@ -16,7 +16,7 @@ const ITEM: SupplierBatchDetail = {
   title: "Beras real",
   supplierName: "Supplier Bandung",
   category: "Makanan Siap Saji",
-  imageUrl: "https://example.test/products/beras.webp",
+  imageUrl: "https://woxgghuoeljagnkldqtf.supabase.co/storage/v1/object/public/wesup-public/products/batch-444/beras.webp",
   description: "Beras untuk UMKM",
   status: "PUBLISHED",
   basePrice: 75_000,
@@ -64,6 +64,15 @@ describe("supplier catalog UI states", () => {
     const image = screen.getByRole("img", { name: "Foto produk Beras real" });
     image.dispatchEvent(new Event("error"));
     await waitFor(() => expect(screen.queryByRole("img", { name: "Foto produk Beras real" })).not.toBeInTheDocument());
+    expect(screen.getByText("Aktif")).toBeInTheDocument();
+  });
+  it.each([
+    "https://evil.example/products/beras.webp",
+    "not-a-valid-image-url",
+    "https://woxgghuoeljagnkldqtf.supabase.co/storage/v1/object/public/other-bucket/beras.webp",
+  ])("uses the placeholder for a disallowed URL", (url) => {
+    render(<CatalogCard batch={{ ...ITEM, imageUrl: url }} />);
+    expect(screen.queryByRole("img", { name: "Foto produk Beras real" })).not.toBeInTheDocument();
     expect(screen.getByText("Aktif")).toBeInTheDocument();
   });
 });

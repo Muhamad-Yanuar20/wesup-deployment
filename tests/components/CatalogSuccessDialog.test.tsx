@@ -17,20 +17,39 @@ describe("CatalogSuccessDialog", () => {
     expect(screen.getByRole("button", { name: "Lihat Katalog Saya" })).toBeInTheDocument();
   });
 
-  it("closes from the primary action, Escape, and backdrop", () => {
+  it("closes from the X button, primary action, Escape, and backdrop", () => {
     const onClose = vi.fn();
     const { rerender } = render(<CatalogSuccessDialog open kind="published" onClose={onClose} />);
-    fireEvent.click(screen.getByRole("button", { name: "Lihat Katalog Saya" }));
+    fireEvent.click(screen.getByRole("button", { name: "Tutup dialog" }));
     expect(onClose).toHaveBeenCalledTimes(1);
 
     rerender(<CatalogSuccessDialog open kind="published" onClose={onClose} />);
-    fireEvent.keyDown(document, { key: "Escape" });
+    fireEvent.click(screen.getByRole("button", { name: "Lihat Katalog Saya" }));
     expect(onClose).toHaveBeenCalledTimes(2);
+
+    rerender(<CatalogSuccessDialog open kind="published" onClose={onClose} />);
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(onClose).toHaveBeenCalledTimes(3);
 
     rerender(<CatalogSuccessDialog open kind="published" onClose={onClose} />);
     const dialog = screen.getByRole("dialog");
     fireEvent.mouseDown(dialog.parentElement!);
-    expect(onClose).toHaveBeenCalledTimes(3);
+    expect(onClose).toHaveBeenCalledTimes(4);
+  });
+
+  it("traps forward and backward Tab focus inside the dialog", async () => {
+    render(<CatalogSuccessDialog open kind="published" onClose={vi.fn()} />);
+    const closeButton = screen.getByRole("button", { name: "Tutup dialog" });
+    const primaryButton = screen.getByRole("button", { name: "Lihat Katalog Saya" });
+
+    await waitFor(() => expect(closeButton).toHaveFocus());
+    primaryButton.focus();
+    fireEvent.keyDown(document, { key: "Tab" });
+    expect(closeButton).toHaveFocus();
+
+    closeButton.focus();
+    fireEvent.keyDown(document, { key: "Tab", shiftKey: true });
+    expect(primaryButton).toHaveFocus();
   });
 
   it("focuses the close control when opened", async () => {

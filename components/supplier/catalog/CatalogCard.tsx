@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { AlertCircle, CheckCircle2, Clock3, Package, Users } from "lucide-react";
 import type { SupplierBatchDetail, SupplierBatchStatus } from "@/lib/supplier-batch/types";
+import { isAllowedSupplierProductImageUrl } from "@/lib/supplier-catalog/image";
 
 const money = new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 });
 const dates = new Intl.DateTimeFormat("id-ID", { dateStyle: "medium", timeZone: "Asia/Jakarta" });
@@ -33,6 +34,8 @@ export interface CatalogCardProps { batch: SupplierBatchDetail; }
 
 export default function CatalogCard({ batch }: CatalogCardProps) {
   const [failedImageUrl, setFailedImageUrl] = useState<string | null>(null);
+  const imageUrl = batch.imageUrl.trim();
+  const canRenderImage = isAllowedSupplierProductImageUrl(imageUrl) && failedImageUrl !== imageUrl;
   const inactive = batch.status !== "PUBLISHED";
   const progress = progressFor(batch.registeredQuantity, batch.targetQuantity);
   const lowest = batch.tiers.at(-1)?.pricePerUnit ?? batch.basePrice;
@@ -42,14 +45,14 @@ export default function CatalogCard({ batch }: CatalogCardProps) {
   return (
     <Link href={`/supplier/batch/${batch.id}`} className="group block rounded-xl border border-slate-200 bg-white shadow-sm transition hover:border-blue-200 hover:shadow-md">
       <div className="relative flex h-36 items-center justify-center overflow-hidden rounded-t-xl bg-slate-100">
-        {batch.imageUrl.startsWith("http") && failedImageUrl !== batch.imageUrl ? (
+        {canRenderImage ? (
           <Image
-            src={batch.imageUrl}
+            src={imageUrl}
             alt={"Foto produk " + batch.title}
             fill
             sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
             className="object-cover"
-            onError={() => setFailedImageUrl(batch.imageUrl)}
+            onError={() => setFailedImageUrl(imageUrl)}
           />
         ) : <Package aria-hidden="true" size={32} className="text-slate-300" />}
         <span className={`absolute left-3 top-3 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold backdrop-blur-sm ${statusClasses(batch.status)}`}>
