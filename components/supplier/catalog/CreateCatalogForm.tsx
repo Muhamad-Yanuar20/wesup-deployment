@@ -124,6 +124,8 @@ export default function CreateCatalogForm({
   const pendingErrorFocusRef = useRef<FieldErrors | null>(null);
   const submitControllerRef = useRef<AbortController | null>(null);
 
+  const navigateToCatalog = useCallback(() => router.push("/supplier/catalog"), [router]);
+
   const submitting = submitPhase !== "idle";
 
   useEffect(() => {
@@ -313,7 +315,7 @@ export default function CreateCatalogForm({
       <CatalogSuccessDialog
         open={submitPhase === "saved" && successfulAction !== null}
         kind={successfulAction ? successKindFor(successfulAction, batchId) : "draft"}
-        onClose={() => router.push("/supplier/catalog")}
+        onClose={navigateToCatalog}
       />
     </>
   );
