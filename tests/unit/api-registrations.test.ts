@@ -119,7 +119,7 @@ function buildClient(opts: ClientOpts) {
       };
     }
     if (table === "umkm_profiles") {
-      return { select: vi.fn(() => ({ eq: vi.fn(() => ({ maybeSingle: vi.fn(async () => ({ data: { user_id: UMKM_ID }, error: null })) })) })) };
+      return { select: vi.fn(() => ({ eq: vi.fn(() => ({ maybeSingle: vi.fn(async () => ({ data: { user_id: UMKM_ID, business_name: "Warung UMKM", address: "Bandung", latitude: -6.914744, longitude: 107.60981 }, error: null })) })) })) };
     }
     if (table === "batches") {
       return { select: vi.fn(() => ({ eq: vi.fn(() => ({ single: batchSingle })) })) };

@@ -1,11 +1,14 @@
 import { NextResponse } from "next/server";
 import { resolveActiveUmkm, type UmkmWorkspaceClient } from "@/lib/umkm/workspace-auth";
+import { isCompleteUmkmProfile } from "@/lib/umkm/profile-completion";
 
 export const dynamic = "force-dynamic";
 
 interface ProfileRow {
   business_name?: string | null;
   address?: string | null;
+  latitude?: number | string | null;
+  longitude?: number | string | null;
 }
 
 interface RegistrationRow {
@@ -74,7 +77,7 @@ export async function GET() {
 
   const profileQuery = client.from("umkm_profiles") as ProfileQuery;
   const { data: profile, error: profileError } = await profileQuery
-    .select("business_name,address")
+    .select("business_name,address,latitude,longitude")
     .eq("user_id", viewer.context.userId)
     .maybeSingle();
   if (profileError) return NextResponse.json({ error: "Unable to load UMKM profile" }, { status: 500 });
@@ -93,9 +96,10 @@ export async function GET() {
   if (notificationError) return NextResponse.json({ error: "Unable to load UMKM notifications" }, { status: 500 });
 
   const rows = registrations ?? [];
+  const profileComplete = isCompleteUmkmProfile(profile);
   return NextResponse.json({
-    profileComplete: Boolean(profile),
-    profile: profile ? { businessName: profile.business_name ?? "", address: profile.address ?? "" } : null,
+    profileComplete,
+    profile: profileComplete && profile ? { businessName: profile.business_name ?? "", address: profile.address ?? "" } : null,
     activeOrderCount: rows.filter((row) => isActiveOrder(row.status)).length,
     unreadNotificationCount: (unreadNotifications ?? []).length,
     nextAction: resolveNextAction(rows),

@@ -7,8 +7,8 @@ export const dynamic = "force-dynamic";
 
 interface ProfileRow {
   user_id: string;
-  business_name: string;
-  address: string;
+  business_name: string | null;
+  address: string | null;
   latitude: number | string;
   longitude: number | string;
   strike_count?: number;
@@ -46,8 +46,8 @@ function toResponseProfile(profile: ProfileRow | null) {
     userId: profile.user_id,
     businessName: profile.business_name,
     address: profile.address,
-    latitude: Number(profile.latitude),
-    longitude: Number(profile.longitude),
+    latitude: profile.latitude === null ? null : Number(profile.latitude),
+    longitude: profile.longitude === null ? null : Number(profile.longitude),
     strikeCount: profile.strike_count ?? 0,
     suspendedUntil: profile.suspended_until ?? null,
     createdAt: profile.created_at ?? null,

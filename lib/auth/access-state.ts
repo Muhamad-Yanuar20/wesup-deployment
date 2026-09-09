@@ -4,6 +4,7 @@ import type {
   VerificationStatus,
 } from "@/types/database";
 import { AuthError } from "@/lib/supabase/auth";
+import { isCompleteUmkmProfile } from "@/lib/umkm/profile-completion";
 
 export { AuthError };
 
@@ -44,7 +45,7 @@ export interface AccessStateClient {
         }>>;
         maybeSingle: () => PromiseLike<QueryResult<
           | { verification_status: VerificationStatus }
-          | { user_id: string }
+          | { user_id: string; business_name: string | null; address: string | null; latitude: number | string | null; longitude: number | string | null }
         >>;
       };
     };
@@ -96,14 +97,14 @@ export async function getViewerAccessState(
 
   const { data: umkmProfile } = await resolvedClient
     .from("umkm_profiles")
-    .select("user_id")
+    .select("user_id,business_name,address,latitude,longitude")
     .eq("user_id", user.id)
     .maybeSingle();
 
   return {
     role: "umkm",
     status: profile.status,
-    profileComplete: Boolean(umkmProfile),
+    profileComplete: isCompleteUmkmProfile(umkmProfile as { business_name?: unknown; address?: unknown; latitude?: unknown; longitude?: unknown } | null),
   };
 }
 

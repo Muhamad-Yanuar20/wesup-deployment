@@ -15,7 +15,7 @@ function fakeClient(options: {
   user?: { id: string } | null;
   profile?: { role: UserAccessState["role"]; status: UserAccessState["status"] } | null;
   supplier?: { verification_status: "pending" | "approved" | "rejected" } | null;
-  umkm?: { user_id: string } | null;
+  umkm?: { user_id: string; business_name?: string | null; address?: string | null; latitude?: number | string | null; longitude?: number | string | null } | null;
 }): AccessStateClient {
   const getUser = vi.fn(async () => ({
     data: { user: options.user ?? null },
@@ -79,7 +79,7 @@ describe("getViewerAccessState", () => {
     const client = fakeClient({
       user: { id: "umkm-1" },
       profile: { role: "umkm", status: "active" },
-      umkm: { user_id: "umkm-1" },
+      umkm: { user_id: "umkm-1", business_name: "Warung Budi", address: "Jl. Asia Afrika", latitude: -6.914744, longitude: 107.60981 },
     });
     await expect(getViewerAccessState(client)).resolves.toEqual({
       role: "umkm",

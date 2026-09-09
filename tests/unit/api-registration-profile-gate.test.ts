@@ -36,7 +36,7 @@ function request(body = { batchId: BATCH_ID, quantity: 2 }) {
 function mockClient(options: {
   user?: { id: string; email: string } | null;
   role?: "umkm" | "supplier" | "admin";
-  profile?: { user_id: string } | null;
+  profile?: { user_id: string; business_name?: string | null; address?: string | null; latitude?: number | string | null; longitude?: number | string | null } | null;
 }) {
   const inserted: Array<Record<string, unknown>> = [];
   const client = {
@@ -120,7 +120,7 @@ describe("POST /api/registrations profile gate", () => {
   });
 
   it("writes consented_at on the server for a complete UMKM profile", async () => {
-    const { inserted } = mockClient({ role: "umkm", profile: { user_id: UMKM_ID } });
+    const { inserted } = mockClient({ role: "umkm", profile: { user_id: UMKM_ID, business_name: "Warung Rina", address: "Bandung", latitude: -6.914744, longitude: 107.60981 } });
     const response = await register(request());
     expect(response.status).toBe(201);
     expect(inserted[0]?.consented_at).toBe("2026-09-09T10:00:00.000Z");

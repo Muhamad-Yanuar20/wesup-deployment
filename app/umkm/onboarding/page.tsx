@@ -1,3 +1,4 @@
+import "leaflet/dist/leaflet.css";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft, Store } from "lucide-react";

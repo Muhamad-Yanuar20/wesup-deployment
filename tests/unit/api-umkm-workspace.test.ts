@@ -80,7 +80,7 @@ describe("UMKM workspace APIs", () => {
 
   it("returns profile completeness, active orders, unread notifications, and the nearest action", async () => {
     mockClient({
-      profile: { business_name: "Warung Rina", address: "Bandung" },
+      profile: { business_name: "Warung Rina", address: "Bandung", latitude: -6.914744, longitude: 107.60981 },
       registrations: [
         { id: "reg-1", batch_id: "batch-1", status: "pending_payment", quantity: 3, final_amount: 30000, created_at: "2026-09-09T08:00:00Z", batch: { id: "batch-1", title: "Beras", batch_timeline: [{ registration_closes_at: "2026-09-10T00:00:00Z", payment_opens_at: "2026-09-10T01:00:00Z", estimated_ready_at: "2026-09-11T01:00:00Z" }] } },
       ],

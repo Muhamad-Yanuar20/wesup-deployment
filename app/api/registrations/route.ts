@@ -9,10 +9,11 @@ import {
   type Tier,
 } from "@/lib/orders/time-gatekeeper";
 import { adjustVolumeCounter } from "@/lib/orders/registration-counter";
+import { isCompleteUmkmProfile } from "@/lib/umkm/profile-completion";
 
 export const dynamic = "force-dynamic";
 
-interface UmkmProfileCheck { user_id: string }
+interface UmkmProfileCheck { user_id: string; business_name: string | null; address: string | null; latitude: number | string | null; longitude: number | string | null }
 
 interface RegistrationBody {
   batchId?: unknown;
@@ -40,13 +41,13 @@ export async function POST(req: Request) {
     };
   };
   const { data: umkmProfile, error: profileError } = await profileQuery
-    .select("user_id")
+    .select("user_id,business_name,address,latitude,longitude")
     .eq("user_id", authCtx.userId)
     .maybeSingle();
   if (profileError) {
     return NextResponse.json({ error: "Unable to verify UMKM profile" }, { status: 500 });
   }
-  if (!umkmProfile) {
+  if (!isCompleteUmkmProfile(umkmProfile)) {
     return NextResponse.json({ error: "Lengkapi profil usaha sebelum bergabung ke batch.", code: "profile_incomplete" }, { status: 409 });
   }
 
