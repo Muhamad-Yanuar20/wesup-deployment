@@ -53,7 +53,7 @@ function mockSearchClient(options: {
     data: options.profileCoords ?? null,
     error: null,
   }));
-  const rpc = vi.fn(async () => ({
+  const rpc = vi.fn(async (_method: string, _params: Record<string, unknown>) => ({
     data: (options.rows ?? []) as unknown[],
     error: null,
   }));
@@ -149,9 +149,9 @@ describe("GET /api/marketplace/search", () => {
   it("clamps radius into the 1..50 km range", async () => {
     const { rpc } = mockSearchClient({ rows: [], user: null });
     await searchBatches(getReq("?radius=999"));
-    expect(rpc.mock.calls[0][1].p_radius_km).toBe(50);
+    expect((rpc.mock.calls[0][1] as Record<string, unknown>).p_radius_km).toBe(50);
     await searchBatches(getReq("?radius=0"));
-    expect(rpc.mock.calls[1][1].p_radius_km).toBe(1);
+    expect((rpc.mock.calls[1][1] as Record<string, unknown>).p_radius_km).toBe(1);
   });
 
   it("falls back to the signed-in UMKM's stored business coordinates", async () => {
@@ -163,8 +163,9 @@ describe("GET /api/marketplace/search", () => {
     });
     const res = await searchBatches(getReq(""));
     expect(res.status).toBe(200);
-    expect(rpc.mock.calls[0][1].p_lat).toBe(-6.95);
-    expect(rpc.mock.calls[0][1].p_lng).toBe(107.7);
+    const params = rpc.mock.calls[0][1] as Record<string, unknown>;
+    expect(params.p_lat).toBe(-6.95);
+    expect(params.p_lng).toBe(107.7);
   });
 
   it("uses bandung center when the stored profile has no coordinates", async () => {
@@ -175,8 +176,9 @@ describe("GET /api/marketplace/search", () => {
       profileCoords: null,
     });
     await searchBatches(getReq(""));
-    expect(rpc.mock.calls[0][1].p_lat).toBe(BANDUNG.latitude);
-    expect(rpc.mock.calls[0][1].p_lng).toBe(BANDUNG.longitude);
+    const params = rpc.mock.calls[0][1] as Record<string, unknown>;
+    expect(params.p_lat).toBe(BANDUNG.latitude);
+    expect(params.p_lng).toBe(BANDUNG.longitude);
   });
 
   it("returns 400 for an unknown category", async () => {
@@ -225,8 +227,8 @@ describe("GET /api/marketplace/search", () => {
   it("returns 500 when the rpc fails", async () => {
     const { rpc } = mockSearchClient({ rows: [] });
     rpc.mockResolvedValue({
-      data: null,
-      error: { message: "boom" },
+      data: null as unknown as unknown[],
+      error: { message: "boom" } as unknown as null,
     });
     const res = await searchBatches(getReq(""));
     expect(res.status).toBe(500);
@@ -241,7 +243,7 @@ describe("GET /api/marketplace/search", () => {
       ),
     );
     expect(res.status).toBe(200);
-    expect(rpc.mock.calls[0][1].p_categories).toEqual([
+    expect((rpc.mock.calls[0][1] as Record<string, unknown>).p_categories).toEqual([
       "Sayur & Buah",
       "Daging & Ikan",
       "Makanan Siap Saji",

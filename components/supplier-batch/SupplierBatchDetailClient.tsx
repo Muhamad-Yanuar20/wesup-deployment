@@ -88,21 +88,43 @@ export function SupplierBatchHeader({ batch, deleteButtonRef, onDelete }: Suppli
             <p className="mt-1 text-sm text-gray-500">ID: {batch.displayCode}</p>
           </div>
           <div className="w-full md:w-auto">
-            <button
-              type="button"
-              disabled
-              aria-describedby="supplier-edit-unavailable"
-              className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-blue-600 px-5 py-2.5 text-sm font-medium text-blue-600 disabled:cursor-not-allowed disabled:border-gray-300 disabled:text-gray-400 md:w-auto"
-            >
-              <Pencil aria-hidden="true" size={18} />
-              Edit Penawaran
-            </button>
-            <p id="supplier-edit-unavailable" className="sr-only">
-              Pengeditan penawaran belum tersedia.
-            </p>
+            {cancelled ? (
+              <span className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-gray-300 px-5 py-2.5 text-sm font-medium text-gray-400 md:w-auto">
+                <Pencil aria-hidden="true" size={18} />
+                Edit Penawaran
+              </span>
+            ) : (
+              <Link
+                href={`/supplier/catalog/${batch.id}/edit`}
+                className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-blue-600 px-5 py-2.5 text-sm font-medium text-blue-600 transition hover:bg-blue-50 md:w-auto"
+              >
+                <Pencil aria-hidden="true" size={18} />
+                Edit Penawaran
+              </Link>
+            )}
           </div>
         </div>
       </section>
+
+      {/* Fulfillment quick actions */}
+      {!cancelled && (
+        <section className="flex flex-col gap-3 sm:flex-row">
+          <Link
+            href={`/supplier/batch/${batch.id}/orders`}
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+          >
+            <Package aria-hidden="true" size={18} />
+            Manajemen Pesanan
+          </Link>
+          <Link
+            href={`/supplier/batch/${batch.id}/pickup`}
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-blue-600 bg-white px-5 py-3 text-sm font-semibold text-blue-600 transition hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+          >
+            <Truck aria-hidden="true" size={18} />
+            Serah Terima (QR / PIN)
+          </Link>
+        </section>
+      )}
     </>
   );
 }

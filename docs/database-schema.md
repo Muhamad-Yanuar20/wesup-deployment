@@ -19,7 +19,7 @@ Defined in migration `20260731000100_core_types_profiles.sql`. Every status colu
 | `refund_trigger` | `takedown`, `force_majeure`, `dispute_won` | `refund_requests.trigger_type` |
 | `refund_status` | `pending`, `waiting_bank_account`, `processing`, `completed`, `failed` | `refund_requests.status` |
 | `notification_type` | `payment_due`, `payment_success`, `pickup_ready`, `dispute`, `refund`, `suspension`, `referral`, `batch_update` | `notifications.type` |
-| `audit_action` | `verify_supplier`, `reject_supplier`, `takedown_batch`, `resolve_dispute`, `approve_refund`, `complete_refund`, `suspend_user`, `ban_user`, `unban_user` | `admin_audit_logs.action_type` |
+| `audit_action` | `verify_supplier`, `reject_supplier`, `takedown_batch`, `resolve_dispute`, `approve_refund`, `complete_refund`, `suspend_user`, `ban_user`, `unban_user`, `cancel_batch`, `cut_off_batch`, `generate_pickup_code`, `confirm_pickup` | `admin_audit_logs.action_type` |
 
 ## 2. Tables by Module
 
@@ -140,6 +140,21 @@ Admin actions are executed through **security-definer SQL functions** (`app/api/
 | `ban_user(p_user_id, ...)` | `profiles.status → 'banned'` | `ban_user` |
 | `unban_user(p_user_id, ...)` | `profiles.status → 'active'` (only from banned) | `unban_user` |
 | `write_audit_log(...)` | appends a row (no state change) | as supplied |
+
+### Module 15 — Order Atomic Counter & Cutoff Gatekeeper (migration 0015)
+
+Implements the PRD 3.1/3.2 order-processing spine without any cron (Lazy Evaluation):
+
+- **`POST /api/registrations`** — UMKM "Daftar" click. API Gatekeeper validates absolute timestamps (`opens ≤ now < closes`) and forces `batches.status = 'published'`; rejects before open / at-after cutoff / non-published with `403`. Input validation requires a **safe integer** quantity (`Number.isSafeInteger`); oversized/invalid values return `400` before any Redis write. Duplicate registrations (unique `(batch_id, umkm_id)`) are detected via PostgreSQL code `23505` (message `/duplicate/i` fallback) and roll the Redis `INCR` back with `decr` → `409`. On a valid request it runs `redis.INCR(batch:<id>:count)` (atomic), mirrors the count into `registration_counters`, and inserts the `registrations` row with server-generate `consented_at`. Per-UMKM rate limiting via the `registration` scope (fail-open).
+- **`POST /api/batches/[id]/cutoff`** — Volume-Limiting Gatekeeper. Wrapped in a Redis **distributed lock** (`SETNX` on `cutoff-lock:<id>` with an owner token, ~30s TTL, released only by the owner via a Lua compare-and-delete). Concurrent requests that fail to acquire the lock become readers (`409`). The single acquirer calls `cut_off_batch(...)`.
+- **`cut_off_batch(p_batch_id, p_ip, p_user_agent)`** — security-definer, idempotent (only closes batches still `published`), callable by the owning supplier or an admin. Reconciles committed volume from `registrations`, persists `registration_counters`, selects the qualifying tier (falling back to Tier 1 base price when the minimum threshold is unmet), locks `locked_tier_number` / `locked_price_per_unit` / `final_amount` onto every live registration, then flips `batches.status → 'closed'`. **Overflow guard:** `final_amount = round(least(price * quantity, 9999999999.99), 2)` so one oversized order cannot fail the whole cutoff (`numeric(12,2)` overflow). Appends an audit row (`cut_off_batch`).
+
+### Module 15.1 — Registration Integrity Gatekeeper (migration 0016)
+
+Database-boundary backstop for the registration/cutoff race (TOCTOU), applied lazily — no cron:
+
+- **`prevent_registration_outside_window()`** — `security definer`, `set search_path = ''`, `BEFORE INSERT` trigger on `registrations`. Reads `batches.status` and the `batch_timeline` window schema-qualified and `raise exception` unless the batch is `published` and `now()` is within `[registration_opens_at, registration_closes_at)`. Both the gate check and the insert run in the same transaction, so a registration can never slip in after a concurrent `cut_off_batch()` has closed the batch. Function EXECUTE revoked from `public`/`anon`/`authenticated` (not invokable standalone).
+- **`registrations_umkm_all`** policy dropped & recreated with an explicit **`WITH CHECK (umkm_id = auth.uid())`** (inserts/updates/deletes only by the owning UMKM).
 
 Grant model: EXECUTE on all of the above is revoked from `public`/`anon` and granted only to `authenticated`; `write_audit_log` additionally requires the caller to be an admin. `admin_audit_logs` keeps FORCE RLS with client access read-only (SELECT for admins); the INSERT policy was dropped so client-side rows cannot be forged.
 
@@ -262,7 +277,7 @@ Objects are never hard-deleted with their rows. The app moves a file to `archive
    });
    ```
 
-3. At cutoff, backend locks `locked_tier_number`, `locked_price_per_unit`, `final_amount` (under Redis SETNX distributed lock) and updates the row.
+3. At cutoff, the Volume-Limiting Gatekeeper runs `POST /api/batches/[id]/cutoff`. Under a Redis `SETNX` distributed lock (`cutoff-lock:<id>`, owner token + TTL, compare-and-delete release) the single acquirer calls `cut_off_batch(...)`, which reconciles volume from `registrations`, persists `registration_counters`, locks `locked_tier_number` / `locked_price_per_unit` / `final_amount` (falling back to Tier 1 base price), and flips `batches.status → 'closed'`. Concurrent requests that lose the lock become readers (`409`).
 
 ### Example D — Payment webhook (backend ← Midtrans)
 

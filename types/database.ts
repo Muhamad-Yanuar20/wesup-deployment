@@ -45,7 +45,11 @@ export type AuditAction =
   | "suspend_user"
   | "ban_user"
   | "unban_user"
-  | "cancel_batch";
+  | "cancel_batch"
+  | "cut_off_batch"
+  | "generate_pickup_code"
+  | "confirm_pickup"
+  | "create_recurring_config";
 
 export interface Database {
   public: {
@@ -808,6 +812,136 @@ export interface Database {
           tiers: unknown;
           distance_km: number | null;
           total_count: number;
+        }[];
+      };
+      cut_off_batch: {
+        Args: {
+          p_batch_id: string;
+          p_ip_address?: string | null;
+          p_user_agent?: string | null;
+        };
+        Returns: void;
+      };
+      is_supplier_approved: {
+        Args: Record<PropertyKey, never>;
+        Returns: boolean;
+      };
+      create_batch: {
+        Args: {
+          p_title: string;
+          p_description?: string | null;
+          p_category: string;
+          p_min_quantity: number;
+          p_product_photo_url?: string | null;
+          p_pickup_address: string;
+          p_latitude: number;
+          p_longitude: number;
+          p_registration_opens_at: string;
+          p_registration_closes_at: string;
+          p_payment_opens_at: string;
+          p_payment_closes_at: string;
+          p_estimated_ready_at: string;
+          p_tiers: unknown;
+          p_recurring_config_id?: string | null;
+          p_ip_address?: string | null;
+          p_user_agent?: string | null;
+        };
+        Returns: string;
+      };
+      update_batch: {
+        Args: {
+          p_batch_id: string;
+          p_title?: string | null;
+          p_description?: string | null;
+          p_category?: string | null;
+          p_product_photo_url?: string | null;
+          p_pickup_address?: string | null;
+          p_latitude?: number | null;
+          p_longitude?: number | null;
+          p_ip_address?: string | null;
+          p_user_agent?: string | null;
+        };
+        Returns: void;
+      };
+      delete_batch: {
+        Args: {
+          p_batch_id: string;
+          p_ip_address?: string | null;
+          p_user_agent?: string | null;
+        };
+        Returns: void;
+      };
+      list_own_batches: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          id: string;
+          title: string;
+          category: string;
+          status: string;
+          min_quantity: number;
+          pickup_address: string;
+          latitude: number;
+          longitude: number;
+          registration_opens_at: string | null;
+          registration_closes_at: string | null;
+          payment_opens_at: string | null;
+          payment_closes_at: string | null;
+          estimated_ready_at: string | null;
+          tiers: unknown;
+          created_at: string;
+        }[];
+      };
+      create_recurring_config: {
+        Args: {
+          p_name?: string | null;
+          p_interval_days?: number;
+          p_days_of_week?: unknown[];
+        };
+        Returns: string;
+      };
+      generate_pickup_code: {
+        Args: {
+          p_registration_id: string;
+          p_ip_address?: string | null;
+          p_user_agent?: string | null;
+        };
+        Returns: {
+          qr_code_token: string;
+          pin_code: string;
+        }[];
+      };
+      confirm_pickup: {
+        Args: {
+          p_registration_id: string;
+          p_method: string;
+          p_code?: string | null;
+          p_latitude?: number | null;
+          p_longitude?: number | null;
+          p_notes?: string | null;
+          p_ip_address?: string | null;
+          p_user_agent?: string | null;
+        };
+        Returns: void;
+      };
+      create_escrow: {
+        Args: {
+          p_registration_id: string;
+          p_pickup_confirmed_at?: string;
+        };
+        Returns: void;
+      };
+      list_batch_orders: {
+        Args: {
+          p_batch_id: string;
+        };
+        Returns: {
+          registration_id: string;
+          umkm_name: string;
+          quantity: number;
+          status: string;
+          final_amount: number | null;
+          lock_tier: number | null;
+          created_at: string;
         }[];
       };
     };
