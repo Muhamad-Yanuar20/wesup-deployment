@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { requireRole, toAuthResponse, type AuthClient } from "@/lib/supabase/auth";
+import { toAuthResponse } from "@/lib/supabase/auth";
+import { requireApprovedSupplier, type AccessStateClient } from "@/lib/auth/access-state";
 import { getServerClient } from "@/lib/supabase/server";
 import { mapSupplierBatchRow, type SupplierBatchRpcRow } from "@/lib/supplier-catalog/api";
 
@@ -22,7 +23,7 @@ function errorResponse(error: unknown) {
 
 export async function GET() {
   const client = await getServerClient();
-  try { await requireRole(client as unknown as AuthClient, ["supplier"]); } catch (error) { return toAuthResponse(error); }
+  try { await requireApprovedSupplier(client as unknown as AccessStateClient); } catch (error) { return toAuthResponse(error); }
   const [summaryResult, batchesResult] = await Promise.all([
     client.rpc("get_supplier_dashboard_summary"),
     client.rpc("list_supplier_batches", { p_status: null, p_query: null }),

@@ -1,18 +1,9 @@
 import type { Metadata } from "next";
-import RecurringDetailClient from "@/components/supplier/recurring/RecurringDetailClient";
+import SupplierModuleUnavailable from "@/components/supplier/SupplierModuleUnavailable";
 
 export const dynamic = "force-dynamic";
+export const metadata: Metadata = { title: "Detail Postingan Berulang | Wesup", description: "Modul postingan berulang Supplier Wesup." };
 
-export const metadata: Metadata = {
-  title: "Detail Jadwal | Wesup",
-  description: "Detail jadwal postingan otomatis Wesup.",
-};
-
-export default async function RecurringDetailPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const { id } = await params;
-  return <RecurringDetailClient key={id} configId={id} />;
+export default function RecurringDetailPage() {
+  return <SupplierModuleUnavailable title="Detail postingan berulang belum tersedia" description="Detail jadwal recurring belum dibuka karena backend generator batch belum tersedia." />;
 }

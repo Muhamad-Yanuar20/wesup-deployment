@@ -12,7 +12,7 @@ import {
   ScanLine,
   Users,
 } from "lucide-react";
-import { fulfillmentMockRepository } from "@/lib/supplier-fulfillment/mock-repository";
+import { supplierFulfillmentApiRepository } from "@/lib/supplier-fulfillment/api-repository";
 import type { FulfillmentOrder } from "@/lib/supplier-fulfillment/types";
 import {
   fulfillmentOrderListReducer,
@@ -106,7 +106,7 @@ export default function OrderListClient({ batchId }: { batchId: string }) {
   useEffect(() => {
     const controller = new AbortController();
     dispatch({ type: "loadStarted" });
-    void fulfillmentMockRepository
+    void supplierFulfillmentApiRepository
       .listOrders(batchId, { signal: controller.signal })
       .then((list) => dispatch({ type: "loadSucceeded", orders: [...list.orders] }))
       .catch((error: unknown) => {
@@ -221,8 +221,8 @@ export default function OrderListClient({ batchId }: { batchId: string }) {
       {/* Summary strip */}
       <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <SummaryCard
-          icon={<Users className="text-indigo-600" size={20} />}
-          iconBg="bg-indigo-100"
+          icon={<Users className="text-blue-600" size={20} />}
+          iconBg="bg-blue-100"
           label="Total Pesanan"
           value={String(state.orders.length)}
         />

@@ -8,6 +8,8 @@ import {
 } from "@/lib/auth/access-state";
 import { AuthError } from "@/lib/supabase/auth";
 import { getServerClient } from "@/lib/supabase/server";
+import { NavigationBar } from "@/components/layout/NavigationBar";
+import { Footer } from "@/components/layout/Footer";
 
 export const dynamic = "force-dynamic";
 
@@ -36,5 +38,5 @@ export default async function SupplierDashboardLayout({
     redirect(accessState ? resolveHomePath(accessState) : "/login?role=supplier");
   }
 
-  return <div className="min-h-screen bg-slate-50">{children}</div>;
+  return <div className="min-h-screen bg-slate-50"><NavigationBar />{children}<Footer /></div>;
 }

@@ -6,13 +6,11 @@ import {
   AlertCircle,
   CheckCircle2,
   ChevronRight,
-  Clock3,
-  FileText,
-  Landmark,
+
+
   Package,
   Plus,
   RefreshCw,
-  Star,
   TrendingUp,
   Users,
   Wallet,
@@ -55,22 +53,6 @@ function statusLabel(status: string): string {
     COMPLETED: "Selesai",
   };
   return labels[status] ?? status;
-}
-
-function StarRow({ average }: { average: number }) {
-  const filled = Math.round(average);
-  return (
-    <span className="flex gap-0" aria-label={`Rating rata-rata ${formatRating(average)} dari 5`}>
-      {[1, 2, 3, 4, 5].map((value) => (
-        <Star
-          key={value}
-          aria-hidden="true"
-          className={value <= filled ? "h-4 w-4 text-amber-500" : "h-4 w-4 text-slate-200"}
-          fill={value <= filled ? "currentColor" : "none"}
-        />
-      ))}
-    </span>
-  );
 }
 
 export default function SupplierDashboard() {
@@ -119,7 +101,6 @@ export default function SupplierDashboard() {
   }
 
   const { supplier, summary, recentBatches } = dashboard;
-  const ratingAverage = summary.ratingAverage;
   const isApproved = supplier.verificationStatus === "approved";
 
   return (
@@ -149,31 +130,24 @@ export default function SupplierDashboard() {
       <section aria-label="Ringkasan aktivitas">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard icon={<Package className="text-blue-600" size={20} />} iconBg="bg-blue-100" label="Katalog Aktif" value={String(summary.activeBatchCount)} />
-          <StatCard icon={<Users className="text-indigo-600" size={20} />} iconBg="bg-indigo-100" label="Total Peserta" value={String(summary.participantCount)} />
+          <StatCard icon={<Users className="text-blue-600" size={20} />} iconBg="bg-blue-100" label="Total Peserta" value={String(summary.participantCount)} />
           <StatCard icon={<TrendingUp className="text-emerald-600" size={20} />} iconBg="bg-emerald-100" label="Pendapatan Terkumpul" value={money.format(summary.collectedRevenue)} />
           <StatCard icon={<Wallet className="text-amber-600" size={20} />} iconBg="bg-amber-100" label="Siap Cair" value={money.format(summary.readyToDisburse)} />
         </div>
       </section>
 
-      <section>
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-bold text-slate-900">Reputasi &amp; Penilaian</h2>
-          <Link href="/supplier/akun/ulasan" className="inline-flex items-center gap-1 text-sm font-semibold text-blue-600 hover:text-blue-800">Lihat Ulasan <ChevronRight aria-hidden="true" size={16} /></Link>
-        </div>
-        <Link href="/supplier/akun/ulasan" className="flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-blue-200 hover:shadow-md sm:gap-6 sm:p-5">
-          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-amber-100"><Star aria-hidden="true" className="h-6 w-6 fill-amber-500 text-amber-500" /></span>
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-semibold text-slate-900">Rating aktif dari pembeli UMKM</p>
-            <div className="mt-1 flex flex-wrap items-center gap-2">
-              <span className="text-xl font-extrabold text-slate-900">{ratingAverage === null ? "—" : formatRating(ratingAverage)}</span>
-              {ratingAverage === null ? <span className="text-sm text-slate-400">Belum ada rating</span> : <StarRow average={ratingAverage} />}
-              <span className="text-sm text-slate-500">dari {summary.ratingTotal} ulasan</span>
-            </div>
+      <section aria-label="Reputasi Supplier" className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-lg font-bold text-slate-900">Reputasi Supplier</h2>
+            <p className="mt-1 text-sm text-slate-600">Ringkasan rating dari transaksi yang sudah selesai.</p>
           </div>
-          <ChevronRight aria-hidden="true" className="h-5 w-5 shrink-0 text-slate-300" />
-        </Link>
+          <div className="text-left sm:text-right">
+            <p className="text-2xl font-extrabold text-slate-900">{summary.ratingAverage === null ? "—" : formatRating(summary.ratingAverage)}</p>
+            <p className="text-sm text-slate-500">{summary.ratingTotal} ulasan</p>
+          </div>
+        </div>
       </section>
-
       <section>
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-bold text-slate-900">Katalog Terbaru</h2>
@@ -210,15 +184,6 @@ export default function SupplierDashboard() {
         )}
       </section>
 
-      <section aria-label="Keuangan dan laporan">
-        <div className="mb-4 flex items-center justify-between"><h2 className="text-lg font-bold text-slate-900">Keuangan &amp; Laporan</h2><Link href="/supplier/akun/rekening" className="inline-flex items-center gap-1 text-sm font-semibold text-blue-600 hover:text-blue-800">Pengaturan Rekening <ChevronRight aria-hidden="true" size={16} /></Link></div>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <QuickLink href="/supplier/akun/rekening" icon={<Landmark className="text-blue-600" size={20} />} iconBg="bg-blue-100" title="Pengaturan Rekening" description="Atur rekening tujuan pencairan dana escrow." />
-          <QuickLink href="/supplier/akun/escrow" icon={<Wallet className="text-emerald-600" size={20} />} iconBg="bg-emerald-100" title="Monitoring Escrow" description="Pantau dana dibekukan, dirilis, atau hangus." />
-          <QuickLink href="/supplier/akun/laporan" icon={<FileText className="text-amber-600" size={20} />} iconBg="bg-amber-100" title="Lapor UMKM" description="Laporkan UMKM bermasalah beserta bukti." />
-          <QuickLink href="/supplier/akun/laporan/riwayat" icon={<Clock3 className="text-indigo-600" size={20} />} iconBg="bg-indigo-100" title="Riwayat Laporan" description="Lacak status laporan yang Anda kirim." />
-        </div>
-      </section>
 
       <section className="rounded-xl border border-blue-100 bg-blue-50 p-5"><h3 className="text-sm font-bold text-blue-900">Informasi Penting</h3><ul className="mt-2 space-y-1 text-sm text-blue-800"><li>• Katalog baru akan tayang di marketplace setelah diterbitkan.</li><li>• Lokasi pengambilan terkunci otomatis setelah ada 1 peserta terdaftar.</li><li>• Skema harga tier terkunci otomatis setelah ada peserta terdaftar.</li><li>• Dana escrow akan cair otomatis 24 jam setelah serah terima fisik.</li></ul></section>
     </div>
@@ -235,8 +200,4 @@ function EmptyCatalog() {
 
 function StatCard({ icon, iconBg, label, value }: { icon: React.ReactNode; iconBg: string; label: string; value: string }) {
   return <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"><div className="flex items-center gap-3"><span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${iconBg}`}>{icon}</span><div className="min-w-0"><p className="text-xs font-medium text-slate-500">{label}</p><p className="truncate text-lg font-bold text-slate-900">{value}</p></div></div></div>;
-}
-
-function QuickLink({ href, icon, iconBg, title, description }: { href: string; icon: React.ReactNode; iconBg: string; title: string; description: string }) {
-  return <Link href={href} className="group block rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-blue-200 hover:shadow-md"><div className="flex items-center gap-3"><span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${iconBg}`}>{icon}</span><div className="min-w-0 flex-1"><p className="text-sm font-bold text-slate-900 group-hover:text-blue-700">{title}</p><p className="mt-0.5 text-xs text-slate-500">{description}</p></div><ChevronRight aria-hidden="true" size={18} className="shrink-0 text-slate-300 group-hover:text-blue-500" /></div></Link>;
 }
