@@ -24,4 +24,13 @@ describe("canonical UMKM routes", () => {
     expect(readFileSync(join(root, "app/akun/page.tsx"), "utf8")).toContain('redirect("/umkm/akun")');
     expect(readFileSync(join(root, "app/beranda-umkm/page.tsx"), "utf8")).toContain('redirect("/umkm")');
   });
+
+  it("provides real UMKM workspace APIs and pages without mock imports", () => {
+    for (const route of ["app/api/umkm/dashboard/route.ts", "app/api/umkm/orders/route.ts", "app/api/umkm/notifications/route.ts"]) {
+      expect(existsSync(join(root, route)), `missing ${route}`).toBe(true);
+    }
+    for (const page of ["app/umkm/page.tsx", "app/umkm/pesanan/page.tsx", "app/umkm/notifikasi/page.tsx", "app/umkm/akun/page.tsx"]) {
+      expect(readFileSync(join(root, page), "utf8")).not.toMatch(/mock-data|OrderCenterClient|NotificationCenterClient/);
+    }
+  });
 });

@@ -1,10 +1,5 @@
 import { NextResponse } from "next/server";
-import {
-  requireRole,
-  toAuthResponse,
-  type AuthClient,
-  type AuthContext,
-} from "@/lib/supabase/auth";
+import { getCurrentUser, type AuthClient } from "@/lib/supabase/auth";
 import { getServerClient } from "@/lib/supabase/server";
 import { isUuid, parseJsonBody } from "@/lib/admin/validation";
 import { enforceRateLimit } from "@/lib/rate-limit";
@@ -17,6 +12,8 @@ import { adjustVolumeCounter } from "@/lib/orders/registration-counter";
 
 export const dynamic = "force-dynamic";
 
+interface UmkmProfileCheck { user_id: string }
+
 interface RegistrationBody {
   batchId?: unknown;
   quantity?: unknown;
@@ -27,11 +24,30 @@ interface RegistrationBody {
 export async function POST(req: Request) {
   const client = await getServerClient();
 
-  let authCtx: AuthContext;
-  try {
-    authCtx = await requireRole(client as unknown as AuthClient, ["umkm"]);
-  } catch (err) {
-    return toAuthResponse(err);
+  const authCtx = await getCurrentUser(client as unknown as AuthClient);
+  if (!authCtx) {
+    return NextResponse.json({ error: "Sign in required", code: "unauthenticated" }, { status: 401 });
+  }
+  if (authCtx.role !== "umkm" || authCtx.status !== "active") {
+    return NextResponse.json({ error: "Pendaftaran hanya tersedia untuk akun UMKM aktif.", code: "role_forbidden" }, { status: 403 });
+  }
+
+  const profileQuery = client.from("umkm_profiles") as never as {
+    select: (columns: string) => {
+      eq: (column: string, value: string) => {
+        maybeSingle: () => PromiseLike<{ data: UmkmProfileCheck | null; error: Error | null }>;
+      };
+    };
+  };
+  const { data: umkmProfile, error: profileError } = await profileQuery
+    .select("user_id")
+    .eq("user_id", authCtx.userId)
+    .maybeSingle();
+  if (profileError) {
+    return NextResponse.json({ error: "Unable to verify UMKM profile" }, { status: 500 });
+  }
+  if (!umkmProfile) {
+    return NextResponse.json({ error: "Lengkapi profil usaha sebelum bergabung ke batch.", code: "profile_incomplete" }, { status: 409 });
   }
 
   const limited = await enforceRateLimit(req, "registration", authCtx.userId);

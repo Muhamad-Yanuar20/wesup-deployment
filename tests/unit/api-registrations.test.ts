@@ -118,6 +118,9 @@ function buildClient(opts: ClientOpts) {
         })),
       };
     }
+    if (table === "umkm_profiles") {
+      return { select: vi.fn(() => ({ eq: vi.fn(() => ({ maybeSingle: vi.fn(async () => ({ data: { user_id: UMKM_ID }, error: null })) })) })) };
+    }
     if (table === "batches") {
       return { select: vi.fn(() => ({ eq: vi.fn(() => ({ single: batchSingle })) })) };
     }

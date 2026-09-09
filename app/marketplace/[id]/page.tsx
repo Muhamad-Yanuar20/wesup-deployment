@@ -7,7 +7,7 @@ import MarketplaceDetailClient from "@/components/marketplace/MarketplaceDetailC
 import { buildPublicMarketplaceUrl } from "@/lib/marketplace/share-link";
 import { fetchMarketplaceDetail } from "@/lib/marketplace/server-repository";
 import { getServerClient } from "@/lib/supabase/server";
-import { getCurrentUser, type AuthClient } from "@/lib/supabase/auth";
+import { getViewerAccessState, type AccessStateClient } from "@/lib/auth/access-state";
 import { isUuid } from "@/lib/admin/validation";
 
 export const dynamic = "force-dynamic";
@@ -29,8 +29,9 @@ export default async function MarketplaceDetailPage({
   const item = await fetchMarketplaceDetail(client as never, id);
   if (!item) notFound();
 
-  const viewer = await getCurrentUser(client as unknown as AuthClient);
-  const viewerRole = viewer?.role ?? null;
+  const viewerAccess = await getViewerAccessState(client as unknown as AccessStateClient);
+  const viewerRole = viewerAccess?.role ?? null;
+  const viewerProfileComplete = viewerAccess?.role === "umkm" ? viewerAccess.profileComplete : undefined;
   const configuredSiteUrl = process.env.NEXT_PUBLIC_SITE_URL;
   if (!configuredSiteUrl && process.env.NODE_ENV === "production") {
     throw new Error("NEXT_PUBLIC_SITE_URL must be configured for canonical marketplace links");
@@ -55,6 +56,7 @@ export default async function MarketplaceDetailPage({
             item={item}
             canonicalUrl={canonicalUrl}
             viewerRole={viewerRole}
+            viewerProfileComplete={viewerProfileComplete}
           />
         </div>
       </div>

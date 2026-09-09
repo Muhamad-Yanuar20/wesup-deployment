@@ -74,12 +74,15 @@ export interface MarketplaceDetailClientProps {
   canonicalUrl: string;
   /** Current viewer's role from the server session; `null` when not signed in. */
   viewerRole: UserRole | null;
+  /** Whether an authenticated UMKM has completed the required business profile. */
+  viewerProfileComplete?: boolean;
 }
 
 export default function MarketplaceDetailClient({
   item,
   canonicalUrl,
   viewerRole,
+  viewerProfileComplete = true,
 }: MarketplaceDetailClientProps) {
   const [consentGiven, setConsentGiven] = useState(false);
   const initialProgress = useMemo(() => buildInitialProgress(item), [item]);
@@ -91,6 +94,7 @@ export default function MarketplaceDetailClient({
   } = useTierProgress(item.id, initialProgress);
 
   const isUmkm = viewerRole === "umkm";
+  const canJoinBatch = isUmkm && viewerProfileComplete;
   const shareUrl = buildWhatsAppShareUrl(item, canonicalUrl);
   const liveTiers = liveProgress.tiers.length > 0 ? liveProgress.tiers : initialProgress.tiers;
   const currentPrice = liveProgress.tierProgress.currentPricePerUnit || item.currentTierPrice;
@@ -190,12 +194,12 @@ export default function MarketplaceDetailClient({
           </p>
         ) : null}
 
-        {isUmkm ? (
+        {canJoinBatch ? (
           <LocationConsentCheckbox onChange={(checked) => setConsentGiven(checked)} />
         ) : null}
 
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2">
-          {isUmkm ? (
+          {canJoinBatch ? (
             <div className="flex-1">
               <JoinBatchForm
                 item={item}
@@ -203,9 +207,16 @@ export default function MarketplaceDetailClient({
                 onSuccess={({ count }) => applyRegistration(count)}
               />
             </div>
+          ) : isUmkm ? (
+            <Link
+              href={`/umkm/onboarding?returnTo=/marketplace/${encodeURIComponent(item.id)}`}
+              className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-bold text-white shadow-sm shadow-blue-600/20 transition-all hover:bg-blue-700 active:scale-[0.98] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+            >
+              Lengkapi profil untuk Mendaftar
+            </Link>
           ) : viewerRole === null ? (
             <Link
-              href="/login"
+              href={`/login?role=umkm&returnTo=/marketplace/${encodeURIComponent(item.id)}`}
               className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-bold text-white shadow-sm shadow-blue-600/20 transition-all hover:bg-blue-700 active:scale-[0.98] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
             >
               <LogIn aria-hidden="true" className="w-4 h-4" />
