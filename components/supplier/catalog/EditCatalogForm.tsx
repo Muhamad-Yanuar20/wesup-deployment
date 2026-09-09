@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { AlertCircle, ArrowLeft, LoaderCircle } from "lucide-react";
 import Link from "next/link";
-import { supplierBatchMockRepository } from "@/lib/supplier-batch/mock-repository";
-import type { SupplierBatchDetail } from "@/lib/supplier-batch/types";
+import { supplierBatchApiRepository } from "@/lib/supplier-catalog/api-repository";
+import type { SupplierBatchDetail, SupplierBatchStatus } from "@/lib/supplier-batch/types";
 import type { CatalogDraft } from "@/lib/supplier-catalog/types";
 import { isTierSchemeLocked } from "@/lib/supplier-catalog/lock";
 import CreateCatalogForm from "@/components/supplier/catalog/CreateCatalogForm";
@@ -15,7 +15,9 @@ function batchToDraft(batch: SupplierBatchDetail): CatalogDraft {
     title: batch.title,
     category: batch.category,
     description: batch.description,
+    targetQuantity: batch.targetQuantity,
     productPhoto: null,
+    productPhotoUrl: batch.imageUrl.startsWith("http") ? batch.imageUrl : null,
     tiers: batch.tiers.map((t) => ({
       tierNumber: t.tierNumber,
       minimumQuantity: t.minimumQuantity,
@@ -40,7 +42,14 @@ function batchToDraft(batch: SupplierBatchDetail): CatalogDraft {
   };
 }
 
-type LoadPhase = "idle" | "loading" | "success" | "error" | "not-found";
+type LoadPhase = "idle" | "loading" | "success" | "error" | "not-found" | "read-only";
+
+const readOnlyStatusLabel: Partial<Record<SupplierBatchStatus, string>> = {
+  CLOSED: "Selesai",
+  CANCELLED_BY_SUPPLIER: "Dibatalkan pemasok",
+  TAKEDOWN: "Diturunkan Admin",
+  COMPLETED: "Selesai",
+};
 
 export default function EditCatalogForm() {
   const params = useParams<{ id: string }>();
@@ -49,6 +58,7 @@ export default function EditCatalogForm() {
 
   const [phase, setPhase] = useState<LoadPhase>("loading");
   const [initialDraft, setInitialDraft] = useState<CatalogDraft | null>(null);
+  const [batchStatus, setBatchStatus] = useState<SupplierBatchStatus | null>(null);
   const [locationLocked, setLocationLocked] = useState(false);
   const [tiersLocked, setTiersLocked] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -56,19 +66,20 @@ export default function EditCatalogForm() {
   useEffect(() => {
     const controller = new AbortController();
 
-    supplierBatchMockRepository
+    supplierBatchApiRepository
       .getById(batchId, { signal: controller.signal })
       .then((batch) => {
         if (!batch) {
           setPhase("not-found");
           return;
         }
-        if (batch.status === "CANCELLED_BY_SUPPLIER") {
-          setError("Katalog yang dibatalkan tidak dapat diedit.");
-          setPhase("error");
+        if (batch.status !== "DRAFT" && batch.status !== "PUBLISHED") {
+          setError(`${readOnlyStatusLabel[batch.status] ?? "Katalog"} tidak dapat diedit.`);
+          setPhase("read-only");
           return;
         }
         setInitialDraft(batchToDraft(batch));
+        setBatchStatus(batch.status);
         setLocationLocked(batch.participantCount > 0);
         setTiersLocked(isTierSchemeLocked(batch.participantCount));
         setPhase("success");
@@ -102,6 +113,23 @@ export default function EditCatalogForm() {
         >
           <ArrowLeft size={16} />
           Kembali ke daftar katalog
+        </Link>
+      </div>
+    );
+  }
+
+  if (phase === "read-only") {
+    return (
+      <div className="rounded-xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+        <AlertCircle className="mx-auto h-6 w-6 text-slate-500" />
+        <h2 className="mt-3 text-lg font-bold text-slate-900">Katalog hanya dapat dibaca</h2>
+        <p className="mt-2 text-sm text-slate-600">{error ?? "Status katalog ini tidak mengizinkan perubahan."}</p>
+        <Link
+          href={`/supplier/batch/${batchId}`}
+          className="mt-4 inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+        >
+          <ArrowLeft size={16} />
+          Kembali ke detail katalog
         </Link>
       </div>
     );
@@ -165,10 +193,12 @@ export default function EditCatalogForm() {
 
       <CreateCatalogForm
         initialDraft={initialDraft}
+        batchId={batchId}
+        submitAction={batchStatus === "DRAFT" ? "publish" : "draft"}
         locationLocked={locationLocked}
         tiersLocked={tiersLocked}
         productPhotoRequired={false}
-        submitLabel="Simpan Perubahan"
+        submitLabel={batchStatus === "DRAFT" ? "Terbitkan Penawaran" : "Simpan Perubahan"}
       />
     </>
   );

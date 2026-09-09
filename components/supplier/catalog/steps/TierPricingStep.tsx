@@ -122,7 +122,7 @@ export default function TierPricingStep({
                 </span>
                 <span className="text-sm font-semibold text-slate-800">
                   Tier {tier.tierNumber}
-                  {index === tiers.length - 1 && (
+                  {index === 0 && (
                     <span className="ml-2 text-xs font-normal text-slate-500">
                       (Harga Dasar/Tertinggi)
                     </span>
@@ -168,8 +168,8 @@ export default function TierPricingStep({
                   min={tier.minimumQuantity}
                   value={tier.maximumQuantity ?? ""}
                   onChange={(e) => updateTier(index, "maximumQuantity", e.target.value === "" ? null : e.target.value)}
-                  disabled={blocked || index === tiers.length - 1}
-                  placeholder={index === tiers.length - 1 ? "Tanpa batas" : ""}
+                  disabled={blocked || index === 0}
+                  placeholder={index === 0 ? "Tanpa batas" : ""}
                   className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-50 placeholder:text-slate-400"
                 />
               </div>

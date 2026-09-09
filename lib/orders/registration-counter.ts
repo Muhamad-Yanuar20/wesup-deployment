@@ -22,17 +22,45 @@ export function cutoffLockKey(batchId: string): string {
   return `${CUTOFF_LOCK_PREFIX}${batchId}`;
 }
 
-export async function incrementVolumeCounter(batchId: string): Promise<number> {
-  return redis.incr(volumeKey(batchId));
+export async function adjustVolumeCounter(
+  batchId: string,
+  quantityDelta: number,
+): Promise<number> {
+  if (!Number.isSafeInteger(quantityDelta) || quantityDelta === 0) {
+    throw new Error("quantityDelta must be a non-zero safe integer");
+  }
+  return redis.incrby(volumeKey(batchId), quantityDelta);
 }
 
-export async function decrementVolumeCounter(batchId: string): Promise<number> {
-  return redis.decr(volumeKey(batchId));
+/** @deprecated Prefer adjustVolumeCounter so registrations reserve quantity. */
+export async function incrementVolumeCounter(
+  batchId: string,
+  quantity = 1,
+): Promise<number> {
+  return adjustVolumeCounter(batchId, quantity);
 }
 
-export async function getVolumeCounter(batchId: string): Promise<number> {
+/** @deprecated Prefer adjustVolumeCounter with a negative delta. */
+export async function decrementVolumeCounter(
+  batchId: string,
+  quantity = 1,
+): Promise<number> {
+  return adjustVolumeCounter(batchId, -quantity);
+}
+
+export async function getVolumeCounter(batchId: string): Promise<number | null> {
   const value = await redis.get<number>(volumeKey(batchId));
-  return typeof value === "number" ? value : 0;
+  return typeof value === "number" ? value : null;
+}
+
+export async function restoreVolumeCounter(
+  batchId: string,
+  quantity: number,
+): Promise<void> {
+  if (!Number.isSafeInteger(quantity) || quantity < 0) {
+    throw new Error("quantity must be a non-negative safe integer");
+  }
+  await redis.set(volumeKey(batchId), quantity);
 }
 
 export async function resetVolumeCounter(batchId: string): Promise<void> {

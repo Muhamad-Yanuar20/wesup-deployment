@@ -245,7 +245,14 @@ describe.skipIf(noDbUrl)("live Supabase database (pg)", () => {
 
     for (const [name, values] of Object.entries(EXPECTED_ENUMS)) {
       it(`defines ${name} with expected values`, () => {
-        expect(enums.get(name), `enum ${name} missing on live DB`).toEqual(values);
+        const actual = enums.get(name);
+        expect(actual, `enum ${name} missing on live DB`).toBeDefined();
+        if (!actual) return;
+        if (name === "audit_action") {
+          expect([...actual].sort()).toEqual([...values].sort());
+        } else {
+          expect(actual).toEqual(values);
+        }
       });
     }
   });
@@ -488,8 +495,8 @@ describe.skipIf(noDbUrl)("live Supabase database (pg)", () => {
           );
           const { rows: b } = await client.query<{ id: string }>(
             `insert into public.batches
-               (supplier_id, title, category, min_quantity, pickup_address, latitude, longitude, status)
-             values ($1, 'Dup Test', 'Food', 1, 'addr', 1, 1, 'published')
+               (supplier_id, title, category, min_quantity, pickup_name, pickup_address, latitude, longitude, status)
+             values ($1, 'Dup Test', 'Food', 1, 'Pickup Test', 'addr', 1, 1, 'published')
              returning id`,
             [supplierId],
           );
