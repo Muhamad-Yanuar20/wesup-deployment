@@ -46,6 +46,8 @@ interface SessionClientOptions {
   getUserError?: Error | null;
   profile?: { role: string; status: string; full_name: string } | null;
   profileError?: Error | null;
+  supplierVerification?: "pending" | "approved" | "rejected" | null;
+  umkmProfile?: boolean;
 }
 
 function mockSessionClient(options: SessionClientOptions) {
@@ -59,9 +61,15 @@ function mockSessionClient(options: SessionClientOptions) {
       ? { data: null, error: options.profileError }
       : { data: options.profile ?? null, error: null },
   );
-  const from = vi.fn(() => ({
+  const maybeSingle = vi.fn(async () => ({
+    data: options.supplierVerification === undefined
+      ? (options.umkmProfile ? { user_id: options.user?.id ?? "u-1" } : null)
+      : (options.supplierVerification ? { verification_status: options.supplierVerification } : null),
+    error: null,
+  }));
+  const from = vi.fn((table: string) => ({
     select: vi.fn(() => ({
-      eq: vi.fn(() => ({ single })),
+      eq: vi.fn(() => table === "profiles" ? { single } : { maybeSingle }),
     })),
   }));
   const client = { auth: { getUser }, from };
@@ -434,16 +442,19 @@ describe("GET /api/auth/session", () => {
     mockGetServerClient.mockReset();
   });
 
-  it("returns the user and profile for an active session", async () => {
+  it("returns the user and access state for an active session", async () => {
     mockSessionClient({
       user: { id: "u-1", email: "buyer@example.com" },
       profile: { role: "supplier", status: "active", full_name: "Budi Supplier" },
+      supplierVerification: "approved",
     });
     const res = await getSession();
     expect(res.status).toBe(200);
     await expect(res.json()).resolves.toEqual({
       user: { email: "buyer@example.com" },
       profile: { role: "supplier", status: "active", full_name: "Budi Supplier" },
+      accessState: { role: "supplier", status: "active", verificationStatus: "approved" },
+      homePath: "/supplier",
     });
   });
 

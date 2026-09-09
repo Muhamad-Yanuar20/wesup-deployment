@@ -16,7 +16,7 @@ import {
 import { useToast } from "@/components/ui/GlobalToast";
 import {
   getLoginRoleLabel,
-  LOGIN_ROLES,
+  PUBLIC_LOGIN_ROLES,
   type LoginErrorResponse,
   type LoginFieldErrors,
   type LoginRole,
@@ -24,19 +24,13 @@ import {
 } from "@/lib/auth/login-contract";
 
 interface RoleOption {
-  value: LoginRole;
+  value: (typeof PUBLIC_LOGIN_ROLES)[number];
   label: string;
   description: string;
   icon: LucideIcon;
 }
 
 const roleOptions: RoleOption[] = [
-  {
-    value: "admin",
-    label: "Admin",
-    description: "Kelola dan moderasi platform",
-    icon: ShieldCheck,
-  },
   {
     value: "umkm",
     label: "UMKM",
@@ -51,16 +45,27 @@ const roleOptions: RoleOption[] = [
   },
 ];
 
-export default function LoginForm() {
+interface LoginFormProps {
+  initialRole?: (typeof PUBLIC_LOGIN_ROLES)[number];
+  fixedRole?: LoginRole;
+  returnTo?: string | null;
+}
+
+export default function LoginForm({
+  initialRole = "umkm",
+  fixedRole,
+  returnTo = null,
+}: LoginFormProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState<LoginRole>("umkm");
+  const [role, setRole] = useState<LoginRole>(fixedRole ?? initialRole);
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<LoginFieldErrors>({});
   const [globalError, setGlobalError] = useState<string>();
+  const selectedRole = fixedRole ?? role;
 
   function updateEmail(value: string) {
     setEmail(value);
@@ -74,7 +79,7 @@ export default function LoginForm() {
     setGlobalError(undefined);
   }
 
-  function updateRole(value: LoginRole) {
+  function updateRole(value: (typeof PUBLIC_LOGIN_ROLES)[number]) {
     setRole(value);
     setFieldErrors((current) => ({ ...current, role: undefined }));
     setGlobalError(undefined);
@@ -92,7 +97,7 @@ export default function LoginForm() {
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, role }),
+        body: JSON.stringify({ email, password, role: selectedRole, returnTo }),
       });
       const body = (await response.json()) as Partial<
         LoginSuccessResponse & LoginErrorResponse
@@ -144,46 +149,46 @@ export default function LoginForm() {
         </div>
       ) : null}
 
-      <fieldset disabled={submitting} className="space-y-3">
-        <legend className="text-sm font-semibold text-slate-800">
-          Login sebagai
-        </legend>
-        <div className="grid gap-3 sm:grid-cols-3">
-          {roleOptions.map((option) => {
-            const Icon = option.icon;
-            const selected = role === option.value;
-            return (
-              <label
-                key={option.value}
-                className={`relative flex cursor-pointer flex-col rounded-2xl border p-4 transition focus-within:ring-2 focus-within:ring-blue-200 ${
-                  selected
-                    ? "border-blue-500 bg-blue-50 text-blue-700 shadow-sm"
-                    : "border-slate-200 bg-white text-slate-700 hover:border-blue-300 hover:bg-blue-50/50"
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="role"
-                  value={option.value}
-                  checked={selected}
-                  onChange={() => updateRole(option.value)}
-                  className="sr-only"
-                  aria-describedby="role-description"
-                />
-                <Icon className="h-5 w-5" aria-hidden="true" />
-                <span className="mt-3 text-sm font-bold">{option.label}</span>
-                <span className="mt-1 text-xs leading-5 text-slate-500">
-                  {option.description}
-                </span>
-              </label>
-            );
-          })}
+      {fixedRole ? (
+        <div className="rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-800">
+          Login Admin
         </div>
-        <p id="role-description" className="text-xs text-slate-500">
-          Pilih sesuai role akun yang sudah terdaftar di Wesup.
-        </p>
-        {fieldError("role")}
-      </fieldset>
+      ) : (
+        <fieldset disabled={submitting} className="space-y-3">
+          <legend className="text-sm font-semibold text-slate-800">Login sebagai</legend>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {roleOptions.map((option) => {
+              const Icon = option.icon;
+              const selected = role === option.value;
+              return (
+                <label
+                  key={option.value}
+                  className={`relative flex min-h-11 cursor-pointer flex-col rounded-2xl border p-4 transition focus-within:ring-2 focus-within:ring-blue-200 ${
+                    selected
+                      ? "border-blue-500 bg-blue-50 text-blue-700 shadow-sm"
+                      : "border-slate-200 bg-white text-slate-700 hover:border-blue-300 hover:bg-blue-50/50"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="role"
+                    value={option.value}
+                    checked={selected}
+                    onChange={() => updateRole(option.value)}
+                    className="sr-only"
+                    aria-describedby="role-description"
+                  />
+                  <Icon className="h-5 w-5" aria-hidden="true" />
+                  <span className="mt-3 text-sm font-bold">{option.label}</span>
+                  <span className="mt-1 text-xs leading-5 text-slate-500">{option.description}</span>
+                </label>
+              );
+            })}
+          </div>
+          <p id="role-description" className="text-xs text-slate-500">Pilih sesuai role akun yang sudah terdaftar di Wesup.</p>
+          {fieldError("role")}
+        </fieldset>
+      )}
 
       <div>
         <label htmlFor="login-email" className="flex items-center gap-2 text-sm font-semibold text-slate-800">
@@ -226,15 +231,11 @@ export default function LoginForm() {
           <button
             type="button"
             onClick={() => setShowPassword((visible) => !visible)}
-            className="absolute inset-y-0 right-0 mt-2 flex items-center px-3 text-slate-400 transition hover:text-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+            className="absolute inset-y-0 right-0 mt-2 flex min-h-11 items-center px-3 text-slate-400 transition hover:text-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
             aria-label={showPassword ? "Sembunyikan password" : "Tampilkan password"}
             aria-pressed={showPassword}
           >
-            {showPassword ? (
-              <EyeOff className="h-5 w-5" aria-hidden="true" />
-            ) : (
-              <Eye className="h-5 w-5" aria-hidden="true" />
-            )}
+            {showPassword ? <EyeOff className="h-5 w-5" aria-hidden="true" /> : <Eye className="h-5 w-5" aria-hidden="true" />}
           </button>
         </div>
         {fieldError("password")}
@@ -242,22 +243,25 @@ export default function LoginForm() {
 
       <button
         type="submit"
-        disabled={submitting || !LOGIN_ROLES.includes(role)}
-        className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-8 py-3.5 text-base font-semibold text-white shadow-sm transition hover:bg-blue-700 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+        disabled={submitting || !selectedRole}
+        className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-8 py-3.5 text-base font-semibold text-white shadow-sm transition hover:bg-blue-700 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {submitting ? (
-          <LoaderCircle className="h-5 w-5 animate-spin" aria-hidden="true" />
-        ) : (
-          <ShieldCheck className="h-5 w-5" aria-hidden="true" />
-        )}
+        {submitting ? <LoaderCircle className="h-5 w-5 animate-spin" aria-hidden="true" /> : <ShieldCheck className="h-5 w-5" aria-hidden="true" />}
         {submitting ? "Sedang masuk…" : "Masuk ke akun"}
       </button>
 
       <p className="text-center text-sm text-slate-500">
-        Belum menjadi mitra pemasok?{" "}
-        <a href="/supplier/register" className="font-semibold text-blue-700 underline-offset-4 hover:underline">
-          Daftar sebagai Supplier
-        </a>
+        {fixedRole ? (
+          <>
+            Bukan login Admin?{" "}
+            <a href="/login" className="font-semibold text-blue-700 underline-offset-4 hover:underline">Login UMKM/Supplier</a>
+          </>
+        ) : (
+          <>
+            Belum punya akun?{" "}
+            <a href="/register" className="font-semibold text-blue-700 underline-offset-4 hover:underline">Pilih role untuk daftar</a>
+          </>
+        )}
       </p>
     </form>
   );

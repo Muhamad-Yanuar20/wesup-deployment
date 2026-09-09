@@ -1,12 +1,14 @@
 import type { AccountStatus, UserRole, VerificationStatus } from "@/types/database";
 
 export const LOGIN_ROLES = ["admin", "umkm", "supplier"] as const;
+export const PUBLIC_LOGIN_ROLES = ["umkm", "supplier"] as const;
 export type LoginRole = (typeof LOGIN_ROLES)[number];
 
 export interface LoginRequest {
   email: string;
   password: string;
   role: LoginRole;
+  returnTo?: string;
 }
 
 export interface LoginFieldErrors {
@@ -42,8 +44,8 @@ export interface LoginErrorResponse {
 }
 
 export const LOGIN_REDIRECT_BY_ROLE: Record<LoginRole, string> = {
-  admin: "/",
-  umkm: "/marketplace",
+  admin: "/admin",
+  umkm: "/umkm",
   supplier: "/supplier",
 };
 
@@ -68,6 +70,7 @@ export function parseLoginPayload(input: unknown): ParseLoginPayloadResult {
     typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
   const password = typeof body.password === "string" ? body.password : "";
   const role = typeof body.role === "string" ? body.role : "";
+  const returnTo = typeof body.returnTo === "string" ? body.returnTo.trim() : "";
   const fieldErrors: LoginFieldErrors = {};
 
   if (!EMAIL_PATTERN.test(email)) {
@@ -86,7 +89,12 @@ export function parseLoginPayload(input: unknown): ParseLoginPayloadResult {
 
   return {
     ok: true,
-    value: { email, password, role: role as LoginRole },
+    value: {
+      email,
+      password,
+      role: role as LoginRole,
+      ...(returnTo ? { returnTo } : {}),
+    },
   };
 }
 
