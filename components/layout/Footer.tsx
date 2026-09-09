@@ -28,8 +28,8 @@ export function Footer() {
                         <ul className="space-y-2">
                             {[
                                 { href: "/marketplace", label: "Marketplace" },
-                                { href: "/pesanan", label: "Pesanan Saya" },
-                                { href: "/notifikasi", label: "Notifikasi" },
+                                { href: "/umkm/pesanan", label: "Pesanan Saya" },
+                                { href: "/umkm/notifikasi", label: "Notifikasi" },
                             ].map((link) => (
                                 <li key={link.href}>
                                     <Link
