@@ -69,7 +69,7 @@ function mockSearchClient(options: {
     }
     return {
       select: vi.fn(() => ({
-        eq: vi.fn(() => ({ maybe: coordsMaybe })),
+        eq: vi.fn(() => ({ maybeSingle: coordsMaybe })),
       })),
     };
   });
@@ -121,7 +121,7 @@ describe("GET /api/marketplace/search", () => {
       origin: {
         latitude: BANDUNG.latitude,
         longitude: BANDUNG.longitude,
-        source: "bandung_default",
+        source: "bandung_default", needsProfileLocation: false,
       },
     });
     expect(rpc).toHaveBeenCalledWith("search_batches", {
@@ -151,7 +151,7 @@ describe("GET /api/marketplace/search", () => {
       page: 3,
       pageSize: 12,
       totalPages: 0,
-      origin: { source: "request" },
+      origin: { source: "request", needsProfileLocation: false },
     });
     expect(rpc).toHaveBeenCalledWith("search_batches", {
       p_query: "cabai",
@@ -205,7 +205,7 @@ describe("GET /api/marketplace/search", () => {
       total: 1,
       pageSize: 12,
       totalPages: 1,
-      origin: { source: "bandung_default" },
+      origin: { source: "bandung_default", needsProfileLocation: false },
     });
     expect(json.items[0]).toMatchObject({
       id: "b1",

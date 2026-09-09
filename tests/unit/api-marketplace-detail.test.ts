@@ -41,7 +41,7 @@ function buildClient(options: { rows?: unknown[]; error?: Error | null } = {}) {
     data: options.rows ?? [ROW],
     error: options.error ?? null,
   }));
-  const client = { rpc };
+  const client = { auth: { getUser: vi.fn(async () => ({ data: { user: null }, error: null })) }, rpc };
   mockGetServerClient.mockResolvedValue(client as never);
   return { rpc };
 }
@@ -85,8 +85,8 @@ describe("GET /api/marketplace/[id]", () => {
     expect(body.slug).toBeUndefined();
     expect(rpc).toHaveBeenCalledWith("get_marketplace_batch", {
       p_batch_id: BATCH_ID,
-      p_lat: null,
-      p_lng: null,
+      p_lat: -6.914744,
+      p_lng: 107.60981,
     });
   });
 

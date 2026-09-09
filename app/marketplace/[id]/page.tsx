@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import "leaflet/dist/leaflet.css";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
@@ -7,6 +8,8 @@ import MarketplaceDetailClient from "@/components/marketplace/MarketplaceDetailC
 import { buildPublicMarketplaceUrl } from "@/lib/marketplace/share-link";
 import { fetchMarketplaceDetail } from "@/lib/marketplace/server-repository";
 import { getServerClient } from "@/lib/supabase/server";
+import { getCurrentUser, type AuthClient } from "@/lib/supabase/auth";
+import { resolveMarketplaceOrigin, type MarketplaceOriginClient } from "@/lib/marketplace/origin";
 import { getViewerAccessState, type AccessStateClient } from "@/lib/auth/access-state";
 import { isUuid } from "@/lib/admin/validation";
 
@@ -26,7 +29,9 @@ export default async function MarketplaceDetailPage({
   if (!isUuid(id)) notFound();
 
   const client = await getServerClient();
-  const item = await fetchMarketplaceDetail(client as never, id);
+  const context = await getCurrentUser(client as unknown as AuthClient);
+  const origin = await resolveMarketplaceOrigin(client as unknown as MarketplaceOriginClient, context);
+  const item = await fetchMarketplaceDetail(client as never, id, { latitude: origin.latitude, longitude: origin.longitude });
   if (!item) notFound();
 
   const viewerAccess = await getViewerAccessState(client as unknown as AccessStateClient);
@@ -57,6 +62,7 @@ export default async function MarketplaceDetailPage({
             canonicalUrl={canonicalUrl}
             viewerRole={viewerRole}
             viewerProfileComplete={viewerProfileComplete}
+            needsProfileLocation={origin.needsProfileLocation}
           />
         </div>
       </div>

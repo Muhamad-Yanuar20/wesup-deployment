@@ -13,6 +13,7 @@ export interface MarketplaceOrigin {
   latitude: number;
   longitude: number;
   source: "umkm_profile" | "request" | "bandung_default";
+  needsProfileLocation: boolean;
 }
 
 export interface TierProgress {

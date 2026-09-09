@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef } from "react";
+import Link from "next/link";
 import { ListFilter, Search } from "lucide-react";
 import { SEARCH_DEFAULT_RADIUS_KM } from "@/lib/catalog/categories";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
@@ -187,6 +188,13 @@ function MarketplaceController() {
             Filter
           </button>
         </div>
+
+        {origin?.needsProfileLocation ? (
+          <div className="flex flex-col gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950 sm:flex-row sm:items-center sm:justify-between" role="status" aria-live="polite">
+            <p><strong>Lokasi usaha belum tersimpan.</strong> Jarak sementara dihitung dari pusat Bandung.</p>
+            <Link href="/umkm/onboarding?returnTo=/marketplace" className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-xl bg-amber-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-amber-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-700 focus-visible:ring-offset-2">Simpan lokasi</Link>
+          </div>
+        ) : null}
 
         {origin ? (
           <MarketplaceRadiusMapClient origin={origin} items={items} radiusKm={radiusKm} />

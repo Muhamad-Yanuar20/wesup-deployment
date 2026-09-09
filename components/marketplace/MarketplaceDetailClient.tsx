@@ -72,10 +72,12 @@ function buildInitialProgress(item: MarketplaceItem): MarketplaceProgressRespons
 export interface MarketplaceDetailClientProps {
   item: MarketplaceItem;
   canonicalUrl: string;
-  /** Current viewer's role from the server session; `null` when not signed in. */
+  /** Current viewers role from the server session; `null` when not signed in. */
   viewerRole: UserRole | null;
   /** Whether an authenticated UMKM has completed the required business profile. */
   viewerProfileComplete?: boolean;
+  /** Whether this UMKM is using the temporary Bandung fallback. */
+  needsProfileLocation?: boolean;
 }
 
 export default function MarketplaceDetailClient({
@@ -83,6 +85,7 @@ export default function MarketplaceDetailClient({
   canonicalUrl,
   viewerRole,
   viewerProfileComplete = true,
+  needsProfileLocation = false,
 }: MarketplaceDetailClientProps) {
   const [consentGiven, setConsentGiven] = useState(false);
   const initialProgress = useMemo(() => buildInitialProgress(item), [item]);
@@ -115,6 +118,12 @@ export default function MarketplaceDetailClient({
       </div>
 
       <div className="p-5 md:p-8 flex flex-col gap-6">
+        {isUmkm && needsProfileLocation ? (
+          <div className="flex flex-col gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950 sm:flex-row sm:items-center sm:justify-between" role="status" aria-live="polite">
+            <p><strong>Lokasi usaha belum tersimpan.</strong> Jarak sementara dihitung dari pusat Bandung.</p>
+            <Link href={`/umkm/onboarding?returnTo=/marketplace/${encodeURIComponent(item.id)}`} className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-xl bg-amber-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-amber-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-700 focus-visible:ring-offset-2">Simpan lokasi</Link>
+          </div>
+        ) : null}
         <div>
           <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 leading-tight">
             {item.title}
