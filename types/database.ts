@@ -687,6 +687,10 @@ export interface Database {
         Args: Record<PropertyKey, never>;
         Returns: boolean;
       };
+      is_approved_supplier: {
+        Args: Record<PropertyKey, never>;
+        Returns: boolean;
+      };
       is_email_registered: {
         Args: { p_email: string };
         Returns: boolean;
