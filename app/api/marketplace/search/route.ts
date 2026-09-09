@@ -3,7 +3,6 @@ import { getServerClient } from "@/lib/supabase/server";
 import {
   getCurrentUser,
   type AuthClient,
-  type AuthContext,
 } from "@/lib/supabase/auth";
 import {
   SEARCH_DEFAULT_LIMIT,

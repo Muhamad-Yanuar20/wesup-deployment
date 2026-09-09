@@ -21,6 +21,19 @@ vi.mock("@/lib/rate-limit", () => ({
 
 const mockGetServerClient = vi.mocked(getServerClient);
 
+const { registerUmkmMock } = vi.hoisted(() => ({ registerUmkmMock: vi.fn() }));
+
+vi.mock("@/lib/umkm-registration/service", () => ({
+  registerUmkm: registerUmkmMock,
+  isDuplicateUmkmEmailError: (error: unknown) => (error as { name?: string })?.name === "DuplicateUmkmEmailError",
+  isUmkmEmailRateLimitError: (error: unknown) => (error as { name?: string })?.name === "UmkmEmailRateLimitError",
+  UmkmRegistrationError: class UmkmRegistrationError extends Error {
+    stage: string;
+    constructor(message: string, stage = "unknown") { super(message); this.name = "UmkmRegistrationError"; this.stage = stage; }
+  },
+}));
+
+
 function postJson(url: string, body: unknown) {
   return new NextRequest(`http://localhost${url}`, {
     method: "POST",
@@ -78,162 +91,56 @@ function mockSessionClient(options: SessionClientOptions) {
 }
 
 describe("POST /api/auth/signup", () => {
+  const validSignup = { email: "buyer@example.com", password: "password123", full_name: "Budi Buyer", phone: "081234567890", latitude: -6.914744, longitude: 107.60981 };
+
   beforeEach(() => {
     vi.unstubAllEnvs();
     mockGetServerClient.mockReset();
     vi.mocked(enforceRateLimit).mockReset();
     vi.mocked(enforceRateLimit).mockResolvedValue(null);
+    registerUmkmMock.mockReset();
   });
 
   it("returns 429 when the rate limiter blocks the request", async () => {
     const auth = { signUp: vi.fn() };
     mockClient(auth);
-    vi.mocked(enforceRateLimit).mockResolvedValueOnce(
-      NextResponse.json({ error: "rate_limited" }, { status: 429 }),
-    );
-    const res = await signup(postJson("/api/auth/signup", {
-      email: "buyer@example.com",
-      password: "password123",
-      full_name: "Budi Buyer",
-    }));
+    vi.mocked(enforceRateLimit).mockResolvedValueOnce(NextResponse.json({ error: "rate_limited" }, { status: 429 }));
+    const res = await signup(postJson("/api/auth/signup", validSignup));
     expect(res.status).toBe(429);
-    expect(auth.signUp).not.toHaveBeenCalled();
+    expect(registerUmkmMock).not.toHaveBeenCalled();
   });
 
-  it("returns 201 with the created user", async () => {
-    const auth = {
-      signUp: vi.fn(async () => ({
-        data: { user: { id: "u-1", email: "buyer@example.com" } },
-        error: null,
-      })),
-    };
-    mockClient(auth);
-    const res = await signup(postJson("/api/auth/signup", {
-      email: "buyer@example.com",
-      password: "password123",
-      full_name: "Budi Buyer",
-      phone: "081234567890",
-    }));
+  it("returns only the success contract and never a user payload", async () => {
+    registerUmkmMock.mockResolvedValue({ ok: true, requiresEmailConfirmation: false });
+    const res = await signup(postJson("/api/auth/signup", { ...validSignup, role: "supplier", userId: "forged" }));
     expect(res.status).toBe(201);
-    await expect(res.json()).resolves.toEqual({
-      user: { id: "u-1", email: "buyer@example.com" },
-      requiresEmailConfirmation: false,
-    });
-    expect(auth.signUp).toHaveBeenCalledWith({
-      email: "buyer@example.com",
-      password: "password123",
-      phone: "081234567890",
-      options: { data: { full_name: "Budi Buyer" } },
-    });
+    await expect(res.json()).resolves.toEqual({ ok: true, requiresEmailConfirmation: false });
+    expect(registerUmkmMock).toHaveBeenCalledWith({ fullName: "Budi Buyer", phone: "081234567890", email: "buyer@example.com", password: "password123", latitude: -6.914744, longitude: 107.60981 });
   });
 
-  it("passes an optional phone through to signUp", async () => {
-    const auth = {
-      signUp: vi.fn(async () => ({ data: { user: { id: "u-1" } }, error: null })),
-    };
-    mockClient(auth);
-    await signup(postJson("/api/auth/signup", {
-      email: "buyer@example.com",
-      password: "password123",
-      full_name: "Budi Buyer",
-      phone: "+6281234567890",
-    }));
-    expect(auth.signUp).toHaveBeenCalledWith({
-      email: "buyer@example.com",
-      password: "password123",
-      phone: "+6281234567890",
-      options: { data: { full_name: "Budi Buyer" } },
-    });
+  it("returns the email confirmation state", async () => {
+    registerUmkmMock.mockResolvedValue({ ok: true, requiresEmailConfirmation: true });
+    const res = await signup(postJson("/api/auth/signup", { ...validSignup, email: "sari@example.com", full_name: "Sari" }));
+    expect(res.status).toBe(201);
+    await expect(res.json()).resolves.toEqual({ ok: true, requiresEmailConfirmation: true });
   });
 
-  it("returns 400 for an invalid email", async () => {
-    const auth = { signUp: vi.fn() };
-    mockClient(auth);
-    const res = await signup(postJson("/api/auth/signup", {
-      email: "not-an-email",
-      password: "password123",
-      full_name: "Budi Buyer",
-    }));
+  it("requires a valid location before calling the service", async () => {
+    const res = await signup(postJson("/api/auth/signup", { ...validSignup, latitude: undefined, longitude: undefined }));
     expect(res.status).toBe(400);
-    await expect(res.json()).resolves.toEqual({ error: "Valid email is required" });
-    expect(auth.signUp).not.toHaveBeenCalled();
+    await expect(res.json()).resolves.toMatchObject({ code: "validation_error", fieldErrors: { latitude: expect.any(String), longitude: expect.any(String) } });
+    expect(registerUmkmMock).not.toHaveBeenCalled();
   });
 
-  it("returns 400 for a password shorter than 8 characters", async () => {
-    const auth = { signUp: vi.fn() };
-    mockClient(auth);
-    const res = await signup(postJson("/api/auth/signup", {
-      email: "buyer@example.com",
-      password: "short",
-      full_name: "Budi Buyer",
-    }));
-    expect(res.status).toBe(400);
-    await expect(res.json()).resolves.toEqual({
-      error: "Password must be at least 8 characters",
-    });
-    expect(auth.signUp).not.toHaveBeenCalled();
-  });
-
-  it("returns 400 when full_name is missing", async () => {
-    const auth = { signUp: vi.fn() };
-    mockClient(auth);
-    const res = await signup(postJson("/api/auth/signup", {
-      email: "buyer@example.com",
-      password: "password123",
-    }));
-    expect(res.status).toBe(400);
-    await expect(res.json()).resolves.toEqual({ error: "Full name is required" });
-    expect(auth.signUp).not.toHaveBeenCalled();
-  });
-
-  it("returns 400 for a malformed JSON body", async () => {
-    const auth = { signUp: vi.fn() };
-    mockClient(auth);
-    const res = await signup(postBadJson("/api/auth/signup"));
-    expect(res.status).toBe(400);
-    expect(auth.signUp).not.toHaveBeenCalled();
-  });
-
-  it("returns 409 when the email is already registered", async () => {
-    const auth = {
-      signUp: vi.fn(async () => ({
-        data: { user: null },
-        error: { code: "user_already_exists", message: "User already registered" },
-      })),
-    };
-    mockClient(auth);
-    const res = await signup(postJson("/api/auth/signup", {
-      email: "taken@example.com",
-      password: "password123",
-      full_name: "Budi Buyer",
-      phone: "081234567890",
-    }));
-    expect(res.status).toBe(409);
-    await expect(res.json()).resolves.toEqual({
-      code: "email_registered_other_role",
-      error: "Email ini sudah terdaftar untuk role lain. Silakan masuk menggunakan role akun sebelumnya.",
-    });
-  });
-
-  it("returns 500 for an unexpected signup error", async () => {
-    const auth = {
-      signUp: vi.fn(async () => ({
-        data: { user: null },
-        error: { code: "over_email_send_rate_limit", message: "Too many requests" },
-      })),
-    };
-    mockClient(auth);
-    const res = await signup(postJson("/api/auth/signup", {
-      email: "buyer@example.com",
-      password: "password123",
-      full_name: "Budi Buyer",
-      phone: "081234567890",
-    }));
-    expect(res.status).toBe(500);
-    await expect(res.json()).resolves.toEqual({ error: "Internal server error" });
+  it("maps duplicate, rate-limit, and unexpected service failures", async () => {
+    registerUmkmMock.mockRejectedValueOnce({ name: "DuplicateUmkmEmailError" });
+    expect((await signup(postJson("/api/auth/signup", validSignup))).status).toBe(409);
+    registerUmkmMock.mockRejectedValueOnce({ name: "UmkmEmailRateLimitError" });
+    expect((await signup(postJson("/api/auth/signup", validSignup))).status).toBe(429);
+    registerUmkmMock.mockRejectedValueOnce(new Error("unexpected"));
+    expect((await signup(postJson("/api/auth/signup", validSignup))).status).toBe(500);
   });
 });
-
 describe("POST /api/auth/login", () => {
   beforeEach(() => {
     mockGetServerClient.mockReset();
