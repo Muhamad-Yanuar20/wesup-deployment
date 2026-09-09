@@ -26,6 +26,7 @@ describe("UmkmOnboardingForm", () => {
     expect(screen.queryByLabelText(/latitude/i)).not.toBeInTheDocument();
     expect(screen.queryByLabelText(/longitude/i)).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: /pilih lokasi peta/i })).toBeInTheDocument();
+    expect(screen.getByText("Belum ada lokasi")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /simpan profil usaha/i })).toBeInTheDocument();
   });
 

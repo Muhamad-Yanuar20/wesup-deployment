@@ -9,8 +9,8 @@ interface ProfileRow {
   user_id: string;
   business_name: string | null;
   address: string | null;
-  latitude: number | string;
-  longitude: number | string;
+  latitude: number | string | null;
+  longitude: number | string | null;
   strike_count?: number;
   suspended_until?: string | null;
   created_at?: string;

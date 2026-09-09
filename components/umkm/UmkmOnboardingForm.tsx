@@ -14,8 +14,8 @@ const DEFAULT_VALUES: FormValues = { businessName: "", address: "", coordinate: 
 
 function profileToForm(profile: Record<string, unknown> | null | undefined): FormValues {
   if (!profile) return DEFAULT_VALUES;
-  const latitude = typeof profile.latitude === "number" ? profile.latitude : Number(profile.latitude);
-  const longitude = typeof profile.longitude === "number" ? profile.longitude : Number(profile.longitude);
+  const latitude = profile.latitude === null || profile.latitude === undefined ? Number.NaN : typeof profile.latitude === "number" ? profile.latitude : Number(profile.latitude);
+  const longitude = profile.longitude === null || profile.longitude === undefined ? Number.NaN : typeof profile.longitude === "number" ? profile.longitude : Number(profile.longitude);
   return {
     businessName: typeof profile.businessName === "string" ? profile.businessName : "",
     address: typeof profile.address === "string" ? profile.address : "",
