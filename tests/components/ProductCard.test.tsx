@@ -8,7 +8,6 @@ import { renderComponent as render } from "./test-utils";
 
 const DEFAULT_ITEM: MarketplaceItem = {
   id: "item-1",
-  slug: "test-slug-1",
   title: "Cabai Merah Premium",
   supplierName: "Mitra Tani Bandung",
   category: "Sayur & Buah",
@@ -86,10 +85,10 @@ describe("ProductCard", () => {
     expect(screen.getByText("100%")).toBeInTheDocument();
   });
 
-  it("links to the detail page using slug", () => {
-    render(<ProductCard item={makeItem({ slug: "cabai-merah-1" })} />);
+  it("links to the detail page using the batch UUID", () => {
+    render(<ProductCard item={makeItem({ id: "44444444-4444-4444-8444-444444444444" })} />);
     const link = screen.getByRole("link");
-    expect(link).toHaveAttribute("href", "/marketplace/cabai-merah-1");
+    expect(link).toHaveAttribute("href", "/marketplace/44444444-4444-4444-8444-444444444444");
   });
 
   it("is keyboard-focusable", async () => {

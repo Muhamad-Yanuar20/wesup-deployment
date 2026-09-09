@@ -14,7 +14,9 @@ export interface CatalogDraft {
   title: string;
   category: BatchCategory | "";
   description: string;
+  targetQuantity: number;
   productPhoto: File | null;
+  productPhotoUrl: string | null;
   tiers: CatalogTierDraft[];
   registrationOpensAt: string;
   registrationClosesAt: string;
@@ -32,7 +34,9 @@ export const INITIAL_CATALOG_DRAFT: CatalogDraft = {
   title: "",
   category: "",
   description: "",
+  targetQuantity: 50,
   productPhoto: null,
+  productPhotoUrl: null,
   tiers: [
     { tierNumber: 1, minimumQuantity: 1, maximumQuantity: 24, pricePerUnit: 0 },
     { tierNumber: 2, minimumQuantity: 25, maximumQuantity: 49, pricePerUnit: 0 },
