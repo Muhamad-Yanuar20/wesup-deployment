@@ -3,27 +3,20 @@ import { Footer } from "@/components/layout/Footer";
 import { ReactNode } from "react";
 
 interface LayoutProps {
-    children: ReactNode;
+  children: ReactNode;
 }
 
-/**
- * Main application layout — wraps every authenticated page with
- * the sticky NavigationBar at the top, a scrollable main content
- * area, and the Footer at the bottom.
- *
- * Usage (inside a route's page.tsx):
- *   import { Layout } from "@/components/layout/Layout";
- *   export default function Page() {
- *     return <Layout><YourContent /></Layout>;
- *   }
- */
 export function Layout({ children }: LayoutProps) {
-    return (
-        <div className="flex min-h-screen flex-col">
-            <NavigationBar />
-            {/* pb-16 reserves space for the mobile bottom nav bar */}
-            <main className="flex-1 bg-gradient-to-b from-blue-50 via-slate-50 to-white pb-16 md:pb-0">{children}</main>
-            <Footer />
-        </div>
-    );
+  return (
+    <div className="flex min-h-screen flex-col bg-slate-50">
+      <a href="#main-content" className="sr-only z-50 rounded-lg bg-blue-700 px-4 py-3 text-sm font-semibold text-white focus:not-sr-only focus:fixed focus:left-4 focus:top-4">
+        Lewati ke konten utama
+      </a>
+      <NavigationBar />
+      <main id="main-content" className="flex-1 bg-gradient-to-b from-blue-50/70 via-slate-50 to-white pb-24 md:pb-0">
+        {children}
+      </main>
+      <Footer />
+    </div>
+  );
 }

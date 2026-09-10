@@ -7,12 +7,12 @@ import {
 
 describe("Leaflet demo map helpers", () => {
   it("uses central Bandung as the initial map position", () => {
-    expect(BANDUNG_CENTER).toEqual({ lat: -6.9175, lng: 107.6191 });
+    expect(BANDUNG_CENTER).toEqual({ lat: -6.914744, lng: 107.60981 });
   });
 
   it("formats coordinates consistently for the demo panel", () => {
-    expect(formatCoordinate({ lat: -6.9175, lng: 107.6191 })).toBe(
-      "-6.91750, 107.61910",
+    expect(formatCoordinate({ lat: -6.914744, lng: 107.60981 })).toBe(
+      "-6.91474, 107.60981",
     );
   });
 

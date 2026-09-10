@@ -15,7 +15,10 @@ export default function PickupLocationMap({
   address,
 }: PickupLocationMapProps) {
   return (
-    <div className="relative h-[260px] w-full overflow-hidden rounded-xl border border-slate-200">
+    <div
+      data-testid="pickup-location-map"
+      className="relative h-[260px] w-full overflow-hidden rounded-xl border border-slate-200"
+    >
       <MapContainer
         center={[latitude, longitude]}
         zoom={15}

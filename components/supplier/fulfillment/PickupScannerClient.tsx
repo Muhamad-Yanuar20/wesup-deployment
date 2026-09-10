@@ -16,7 +16,7 @@ import {
   Truck,
   Users,
 } from "lucide-react";
-import { fulfillmentMockRepository } from "@/lib/supplier-fulfillment/mock-repository";
+import { supplierFulfillmentApiRepository } from "@/lib/supplier-fulfillment/api-repository";
 import { supplierBatchApiRepository } from "@/lib/supplier-catalog/api-repository";
 import { pickupViewReducer, initialPickupViewState } from "@/lib/supplier-fulfillment/pickup-state";
 import type { FulfillmentError } from "@/lib/supplier-fulfillment/types";
@@ -60,7 +60,7 @@ export default function PickupScannerClient({ batchId }: { batchId: string }) {
   useEffect(() => {
     const controller = new AbortController();
     dispatch({ type: "loadStarted" });
-    void fulfillmentMockRepository
+    void supplierFulfillmentApiRepository
       .listOrders(batchId, { signal: controller.signal })
       .then((list) => dispatch({ type: "loadSucceeded", orders: [...list.orders] }))
       .catch((error: unknown) => {
@@ -106,7 +106,7 @@ export default function PickupScannerClient({ batchId }: { batchId: string }) {
       return;
     }
     dispatch({ type: "confirmStarted" });
-    void fulfillmentMockRepository
+    void supplierFulfillmentApiRepository
       .confirmPickup(selectedOrder.registrationId, {
         method: state.method,
         code: state.code,
@@ -133,7 +133,7 @@ export default function PickupScannerClient({ batchId }: { batchId: string }) {
   const confirmForceMajeure = () => {
     if (state.forceMajeurePhase === "loading") return;
     dispatch({ type: "forceMajeureStarted" });
-    void fulfillmentMockRepository
+    void supplierFulfillmentApiRepository
       .forceMajeureCancel(batchId)
       .then((result) => {
         dispatch({ type: "forceMajeureSucceeded", result });
@@ -243,8 +243,8 @@ export default function PickupScannerClient({ batchId }: { batchId: string }) {
       {/* Summary strip */}
       <section className="grid grid-cols-2 gap-3 lg:grid-cols-3">
         <SummaryCard
-          icon={<Users className="text-indigo-600" size={20} />}
-          iconBg="bg-indigo-100"
+          icon={<Users className="text-blue-600" size={20} />}
+          iconBg="bg-blue-100"
           label="Lunas"
           value={String(paidOrders.length)}
         />
@@ -267,7 +267,7 @@ export default function PickupScannerClient({ batchId }: { batchId: string }) {
         {/* Order selection */}
         <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
           <h2 className="mb-3 flex items-center gap-2 font-semibold text-slate-900">
-            <Users aria-hidden="true" size={18} className="text-indigo-500" />
+            <Users aria-hidden="true" size={18} className="text-blue-500" />
             Pilih Pesanan UMKM
           </h2>
           {state.orders.length === 0 ? (

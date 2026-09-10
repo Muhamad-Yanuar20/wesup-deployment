@@ -172,9 +172,7 @@ export const EXPECTED_TABLES: Record<string, ExpectedTable> = {
     },
     notNull: [
       "user_id",
-      "business_name",
-      "address",
-      "latitude",
+       "latitude",
       "longitude",
       "strike_count",
       "created_at",
@@ -630,9 +628,11 @@ export const CRITICAL_INDEXES = [
 export const REQUIRED_FUNCTIONS = [
   "is_admin",
   "is_supplier",
+  "is_approved_supplier",
+  "create_supplier_registration",
+  "create_umkm_registration",
   "handle_new_user",
   "prevent_admin_audit_logs_mutation",
-  "promote_supplier_on_approval",
   "approve_supplier",
   "reject_supplier",
   "takedown_batch",
@@ -660,9 +660,10 @@ export const REQUIRED_TRIGGERS = [
   { name: "on_auth_user_created", table: "auth.users" },
   { name: "admin_audit_logs_immutable", table: "admin_audit_logs" },
   { name: "admin_audit_logs_no_truncate", table: "admin_audit_logs" },
-  { name: "promote_supplier_on_approval", table: "supplier_profiles" },
   { name: "batches_cancel_side_effects", table: "batches" },
   { name: "prevent_registration_outside_window", table: "registrations" },
 ];
 
 export const EXPECTED_TABLE_NAMES = Object.keys(EXPECTED_TABLES);
+
+

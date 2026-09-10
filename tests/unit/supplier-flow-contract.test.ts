@@ -26,13 +26,13 @@ function normalizeSupplierRoute(route: string): string {
 }
 
 describe("supplier dashboard route protection", () => {
-  it("guards the supplier dashboard layout with requireRole for supplier role", () => {
+  it("guards the supplier dashboard layout with requireApprovedSupplier", () => {
     const layoutPath = join(SUPPLIER_DASHBOARD_GLOB, "layout.tsx");
     expect(existsSync(layoutPath), "layout.tsx should exist").toBe(true);
     const src = readFileSync(layoutPath, "utf8");
-    expect(src).toContain("requireRole");
-    expect(src).toMatch(/\["supplier"\]/);
-    expect(src).toContain('redirect("/login")');
+    expect(src).toContain("requireApprovedSupplier");
+    expect(src).toContain("verificationStatus");
+    expect(src).toContain('redirect("/login?role=supplier")');
   });
 
   it("keeps the public supplier registration page outside the guarded layout", () => {

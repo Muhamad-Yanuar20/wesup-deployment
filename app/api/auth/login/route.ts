@@ -6,9 +6,11 @@ import {
   LOGIN_REDIRECT_BY_ROLE,
   parseLoginPayload,
 } from "@/lib/auth/login-contract";
+import { sanitizeReturnTo } from "@/lib/auth/access-state";
 import { getCurrentUser } from "@/lib/supabase/auth";
 import type { AuthClient } from "@/lib/supabase/auth";
 import { getServerClient } from "@/lib/supabase/server";
+import type { VerificationStatus } from "@/types/database";
 import { enforceRateLimit } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
@@ -37,7 +39,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { email, password, role: selectedRole } = parsed.value;
+  const { email, password, role: selectedRole, returnTo } = parsed.value;
   const { data, error } = await client.auth.signInWithPassword({ email, password });
 
   if (error || !data.user) {
@@ -81,18 +83,29 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  if (context.role !== selectedRole) {
-    let verificationStatus: "pending" | "approved" | "rejected" | null = null;
-
-    if (selectedRole === "supplier") {
-      const { data: supplierProfile } = await client
-        .from("supplier_profiles")
-        .select("verification_status")
-        .eq("user_id", context.userId)
-        .maybeSingle();
-      verificationStatus = supplierProfile?.verification_status ?? null;
+  let verificationStatus: VerificationStatus | null = null;
+  if (context.role === "supplier" || selectedRole === "supplier") {
+    const { data: supplierProfile, error: supplierProfileError } = await client
+      .from("supplier_profiles")
+      .select("verification_status")
+      .eq("user_id", context.userId)
+      .maybeSingle();
+    if (supplierProfileError && context.role === "supplier") {
+      await client.auth.signOut();
+      return NextResponse.json(
+        {
+          code: "profile_unavailable",
+          error: "Profil akun belum dapat dimuat. Coba lagi.",
+        },
+        { status: 500 },
+      );
     }
+    verificationStatus =
+      (supplierProfile as { verification_status?: VerificationStatus } | null)
+        ?.verification_status ?? null;
+  }
 
+  if (context.role !== selectedRole) {
     const errorMessage = getRoleMismatchMessage(selectedRole, verificationStatus);
     const code =
       selectedRole === "supplier" && verificationStatus === "pending"
@@ -108,6 +121,15 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  const supplierReadOnly =
+    context.role === "supplier" && verificationStatus !== "approved";
+  const defaultRedirect = supplierReadOnly
+    ? "/supplier/status"
+    : LOGIN_REDIRECT_BY_ROLE[selectedRole];
+  const safeReturnTo = supplierReadOnly
+    ? null
+    : sanitizeReturnTo(returnTo, context.role);
+
   return NextResponse.json({
     user: { email: context.email },
     profile: {
@@ -115,6 +137,6 @@ export async function POST(request: NextRequest) {
       status: context.status,
       fullName: context.fullName,
     },
-    redirectTo: LOGIN_REDIRECT_BY_ROLE[selectedRole],
+    redirectTo: safeReturnTo ?? defaultRedirect,
   });
 }

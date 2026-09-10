@@ -1,3 +1,5 @@
+import { BANDUNG_SERVICE_CENTER } from "@/lib/geo/service-center";
+
 export const BATCH_CATEGORIES = [
   "Sayur & Buah",
   "Daging & Ikan",
@@ -8,10 +10,8 @@ export const BATCH_CATEGORIES = [
 
 export type BatchCategory = (typeof BATCH_CATEGORIES)[number];
 
-export const BANDUNG_CENTER = {
-  lat: -6.914744,
-  lng: 107.60981,
-} as const;
+/** @deprecated Use BANDUNG_SERVICE_CENTER for new code. */
+export const BANDUNG_CENTER = BANDUNG_SERVICE_CENTER;
 
 export const SEARCH_DEFAULT_RADIUS_KM = 10;
 export const SEARCH_MIN_RADIUS_KM = 1;

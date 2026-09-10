@@ -57,20 +57,26 @@ export default function Home() {
               Dapatkan harga grosir tanpa minimun order besar dengan bergabung bersama ratusan UMKM lainnya. Belanja bersama, kumpulkan diskonnya, dan ambil sendiri tanpa pusing urusan ongkos kirim logistik last-mile!
             </p>
 
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                        <div className="flex flex-col items-center justify-center gap-3 sm:flex-row sm:flex-wrap">
               <Link
-                href="/supplier/register"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-8 py-4 text-base font-semibold text-white shadow hover:bg-blue-700 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 transition-all active:scale-[0.98]"
+                href="/register?role=umkm"
+                className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-7 py-3.5 text-base font-semibold text-white shadow hover:bg-blue-700 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 transition-all active:scale-[0.98] sm:w-auto"
               >
-                Daftar Sebagai Supplier
-                <ArrowRight className="h-5 w-5" />
+                Mulai Belanja sebagai UMKM
+                <ShoppingBag className="h-5 w-5" />
               </Link>
               <Link
-                href="/beranda-umkm"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-white px-8 py-4 text-base font-semibold text-slate-900 shadow-sm ring-1 ring-inset ring-slate-200 hover:bg-slate-50 hover:ring-slate-300 transition-all active:scale-[0.98]"
+                href="/register?role=supplier"
+                className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-white px-7 py-3.5 text-base font-semibold text-slate-900 shadow-sm ring-1 ring-inset ring-slate-200 hover:bg-slate-50 hover:ring-slate-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 transition-all active:scale-[0.98] sm:w-auto"
               >
-                Mulai Belanja (UMKM)
-                <ShoppingBag className="h-5 w-5 text-slate-500" />
+                Jadi Supplier
+                <ArrowRight className="h-5 w-5 text-blue-600" />
+              </Link>
+              <Link
+                href="/marketplace"
+                className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl px-7 py-3.5 text-base font-semibold text-blue-700 hover:bg-blue-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 transition-all active:scale-[0.98] sm:w-auto"
+              >
+                Lihat Marketplace
               </Link>
             </div>
           </div>

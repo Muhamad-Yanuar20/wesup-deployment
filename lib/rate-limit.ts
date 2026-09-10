@@ -8,6 +8,7 @@ export type RateLimitScope =
   | "forgot-password"
   | "reset-password"
   | "search"
+  | "route"
   | "admin"
   | "registration";
 
@@ -29,6 +30,7 @@ export const RATE_LIMITS: Record<RateLimitScope, RateLimitConfig> = {
   "forgot-password": { limit: 3, windowSeconds: 900 },
   "reset-password": { limit: 10, windowSeconds: 900 },
   search: { limit: 60, windowSeconds: 60 },
+  route: { limit: 30, windowSeconds: 60 },
   admin: { limit: 30, windowSeconds: 60 },
   registration: { limit: 5, windowSeconds: 900 },
 };
