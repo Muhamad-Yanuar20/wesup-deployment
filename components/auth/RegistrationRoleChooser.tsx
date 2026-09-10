@@ -44,7 +44,7 @@ export default function RegistrationRoleChooser() {
         </p>
       </div>
 
-      <div className="mt-8 grid gap-4 md:grid-cols-2">
+      <div className="mt-8 grid gap-4 sm:gap-5 md:grid-cols-2">
         {roleCards.map(({ Icon, ...card }) => (
           <Link
             key={card.href}

@@ -104,7 +104,7 @@ export default function SupplierDashboard() {
   const isApproved = supplier.verificationStatus === "approved";
 
   return (
-    <div className="space-y-8" aria-busy={false}>
+    <div className="space-y-6 sm:space-y-8" aria-busy={false}>
       <section>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -136,7 +136,7 @@ export default function SupplierDashboard() {
         </div>
       </section>
 
-      <section aria-label="Reputasi Supplier" className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <section aria-label="Reputasi Supplier" className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-lg font-bold text-slate-900">Reputasi Supplier</h2>
@@ -159,7 +159,7 @@ export default function SupplierDashboard() {
               const progress = progressFor(batch.registeredQuantity, batch.targetQuantity);
               const cancelled = batch.status === "CANCELLED_BY_SUPPLIER";
               return (
-                <Link key={batch.id} href={`/supplier/batch/${batch.id}`} className="group block rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-blue-200 hover:shadow-md sm:p-5">
+                <Link key={batch.id} href={`/supplier/batch/${batch.id}`} className="group block rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-blue-200 hover:shadow-md sm:p-5">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div className="min-w-0 flex-1">
                       <div className="mb-1 flex items-center gap-2">
@@ -191,7 +191,7 @@ export default function SupplierDashboard() {
 }
 
 function DashboardSkeleton() {
-  return <div aria-busy="true" aria-label="Memuat dashboard supplier" className="space-y-8"><div className="h-24 animate-pulse rounded-xl bg-slate-200 motion-reduce:animate-none" /><div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">{[1, 2, 3, 4].map((item) => <div key={item} className="h-24 animate-pulse rounded-xl bg-slate-200 motion-reduce:animate-none" />)}</div><div className="h-32 animate-pulse rounded-xl bg-slate-200 motion-reduce:animate-none" /><div className="space-y-3">{[1, 2, 3].map((item) => <div key={item} className="h-20 animate-pulse rounded-xl bg-slate-200 motion-reduce:animate-none" />)}</div></div>;
+  return <div aria-busy="true" aria-label="Memuat dashboard supplier" className="space-y-6 sm:space-y-8"><div className="h-24 animate-pulse rounded-xl bg-slate-200 motion-reduce:animate-none" /><div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">{[1, 2, 3, 4].map((item) => <div key={item} className="h-24 animate-pulse rounded-xl bg-slate-200 motion-reduce:animate-none" />)}</div><div className="h-32 animate-pulse rounded-xl bg-slate-200 motion-reduce:animate-none" /><div className="space-y-3">{[1, 2, 3].map((item) => <div key={item} className="h-20 animate-pulse rounded-xl bg-slate-200 motion-reduce:animate-none" />)}</div></div>;
 }
 
 function EmptyCatalog() {
@@ -199,5 +199,5 @@ function EmptyCatalog() {
 }
 
 function StatCard({ icon, iconBg, label, value }: { icon: React.ReactNode; iconBg: string; label: string; value: string }) {
-  return <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"><div className="flex items-center gap-3"><span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${iconBg}`}>{icon}</span><div className="min-w-0"><p className="text-xs font-medium text-slate-500">{label}</p><p className="truncate text-lg font-bold text-slate-900">{value}</p></div></div></div>;
+  return <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5"><div className="flex items-center gap-3"><span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${iconBg}`}>{icon}</span><div className="min-w-0"><p className="text-xs font-medium text-slate-500">{label}</p><p className="truncate text-lg font-bold text-slate-900">{value}</p></div></div></div>;
 }

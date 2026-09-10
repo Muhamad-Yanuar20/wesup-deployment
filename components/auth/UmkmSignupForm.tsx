@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useCallback, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
@@ -103,7 +103,7 @@ export default function UmkmSignupForm({ returnTo = null }: UmkmSignupFormProps)
   }, [router]);
 
   return (
-    <form onSubmit={handleSubmit} noValidate className="space-y-5">
+    <form onSubmit={handleSubmit} noValidate className="space-y-5 pb-2">
       {globalError ? <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium leading-6 text-red-700" role="alert">{globalError}</div> : null}
 
       <div>

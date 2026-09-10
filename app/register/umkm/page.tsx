@@ -1,4 +1,4 @@
-﻿import "leaflet/dist/leaflet.css";
+import "leaflet/dist/leaflet.css";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import Link from "next/link";
@@ -26,7 +26,7 @@ export default async function UmkmRegistrationPage({
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,_#dbeafe,_transparent_38%),linear-gradient(180deg,_#f8fafc,_#eff6ff)] px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
-      <div className="mx-auto w-full max-w-xl">
+      <div className="mx-auto w-full max-w-2xl">
         <header className="mb-8 text-center sm:mb-10">
           <Link href="/register" className="inline-flex min-h-11 items-center gap-2 rounded-xl text-sm font-bold text-blue-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
             ← Pilih role lain

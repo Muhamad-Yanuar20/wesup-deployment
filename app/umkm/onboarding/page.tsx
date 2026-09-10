@@ -22,9 +22,9 @@ export default async function UmkmOnboardingPage({ searchParams }: OnboardingPag
   const returnTo = sanitizeReturnTo(rawReturnTo, "umkm");
 
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
+    <main className="min-h-screen bg-gradient-to-b from-blue-50/70 via-slate-50 to-white px-4 py-6 pb-10 sm:px-6 sm:py-10 lg:px-8">
       <div className="mx-auto w-full max-w-3xl">
-        <header className="mb-6 flex items-center justify-between gap-4">
+        <header className="mb-7 flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white/80 p-3 shadow-sm backdrop-blur-sm">
           <Link href="/umkm" className="inline-flex min-h-11 items-center gap-2 rounded-lg px-2 text-sm font-semibold text-slate-600 transition hover:bg-white hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">
             <ArrowLeft className="h-4 w-4" aria-hidden="true" />
             Kembali ke Dashboard
@@ -34,7 +34,7 @@ export default async function UmkmOnboardingPage({ searchParams }: OnboardingPag
           </span>
         </header>
 
-        <div className="mb-6">
+        <div className="mb-7">
           <p className="text-sm font-bold uppercase tracking-[0.16em] text-blue-700">Onboarding</p>
           <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-slate-950 sm:text-4xl">Profil usaha Anda</h1>
           <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">Lengkapi sekali agar proses bergabung ke batch lebih cepat. Anda tetap dapat melihat marketplace tanpa melengkapi profil.</p>

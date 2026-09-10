@@ -86,8 +86,8 @@ export function NavigationBar() {
     const navItems = getRoleNavigationItems(accessState);
 
     return (
-        <header className="sticky top-0 z-40 w-full border-b border-slate-200 bg-white/95 backdrop-blur-sm">
-            <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
+        <header className="sticky top-0 z-40 w-full border-b border-slate-200/90 bg-white/90 shadow-[0_1px_10px_rgb(15_23_42/0.04)] backdrop-blur-md">
+            <div className="mx-auto flex min-h-16 w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
                 <Link href="/" className="flex items-center gap-2 text-slate-900 transition-opacity hover:opacity-80" aria-label="Wesup - Kembali ke Beranda">
                     <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-sm font-bold text-white shadow-sm shadow-blue-600/20" aria-hidden="true">W</span>
                     <span className="text-lg font-extrabold tracking-tight">Wesup</span>
@@ -98,12 +98,11 @@ export function NavigationBar() {
                     {authenticated && <LogoutButton onClick={handleLogout} disabled={loggingOut} />}
                 </nav>
 
-                <div className="flex items-center gap-2 text-sm text-slate-400 md:hidden"><span>Menu</span></div>
+                <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 md:hidden" aria-label="Navigasi cepat"><span className="rounded-full bg-slate-100 px-2.5 py-1">Menu</span></div>
             </div>
 
-            <nav aria-label="Navigasi bawah (mobile)" className="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-around border-t border-slate-200 bg-white px-2 py-2 md:hidden">
+            <nav aria-label="Navigasi bawah (mobile)" className="fixed inset-x-0 bottom-0 z-40 flex items-stretch justify-around gap-1 border-t border-slate-200/90 bg-white/95 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 shadow-[0_-4px_16px_rgb(15_23_42/0.06)] backdrop-blur-md md:hidden">
                 {navItems.slice(0, 5).map((item) => <NavLink key={`${item.href}-${item.label}`} item={item} pathname={pathname} mobile />)}
-                {authenticated && <LogoutButton onClick={handleLogout} disabled={loggingOut} mobile />}
             </nav>
         </header>
     );
@@ -114,9 +113,9 @@ function NavLink({ item, pathname, mobile = false }: { item: RoleNavigationItem;
     return (
         <Link href={item.href} aria-current={isActive ? "page" : undefined} className={cn(
             mobile
-                ? "flex min-h-11 flex-1 flex-col items-center justify-center gap-0.5 rounded-md py-1.5 text-[10px] font-medium transition-colors"
+                ? "flex min-h-11 flex-1 flex-col items-center justify-center gap-0.5 rounded-xl py-1.5 text-[10px] font-semibold transition-colors"
                 : "flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-            isActive ? "bg-blue-50 text-blue-700" : "text-slate-600 hover:bg-slate-100 hover:text-slate-900",
+            isActive ? "bg-blue-50 text-blue-700 shadow-sm" : "text-slate-600 hover:bg-slate-100 hover:text-slate-900",
         )}>
             <span className={cn("flex items-center gap-1", isActive && "text-blue-700")}>{iconForItem(item)}</span>
             <span>{item.label}</span>

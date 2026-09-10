@@ -139,7 +139,7 @@ export default function LoginForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} noValidate className="space-y-7">
+    <form onSubmit={handleSubmit} noValidate className="space-y-6 sm:space-y-7">
       {globalError ? (
         <div
           className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium leading-6 text-red-700"

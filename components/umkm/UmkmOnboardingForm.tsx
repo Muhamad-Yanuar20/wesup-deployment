@@ -105,8 +105,8 @@ export default function UmkmOnboardingForm({ returnTo }: UmkmOnboardingFormProps
   };
 
   return (
-    <form onSubmit={handleSubmit} noValidate className="space-y-6">
-      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+    <form onSubmit={handleSubmit} noValidate className="space-y-6 pb-24">
+      <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
         <div className="flex items-start gap-3">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-700"><MapPin className="h-5 w-5" aria-hidden="true" /></span>
           <div>
@@ -118,7 +118,7 @@ export default function UmkmOnboardingForm({ returnTo }: UmkmOnboardingFormProps
         {loadError ? <p role="alert" className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">{loadError}</p> : null}
         {loading ? <p role="status" className="mt-4 text-sm text-slate-500">Memuat profil usaha...</p> : null}
 
-        <div className="mt-6 grid gap-5">
+        <div className="mt-6 grid gap-6">
           <div>
             <label htmlFor="umkm-business-name" className="block text-sm font-semibold text-slate-900">Nama usaha <span aria-hidden="true" className="text-red-600">*</span></label>
             <input id="umkm-business-name" name="businessName" value={values.businessName} onChange={(event) => updateValue("businessName", event.target.value)} required autoComplete="organization" placeholder="Contoh: Warung Budi" className="mt-2 min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-950 caret-slate-950 outline-none transition placeholder:text-slate-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-200" aria-invalid={Boolean(fieldErrors.businessName)} aria-describedby={fieldErrors.businessName ? "umkm-business-name-error" : undefined} />
@@ -140,7 +140,7 @@ export default function UmkmOnboardingForm({ returnTo }: UmkmOnboardingFormProps
 
         {fieldErrors.form ? <p ref={formErrorRef} tabIndex={-1} role="alert" className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700 outline-none focus-visible:ring-2 focus-visible:ring-red-500">{fieldErrors.form}</p> : null}
         {success ? <p role="status" aria-live="polite" className="mt-4 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-700">{success}</p> : null}
-        <button type="submit" disabled={loading || saving} className="mt-6 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-blue-700 px-4 py-3 text-sm font-bold text-white transition hover:bg-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"><Save className="h-4 w-4" aria-hidden="true" />{saving ? "Menyimpan..." : "Simpan profil usaha"}</button>
+        <button type="submit" disabled={loading || saving} className="sticky bottom-4 z-10 mt-6 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-blue-700 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-blue-700/20 transition hover:bg-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 sm:static sm:w-auto sm:shadow-sm"><Save className="h-4 w-4" aria-hidden="true" />{saving ? "Menyimpan..." : "Simpan profil usaha"}</button>
       </section>
     </form>
   );

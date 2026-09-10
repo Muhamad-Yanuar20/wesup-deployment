@@ -116,8 +116,8 @@ export default function MarketplaceDetailClient({
         : "Jarak perkiraan";
 
   return (
-    <article className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-      <div className="relative w-full aspect-[16/9] bg-slate-100">
+    <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <div className="relative aspect-[16/8] w-full overflow-hidden bg-slate-100 sm:aspect-[16/7] lg:aspect-[16/6]">
         <Image
           src={item.imageUrl}
           alt={`Foto produk ${item.title}`}
@@ -130,7 +130,7 @@ export default function MarketplaceDetailClient({
         </div>
       </div>
 
-      <div className="p-5 md:p-8 flex flex-col gap-6">
+      <div className="flex flex-col gap-6 p-4 sm:p-6 lg:p-8">
         {isUmkm && needsProfileLocation ? (
           <div className="flex flex-col gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950 sm:flex-row sm:items-center sm:justify-between" role="status" aria-live="polite">
             <p><strong>Lokasi usaha belum tersimpan.</strong> Jarak sementara dihitung dari pusat Bandung.</p>
@@ -147,7 +147,7 @@ export default function MarketplaceDetailClient({
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
           <div className="flex items-start gap-3 p-4 bg-slate-50 rounded-xl border border-slate-100">
             <MapPin aria-hidden="true" className="w-5 h-5 text-slate-400 mt-0.5" />
             <div>
@@ -225,7 +225,7 @@ export default function MarketplaceDetailClient({
           <LocationConsentCheckbox onChange={(checked) => setConsentGiven(checked)} />
         ) : null}
 
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2">
+        <div className="sticky bottom-[4.75rem] z-10 -mx-4 flex flex-col items-stretch gap-3 border-t border-slate-200 bg-white/95 px-4 py-3 backdrop-blur-sm sm:static sm:mx-0 sm:flex-row sm:items-center sm:border-0 sm:bg-transparent sm:px-0 sm:py-2">
           {canJoinBatch ? (
             <div className="flex-1">
               <JoinBatchForm

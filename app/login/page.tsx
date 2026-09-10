@@ -23,7 +23,7 @@ export default async function LoginPage({
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,_#dbeafe,_transparent_38%),linear-gradient(180deg,_#f8fafc,_#eff6ff)] px-4 py-12 sm:px-6 lg:px-8">
-      <div className="mx-auto w-full max-w-xl">
+      <div className="mx-auto w-full max-w-2xl">
         <header className="mb-8 text-center">
           <div className="flex flex-col items-center gap-6">
             <Link href="/" className="inline-flex items-center gap-2 text-slate-900 transition hover:opacity-80" aria-label="Wesup - Kembali ke beranda">

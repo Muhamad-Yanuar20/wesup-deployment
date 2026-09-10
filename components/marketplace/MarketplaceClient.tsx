@@ -155,9 +155,9 @@ function MarketplaceController() {
   );
 
   return (
-    <div className="bg-transparent font-sans">
-      <div className="flex flex-col gap-4">
-        <div className="flex items-stretch gap-3">
+    <div className="space-y-1 font-sans">
+      <div className="flex flex-col gap-5">
+        <div className="sticky top-[4.5rem] z-20 -mx-1 flex items-stretch gap-2 rounded-2xl bg-slate-50/95 p-1 backdrop-blur-sm sm:static sm:mx-0 sm:bg-transparent sm:p-0">
           <div className="flex-1 relative group">
             <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
               <Search
@@ -181,7 +181,7 @@ function MarketplaceController() {
           <button
             type="button"
             onClick={openFilterDrawer}
-            className="lg:hidden inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-slate-200 bg-white text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+            className="lg:hidden inline-flex items-center justify-center gap-2 px-4 py-3 min-h-11 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50"
             aria-label="Buka filter pencarian"
           >
             <ListFilter aria-hidden="true" className="w-4 h-4" />
@@ -200,8 +200,8 @@ function MarketplaceController() {
           <MarketplaceRadiusMapClient origin={origin} items={items} radiusKm={radiusKm} />
         ) : null}
 
-        <div className="flex items-start gap-6">
-          <aside className="hidden lg:flex flex-col w-[280px] shrink-0 bg-white border border-slate-200 rounded-2xl lg:sticky lg:top-20">
+        <div className="flex flex-col items-stretch gap-5 lg:flex-row lg:items-start lg:gap-6">
+          <aside className="hidden w-[280px] shrink-0 flex-col rounded-2xl border border-slate-200 bg-white shadow-sm lg:sticky lg:top-24 lg:flex">
             <MarketplaceFilters
               idPrefix="desktop"
               value={filters}
@@ -210,8 +210,8 @@ function MarketplaceController() {
             />
           </aside>
           <main className="flex-1 w-full min-w-0">
-            <div className="w-full bg-white border border-slate-200 rounded-2xl p-4 md:p-6 lg:p-8 shadow-sm">
-              <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+            <div className="w-full rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6 lg:p-8">
+              <div className="mb-5 flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 pb-5">
                 <div>
                   <h2
                     ref={resultHeadingRef}

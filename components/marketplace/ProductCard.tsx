@@ -16,12 +16,12 @@ function formatClosingTime(value: string): string {
 export default function ProductCard({ item }: ProductCardProps) {
   const progress = item.targetQuantity <= 0 ? 0 : Math.min(100, Math.round((item.registeredQuantity / item.targetQuantity) * 100));
   return (
-    <Link href={`/marketplace/${encodeURIComponent(item.id)}`} className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md hover:border-blue-300 transition-all group flex flex-col h-full focus:outline-none focus:ring-2 focus:ring-blue-500/30">
-      <div className="relative w-full h-48 bg-slate-100 overflow-hidden">
+    <Link href={`/marketplace/${encodeURIComponent(item.id)}`} className="group flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all hover:border-blue-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500/30">
+      <div className="relative aspect-[4/3] w-full overflow-hidden bg-slate-100 sm:aspect-[16/10]">
         <Image src={item.imageUrl} alt={`Foto produk ${item.title}`} fill sizes="(min-width: 1280px) 25vw, (min-width: 768px) 33vw, 100vw" className="object-cover" />
         <div className="absolute top-3 left-3 bg-white/95 backdrop-blur-sm px-3 py-1.5 rounded-full text-xs font-semibold text-blue-700 shadow-sm border border-white">{item.category}</div>
       </div>
-      <div className="p-4 flex flex-col flex-1 gap-4">
+      <div className="flex flex-1 flex-col gap-4 p-4 sm:p-5">
         <div className="space-y-1"><h3 className="font-bold text-slate-800 text-lg leading-tight group-hover:text-blue-600 transition-colors line-clamp-2">{item.title}</h3><p className="text-sm font-medium text-slate-500">{item.supplierName}</p></div>
         <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-slate-600 font-medium bg-slate-50 p-3 rounded-xl border border-slate-100">
           <div className="flex items-center gap-2 whitespace-nowrap"><MapPin aria-hidden="true" className="w-4 h-4 text-slate-400" /><span>{item.distanceKm === null ? "Jarak belum tersedia" : `${item.distanceKm.toLocaleString("id-ID", { maximumFractionDigits: 1 })} km`}</span></div>

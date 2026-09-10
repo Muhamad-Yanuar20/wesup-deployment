@@ -17,7 +17,7 @@ export default async function RegisterPage() {
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,_#dbeafe,_transparent_38%),linear-gradient(180deg,_#f8fafc,_#eff6ff)] px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
-      <div className="mx-auto w-full max-w-5xl">
+      <div className="mx-auto w-full max-w-6xl">
         <header className="mb-8 flex items-center justify-between gap-4 sm:mb-12">
           <Link
             href="/"
