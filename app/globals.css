@@ -51,6 +51,11 @@ textarea {
   min-height: 2.75rem;
 }
 
+input[type="checkbox"],
+input[type="radio"] {
+  min-height: 0;
+}
+
 ::selection {
   background: rgb(37 99 235 / 0.18);
 }
