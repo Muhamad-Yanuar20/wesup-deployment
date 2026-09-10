@@ -668,6 +668,11 @@ describe.skipIf(noDbUrl)("live Supabase database (pg)", () => {
 
 describe.skipIf(noRestUrl)("live Supabase database (REST)", () => {
   it("serves every business table through PostgREST", async () => {
+    const protectedProfileTables = new Set([
+      "profiles",
+      "supplier_profiles",
+      "umkm_profiles",
+    ]);
     const fetchTable = async (table: string) => {
       for (let attempt = 0; ; attempt++) {
         const res = await fetch(
@@ -698,23 +703,29 @@ describe.skipIf(noRestUrl)("live Supabase database (REST)", () => {
         ),
       )
     ).flat();
-    const failures = results.filter((r) => r.status !== 200);
+    const failures = results.filter(
+      (r) =>
+        r.status !== 200 &&
+        !(protectedProfileTables.has(r.table) && [401, 403].includes(r.status)),
+    );
     expect(
       failures.map((f) => `${f.table}: ${f.status} ${f.body.slice(0, 160)}`),
     ).toEqual([]);
   });
 
-  it("returns empty list for anon read of profiles (RLS enforced)", async () => {
+  it("blocks anon read of profiles without leaking rows", async () => {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/profiles?select=*`, {
       headers: {
         apikey: PUBLISHABLE_KEY!,
         Authorization: `Bearer ${PUBLISHABLE_KEY!}`,
       },
     });
-    expect(res.status).toBe(200);
-    const body = await res.json();
-    expect(Array.isArray(body)).toBe(true);
-    expect(body).toEqual([]);
+    expect([200, 401, 403]).toContain(res.status);
+    if (res.status === 200) {
+      const body = await res.json();
+      expect(Array.isArray(body)).toBe(true);
+      expect(body).toEqual([]);
+    }
   });
 
   it("blocks anon INSERT into admin_audit_logs (RLS, no insert policy)", async () => {

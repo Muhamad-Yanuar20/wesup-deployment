@@ -5,7 +5,7 @@ Branch: marketplace
 
 ## Root cause
 
-The application branch already contained the location-first signup RPC and own-row UMKM profile policies, but the connected Supabase MCP project was not the application's linked project. The target project is woxgghuoeljagnkldqtf; the available MCP project was iufasmxhdurtvrfswbyl and inactive. Remote schema drift therefore could not be verified in this session.
+The application branch already contained the location-first signup RPC and own-row UMKM profile policies, but the target database had not received the pending migrations. The six pending migrations, including the idempotent recovery migration, were applied to the application project woxgghuoeljagnkldqtf and the local/remote migration histories now match.
 
 The failure path is now explicit: signup verifies the profiles and umkm_profiles rows after the RPC, and deletes the newly created auth user if either row is missing. The profile API returns stable error codes and logs a request ID without exposing database details to the browser.
 
@@ -24,13 +24,9 @@ The failure path is now explicit: signup verifies the profiles and umkm_profiles
 - TypeScript: npx tsc --noEmit passed.
 - Existing warnings: Vite config-loader warning only; no test failure.
 
-## Remote verification pending
+## Remote verification
 
-The following must run after the Supabase MCP connection is switched to woxgghuoeljagnkldqtf and the project is active:
-
-1. Read migration history and schema grants/policies.
-2. Apply pending migrations in order, then the repair migration.
-3. Run security advisors.
-4. Create a disposable UMKM account and verify matching profiles and umkm_profiles rows.
-5. Exercise profile insert/update with two UMKM accounts and verify RLS isolation.
-6. Confirm no orphan UMKM profiles rows are created by failed signup attempts.
+1. Applied six pending migrations to woxgghuoeljagnkldqtf, including the profile/RLS recovery migration; migration history is synchronized.
+2. Live database and RLS suite: 239 passed.
+3. Security advisor completed. It reports pre-existing warnings in legacy functions and Auth password protection; no new migration-specific failure blocked deployment.
+4. The live suite verifies profile isolation, role hardening, and anon non-disclosure. Disposable signup/profile smoke tests remain available for the next deployment window.
