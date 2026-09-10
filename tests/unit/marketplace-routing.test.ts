@@ -129,7 +129,12 @@ describe("marketplace routing adapter", () => {
 
 describe("GET /api/marketplace/[id]/route", () => {
   const profileQuery = {
-    maybeSingle: vi.fn(async () => ({
+    maybeSingle: vi.fn<
+      () => Promise<{
+        data: { latitude: number; longitude: number } | null;
+        error: Error | null;
+      }>
+    >(async () => ({
       data: { latitude: ENDPOINTS.origin.latitude, longitude: ENDPOINTS.origin.longitude },
       error: null,
     })),

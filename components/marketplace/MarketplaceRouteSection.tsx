@@ -21,6 +21,18 @@ interface MarketplaceRouteSectionProps {
   onRouteLoaded?: (summary: MarketplaceRouteSummary) => void;
 }
 
+function isMarketplaceRouteResponse(value: unknown): value is MarketplaceRouteResponse {
+  if (!value || typeof value !== "object") return false;
+  const payload = value as { route?: unknown; origin?: unknown; destination?: unknown };
+  if (!payload.route || !payload.origin || !payload.destination) return false;
+  const route = payload.route as { coordinates?: unknown; distanceKm?: unknown; source?: unknown };
+  return (
+    Array.isArray(route.coordinates) &&
+    typeof route.distanceKm === "number" &&
+    (route.source === "osrm" || route.source === "straight_line_fallback")
+  );
+}
+
 export default function MarketplaceRouteSection({
   batchId,
   viewerCanRoute,
@@ -29,20 +41,16 @@ export default function MarketplaceRouteSection({
   pickupAddress,
   onRouteLoaded,
 }: MarketplaceRouteSectionProps) {
-  const [route, setRoute] = useState<MarketplaceRouteResponse | null>(null);
-  const [isLoading, setIsLoading] = useState(viewerCanRoute);
-  const [error, setError] = useState<string | null>(null);
+  const [requestState, setRequestState] = useState<{
+    batchId: string | null;
+    route: MarketplaceRouteResponse | null;
+    error: string | null;
+  }>({ batchId: null, route: null, error: null });
 
   useEffect(() => {
-    if (!viewerCanRoute) {
-      setIsLoading(false);
-      return;
-    }
+    if (!viewerCanRoute) return;
 
     const controller = new AbortController();
-    setIsLoading(true);
-    setError(null);
-    setRoute(null);
 
     void fetch(`/api/marketplace/${encodeURIComponent(batchId)}/route`, {
       cache: "no-store",
@@ -56,11 +64,14 @@ export default function MarketplaceRouteSection({
         if (!response.ok) {
           throw new Error(body && "error" in body && body.error ? body.error : "Rute belum dapat dimuat.");
         }
-        return body as MarketplaceRouteResponse;
+        if (!isMarketplaceRouteResponse(body)) {
+          throw new Error("Rute belum dapat dimuat.");
+        }
+        return body;
       })
       .then((nextRoute) => {
         if (controller.signal.aborted) return;
-        setRoute(nextRoute);
+        setRequestState({ batchId, route: nextRoute, error: null });
         onRouteLoaded?.({
           source: nextRoute.route.source,
           distanceKm: nextRoute.route.distanceKm,
@@ -70,10 +81,11 @@ export default function MarketplaceRouteSection({
       })
       .catch((requestError: unknown) => {
         if (controller.signal.aborted) return;
-        setError(requestError instanceof Error ? requestError.message : "Rute belum dapat dimuat.");
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) setIsLoading(false);
+        setRequestState({
+          batchId,
+          route: null,
+          error: requestError instanceof Error ? requestError.message : "Rute belum dapat dimuat.",
+        });
       });
 
     return () => controller.abort();
@@ -88,6 +100,10 @@ export default function MarketplaceRouteSection({
       />
     );
   }
+
+  const route = requestState.batchId === batchId ? requestState.route : null;
+  const error = requestState.batchId === batchId ? requestState.error : null;
+  const isLoading = viewerCanRoute && requestState.batchId !== batchId;
 
   if (isLoading) {
     return (
