@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { LogIn, MapPin, Clock, Tag, Share2 } from "lucide-react";
@@ -12,7 +12,7 @@ import type {
 } from "@/lib/marketplace/types";
 import { deriveTierProgress } from "@/lib/marketplace/tier-progress";
 import { buildWhatsAppShareUrl } from "@/lib/marketplace/share-link";
-import PickupLocationMapClient from "./PickupLocationMapClient";
+import MarketplaceRouteSection, { type MarketplaceRouteSummary } from "./MarketplaceRouteSection";
 import LocationConsentCheckbox from "./LocationConsentCheckbox";
 import SupplierRatingBadge from "./SupplierRatingBadge";
 import TierProgressBar from "./TierProgressBar";
@@ -88,6 +88,7 @@ export default function MarketplaceDetailClient({
   needsProfileLocation = false,
 }: MarketplaceDetailClientProps) {
   const [consentGiven, setConsentGiven] = useState(false);
+  const [routeSummary, setRouteSummary] = useState<MarketplaceRouteSummary | null>(null);
   const initialProgress = useMemo(() => buildInitialProgress(item), [item]);
   const {
     progress: liveProgress,
@@ -98,9 +99,21 @@ export default function MarketplaceDetailClient({
 
   const isUmkm = viewerRole === "umkm";
   const canJoinBatch = isUmkm && viewerProfileComplete;
+  const viewerCanRoute = isUmkm && !needsProfileLocation;
+  const handleRouteLoaded = useCallback((summary: MarketplaceRouteSummary) => {
+    setRouteSummary(summary);
+  }, []);
   const shareUrl = buildWhatsAppShareUrl(item, canonicalUrl);
   const liveTiers = liveProgress.tiers.length > 0 ? liveProgress.tiers : initialProgress.tiers;
   const currentPrice = liveProgress.tierProgress.currentPricePerUnit || item.currentTierPrice;
+  const displayDistanceKm = routeSummary?.distanceKm ?? item.distanceKm;
+  const displayDurationMinutes = routeSummary?.durationMinutes ?? item.estimatedPickupMinutes;
+  const distanceSourceLabel =
+    routeSummary?.source === "straight_line_fallback"
+      ? "Perkiraan garis lurus"
+      : routeSummary
+        ? "Rute berkendara"
+        : "Jarak perkiraan";
 
   return (
     <article className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
@@ -147,13 +160,15 @@ export default function MarketplaceDetailClient({
             <div>
               <p className="text-sm font-semibold text-slate-800">Estimasi & Jarak</p>
               <p className="text-sm text-slate-500">
-                {item.distanceKm === null
+                {displayDistanceKm === null
                   ? "Jarak belum tersedia"
-                  : `${item.distanceKm.toLocaleString("id-ID", { maximumFractionDigits: 1 })} km`}
+                  : routeSummary
+                    ? `${distanceSourceLabel}: ${displayDistanceKm.toLocaleString("id-ID", { maximumFractionDigits: 1 })} km`
+                    : `${displayDistanceKm.toLocaleString("id-ID", { maximumFractionDigits: 1 })} km`}
                 {" • "}
-                {item.estimatedPickupMinutes === null
+                {displayDurationMinutes === null
                   ? "Estimasi belum tersedia"
-                  : `${item.estimatedPickupMinutes} mnt (Pickup)`}
+                  : `${displayDurationMinutes} mnt (${routeSummary?.source === "osrm" ? "Berkendara" : "Pickup"})`}
               </p>
             </div>
           </div>
@@ -164,10 +179,13 @@ export default function MarketplaceDetailClient({
             <MapPin aria-hidden="true" className="w-4 h-4" />
             <span>Lokasi Titik Kumpul</span>
           </div>
-          <PickupLocationMapClient
-            latitude={item.pickupLatitude}
-            longitude={item.pickupLongitude}
-            address={item.pickupAddress}
+          <MarketplaceRouteSection
+            batchId={item.id}
+            viewerCanRoute={viewerCanRoute}
+            pickupLatitude={item.pickupLatitude}
+            pickupLongitude={item.pickupLongitude}
+            pickupAddress={item.pickupAddress}
+            onRouteLoaded={handleRouteLoaded}
           />
         </div>
 
