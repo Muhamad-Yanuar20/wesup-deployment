@@ -11,6 +11,7 @@ interface ApiOrderRow {
   registration_id: string;
   umkm_name: string;
   quantity: number;
+  unit?: string | null;
   status: FulfillmentOrder["status"];
   final_amount: number | string | null;
   lock_tier: number | null;
@@ -22,6 +23,7 @@ interface ErrorBody {
 }
 
 const orderCache = new Map<string, FulfillmentOrder>();
+const DEFAULT_FULFILLMENT_UNIT = "pcs";
 
 async function readError(response: Response, fallback: string): Promise<string> {
   try {
@@ -40,6 +42,7 @@ function mapOrder(batchId: string, row: ApiOrderRow): FulfillmentOrder {
     displayCode: `REG-${row.registration_id.slice(0, 8).toUpperCase()}`,
     umkmName: row.umkm_name,
     quantity: Number(row.quantity),
+    unit: typeof row.unit === "string" && row.unit.trim() ? row.unit.trim() : DEFAULT_FULFILLMENT_UNIT,
     status: row.status,
     finalAmount: row.final_amount === null ? null : Number(row.final_amount),
     lockedTier: row.lock_tier === null ? null : Number(row.lock_tier),
@@ -93,6 +96,7 @@ export const supplierFulfillmentApiRepository: FulfillmentRepository = {
       displayCode: `REG-${registrationId.slice(0, 8).toUpperCase()}`,
       umkmName: "UMKM",
       quantity: 0,
+      unit: DEFAULT_FULFILLMENT_UNIT,
       status: "paid",
       finalAmount: null,
       lockedTier: null,
