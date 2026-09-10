@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database";
 import { POST as signup } from "@/app/api/auth/signup/route";
+import { UmkmRegistrationError } from "@/lib/umkm-registration/service";
 import { POST as login } from "@/app/api/auth/login/route";
 import { POST as logout } from "@/app/api/auth/logout/route";
 import { POST as forgotPassword } from "@/app/api/auth/forgot-password/route";
@@ -29,7 +30,8 @@ vi.mock("@/lib/umkm-registration/service", () => ({
   isUmkmEmailRateLimitError: (error: unknown) => (error as { name?: string })?.name === "UmkmEmailRateLimitError",
   UmkmRegistrationError: class UmkmRegistrationError extends Error {
     stage: string;
-    constructor(message: string, stage = "unknown") { super(message); this.name = "UmkmRegistrationError"; this.stage = stage; }
+    correlationId?: string;
+    constructor(message: string, stage = "unknown", correlationId?: string) { super(message); this.name = "UmkmRegistrationError"; this.stage = stage; this.correlationId = correlationId; }
   },
 }));
 
@@ -132,6 +134,20 @@ describe("POST /api/auth/signup", () => {
     expect(registerUmkmMock).not.toHaveBeenCalled();
   });
 
+  it("logs the registration correlation ID for server failures", async () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    registerUmkmMock.mockRejectedValueOnce(new UmkmRegistrationError("database failure", "profile_insert", "corr-umkm-123"));
+
+    const res = await signup(postJson("/api/auth/signup", validSignup));
+
+    expect(res.status).toBe(500);
+    expect(errorSpy).toHaveBeenCalledWith("[auth/signup] UMKM registration failed", {
+      stage: "profile_insert",
+      message: "database failure",
+      correlationId: "corr-umkm-123",
+    });
+    errorSpy.mockRestore();
+  });
   it("maps duplicate, rate-limit, and unexpected service failures", async () => {
     registerUmkmMock.mockRejectedValueOnce({ name: "DuplicateUmkmEmailError" });
     expect((await signup(postJson("/api/auth/signup", validSignup))).status).toBe(409);

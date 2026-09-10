@@ -728,6 +728,22 @@ describe.skipIf(noRestUrl)("live Supabase database (REST)", () => {
     }
   });
 
+  it("blocks anon calls to the UMKM registration RPC", async () => {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/create_umkm_registration`, {
+      method: "POST",
+      headers: {
+        apikey: PUBLISHABLE_KEY!,
+        Authorization: `Bearer ${PUBLISHABLE_KEY!}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        p_user_id: "00000000-0000-0000-0000-000000000001",
+        p_latitude: -6.914744,
+        p_longitude: 107.60981,
+      }),
+    });
+    expect(res.status).toBeGreaterThanOrEqual(400);
+  });
   it("blocks anon INSERT into admin_audit_logs (RLS, no insert policy)", async () => {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/admin_audit_logs`, {
       method: "POST",

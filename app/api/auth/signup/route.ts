@@ -46,7 +46,11 @@ export async function POST(request: Request) {
       );
     }
     if (error instanceof UmkmRegistrationError) {
-      console.error("[auth/signup] UMKM registration failed", { stage: error.stage, message: error.message });
+      console.error("[auth/signup] UMKM registration failed", {
+        stage: error.stage,
+        message: error.message,
+        correlationId: error.correlationId,
+      });
     } else {
       console.error("[auth/signup] unexpected registration error", error);
     }

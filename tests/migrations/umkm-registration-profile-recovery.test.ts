@@ -6,6 +6,10 @@ const migration = readFileSync(
   resolve(process.cwd(), "supabase/migrations/20260910012225_umkm_registration_profile_recovery.sql"),
   "utf8",
 );
+const rpcRepairMigration = readFileSync(
+  resolve(process.cwd(), "supabase/migrations/20260910023101_umkm_registration_rpc_without_auth_users.sql"),
+  "utf8",
+);
 
 describe("UMKM registration/profile recovery migration", () => {
   it("restores nullable business fields and explicit Data API grants", () => {
@@ -42,6 +46,16 @@ describe("UMKM registration/profile recovery migration", () => {
     expect(migration).toContain("grant execute on function public.create_umkm_registration");
     expect(migration).toContain("to service_role");
     expect(migration).toContain("on conflict (user_id) do nothing");
+  });
+  it("keeps the repaired RPC independent from auth.users", () => {
+    expect(rpcRepairMigration).toContain("create or replace function public.create_umkm_registration");
+    expect(rpcRepairMigration).toContain("security invoker");
+    expect(rpcRepairMigration).toContain("current_user <> 'service_role'");
+    expect(rpcRepairMigration).toContain("from public.profiles p");
+    expect(rpcRepairMigration).not.toContain("from auth.users");
+    expect(rpcRepairMigration).toContain("v_status is distinct from 'active'");
+    expect(rpcRepairMigration).toContain("grant execute on function public.create_umkm_registration");
+    expect(rpcRepairMigration).toContain("to service_role");
   });
 });
 

@@ -163,6 +163,18 @@ describe.skipIf(noDbUrl || noRestUrl)("live auth & RLS hardening", () => {
       expect(res.status).toBeLessThan(300);
     });
 
+    it("rejects UMKM registration RPC for authenticated users", async () => {
+      const res = await rest("/rest/v1/rpc/create_umkm_registration", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          p_user_id: uid,
+          p_latitude: -6.914744,
+          p_longitude: 107.60981,
+        }),
+      });
+      expect(res.status).toBeGreaterThanOrEqual(400);
+    });
     it("rejects approve_supplier rpc for non-admin", async () => {
       const res = await rest("/rest/v1/rpc/approve_supplier", {
         method: "POST",
