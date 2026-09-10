@@ -13,6 +13,30 @@ export interface MarketplaceOrigin {
   latitude: number;
   longitude: number;
   source: "umkm_profile" | "request" | "bandung_default";
+  needsProfileLocation: boolean;
+}
+
+export type MarketplaceRouteSource = "osrm" | "straight_line_fallback";
+
+export interface MarketplaceRouteResponse {
+  batchId: string;
+  origin: {
+    latitude: number;
+    longitude: number;
+    label: "Lokasi usaha Anda";
+  };
+  destination: {
+    latitude: number;
+    longitude: number;
+    address: string;
+  };
+  route: {
+    source: MarketplaceRouteSource;
+    coordinates: Array<[number, number]>;
+    distanceKm: number;
+    durationMinutes: number | null;
+    warning?: string;
+  };
 }
 
 export interface TierProgress {

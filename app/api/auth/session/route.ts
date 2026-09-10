@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getViewerAccessState, resolveHomePath, type AccessStateClient } from "@/lib/auth/access-state";
 import { getCurrentUser } from "@/lib/supabase/auth";
 import type { AuthClient } from "@/lib/supabase/auth";
 import { getServerClient } from "@/lib/supabase/server";
@@ -7,7 +8,6 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   const client = await getServerClient();
-
   const context = await getCurrentUser(client as unknown as AuthClient);
 
   if (!context) {
@@ -21,6 +21,11 @@ export async function GET() {
     );
   }
 
+  const accessState = await getViewerAccessState(client as unknown as AccessStateClient);
+  if (!accessState) {
+    return NextResponse.json({ error: "Sign in required" }, { status: 401 });
+  }
+
   return NextResponse.json({
     user: { email: context.email },
     profile: {
@@ -28,5 +33,7 @@ export async function GET() {
       status: context.status,
       full_name: context.fullName,
     },
+    accessState,
+    homePath: resolveHomePath(accessState),
   });
 }

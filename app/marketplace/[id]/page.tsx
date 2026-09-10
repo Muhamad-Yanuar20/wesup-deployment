@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import "leaflet/dist/leaflet.css";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
@@ -8,6 +9,8 @@ import { buildPublicMarketplaceUrl } from "@/lib/marketplace/share-link";
 import { fetchMarketplaceDetail } from "@/lib/marketplace/server-repository";
 import { getServerClient } from "@/lib/supabase/server";
 import { getCurrentUser, type AuthClient } from "@/lib/supabase/auth";
+import { resolveMarketplaceOrigin, type MarketplaceOriginClient } from "@/lib/marketplace/origin";
+import { getViewerAccessState, type AccessStateClient } from "@/lib/auth/access-state";
 import { isUuid } from "@/lib/admin/validation";
 
 export const dynamic = "force-dynamic";
@@ -26,11 +29,14 @@ export default async function MarketplaceDetailPage({
   if (!isUuid(id)) notFound();
 
   const client = await getServerClient();
-  const item = await fetchMarketplaceDetail(client as never, id);
+  const context = await getCurrentUser(client as unknown as AuthClient);
+  const origin = await resolveMarketplaceOrigin(client as unknown as MarketplaceOriginClient, context);
+  const item = await fetchMarketplaceDetail(client as never, id, { latitude: origin.latitude, longitude: origin.longitude });
   if (!item) notFound();
 
-  const viewer = await getCurrentUser(client as unknown as AuthClient);
-  const viewerRole = viewer?.role ?? null;
+  const viewerAccess = await getViewerAccessState(client as unknown as AccessStateClient);
+  const viewerRole = viewerAccess?.role ?? null;
+  const viewerProfileComplete = viewerAccess?.role === "umkm" ? viewerAccess.profileComplete : undefined;
   const configuredSiteUrl = process.env.NEXT_PUBLIC_SITE_URL;
   if (!configuredSiteUrl && process.env.NODE_ENV === "production") {
     throw new Error("NEXT_PUBLIC_SITE_URL must be configured for canonical marketplace links");
@@ -55,6 +61,8 @@ export default async function MarketplaceDetailPage({
             item={item}
             canonicalUrl={canonicalUrl}
             viewerRole={viewerRole}
+            viewerProfileComplete={viewerProfileComplete}
+            needsProfileLocation={origin.needsProfileLocation}
           />
         </div>
       </div>

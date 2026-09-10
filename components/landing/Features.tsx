@@ -28,7 +28,7 @@ const FEATURES = [
             "Tagihan final diterbitkan setelah kuota ditutup, dengan countdown berbasis server agar tidak bisa dimanipulasi. Cukup satu kali scan QRIS di Payment Window.",
     },
     {
-        href: "/pesanan",
+        href: "/umkm/pesanan",
         icon: QrCode,
         iconClass: "bg-amber-50 text-amber-600 ring-amber-100 group-hover:bg-amber-100",
         title: "Dasbor Pesanan & Serah Terima",
@@ -36,7 +36,7 @@ const FEATURES = [
             "Pantau status pesanan dari pendaftaran hingga diambil. Terima Kode QR pengambilan plus PIN 4-digit cadangan untuk bukti serah terima di titik kumpul.",
     },
     {
-        href: "/pesanan",
+        href: "/umkm/pesanan",
         icon: ShieldCheck,
         iconClass: "bg-rose-50 text-rose-600 ring-rose-100 group-hover:bg-rose-100",
         title: "Escrow 24 Jam & Komplain",

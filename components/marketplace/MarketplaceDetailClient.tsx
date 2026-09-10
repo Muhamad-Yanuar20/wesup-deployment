@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { LogIn, MapPin, Clock, Tag, Share2 } from "lucide-react";
@@ -12,7 +12,7 @@ import type {
 } from "@/lib/marketplace/types";
 import { deriveTierProgress } from "@/lib/marketplace/tier-progress";
 import { buildWhatsAppShareUrl } from "@/lib/marketplace/share-link";
-import PickupLocationMapClient from "./PickupLocationMapClient";
+import MarketplaceRouteSection, { type MarketplaceRouteSummary } from "./MarketplaceRouteSection";
 import LocationConsentCheckbox from "./LocationConsentCheckbox";
 import SupplierRatingBadge from "./SupplierRatingBadge";
 import TierProgressBar from "./TierProgressBar";
@@ -72,16 +72,23 @@ function buildInitialProgress(item: MarketplaceItem): MarketplaceProgressRespons
 export interface MarketplaceDetailClientProps {
   item: MarketplaceItem;
   canonicalUrl: string;
-  /** Current viewer's role from the server session; `null` when not signed in. */
+  /** Current viewers role from the server session; `null` when not signed in. */
   viewerRole: UserRole | null;
+  /** Whether an authenticated UMKM has completed the required business profile. */
+  viewerProfileComplete?: boolean;
+  /** Whether this UMKM is using the temporary Bandung fallback. */
+  needsProfileLocation?: boolean;
 }
 
 export default function MarketplaceDetailClient({
   item,
   canonicalUrl,
   viewerRole,
+  viewerProfileComplete = true,
+  needsProfileLocation = false,
 }: MarketplaceDetailClientProps) {
   const [consentGiven, setConsentGiven] = useState(false);
+  const [routeSummary, setRouteSummary] = useState<MarketplaceRouteSummary | null>(null);
   const initialProgress = useMemo(() => buildInitialProgress(item), [item]);
   const {
     progress: liveProgress,
@@ -91,13 +98,26 @@ export default function MarketplaceDetailClient({
   } = useTierProgress(item.id, initialProgress);
 
   const isUmkm = viewerRole === "umkm";
+  const canJoinBatch = isUmkm && viewerProfileComplete;
+  const viewerCanRoute = isUmkm && !needsProfileLocation;
+  const handleRouteLoaded = useCallback((summary: MarketplaceRouteSummary) => {
+    setRouteSummary(summary);
+  }, []);
   const shareUrl = buildWhatsAppShareUrl(item, canonicalUrl);
   const liveTiers = liveProgress.tiers.length > 0 ? liveProgress.tiers : initialProgress.tiers;
   const currentPrice = liveProgress.tierProgress.currentPricePerUnit || item.currentTierPrice;
+  const displayDistanceKm = routeSummary?.distanceKm ?? item.distanceKm;
+  const displayDurationMinutes = routeSummary?.durationMinutes ?? item.estimatedPickupMinutes;
+  const distanceSourceLabel =
+    routeSummary?.source === "straight_line_fallback"
+      ? "Perkiraan garis lurus"
+      : routeSummary
+        ? "Rute berkendara"
+        : "Jarak perkiraan";
 
   return (
-    <article className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-      <div className="relative w-full aspect-[16/9] bg-slate-100">
+    <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <div className="relative aspect-[16/8] w-full overflow-hidden bg-slate-100 sm:aspect-[16/7] lg:aspect-[16/6]">
         <Image
           src={item.imageUrl}
           alt={`Foto produk ${item.title}`}
@@ -110,7 +130,13 @@ export default function MarketplaceDetailClient({
         </div>
       </div>
 
-      <div className="p-5 md:p-8 flex flex-col gap-6">
+      <div className="flex flex-col gap-6 p-4 sm:p-6 lg:p-8">
+        {isUmkm && needsProfileLocation ? (
+          <div className="flex flex-col gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950 sm:flex-row sm:items-center sm:justify-between" role="status" aria-live="polite">
+            <p><strong>Lokasi usaha belum tersimpan.</strong> Jarak sementara dihitung dari pusat Bandung.</p>
+            <Link href={`/umkm/onboarding?returnTo=/marketplace/${encodeURIComponent(item.id)}`} className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-xl bg-amber-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-amber-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-700 focus-visible:ring-offset-2">Simpan lokasi</Link>
+          </div>
+        ) : null}
         <div>
           <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 leading-tight">
             {item.title}
@@ -121,7 +147,7 @@ export default function MarketplaceDetailClient({
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
           <div className="flex items-start gap-3 p-4 bg-slate-50 rounded-xl border border-slate-100">
             <MapPin aria-hidden="true" className="w-5 h-5 text-slate-400 mt-0.5" />
             <div>
@@ -134,13 +160,15 @@ export default function MarketplaceDetailClient({
             <div>
               <p className="text-sm font-semibold text-slate-800">Estimasi & Jarak</p>
               <p className="text-sm text-slate-500">
-                {item.distanceKm === null
+                {displayDistanceKm === null
                   ? "Jarak belum tersedia"
-                  : `${item.distanceKm.toLocaleString("id-ID", { maximumFractionDigits: 1 })} km`}
+                  : routeSummary
+                    ? `${distanceSourceLabel}: ${displayDistanceKm.toLocaleString("id-ID", { maximumFractionDigits: 1 })} km`
+                    : `${displayDistanceKm.toLocaleString("id-ID", { maximumFractionDigits: 1 })} km`}
                 {" • "}
-                {item.estimatedPickupMinutes === null
+                {displayDurationMinutes === null
                   ? "Estimasi belum tersedia"
-                  : `${item.estimatedPickupMinutes} mnt (Pickup)`}
+                  : `${displayDurationMinutes} mnt (${routeSummary?.source === "osrm" ? "Berkendara" : "Pickup"})`}
               </p>
             </div>
           </div>
@@ -151,10 +179,13 @@ export default function MarketplaceDetailClient({
             <MapPin aria-hidden="true" className="w-4 h-4" />
             <span>Lokasi Titik Kumpul</span>
           </div>
-          <PickupLocationMapClient
-            latitude={item.pickupLatitude}
-            longitude={item.pickupLongitude}
-            address={item.pickupAddress}
+          <MarketplaceRouteSection
+            batchId={item.id}
+            viewerCanRoute={viewerCanRoute}
+            pickupLatitude={item.pickupLatitude}
+            pickupLongitude={item.pickupLongitude}
+            pickupAddress={item.pickupAddress}
+            onRouteLoaded={handleRouteLoaded}
           />
         </div>
 
@@ -190,12 +221,12 @@ export default function MarketplaceDetailClient({
           </p>
         ) : null}
 
-        {isUmkm ? (
+        {canJoinBatch ? (
           <LocationConsentCheckbox onChange={(checked) => setConsentGiven(checked)} />
         ) : null}
 
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2">
-          {isUmkm ? (
+        <div className="sticky bottom-[4.75rem] z-10 -mx-4 flex flex-col items-stretch gap-3 border-t border-slate-200 bg-white/95 px-4 py-3 backdrop-blur-sm sm:static sm:mx-0 sm:flex-row sm:items-center sm:border-0 sm:bg-transparent sm:px-0 sm:py-2">
+          {canJoinBatch ? (
             <div className="flex-1">
               <JoinBatchForm
                 item={item}
@@ -203,9 +234,16 @@ export default function MarketplaceDetailClient({
                 onSuccess={({ count }) => applyRegistration(count)}
               />
             </div>
+          ) : isUmkm ? (
+            <Link
+              href={`/umkm/onboarding?returnTo=/marketplace/${encodeURIComponent(item.id)}`}
+              className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-bold text-white shadow-sm shadow-blue-600/20 transition-all hover:bg-blue-700 active:scale-[0.98] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+            >
+              Lengkapi profil untuk Mendaftar
+            </Link>
           ) : viewerRole === null ? (
             <Link
-              href="/login"
+              href={`/login?role=umkm&returnTo=/marketplace/${encodeURIComponent(item.id)}`}
               className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-bold text-white shadow-sm shadow-blue-600/20 transition-all hover:bg-blue-700 active:scale-[0.98] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
             >
               <LogIn aria-hidden="true" className="w-4 h-4" />

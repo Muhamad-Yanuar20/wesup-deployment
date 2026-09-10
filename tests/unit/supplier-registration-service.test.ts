@@ -34,7 +34,7 @@ function mockDependencies(options: {
     error: { code?: string; message?: string } | null;
   };
   upload?: { data: { path: string } | null; error: { message?: string } | null };
-  insert?: { error: { message?: string } | null };
+  rpc?: { error: { message?: string } | null };
 }) {
   const maybeSingle = vi.fn(async () =>
     options.lookup ?? { data: null, error: null },
@@ -50,7 +50,7 @@ function mockDependencies(options: {
   );
   const remove = vi.fn(async () => ({ error: null }));
   const deleteUser = vi.fn(async () => ({ error: null }));
-  const insert = vi.fn(async () => options.insert ?? { error: null });
+  const rpc = vi.fn(async () => options.rpc ?? { error: null });
   const profileQuery = {
     select: vi.fn(() => ({
       eq: vi.fn(() => ({ maybeSingle })),
@@ -60,15 +60,14 @@ function mockDependencies(options: {
   const adminClient = {
     storage: { from: vi.fn(() => storageBucket) },
     auth: { admin: { deleteUser } },
-    from: vi.fn((table: string) =>
-      table === "profiles" ? profileQuery : { insert },
-    ),
+    from: vi.fn(() => profileQuery),
+    rpc,
   };
   const dependencies = {
     authClient: { auth: { signUp } },
     adminClient,
   } as unknown as RegistrationDependencies;
-  return { dependencies, maybeSingle, signUp, upload, remove, deleteUser, insert };
+  return { dependencies, maybeSingle, signUp, upload, remove, deleteUser, rpc };
 }
 
 describe("registerSupplier", () => {
@@ -92,15 +91,13 @@ describe("registerSupplier", () => {
       expect.any(File),
       { contentType: "image/webp", cacheControl: "3600", upsert: false },
     );
-    expect(mocks.insert).toHaveBeenCalledWith({
-      user_id: USER_ID,
-      business_name: "Toko Budi",
-      address: "Jl. Bandung No. 1",
-      latitude: -6.914744,
-      longitude: 107.60981,
-      business_photo_url: `business/${USER_ID}/photo.webp`,
-      ktp_photo_url: null,
-      nik: null,
+    expect(mocks.rpc).toHaveBeenCalledWith("create_supplier_registration", {
+      p_user_id: USER_ID,
+      p_business_name: "Toko Budi",
+      p_address: "Jl. Bandung No. 1",
+      p_latitude: -6.914744,
+      p_longitude: 107.60981,
+      p_business_photo_url: `business/${USER_ID}/photo.webp`,
     });
     expect(mocks.deleteUser).not.toHaveBeenCalled();
   });
@@ -128,12 +125,12 @@ describe("registerSupplier", () => {
     });
     expect(mocks.remove).not.toHaveBeenCalled();
     expect(mocks.deleteUser).toHaveBeenCalledWith(USER_ID);
-    expect(mocks.insert).not.toHaveBeenCalled();
+    expect(mocks.rpc).not.toHaveBeenCalled();
   });
 
   it("removes the uploaded photo and auth user when profile insert fails", async () => {
     const mocks = mockDependencies({
-      insert: { error: { message: "insert failed" } },
+      rpc: { error: { message: "insert failed" } },
     });
 
     await expect(registerSupplier(validFields(), mocks.dependencies)).rejects.toMatchObject({

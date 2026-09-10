@@ -20,7 +20,7 @@ const RESPONSE = {
   origin: {
     latitude: -6.914744,
     longitude: 107.60981,
-    source: "bandung_default" as const,
+    source: "bandung_default", needsProfileLocation: false as const,
   },
 };
 

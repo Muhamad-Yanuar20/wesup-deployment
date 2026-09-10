@@ -76,18 +76,17 @@ export interface RegistrationDependencies {
         };
       };
     };
-    from(table: "supplier_profiles"): {
-      insert(row: {
-        user_id: string;
-        business_name: string;
-        address: string;
-        latitude: number;
-        longitude: number;
-        business_photo_url: string;
-        ktp_photo_url: null;
-        nik: null;
-      }): Promise<{ error: { message?: string } | null }>;
-    };
+    rpc(
+      name: "create_supplier_registration",
+      args: {
+        p_user_id: string;
+        p_business_name: string;
+        p_address: string;
+        p_latitude: number;
+        p_longitude: number;
+        p_business_photo_url: string;
+      },
+    ): Promise<{ error: { message?: string } | null }>;
   };
 }
 
@@ -150,15 +149,13 @@ export async function registerSupplier(
     uploaded = true;
     stage = "profile_insert";
 
-    const { error: insertError } = await adminClient.from("supplier_profiles").insert({
-      user_id: user.id,
-      business_name: fields.businessName,
-      address: fields.address,
-      latitude: fields.latitude,
-      longitude: fields.longitude,
-      business_photo_url: upload.data.path,
-      ktp_photo_url: null,
-      nik: null,
+    const { error: insertError } = await adminClient.rpc("create_supplier_registration", {
+      p_user_id: user.id,
+      p_business_name: fields.businessName,
+      p_address: fields.address,
+      p_latitude: fields.latitude,
+      p_longitude: fields.longitude,
+      p_business_photo_url: upload.data.path,
     });
     if (insertError) {
       throw new SupplierRegistrationError("Supplier profile insert failed", "profile_insert");

@@ -84,7 +84,7 @@ export default function JoinBatchForm({
           Selesaikan pembayaran sebelum batas waktu agar slot tetap tersimpan.
         </p>
         <Link
-          href="/pesanan"
+          href="/umkm/pesanan"
           className="inline-flex w-fit items-center rounded-lg bg-emerald-600 px-3 py-2 text-sm font-bold text-white hover:bg-emerald-700"
         >
           Lihat Pesanan

@@ -81,7 +81,7 @@ describe("JoinBatchForm", () => {
     }));
     expect(onSuccess).toHaveBeenCalledWith({ count: 35, registrationId: "reg-1" });
     expect(await screen.findByText(/pendaftaran berhasil/i)).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /lihat pesanan/i })).toHaveAttribute("href", "/pesanan");
+    expect(screen.getByRole("link", { name: /lihat pesanan/i })).toHaveAttribute("href", "/umkm/pesanan");
   });
 
   it("keeps the form usable and exposes duplicate/closed API errors", async () => {

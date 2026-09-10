@@ -193,7 +193,7 @@ describe("MarketplaceDetailClient", () => {
     it("shows a login CTA instead of the join flow for anonymous viewers", () => {
       renderDetail({}, null);
       const loginCta = screen.getByRole("link", { name: /masuk sebagai umkm untuk mendaftar/i });
-      expect(loginCta).toHaveAttribute("href", "/login");
+      expect(loginCta).toHaveAttribute("href", "/login?role=umkm&returnTo=/marketplace/item-1");
       expect(screen.queryByRole("button", { name: /daftar sekarang/i })).not.toBeInTheDocument();
       expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
     });

@@ -4,9 +4,9 @@ export function Footer() {
     const year = new Date().getFullYear();
 
     return (
-        <footer className="mt-auto border-t border-slate-200 bg-slate-50">
-            <div className="mx-auto max-w-6xl px-4 sm:px-6 py-8">
-                <div className="grid grid-cols-1 gap-8 sm:grid-cols-3">
+        <footer className="mt-auto border-t border-slate-200 bg-white">
+            <div className="mx-auto w-full max-w-7xl px-4 py-7 pb-28 sm:px-6 sm:py-9 sm:pb-9 lg:px-8">
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-3 sm:gap-8">
                     {/* Brand column */}
                     <div className="space-y-2">
                         <div className="flex items-center gap-2">
@@ -28,8 +28,8 @@ export function Footer() {
                         <ul className="space-y-2">
                             {[
                                 { href: "/marketplace", label: "Marketplace" },
-                                { href: "/pesanan", label: "Pesanan Saya" },
-                                { href: "/notifikasi", label: "Notifikasi" },
+                                { href: "/umkm/pesanan", label: "Pesanan Saya" },
+                                { href: "/umkm/notifikasi", label: "Notifikasi" },
                             ].map((link) => (
                                 <li key={link.href}>
                                     <Link
@@ -67,7 +67,7 @@ export function Footer() {
                     </div>
                 </div>
 
-                <div className="mt-8 border-t border-slate-200 pt-4 text-center text-xs text-slate-400">
+                <div className="mt-7 border-t border-slate-200 pt-4 text-center text-xs leading-5 text-slate-400">
                     © {year} Wesup — INSEVENT 2026 · Fullstack Web Development Competition
                 </div>
             </div>

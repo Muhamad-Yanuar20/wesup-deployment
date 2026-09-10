@@ -3,10 +3,8 @@ import { getServerClient } from "@/lib/supabase/server";
 import {
   getCurrentUser,
   type AuthClient,
-  type AuthContext,
 } from "@/lib/supabase/auth";
 import {
-  BANDUNG_CENTER,
   SEARCH_DEFAULT_LIMIT,
   SEARCH_DEFAULT_RADIUS_KM,
   SEARCH_MAX_LIMIT,
@@ -18,27 +16,9 @@ import {
 import { parsePositiveInt } from "@/lib/admin/validation";
 import { enforceRateLimit } from "@/lib/rate-limit";
 import { mapMarketplaceRpcRows, type MarketplaceRpcRow } from "@/lib/marketplace/api-mapper";
+import { resolveMarketplaceOrigin, type MarketplaceOriginClient } from "@/lib/marketplace/origin";
 
 export const dynamic = "force-dynamic";
-
-interface CoordsResponse {
-  data: { latitude: number | string | null; longitude: number | string | null } | null;
-  error: Error | null;
-}
-
-interface SearchOriginQuery {
-  select: (columns: string) => {
-    eq: (column: string, value: string) => {
-      maybe: () => PromiseLike<CoordsResponse>;
-    };
-  };
-}
-
-interface SearchOrigin {
-  latitude: number;
-  longitude: number;
-  source: "umkm_profile" | "request" | "bandung_default";
-}
 
 interface MarketplaceRpcError {
   code?: unknown;
@@ -54,43 +34,6 @@ function isMarketplaceRpcError(error: unknown): error is MarketplaceRpcError {
 function isMarketplaceSchemaOutdated(error: unknown): boolean {
   if (!isMarketplaceRpcError(error)) return false;
   return error.code === "PGRST202" && /search_batches/i.test(String(error.message ?? ""));
-}
-
-async function resolveSearchOrigin(
-  client: { from: (table: string) => unknown },
-  ctx: AuthContext | null,
-): Promise<SearchOrigin> {
-  if (ctx?.role !== "umkm") {
-    return {
-      latitude: BANDUNG_CENTER.lat,
-      longitude: BANDUNG_CENTER.lng,
-      source: "bandung_default",
-    };
-  }
-
-  const query = client.from("umkm_profiles") as SearchOriginQuery;
-  const { data } = await query
-    .select("latitude,longitude")
-    .eq("user_id", ctx.userId)
-    .maybe();
-
-  const latitude = Number(data?.latitude);
-  const longitude = Number(data?.longitude);
-  if (
-    !Number.isFinite(latitude) ||
-    !Number.isFinite(longitude) ||
-    latitude < -90 ||
-    latitude > 90 ||
-    longitude < -180 ||
-    longitude > 180
-  ) {
-    return {
-      latitude: BANDUNG_CENTER.lat,
-      longitude: BANDUNG_CENTER.lng,
-      source: "bandung_default",
-    };
-  }
-  return { latitude, longitude, source: "umkm_profile" };
 }
 
 export async function GET(req: Request) {
@@ -227,10 +170,11 @@ export async function GET(req: Request) {
   }
   const offset = (page - 1) * limit;
 
-  const origin =
-    lat !== null && lng !== null
-      ? { latitude: lat, longitude: lng, source: "request" as const }
-      : await resolveSearchOrigin(client, ctx);
+  const origin = await resolveMarketplaceOrigin(
+    client as unknown as MarketplaceOriginClient,
+    ctx,
+    lat !== null && lng !== null ? { latitude: lat, longitude: lng } : null,
+  );
 
   const { data, error } = await client.rpc("search_batches", {
     p_query: query === "" ? null : query,

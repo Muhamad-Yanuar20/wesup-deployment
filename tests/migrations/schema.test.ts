@@ -34,6 +34,8 @@ function stripUnsupported(sql: string): string {
     .replace(/CREATE\s+TRIGGER[^;]+;/gi, "")
     .replace(/CREATE\s+POLICY[^;]+;/gi, "")
     .replace(/DROP\s+POLICY[^;]+;/gi, "")
+    .replace(/DROP\s+TRIGGER[^;]+;/gi, "")
+    .replace(/DROP\s+FUNCTION[^;]+;/gi, "")
     .replace(/GRANT\s+[^;]+;/gi, "")
     .replace(/REVOKE\s+[^;]+;/gi, "")
     .replace(/ALTER\s+TABLE[^;]*ENABLE\s+ROW\s+LEVEL\s+SECURITY[^;]*;/gi, "")

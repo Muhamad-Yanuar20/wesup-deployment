@@ -46,7 +46,7 @@ describe("MarketplaceRadiusMap", () => {
   it("draws the selected radius and only valid pickup coordinates", () => {
     render(
       <MarketplaceRadiusMap
-        origin={{ latitude: -6.91, longitude: 107.61, source: "request" }}
+        origin={{ latitude: -6.91, longitude: 107.61, source: "request", needsProfileLocation: false }}
         radiusKm={5}
         items={[ITEM(), ITEM({ id: "55555555-5555-4555-8555-555555555555", pickupLatitude: Number.NaN })]}
       />,
@@ -61,7 +61,7 @@ describe("MarketplaceRadiusMap", () => {
   it("falls back to a one-kilometre circle for invalid radius input", () => {
     render(
       <MarketplaceRadiusMap
-        origin={{ latitude: -6.91, longitude: 107.61, source: "bandung_default" }}
+        origin={{ latitude: -6.91, longitude: 107.61, source: "bandung_default", needsProfileLocation: false }}
         radiusKm={Number.NaN}
         items={[]}
       />,

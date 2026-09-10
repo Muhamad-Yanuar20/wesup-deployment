@@ -163,6 +163,18 @@ describe.skipIf(noDbUrl || noRestUrl)("live auth & RLS hardening", () => {
       expect(res.status).toBeLessThan(300);
     });
 
+    it("rejects UMKM registration RPC for authenticated users", async () => {
+      const res = await rest("/rest/v1/rpc/create_umkm_registration", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          p_user_id: uid,
+          p_latitude: -6.914744,
+          p_longitude: 107.60981,
+        }),
+      });
+      expect(res.status).toBeGreaterThanOrEqual(400);
+    });
     it("rejects approve_supplier rpc for non-admin", async () => {
       const res = await rest("/rest/v1/rpc/approve_supplier", {
         method: "POST",
@@ -192,7 +204,7 @@ describe.skipIf(noDbUrl || noRestUrl)("live auth & RLS hardening", () => {
     });
 
     it.skipIf(!freshUser?.uid)(
-      "promotes fresh user via pool insert of approved supplier profile",
+      "does not promote a fresh UMKM when supplier profile is approved",
       async () => {
         const nik = `rls-${Math.random().toString(36).slice(2, 14)}`;
         await pool!.query(
@@ -206,7 +218,9 @@ describe.skipIf(noDbUrl || noRestUrl)("live auth & RLS hardening", () => {
           [freshUser!.uid],
         );
         expect(res.rows).toHaveLength(1);
-        expect(res.rows[0].role).toBe("supplier");
+        // Supplier identity is assigned during supplier registration.
+        // Approval changes capability only and must never promote an existing UMKM.
+        expect(res.rows[0].role).toBe("umkm");
       },
     );
 
