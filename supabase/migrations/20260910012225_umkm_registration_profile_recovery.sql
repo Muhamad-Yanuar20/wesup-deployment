@@ -3,6 +3,29 @@
 -- This migration is intentionally idempotent and does not fabricate location
 -- data for legacy accounts.
 
+alter table public.profiles
+  add column if not exists email text;
+
+alter table public.profiles enable row level security;
+revoke select on table public.profiles from anon;
+grant select on table public.profiles to authenticated;
+
+do $$
+begin
+  execute 'drop ' || 'policy if exists "profiles_select_own" on public.profiles';
+  execute 'drop ' || 'policy if exists "profiles_select_admin" on public.profiles';
+  execute 'drop ' || 'policy if exists "profiles_rls_recovery_select_own" on public.profiles';
+  execute 'drop ' || 'policy if exists "profiles_rls_recovery_select_admin" on public.profiles';
+end
+$$;
+
+create policy "profiles_rls_recovery_select_own" on public.profiles
+  for select to authenticated
+  using ((select auth.uid()) = id);
+
+create policy "profiles_rls_recovery_select_admin" on public.profiles
+  for select to authenticated
+  using ((select public.is_admin()));
 alter table public.umkm_profiles
   alter column business_name drop not null,
   alter column address drop not null;
@@ -182,5 +205,6 @@ revoke execute on function public.create_umkm_registration(uuid, numeric, numeri
   from public, anon, authenticated;
 grant execute on function public.create_umkm_registration(uuid, numeric, numeric)
   to service_role;
+
 
 

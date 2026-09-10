@@ -9,6 +9,8 @@ const migration = readFileSync(
 
 describe("UMKM registration/profile recovery migration", () => {
   it("restores nullable business fields and explicit Data API grants", () => {
+    expect(migration).toContain("alter table public.profiles enable row level security");
+    expect(migration).toContain("grant select on table public.profiles to authenticated");
     expect(migration).toContain("alter column business_name drop not null");
     expect(migration).toContain("alter column address drop not null");
     expect(migration).toContain("alter table public.umkm_profiles enable row level security");
@@ -42,3 +44,4 @@ describe("UMKM registration/profile recovery migration", () => {
     expect(migration).toContain("on conflict (user_id) do nothing");
   });
 });
+
