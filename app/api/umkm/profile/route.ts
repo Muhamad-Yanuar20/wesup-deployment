@@ -40,6 +40,19 @@ interface ProfileClient {
   from: (table: "umkm_profiles") => ProfileQuery & ProfileMutationQuery;
 }
 
+function requestId(): string {
+  return globalThis.crypto?.randomUUID?.() ?? "umkm-profile-" + Date.now();
+}
+
+function errorDetails(error: unknown): { message?: string; code?: string } {
+  if (!error || typeof error !== "object") return {};
+  const value = error as { message?: unknown; code?: unknown };
+  return {
+    message: typeof value.message === "string" ? value.message : undefined,
+    code: typeof value.code === "string" ? value.code : undefined,
+  };
+}
+
 function toResponseProfile(profile: ProfileRow | null) {
   if (!profile) return null;
   return {
@@ -77,6 +90,7 @@ async function resolveUmkmClient() {
 }
 
 export async function GET() {
+  const id = requestId();
   const resolved = await resolveUmkmClient();
   if (!resolved.client) return resolved.response;
 
@@ -87,13 +101,17 @@ export async function GET() {
     .maybeSingle();
 
   if (error) {
-    console.error("[umkm-profile] read failed", error);
-    return NextResponse.json({ error: "Unable to load UMKM profile" }, { status: 500 });
+    console.error("[umkm-profile] read failed", { requestId: id, userId: resolved.context.userId, ...errorDetails(error) });
+    return NextResponse.json(
+      { error: "Profil usaha belum dapat dimuat. Coba lagi.", code: "profile_load_failed", requestId: id },
+      { status: 500 },
+    );
   }
   return NextResponse.json({ profile: toResponseProfile(data) });
 }
 
 export async function PUT(request: Request) {
+  const id = requestId();
   const resolved = await resolveUmkmClient();
   if (!resolved.client) return resolved.response;
 
@@ -121,6 +139,7 @@ export async function PUT(request: Request) {
         address: parsed.value.address,
         latitude: parsed.value.latitude,
         longitude: parsed.value.longitude,
+        updated_at: new Date().toISOString(),
       },
       { onConflict: "user_id" },
     )
@@ -128,8 +147,16 @@ export async function PUT(request: Request) {
     .single();
 
   if (error || !data) {
-    console.error("[umkm-profile] write failed", error);
-    return NextResponse.json({ error: "Unable to save UMKM profile" }, { status: 500 });
+    console.error("[umkm-profile] write failed", {
+      requestId: id,
+      userId: resolved.context.userId,
+      ...errorDetails(error),
+      rowReturned: Boolean(data),
+    });
+    return NextResponse.json(
+      { error: "Profil usaha belum dapat disimpan. Coba lagi.", code: "profile_save_failed", requestId: id },
+      { status: 500 },
+    );
   }
   return NextResponse.json({ profile: toResponseProfile(data) });
 }

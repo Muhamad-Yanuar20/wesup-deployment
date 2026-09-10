@@ -11,18 +11,19 @@ function makeClient(options: {
   user?: { id: string; email: string } | null;
   role?: "umkm" | "supplier" | "admin";
   profile?: Record<string, unknown> | null;
+  writeError?: { message?: string; code?: string } | null;
 }) {
   const upsert = vi.fn(() => ({
     select: vi.fn(() => ({
       single: vi.fn(async () => ({
-        data: {
+        data: options.writeError ? null : {
           user_id: options.user?.id ?? "umkm-1",
           business_name: "Warung Rina",
           address: "Jl. Braga",
           latitude: -6.914744,
           longitude: 107.60981,
         },
-        error: null,
+        error: options.writeError ?? null,
       })),
     })),
   }));
@@ -92,7 +93,20 @@ describe("UMKM profile API", () => {
       address: "Jl. Braga",
       latitude: -6.914744,
       longitude: 107.60981,
+      updated_at: expect.any(String),
     }, { onConflict: "user_id" });
+  });
+
+  it("returns a stable persistence error when RLS or the database rejects the write", async () => {
+    makeClient({ profile: null, writeError: { message: "new row violates row-level security policy", code: "42501" } });
+    const response = await PUT(jsonRequest({
+      businessName: "Warung Rina",
+      address: "Bandung",
+      latitude: -6.914744,
+      longitude: 107.60981,
+    }));
+    expect(response.status).toBe(500);
+    await expect(response.json()).resolves.toMatchObject({ code: "profile_save_failed" });
   });
 
   it("rejects non-UMKM callers before touching the table", async () => {

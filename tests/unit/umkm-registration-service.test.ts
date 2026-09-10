@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { registerUmkm, UmkmRegistrationError, type UmkmRegistrationDependencies } from "@/lib/umkm-registration/service";
+import { registerUmkm, type UmkmRegistrationDependencies } from "@/lib/umkm-registration/service";
 import type { UmkmRegistrationFields } from "@/lib/umkm-registration/contracts";
 
 vi.mock("server-only", () => ({}));
@@ -18,27 +18,41 @@ function fields(): UmkmRegistrationFields {
 }
 
 function dependencies(options: {
-  lookup?: { data: { id: string } | null; error: { message?: string } | null };
+  lookup?: { data: Record<string, unknown> | null; error: { message?: string; code?: string } | null };
   signup?: { data: { user: { id: string; identities?: unknown[] } | null; session: unknown }; error: { code?: string; message?: string } | null };
-  rpc?: { error: { message?: string } | null };
+  rpc?: { error: { message?: string; code?: string } | null };
+  profile?: { data: Record<string, unknown> | null; error: { message?: string; code?: string } | null };
+  umkmProfile?: { data: Record<string, unknown> | null; error: { message?: string; code?: string } | null };
+  deleteError?: { message?: string; code?: string } | null;
 }) {
-  const maybeSingle = vi.fn(async () => options.lookup ?? { data: null, error: null });
+  const lookup = vi.fn(async () => options.lookup ?? { data: null, error: null });
+  const profile = vi.fn(async () => options.profile ?? { data: { id: USER_ID, role: "umkm" }, error: null });
+  const umkmProfile = vi.fn(async () => options.umkmProfile ?? { data: { user_id: USER_ID }, error: null });
   const signUp = vi.fn(async () => options.signup ?? { data: { user: { id: USER_ID, identities: [{}] }, session: null }, error: null });
-  const deleteUser = vi.fn(async () => ({ error: null }));
+  const deleteUser = vi.fn(async () => ({ error: options.deleteError ?? null }));
   const rpc = vi.fn(async () => options.rpc ?? { error: null });
+
+  const from = vi.fn((table: "profiles" | "umkm_profiles") => ({
+    select: vi.fn((columns: string) => ({
+      eq: vi.fn(() => ({
+        maybeSingle: table === "profiles" && columns === "id" ? lookup : table === "profiles" ? profile : umkmProfile,
+      })),
+    })),
+  }));
+
   const deps = {
     authClient: { auth: { signUp } },
     adminClient: {
       auth: { admin: { deleteUser } },
-      from: vi.fn(() => ({ select: vi.fn(() => ({ eq: vi.fn(() => ({ maybeSingle })) })) })),
+      from,
       rpc,
     },
   } as unknown as UmkmRegistrationDependencies;
-  return { deps, maybeSingle, signUp, deleteUser, rpc };
+  return { deps, lookup, signUp, deleteUser, rpc, profile, umkmProfile };
 }
 
 describe("registerUmkm", () => {
-  it("creates a location-only UMKM profile without returning a session", async () => {
+  it("creates and verifies profiles plus a location-only UMKM row without returning a session", async () => {
     const mocks = dependencies({ signup: { data: { user: { id: USER_ID, identities: [{}] }, session: { id: "session" } }, error: null } });
     await expect(registerUmkm(fields(), mocks.deps)).resolves.toEqual({ ok: true, requiresEmailConfirmation: false });
     expect(mocks.signUp).toHaveBeenCalledWith({
@@ -51,13 +65,29 @@ describe("registerUmkm", () => {
       p_latitude: -6.914744,
       p_longitude: 107.60981,
     });
+    expect(mocks.profile).toHaveBeenCalled();
+    expect(mocks.umkmProfile).toHaveBeenCalled();
     expect(mocks.deleteUser).not.toHaveBeenCalled();
   });
 
   it("rolls back the auth user when the profile RPC fails", async () => {
-    const mocks = dependencies({ rpc: { error: { message: "insert failed" } } });
+    const mocks = dependencies({ rpc: { error: { message: "insert failed", code: "42501" } } });
     await expect(registerUmkm(fields(), mocks.deps)).rejects.toMatchObject({ name: "UmkmRegistrationError", stage: "profile_insert" });
     expect(mocks.deleteUser).toHaveBeenCalledWith(USER_ID);
+  });
+
+  it("rolls back when the profile rows cannot be verified", async () => {
+    const mocks = dependencies({ profile: { data: null, error: null } });
+    await expect(registerUmkm(fields(), mocks.deps)).rejects.toMatchObject({ name: "UmkmRegistrationError", stage: "profile_verify" });
+    expect(mocks.deleteUser).toHaveBeenCalledWith(USER_ID);
+  });
+
+  it("classifies cleanup failures separately", async () => {
+    const mocks = dependencies({
+      rpc: { error: { message: "insert failed" } },
+      deleteError: { message: "delete failed", code: "unexpected" },
+    });
+    await expect(registerUmkm(fields(), mocks.deps)).rejects.toMatchObject({ name: "UmkmRegistrationError", stage: "cleanup" });
   });
 
   it("does not create an auth user for duplicate email", async () => {
@@ -72,3 +102,4 @@ describe("registerUmkm", () => {
     expect(mocks.signUp).not.toHaveBeenCalled();
   });
 });
+

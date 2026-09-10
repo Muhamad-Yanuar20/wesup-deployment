@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { MapPin, Save } from "lucide-react";
 import BusinessLocationPickerClient from "@/components/maps/BusinessLocationPickerClient";
@@ -25,6 +25,7 @@ function profileToForm(profile: Record<string, unknown> | null | undefined): For
 
 export default function UmkmOnboardingForm({ returnTo }: UmkmOnboardingFormProps) {
   const router = useRouter();
+  const formErrorRef = useRef<HTMLParagraphElement>(null);
   const [values, setValues] = useState<FormValues>(DEFAULT_VALUES);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [loadError, setLoadError] = useState("");
@@ -46,6 +47,10 @@ export default function UmkmOnboardingForm({ returnTo }: UmkmOnboardingFormProps
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, []);
+
+  const focusError = () => {
+    window.setTimeout(() => formErrorRef.current?.focus(), 0);
+  };
 
   const updateValue = (field: "businessName" | "address", value: string) => {
     setValues((current) => ({ ...current, [field]: value }));
@@ -70,6 +75,7 @@ export default function UmkmOnboardingForm({ returnTo }: UmkmOnboardingFormProps
     });
     if (!parsed.ok) {
       setFieldErrors(parsed.fieldErrors);
+      focusError();
       return;
     }
 
@@ -84,6 +90,7 @@ export default function UmkmOnboardingForm({ returnTo }: UmkmOnboardingFormProps
       const body = await response.json().catch(() => ({}));
       if (!response.ok) {
         setFieldErrors(body.fieldErrors ?? { form: body.error ?? "Profil usaha belum dapat disimpan." });
+        focusError();
         return;
       }
       setSuccess("Profil usaha berhasil tersimpan.");
@@ -91,6 +98,7 @@ export default function UmkmOnboardingForm({ returnTo }: UmkmOnboardingFormProps
       router.refresh();
     } catch {
       setFieldErrors({ form: "Jaringan bermasalah. Coba lagi." });
+      focusError();
     } finally {
       setSaving(false);
     }
@@ -130,7 +138,7 @@ export default function UmkmOnboardingForm({ returnTo }: UmkmOnboardingFormProps
           </fieldset>
         </div>
 
-        {fieldErrors.form ? <p role="alert" className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">{fieldErrors.form}</p> : null}
+        {fieldErrors.form ? <p ref={formErrorRef} tabIndex={-1} role="alert" className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700 outline-none focus-visible:ring-2 focus-visible:ring-red-500">{fieldErrors.form}</p> : null}
         {success ? <p role="status" aria-live="polite" className="mt-4 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-700">{success}</p> : null}
         <button type="submit" disabled={loading || saving} className="mt-6 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-blue-700 px-4 py-3 text-sm font-bold text-white transition hover:bg-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"><Save className="h-4 w-4" aria-hidden="true" />{saving ? "Menyimpan..." : "Simpan profil usaha"}</button>
       </section>
