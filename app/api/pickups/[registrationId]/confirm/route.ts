@@ -11,25 +11,25 @@ export async function POST(
 ) {
   const { registrationId } = await params;
   if (!isUuid(registrationId)) {
-    return NextResponse.json({ error: "Invalid registration id" }, { status: 400 });
+    return NextResponse.json({ error: "Invalid registration id", code: "INVALID_REGISTRATION_ID" }, { status: 400 });
   }
 
   const body = await parseJsonBody(req);
   if (!body) {
-    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+    return NextResponse.json({ error: "Invalid request body", code: "INVALID_REQUEST" }, { status: 400 });
   }
 
   const method = String(body.method ?? "").toLowerCase();
   if (method !== "qr" && method !== "pin") {
-    return NextResponse.json({ error: "method must be qr or pin" }, { status: 400 });
+    return NextResponse.json({ error: "method must be qr or pin", code: "INVALID_PICKUP_METHOD" }, { status: 400 });
   }
   if (typeof body.code !== "string" || body.code.trim() === "") {
-    return NextResponse.json({ error: "code is required" }, { status: 400 });
+    return NextResponse.json({ error: "code is required", code: "PICKUP_CODE_REQUIRED" }, { status: 400 });
   }
 
   const client = await getServerClient();
   try {
-    await requireRole(client as unknown as AuthClient, ["umkm", "supplier", "admin"]);
+    await requireRole(client as unknown as AuthClient, ["supplier", "admin"]);
   } catch (err) {
     return toAuthResponse(err);
   }
@@ -47,13 +47,19 @@ export async function POST(
 
   if (error) {
     const msg = error.message ?? "";
-    if (/invalid or already-used (qr code|pin)|not eligible|already picked up/i.test(msg)) {
-      return NextResponse.json({ error: msg }, { status: 400 });
+    if (/invalid or already-used (qr code|pin)/i.test(msg)) {
+      return NextResponse.json({ error: msg, code: "PICKUP_CODE_INVALID" }, { status: 409 });
+    }
+    if (/not eligible|already picked up/i.test(msg)) {
+      return NextResponse.json({ error: msg, code: "PICKUP_STATE_CONFLICT" }, { status: 409 });
     }
     if (/only the owning supplier|sign in required/i.test(msg)) {
-      return NextResponse.json({ error: msg }, { status: 403 });
+      return NextResponse.json({ error: msg, code: "PICKUP_FORBIDDEN" }, { status: 403 });
     }
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    if (/registration not found/i.test(msg)) {
+      return NextResponse.json({ error: "Pesanan tidak ditemukan", code: "ORDER_NOT_FOUND" }, { status: 404 });
+    }
+    return NextResponse.json({ error: "Internal server error", code: "PICKUP_CONFIRM_FAILED" }, { status: 500 });
   }
 
   return NextResponse.json({ ok: true });

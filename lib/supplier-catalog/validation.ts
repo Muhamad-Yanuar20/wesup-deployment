@@ -15,6 +15,9 @@ export interface CatalogMutationInput {
   category: BatchCategory | "";
   description: string;
   targetQuantity: number;
+  capacityQuantity?: number;
+  unit?: string;
+  paymentWindowHours?: number;
   pickupName: string;
   pickupAddress: string;
   pickupLatitude: number | null;
@@ -57,6 +60,18 @@ export function validateCatalogMutation(
   if (input.productPhotoUrl !== null && !/^https?:\/\//i.test(input.productPhotoUrl)) fieldErrors.productPhotoUrl = "URL foto produk harus absolut.";
   if (!Number.isInteger(input.targetQuantity) || input.targetQuantity <= 0) {
     fieldErrors.targetQuantity = "Target kelompok harus berupa bilangan positif.";
+  }
+  const capacity = input.capacityQuantity ?? Math.max(input.targetQuantity, 1);
+  if (!Number.isInteger(capacity) || capacity <= 0) {
+    fieldErrors.capacityQuantity = "Kapasitas maksimum harus berupa bilangan positif.";
+  } else if (capacity < input.targetQuantity) {
+    fieldErrors.capacityQuantity = "Kapasitas maksimum tidak boleh di bawah target minimum.";
+  }
+  if (input.unit !== undefined && !["kg", "gram", "liter", "ml", "pcs", "pack", "karung", "ikat", "sisir"].includes(input.unit)) {
+    fieldErrors.unit = "Satuan produk tidak valid.";
+  }
+  if (input.paymentWindowHours !== undefined && ![3, 6, 12, 24].includes(input.paymentWindowHours)) {
+    fieldErrors.paymentWindowHours = "Durasi pembayaran harus 3, 6, 12, atau 24 jam.";
   }
   if (!input.pickupName.trim()) fieldErrors.pickupName = "Nama lokasi wajib diisi.";
   if (!input.pickupAddress.trim()) fieldErrors.pickupAddress = "Alamat wajib diisi.";

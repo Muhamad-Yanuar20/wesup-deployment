@@ -136,8 +136,28 @@ function loadSchema(): ParsedSchema {
         );
       }
     }
+    applyAlterColumns(sql, schema);
   }
   return schema;
+}
+
+function applyAlterColumns(sql: string, schema: ParsedSchema): void {
+  const addColumnRe = /ALTER\s+TABLE\s+(?:public\.)?([a-zA-Z0-9_]+)\s+ADD\s+COLUMN\s+(?:IF\s+NOT\s+EXISTS\s+)?([a-zA-Z0-9_]+)\s+([a-zA-Z0-9_.]+)([^;]*);/gi;
+  for (const match of sql.matchAll(addColumnRe)) {
+    const table = schema.tables.get(match[1]);
+    if (!table) continue;
+    const tail = match[4] ?? "";
+    table.columns.set(match[2], {
+      type: match[3].includes("[]") ? "array" : match[3].split(".").at(-1) ?? match[3],
+      notNull: /\bNOT\s+NULL\b/i.test(tail),
+      unique: /\bUNIQUE\b/i.test(tail),
+    });
+  }
+  const dropNotNullRe = /ALTER\s+TABLE\s+(?:public\.)?([a-zA-Z0-9_]+)\s+ALTER\s+COLUMN\s+([a-zA-Z0-9_]+)\s+DROP\s+NOT\s+NULL\s*;/gi;
+  for (const match of sql.matchAll(dropNotNullRe)) {
+    const column = schema.tables.get(match[1])?.columns.get(match[2]);
+    if (column) column.notNull = false;
+  }
 }
 
 function listMigrationFiles(): string[] {

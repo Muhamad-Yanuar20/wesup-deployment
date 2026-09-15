@@ -27,6 +27,8 @@ import {
   resetVolumeCounter,
   acquireCutoffLock,
   releaseCutoffLock,
+  reserveVolumeCounter,
+  BatchCapacityError,
 } from "@/lib/orders/registration-counter";
 
 const BATCH_ID = "44444444-4444-4444-8444-444444444444";
@@ -77,6 +79,25 @@ describe("adjustVolumeCounter (quantity-aware atomic INCRBY)", () => {
       expect(incrbyMock).not.toHaveBeenCalled();
     },
   );
+});
+
+describe("reserveVolumeCounter (atomic capacity gate)", () => {
+  beforeEach(() => evalMock.mockReset());
+
+  it("uses Lua check-and-increment and returns the resulting count", async () => {
+    evalMock.mockResolvedValue(10);
+    await expect(reserveVolumeCounter(BATCH_ID, 5, 20)).resolves.toBe(10);
+    expect(evalMock).toHaveBeenCalledWith(
+      expect.stringContaining("current + requested > maximum"),
+      [`batch:${BATCH_ID}:count`],
+      ["5", "20"],
+    );
+  });
+
+  it("maps a negative Lua result to a typed capacity conflict", async () => {
+    evalMock.mockResolvedValue(-1);
+    await expect(reserveVolumeCounter(BATCH_ID, 5, 20)).rejects.toBeInstanceOf(BatchCapacityError);
+  });
 });
 
 describe("resetVolumeCounter (post-cutoff cleanup)", () => {

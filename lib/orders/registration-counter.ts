@@ -14,6 +14,26 @@ else
 end
 `;
 
+const RESERVE_VOLUME_SCRIPT = `
+local current = tonumber(redis.call('get', KEYS[1]) or '0')
+local requested = tonumber(ARGV[1])
+local maximum = tonumber(ARGV[2])
+if maximum > 0 and current + requested > maximum then
+  return -(maximum - current)
+end
+return redis.call('incrby', KEYS[1], requested)
+`;
+
+export class BatchCapacityError extends Error {
+  readonly remainingQuantity: number | null;
+
+  constructor(remainingQuantity: number | null = null) {
+    super("batch capacity is full");
+    this.name = "BatchCapacityError";
+    this.remainingQuantity = remainingQuantity;
+  }
+}
+
 export function volumeKey(batchId: string): string {
   return `${VOLUME_KEY_PREFIX}${batchId}${VOLUME_KEY_SUFFIX}`;
 }
@@ -30,6 +50,31 @@ export async function adjustVolumeCounter(
     throw new Error("quantityDelta must be a non-zero safe integer");
   }
   return redis.incrby(volumeKey(batchId), quantityDelta);
+}
+
+/** Atomically checks capacity and increments the reservation counter. */
+export async function reserveVolumeCounter(
+  batchId: string,
+  quantity: number,
+  maxVolume: number | null,
+): Promise<number> {
+  if (!Number.isSafeInteger(quantity) || quantity <= 0) {
+    throw new Error("quantity must be a positive safe integer");
+  }
+  if (maxVolume !== null && (!Number.isSafeInteger(maxVolume) || maxVolume < 0)) {
+    throw new Error("maxVolume must be null or a non-negative safe integer");
+  }
+  const result = await redis.eval<[string, string], number>(
+    RESERVE_VOLUME_SCRIPT,
+    [volumeKey(batchId)],
+    [String(quantity), String(maxVolume ?? 0)],
+  );
+  const count = Number(result);
+  if (!Number.isFinite(count)) {
+    throw new Error("capacity reservation unavailable");
+  }
+  if (count < 0) throw new BatchCapacityError(Math.max(0, -count));
+  return count;
 }
 
 /** @deprecated Prefer adjustVolumeCounter so registrations reserve quantity. */
@@ -93,4 +138,4 @@ export async function releaseCutoffLock(
   await redis.eval(RELEASE_LOCK_SCRIPT, [cutoffLockKey(batchId)], [token]);
 }
 
-export { RELEASE_LOCK_SCRIPT };
+export { RELEASE_LOCK_SCRIPT, RESERVE_VOLUME_SCRIPT };

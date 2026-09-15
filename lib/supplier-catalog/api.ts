@@ -8,6 +8,9 @@ export interface SupplierCatalogPayload {
   category: BatchCategory | "";
   description: string;
   targetQuantity: number;
+  capacityQuantity?: number;
+  unit?: CatalogDraft["unit"];
+  paymentWindowHours?: CatalogDraft["paymentWindowHours"];
   pickupName: string;
   pickupAddress: string;
   pickupLatitude: number | null;
@@ -27,6 +30,17 @@ export interface SupplierBatchRpcRow {
   description?: unknown;
   category?: unknown;
   min_quantity?: unknown;
+  capacity_quantity?: unknown;
+  unit?: unknown;
+  payment_window_hours?: unknown;
+  registration_closed_at?: unknown;
+  close_reason?: unknown;
+  final_registered_quantity?: unknown;
+  locked_tier_number?: unknown;
+  locked_unit_price?: unknown;
+  invoices_issued_at?: unknown;
+  ready_at?: unknown;
+  completed_at?: unknown;
   product_photo_url?: unknown;
   pickup_name?: unknown;
   pickup_address?: unknown;
@@ -38,6 +52,8 @@ export interface SupplierBatchRpcRow {
   payment_opens_at?: unknown;
   payment_closes_at?: unknown;
   estimated_ready_at?: unknown;
+  effective_payment_opens_at?: unknown;
+  effective_payment_closes_at?: unknown;
   tiers?: unknown;
   registered_quantity?: unknown;
   participant_count?: unknown;
@@ -58,6 +74,9 @@ export function draftToPayload(draft: CatalogDraft): SupplierCatalogPayload {
     category: draft.category,
     description: draft.description,
     targetQuantity: draft.targetQuantity,
+    capacityQuantity: draft.capacityQuantity,
+    unit: draft.unit,
+    paymentWindowHours: draft.paymentWindowHours,
     pickupName: draft.pickupName,
     pickupAddress: draft.pickupAddress,
     pickupLatitude: draft.pickupLatitude,
@@ -89,6 +108,9 @@ export function parseSupplierCatalogPayload(value: unknown): SupplierCatalogPayl
     category,
     description: stringValue("description"),
     targetQuantity: numberValue("targetQuantity"),
+    capacityQuantity: numberValue("capacityQuantity"),
+    unit: stringValue("unit"),
+    paymentWindowHours: numberValue("paymentWindowHours"),
     pickupName: stringValue("pickupName"),
     pickupAddress: stringValue("pickupAddress"),
     pickupLatitude: numberValue("pickupLatitude"),
@@ -99,13 +121,16 @@ export function parseSupplierCatalogPayload(value: unknown): SupplierCatalogPayl
     paymentClosesAt: stringValue("paymentClosesAt"),
     estimatedReadyAt: stringValue("estimatedReadyAt"),
   };
-  if (Object.values(values).some((entry) => entry === null)) return null;
+  if (Object.entries(values).some(([key, entry]) => entry === null && !["capacityQuantity", "unit", "paymentWindowHours"].includes(key))) return null;
   if (!isBatchCategory(category as string)) return null;
   return {
     title: values.title as string,
     category: category as BatchCategory,
     description: values.description as string,
     targetQuantity: values.targetQuantity as number,
+    capacityQuantity: values.capacityQuantity ?? Math.max(values.targetQuantity as number, 1),
+    unit: (values.unit ?? "pcs") as SupplierCatalogPayload["unit"],
+    paymentWindowHours: (values.paymentWindowHours ?? 24) as SupplierCatalogPayload["paymentWindowHours"],
     pickupName: values.pickupName as string,
     pickupAddress: values.pickupAddress as string,
     pickupLatitude: values.pickupLatitude as number,
@@ -158,6 +183,17 @@ export function mapSupplierBatchRow(row: SupplierBatchRpcRow): SupplierBatchDeta
     status,
     basePrice: tiers[0]?.pricePerUnit ?? 0,
     targetQuantity: Math.max(1, Math.trunc(number(row.min_quantity, 1))),
+    capacityQuantity: Math.max(1, Math.trunc(number(row.capacity_quantity, number(row.min_quantity, 1)))),
+    unit: (typeof row.unit === "string" ? row.unit : "pcs") as SupplierBatchDetail["unit"],
+    paymentWindowHours: Math.trunc(number(row.payment_window_hours, 24)) as SupplierBatchDetail["paymentWindowHours"],
+    registrationClosedAt: typeof row.registration_closed_at === "string" ? row.registration_closed_at : null,
+    closeReason: typeof row.close_reason === "string" ? row.close_reason : null,
+    finalRegisteredQuantity: row.final_registered_quantity == null ? null : number(row.final_registered_quantity),
+    lockedTierNumber: row.locked_tier_number == null ? null : number(row.locked_tier_number),
+    lockedUnitPrice: row.locked_unit_price == null ? null : number(row.locked_unit_price),
+    invoicesIssuedAt: typeof row.invoices_issued_at === "string" ? row.invoices_issued_at : null,
+    readyAt: typeof row.ready_at === "string" ? row.ready_at : null,
+    completedAt: typeof row.completed_at === "string" ? row.completed_at : null,
     registeredQuantity,
     participantCount,
     paidParticipantCount,
@@ -168,6 +204,8 @@ export function mapSupplierBatchRow(row: SupplierBatchRpcRow): SupplierBatchDeta
       paymentOpensAt: string(row.payment_opens_at, ""),
       paymentClosesAt: string(row.payment_closes_at, ""),
       estimatedReadyAt: string(row.estimated_ready_at, ""),
+      effectivePaymentOpensAt: typeof row.effective_payment_opens_at === "string" ? row.effective_payment_opens_at : null,
+      effectivePaymentClosesAt: typeof row.effective_payment_closes_at === "string" ? row.effective_payment_closes_at : null,
     },
     pickup: {
       name: string(row.pickup_name, string(row.pickup_address, "Lokasi pickup")),

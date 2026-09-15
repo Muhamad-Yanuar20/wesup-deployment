@@ -93,6 +93,7 @@ export default function CatalogReviewStep({
               {draft.productPhoto?.name ?? "Terkirim"}
             </dd>
           </div>
+          <div className="flex justify-between"><dt className="text-slate-500">Kapasitas</dt><dd className="font-semibold text-slate-900">{draft.capacityQuantity ?? draft.targetQuantity} {draft.unit ?? "pcs"}</dd></div>
         </dl>
       </section>
 
@@ -131,6 +132,7 @@ export default function CatalogReviewStep({
           Timeline
         </h3>
         <dl className="space-y-2 text-sm">
+          <div className="flex items-center gap-3"><CreditCard size={14} className="text-rose-600" /><dt className="w-36 text-slate-500">Jendela bayar</dt><dd className="font-semibold text-slate-900">{draft.paymentWindowHours ?? 24} jam setelah batch ditutup</dd></div>
           {(
             [
               ["Buka Pendaftaran", draft.registrationOpensAt, Calendar, "text-indigo-600"],

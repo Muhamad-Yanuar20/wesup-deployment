@@ -12,6 +12,8 @@ export interface BatchTimeline {
   payment_opens_at: string;
   payment_closes_at: string;
   estimated_ready_at: string;
+  effective_payment_opens_at?: string | null;
+  effective_payment_closes_at?: string | null;
 }
 
 export interface Tier {
@@ -92,8 +94,8 @@ export function evaluatePaymentWindow(
   nowIso: string,
 ): PaymentGateResult {
   const now = Date.parse(nowIso);
-  const opens = Date.parse(timeline.payment_opens_at);
-  const closes = Date.parse(timeline.payment_closes_at);
+  const opens = Date.parse(timeline.effective_payment_opens_at ?? timeline.payment_opens_at);
+  const closes = Date.parse(timeline.effective_payment_closes_at ?? timeline.payment_closes_at);
 
   if (now < opens) {
     return { allowed: false, reason: "not_open", state: "waiting" };

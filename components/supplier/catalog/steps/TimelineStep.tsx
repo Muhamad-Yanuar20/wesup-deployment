@@ -17,6 +17,8 @@ interface TimelineStepProps {
       | "estimatedReadyAt",
     value: string,
   ) => void;
+  paymentWindowHours?: CatalogDraft["paymentWindowHours"];
+  onPaymentWindowChange?: (value: CatalogDraft["paymentWindowHours"]) => void;
 }
 
 const TIMELINE_FIELDS = [
@@ -63,6 +65,8 @@ export default function TimelineStep({
   disabled,
   headingRef,
   onFieldChange,
+  paymentWindowHours = 24,
+  onPaymentWindowChange,
 }: TimelineStepProps) {
   return (
     <div className="space-y-6">
@@ -76,6 +80,15 @@ export default function TimelineStep({
       <p className="text-sm text-slate-500">
         Atur jadwal mutlak penawaran. Urutan waktu harus linear: Buka &lt; Tutup &lt; Mulai Payment &lt; Batas Payment &lt; Ready.
       </p>
+
+      <div className="rounded-xl border border-rose-100 bg-rose-50 p-4">
+        <label htmlFor="payment-window-hours" className="block text-sm font-semibold text-slate-800">Durasi jendela pembayaran</label>
+        <p className="mt-1 text-xs text-slate-600">Mulai dihitung saat batch ditutup dan invoice diterbitkan.</p>
+        <select id="payment-window-hours" value={paymentWindowHours ?? 24} onChange={(e) => onPaymentWindowChange?.(Number(e.target.value) as CatalogDraft["paymentWindowHours"])} disabled={disabled} className="mt-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900">
+          {[3, 6, 12, 24].map((hours) => <option key={hours} value={hours}>{hours} jam</option>)}
+        </select>
+        {errors.paymentWindowHours && <p className="mt-1 text-xs font-medium text-red-600" role="alert">{errors.paymentWindowHours}</p>}
+      </div>
 
       {/* Time travel warning */}
       {errors.timelineOrder && (

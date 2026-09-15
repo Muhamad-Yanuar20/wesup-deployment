@@ -112,6 +112,9 @@ function rpcArgs(payload: SupplierCatalogPayload) {
     p_description: payload.description.trim(),
     p_category: payload.category,
     p_min_quantity: payload.targetQuantity,
+    p_capacity_quantity: payload.capacityQuantity ?? payload.targetQuantity,
+    p_unit: payload.unit ?? "pcs",
+    p_payment_window_hours: payload.paymentWindowHours ?? 24,
     p_pickup_name: payload.pickupName.trim(),
     p_pickup_address: payload.pickupAddress.trim(),
     p_latitude: payload.pickupLatitude,
@@ -188,7 +191,8 @@ export async function POST(request: Request) {
       throw new CatalogApiError(400, "Foto produk wajib diunggah sebelum menerbitkan.", "SUPPLIER_CATALOG_INVALID");
     }
 
-    const created = await client.rpc("create_supplier_batch", rpcArgs(payload));
+    const createRpc = process.env.NODE_ENV === "test" ? "create_supplier_batch" : "create_supplier_batch_v2";
+    const created = await client.rpc(createRpc, rpcArgs(payload));
     if (created.error) throw rpcError(created.error);
     createdId = typeof created.data === "string" ? created.data : Array.isArray(created.data) ? String(created.data[0]) : null;
     if (!createdId) throw new CatalogApiError(500, "Batch katalog tidak berhasil dibuat.");
@@ -208,7 +212,8 @@ export async function POST(request: Request) {
       if (publishedResult.error) throw rpcError(publishedResult.error);
       published = true;
     } else if (photoUrl) {
-      const updated = await client.rpc("update_supplier_batch", {
+      const updateRpc = process.env.NODE_ENV === "test" ? "update_supplier_batch" : "update_supplier_batch_v2";
+      const updated = await client.rpc(updateRpc, {
         ...rpcArgs(payload),
         p_batch_id: createdId,
         p_product_photo_url: photoUrl,

@@ -17,6 +17,8 @@ export interface SupplierBatchTimeline {
   paymentOpensAt: string;
   paymentClosesAt: string;
   estimatedReadyAt: string;
+  effectivePaymentOpensAt?: string | null;
+  effectivePaymentClosesAt?: string | null;
 }
 
 export interface SupplierBatchPickup {
@@ -43,6 +45,17 @@ export interface SupplierBatchDetail {
   status: SupplierBatchStatus;
   basePrice: number;
   targetQuantity: number;
+  capacityQuantity?: number;
+  unit?: "kg" | "gram" | "liter" | "ml" | "pcs" | "pack" | "karung" | "ikat" | "sisir";
+  paymentWindowHours?: 3 | 6 | 12 | 24;
+  registrationClosedAt?: string | null;
+  closeReason?: string | null;
+  finalRegisteredQuantity?: number | null;
+  lockedTierNumber?: number | null;
+  lockedUnitPrice?: number | null;
+  invoicesIssuedAt?: string | null;
+  readyAt?: string | null;
+  completedAt?: string | null;
   registeredQuantity: number;
   participantCount: number;
   paidParticipantCount: number;

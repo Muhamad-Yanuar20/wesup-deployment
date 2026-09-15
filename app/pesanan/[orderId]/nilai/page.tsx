@@ -1,9 +1,6 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
 import { Layout } from "@/components/layout/Layout";
-import RatingFormClient from "@/components/ratings/RatingFormClient";
-import { getAccountOrderMock } from "@/lib/orders/mock-data";
-import { getRatingScenarioForOrder } from "@/lib/ratings/mock-data";
+import UmkmOrderDetailClient from "@/components/umkm/UmkmOrderDetailClient";
 
 export const dynamic = "force-dynamic";
 
@@ -19,18 +16,10 @@ export default async function RatingPage({
   params: Promise<{ orderId: string }>;
 }) {
   const { orderId } = await params;
-  const order = getAccountOrderMock(orderId);
-
-  if (!order) {
-    notFound();
-  }
-
-  const scenario = getRatingScenarioForOrder(orderId);
-
   return (
     <Layout>
       <div className="mx-auto w-full max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
-        <RatingFormClient order={order} scenario={scenario} />
+        <UmkmOrderDetailClient orderId={orderId} mode="rating" />
       </div>
     </Layout>
   );

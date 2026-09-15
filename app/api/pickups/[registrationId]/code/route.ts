@@ -11,7 +11,7 @@ export async function POST(
 ) {
   const { registrationId } = await params;
   if (!isUuid(registrationId)) {
-    return NextResponse.json({ error: "Invalid registration id" }, { status: 400 });
+    return NextResponse.json({ error: "Invalid registration id", code: "INVALID_REGISTRATION_ID" }, { status: 400 });
   }
 
   const client = await getServerClient();
@@ -30,17 +30,20 @@ export async function POST(
   if (error) {
     const msg = error.message ?? "";
     if (/sign in required|only the UMKM owner/i.test(msg)) {
-      return NextResponse.json({ error: msg }, { status: 403 });
+      return NextResponse.json({ error: msg, code: "PICKUP_FORBIDDEN" }, { status: 403 });
     }
     if (/only available after payment/i.test(msg)) {
-      return NextResponse.json({ error: msg }, { status: 409 });
+      return NextResponse.json({ error: msg, code: "PICKUP_STATE_CONFLICT" }, { status: 409 });
     }
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    if (/registration not found/i.test(msg)) {
+      return NextResponse.json({ error: "Pesanan tidak ditemukan", code: "ORDER_NOT_FOUND" }, { status: 404 });
+    }
+    return NextResponse.json({ error: "Internal server error", code: "PICKUP_CODE_FAILED" }, { status: 500 });
   }
 
   const first = Array.isArray(data) ? data[0] : null;
   if (!first) {
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: "Internal server error", code: "PICKUP_CODE_FAILED" }, { status: 500 });
   }
 
   return NextResponse.json({
