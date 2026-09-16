@@ -40,6 +40,8 @@ function validateStep(step: CatalogDraftStep, draft: CatalogDraft, productPhotoR
     if (!draft.title.trim()) errors.title = "Nama produk wajib diisi.";
     if (!draft.category) errors.category = "Pilih kategori produk.";
     if (draft.targetQuantity <= 0 || !Number.isInteger(draft.targetQuantity)) errors.targetQuantity = "Target kelompok harus berupa bilangan bulat positif.";
+    const capacity = draft.capacityQuantity ?? draft.targetQuantity;
+    if (!Number.isInteger(capacity) || capacity < draft.targetQuantity) errors.capacityQuantity = "Kapasitas maksimum harus minimal sebesar target kelompok.";
     if (!draft.description.trim()) errors.description = "Deskripsi produk wajib diisi.";
     if (productPhotoRequired && !draft.productPhoto && !draft.productPhotoUrl) errors.productPhoto = "Unggah foto produk.";
   }
@@ -251,6 +253,16 @@ export default function CreateCatalogForm({
               setErrors((current) => ({ ...current, targetQuantity: undefined }));
               setGlobalError(undefined);
             }}
+            onCapacityQuantityChange={(value) => {
+              setDraft((current) => ({ ...current, capacityQuantity: value }));
+              setErrors((current) => ({ ...current, capacityQuantity: undefined }));
+              setGlobalError(undefined);
+            }}
+            onUnitChange={(value) => {
+              setDraft((current) => ({ ...current, unit: value }));
+              setErrors((current) => ({ ...current, unit: undefined }));
+              setGlobalError(undefined);
+            }}
             onPhotoChange={(file) => {
               setDraft((current) => ({ ...current, productPhoto: file, productPhotoUrl: file ? null : current.productPhotoUrl }));
               setErrors((current) => ({ ...current, productPhoto: undefined }));
@@ -259,7 +271,7 @@ export default function CreateCatalogForm({
           />
         )}
         {currentStep === 2 && <TierPricingStep draft={draft} errors={errors} disabled={submitting} locked={tiersLocked} headingRef={headingRef} onTiersChange={updateTiers} />}
-        {currentStep === 3 && <TimelineStep draft={draft} errors={errors} disabled={submitting} headingRef={headingRef} onFieldChange={(field, value) => updateField(field, value)} />}
+        {currentStep === 3 && <TimelineStep draft={draft} errors={errors} disabled={submitting} headingRef={headingRef} paymentWindowHours={draft.paymentWindowHours} onPaymentWindowChange={(value) => { setDraft((current) => ({ ...current, paymentWindowHours: value })); setErrors((current) => ({ ...current, paymentWindowHours: undefined })); }} onFieldChange={(field, value) => updateField(field, value)} />}
         {currentStep === 4 && (
           <PickupLocationStep
             draft={draft}

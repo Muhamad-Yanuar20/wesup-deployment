@@ -1,6 +1,8 @@
 import type { SupplierBatchDetail, SupplierBatchRepository } from "@/lib/supplier-batch/types";
 import type { CatalogDraft } from "@/lib/supplier-catalog/types";
 import { draftToPayload, mapSupplierBatchRow, type SupplierCatalogListResponse, type SupplierBatchRpcRow } from "@/lib/supplier-catalog/api";
+import { parseSupplierBatchTransaction, type SupplierBatchTransactionSnapshot } from "@/lib/supplier-batch/transaction-types";
+import { parseSupplierApiError } from "@/lib/supplier-catalog/api-error";
 
 export type CatalogMutationAction = "draft" | "publish";
 
@@ -11,6 +13,9 @@ export interface SupplierCatalogRepository {
   update(id: string, draft: CatalogDraft, action?: CatalogMutationAction, options?: { signal?: AbortSignal }): Promise<SupplierBatchDetail>;
   cancel(id: string, reason: string, options?: { signal?: AbortSignal }): Promise<void>;
   delete(id: string, options?: { signal?: AbortSignal }): Promise<void>;
+  getTransaction(id: string, options?: { signal?: AbortSignal }): Promise<SupplierBatchTransactionSnapshot>;
+  close(id: string, options?: { signal?: AbortSignal }): Promise<unknown>;
+  markReady(id: string, options?: { signal?: AbortSignal }): Promise<void>;
 }
 
 export async function readSupplierCatalogError(response: Response): Promise<string> {
@@ -76,6 +81,21 @@ export const supplierCatalogApiRepository: SupplierCatalogRepository = {
 
   async delete(id, { signal } = {}) {
     const response = await fetch(`/api/suppliers/batches/${encodeURIComponent(id)}`, { method: "DELETE", signal });
+    if (!response.ok) throw new Error(await readSupplierCatalogError(response));
+  },
+  async getTransaction(id, { signal } = {}) {
+    const response = await fetch(`/api/suppliers/batches/${encodeURIComponent(id)}/transactions`, { signal, cache: "no-store" });
+    if (!response.ok) throw await parseSupplierApiError(response, "Transaksi batch belum dapat dimuat.");
+    const body = await response.json() as { item?: unknown };
+    return parseSupplierBatchTransaction(body.item);
+  },
+  async close(id, { signal } = {}) {
+    const response = await fetch(`/api/suppliers/batches/${encodeURIComponent(id)}/close`, { method: "POST", body: "{}", headers: { "content-type": "application/json" }, signal });
+    if (!response.ok) throw new Error(await readSupplierCatalogError(response));
+    return (await response.json()) as unknown;
+  },
+  async markReady(id, { signal } = {}) {
+    const response = await fetch(`/api/suppliers/batches/${encodeURIComponent(id)}/ready`, { method: "POST", signal });
     if (!response.ok) throw new Error(await readSupplierCatalogError(response));
   },
 };

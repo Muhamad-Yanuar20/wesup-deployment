@@ -16,6 +16,9 @@ function batchToDraft(batch: SupplierBatchDetail): CatalogDraft {
     category: batch.category,
     description: batch.description,
     targetQuantity: batch.targetQuantity,
+    capacityQuantity: batch.capacityQuantity ?? batch.targetQuantity,
+    unit: batch.unit ?? "pcs",
+    paymentWindowHours: batch.paymentWindowHours ?? 24,
     productPhoto: null,
     productPhotoUrl: batch.imageUrl.startsWith("http") ? batch.imageUrl : null,
     tiers: batch.tiers.map((t) => ({

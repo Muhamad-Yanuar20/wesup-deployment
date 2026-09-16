@@ -3,8 +3,11 @@ export type AccountOrderStatus =
   | "pending_payment"
   | "paid"
   | "picked_up"
+  | "completed"
   | "no_show"
-  | "cancelled";
+  | "cancelled"
+  | "refund_pending"
+  | "refunded";
 
 /** Lightweight order record shown in the "Pesanan" center (mock feed). */
 export interface AccountOrder {

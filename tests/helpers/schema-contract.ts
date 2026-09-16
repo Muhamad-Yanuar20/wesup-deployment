@@ -42,7 +42,7 @@ export const EXPECTED_ENUMS: Record<string, string[]> = {
     "refunded",
   ],
   payment_status: ["pending", "paid", "expired", "failed", "refunded"],
-  escrow_status: ["held", "released", "refunded", "forfeited"],
+  escrow_status: ["held", "released", "refunded", "forfeited", "frozen"],
   dispute_status: [
     "pending",
     "under_review",
@@ -240,6 +240,7 @@ export const EXPECTED_TABLES: Record<string, ExpectedTable> = {
       min_quantity: "integer",
       product_photo_url: "text",
       pickup_address: "text",
+      pickup_name: "text",
       latitude: "numeric",
       longitude: "numeric",
       status: "batch_status",
@@ -257,6 +258,7 @@ export const EXPECTED_TABLES: Record<string, ExpectedTable> = {
       "category",
       "min_quantity",
       "pickup_address",
+      "pickup_name",
       "latitude",
       "longitude",
       "status",
@@ -457,8 +459,6 @@ export const EXPECTED_TABLES: Record<string, ExpectedTable> = {
       "registration_id",
       "amount",
       "status",
-      "pickup_confirmed_at",
-      "auto_release_at",
       "created_at",
     ],
     unique: [["registration_id"]],
@@ -654,6 +654,8 @@ export const REQUIRED_FUNCTIONS = [
   "create_escrow",
   "list_batch_orders",
   "get_supplier_dashboard_summary",
+  "materialize_supplier_batch",
+  "get_supplier_batch_transaction",
 ];
 
 export const REQUIRED_TRIGGERS = [

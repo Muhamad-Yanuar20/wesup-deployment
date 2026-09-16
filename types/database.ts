@@ -16,7 +16,18 @@ export type RegistrationStatus =
   | "refunded";
 export type PaymentStatus =
   "pending" | "paid" | "expired" | "failed" | "refunded";
-export type EscrowStatus = "held" | "released" | "refunded" | "forfeited";
+export type EscrowStatus = "held" | "frozen" | "released" | "refunded" | "forfeited";
+export type PaymentAttemptStatus = "pending" | "paid" | "expired" | "failed";
+export type ComplaintCategory = "cacat" | "busuk";
+export type SupplierLedgerBucket = "escrow" | "frozen" | "available" | "paid_out" | "refunded";
+export type SupplierPayoutStatus = "requested" | "approved" | "transferred" | "rejected";
+export type BatchCloseReason =
+  | "capacity_reached"
+  | "registration_expired"
+  | "supplier_manual"
+  | "supplier_cancelled"
+  | "admin_cancelled"
+  | "no_registrations";
 export type DisputeStatus =
   "pending" | "under_review" | "resolved_supplier" | "resolved_umkm";
 export type RefundTrigger =
@@ -234,7 +245,18 @@ export interface Database {
           title: string;
           description: string | null;
           category: string;
+          unit: string;
           min_quantity: number;
+          capacity_quantity: number | null;
+          payment_window_hours: number;
+          registration_closed_at: string | null;
+          close_reason: BatchCloseReason | null;
+          final_registered_quantity: number | null;
+          locked_tier_number: number | null;
+          locked_unit_price: number | null;
+          invoices_issued_at: string | null;
+          ready_at: string | null;
+          completed_at: string | null;
           product_photo_url: string | null;
           pickup_name: string;
           pickup_address: string;
@@ -255,7 +277,18 @@ export interface Database {
           title: string;
           description?: string | null;
           category: string;
+          unit?: string;
           min_quantity: number;
+          capacity_quantity?: number | null;
+          payment_window_hours?: number;
+          registration_closed_at?: string | null;
+          close_reason?: BatchCloseReason | null;
+          final_registered_quantity?: number | null;
+          locked_tier_number?: number | null;
+          locked_unit_price?: number | null;
+          invoices_issued_at?: string | null;
+          ready_at?: string | null;
+          completed_at?: string | null;
           product_photo_url?: string | null;
           pickup_name?: string;
           pickup_address: string;
@@ -302,6 +335,8 @@ export interface Database {
           payment_opens_at: string;
           payment_closes_at: string;
           estimated_ready_at: string;
+          effective_payment_opens_at: string | null;
+          effective_payment_closes_at: string | null;
           created_at: string;
         };
         Insert: {
@@ -311,6 +346,8 @@ export interface Database {
           payment_opens_at: string;
           payment_closes_at: string;
           estimated_ready_at: string;
+          effective_payment_opens_at?: string | null;
+          effective_payment_closes_at?: string | null;
           created_at?: string;
         };
         Update: Partial<
@@ -352,6 +389,122 @@ export interface Database {
         Update: Partial<
           Database["public"]["Tables"]["registrations"]["Insert"]
         >;
+        Relationships: [];
+      };
+      batch_status_events: {
+        Row: {
+          id: string;
+          batch_id: string;
+          from_status: BatchStatus | null;
+          to_status: BatchStatus;
+          source: string;
+          actor_id: string | null;
+          metadata: Record<string, unknown>;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          batch_id: string;
+          from_status?: BatchStatus | null;
+          to_status: BatchStatus;
+          source: string;
+          actor_id?: string | null;
+          metadata?: Record<string, unknown>;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["batch_status_events"]["Insert"]>;
+        Relationships: [];
+      };
+      supplier_ledger_entries: {
+        Row: {
+          id: string;
+          supplier_id: string;
+          registration_id: string | null;
+          payout_id: string | null;
+          from_bucket: SupplierLedgerBucket | null;
+          to_bucket: SupplierLedgerBucket | null;
+          amount: number;
+          entry_type: string;
+          idempotency_key: string;
+          metadata: Record<string, unknown>;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          supplier_id: string;
+          registration_id?: string | null;
+          payout_id?: string | null;
+          from_bucket?: SupplierLedgerBucket | null;
+          to_bucket?: SupplierLedgerBucket | null;
+          amount: number;
+          entry_type: string;
+          idempotency_key: string;
+          metadata?: Record<string, unknown>;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["supplier_ledger_entries"]["Insert"]>;
+        Relationships: [];
+      };
+      supplier_payouts: {
+        Row: {
+          id: string;
+          supplier_id: string;
+          supplier_bank_account_id: string | null;
+          amount: number;
+          status: SupplierPayoutStatus;
+          bank_account_snapshot: Record<string, unknown>;
+          transfer_proof_url: string | null;
+          requested_at: string;
+          approved_at: string | null;
+          transferred_at: string | null;
+          processed_by: string | null;
+          notes: string | null;
+          idempotency_key: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          supplier_id: string;
+          supplier_bank_account_id?: string | null;
+          amount: number;
+          status?: SupplierPayoutStatus;
+          bank_account_snapshot: Record<string, unknown>;
+          transfer_proof_url?: string | null;
+          requested_at?: string;
+          approved_at?: string | null;
+          transferred_at?: string | null;
+          processed_by?: string | null;
+          notes?: string | null;
+          idempotency_key: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["supplier_payouts"]["Insert"]>;
+        Relationships: [];
+      };
+      registration_status_events: {
+        Row: {
+          id: string;
+          registration_id: string;
+          from_status: RegistrationStatus | null;
+          to_status: RegistrationStatus;
+          source: string;
+          actor_id: string | null;
+          metadata: Record<string, unknown>;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          registration_id: string;
+          from_status?: RegistrationStatus | null;
+          to_status: RegistrationStatus;
+          source: string;
+          actor_id?: string | null;
+          metadata?: Record<string, unknown>;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["registration_status_events"]["Insert"]>;
         Relationships: [];
       };
       registration_counters: {
@@ -410,6 +563,7 @@ export interface Database {
           payment_id: string;
           event_type: string;
           payload: Record<string, unknown>;
+          payload_hash: string | null;
           status: string;
           error_message: string | null;
           created_at: string;
@@ -419,6 +573,7 @@ export interface Database {
           payment_id: string;
           event_type: string;
           payload: Record<string, unknown>;
+          payload_hash?: string | null;
           status?: string;
           error_message?: string | null;
           created_at?: string;
@@ -426,6 +581,36 @@ export interface Database {
         Update: Partial<
           Database["public"]["Tables"]["payment_webhook_logs"]["Insert"]
         >;
+        Relationships: [];
+      };
+      payment_attempts: {
+        Row: {
+          id: string;
+          payment_id: string;
+          provider_order_id: string;
+          provider_transaction_id: string | null;
+          status: PaymentAttemptStatus;
+          qr_code_url: string | null;
+          expires_at: string | null;
+          idempotency_key: string;
+          provider_payload: Record<string, unknown> | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          payment_id: string;
+          provider_order_id: string;
+          provider_transaction_id?: string | null;
+          status?: PaymentAttemptStatus;
+          qr_code_url?: string | null;
+          expires_at?: string | null;
+          idempotency_key: string;
+          provider_payload?: Record<string, unknown> | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["payment_attempts"]["Insert"]>;
         Relationships: [];
       };
       pickup_codes: {
@@ -482,8 +667,8 @@ export interface Database {
           registration_id: string;
           amount: number;
           status: EscrowStatus;
-          pickup_confirmed_at: string;
-          auto_release_at: string;
+          pickup_confirmed_at: string | null;
+          auto_release_at: string | null;
           released_at: string | null;
           release_destination: "supplier" | "umkm" | null;
           dispute_id: string | null;
@@ -494,8 +679,8 @@ export interface Database {
           registration_id: string;
           amount: number;
           status?: EscrowStatus;
-          pickup_confirmed_at: string;
-          auto_release_at: string;
+          pickup_confirmed_at?: string | null;
+          auto_release_at?: string | null;
           released_at?: string | null;
           release_destination?: "supplier" | "umkm" | null;
           dispute_id?: string | null;
@@ -510,6 +695,7 @@ export interface Database {
           registration_id: string;
           umkm_id: string;
           supplier_id: string;
+          complaint_category: ComplaintCategory;
           description: string;
           photo_urls: string[];
           status: DisputeStatus;
@@ -524,6 +710,7 @@ export interface Database {
           registration_id: string;
           umkm_id: string;
           supplier_id: string;
+          complaint_category?: ComplaintCategory;
           description: string;
           photo_urls?: string[];
           status?: DisputeStatus;
@@ -836,11 +1023,34 @@ export interface Database {
         };
         Returns: string;
       };
+      create_supplier_batch_v2: {
+        Args: {
+          p_title: string;
+          p_description: string;
+          p_category: string;
+          p_min_quantity: number;
+          p_capacity_quantity: number;
+          p_unit: string;
+          p_payment_window_hours: number;
+          p_pickup_name: string;
+          p_pickup_address: string;
+          p_latitude: number;
+          p_longitude: number;
+          p_registration_opens_at: string;
+          p_registration_closes_at: string;
+          p_payment_opens_at: string;
+          p_payment_closes_at: string;
+          p_estimated_ready_at: string;
+          p_tiers: unknown;
+        };
+        Returns: string;
+      };
       publish_supplier_batch: {
         Args: { p_batch_id: string; p_product_photo_url: string };
         Returns: void;
       };
       update_and_publish_supplier_batch: { Args: { p_batch_id: string; p_title: string; p_description: string; p_category: string; p_min_quantity: number; p_product_photo_url: string; p_pickup_name: string; p_pickup_address: string; p_latitude: number; p_longitude: number; p_registration_opens_at: string; p_registration_closes_at: string; p_payment_opens_at: string; p_payment_closes_at: string; p_estimated_ready_at: string; p_tiers: unknown; }; Returns: void; };
+      update_and_publish_supplier_batch_v2: { Args: { p_batch_id: string; p_title: string; p_description: string; p_category: string; p_min_quantity: number; p_capacity_quantity: number; p_unit: string; p_payment_window_hours: number; p_product_photo_url: string; p_pickup_name: string; p_pickup_address: string; p_latitude: number; p_longitude: number; p_registration_opens_at: string; p_registration_closes_at: string; p_payment_opens_at: string; p_payment_closes_at: string; p_estimated_ready_at: string; p_tiers: unknown; }; Returns: void; };
       update_supplier_batch: {
         Args: {
           p_batch_id: string;
@@ -848,6 +1058,30 @@ export interface Database {
           p_description: string;
           p_category: string;
           p_min_quantity: number;
+          p_product_photo_url: string | null;
+          p_pickup_name: string;
+          p_pickup_address: string;
+          p_latitude: number;
+          p_longitude: number;
+          p_registration_opens_at: string;
+          p_registration_closes_at: string;
+          p_payment_opens_at: string;
+          p_payment_closes_at: string;
+          p_estimated_ready_at: string;
+          p_tiers: unknown;
+        };
+        Returns: void;
+      };
+      update_supplier_batch_v2: {
+        Args: {
+          p_batch_id: string;
+          p_title: string;
+          p_description: string;
+          p_category: string;
+          p_min_quantity: number;
+          p_capacity_quantity: number;
+          p_unit: string;
+          p_payment_window_hours: number;
           p_product_photo_url: string | null;
           p_pickup_name: string;
           p_pickup_address: string;
@@ -923,6 +1157,46 @@ export interface Database {
           updated_at: string;
           created_at: string;
         }[];
+      };
+      get_supplier_batch_transaction: {
+        Args: { p_batch_id: string };
+        Returns: Record<string, unknown>;
+      };
+      close_batch_and_issue_invoices: {
+        Args: { p_batch_id: string; p_trigger: string; p_ip_address?: string | null; p_user_agent?: string | null };
+        Returns: Record<string, unknown>;
+      };
+      materialize_supplier_batch: {
+        Args: { p_batch_id: string };
+        Returns: Record<string, unknown>;
+      };
+      mark_supplier_batch_ready: {
+        Args: { p_batch_id: string };
+        Returns: void;
+      };
+      cancel_supplier_batch: {
+        Args: { p_batch_id: string; p_reason: string };
+        Returns: void;
+      };
+      request_supplier_payout: {
+        Args: { p_amount: number; p_bank_account_id: string; p_idempotency_key: string };
+        Returns: string;
+      };
+      complete_supplier_payout: {
+        Args: { p_payout_id: string; p_status: string; p_transfer_proof_url?: string | null; p_notes?: string | null };
+        Returns: void;
+      };
+      upsert_supplier_bank_account: {
+        Args: { p_bank_account_id?: string | null; p_bank_name: string; p_account_number: string; p_account_holder_name: string; p_is_primary?: boolean };
+        Returns: string;
+      };
+      get_supplier_finance: {
+        Args: Record<PropertyKey, never>;
+        Returns: Record<string, unknown>;
+      };
+      materialize_supplier_order: {
+        Args: { p_registration_id: string };
+        Returns: RegistrationStatus;
       };
       get_supplier_dashboard_summary: {
         Args: Record<PropertyKey, never>;

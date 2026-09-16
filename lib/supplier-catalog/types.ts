@@ -15,6 +15,9 @@ export interface CatalogDraft {
   category: BatchCategory | "";
   description: string;
   targetQuantity: number;
+  capacityQuantity?: number;
+  unit?: "kg" | "gram" | "liter" | "ml" | "pcs" | "pack" | "karung" | "ikat" | "sisir";
+  paymentWindowHours?: 3 | 6 | 12 | 24;
   productPhoto: File | null;
   productPhotoUrl: string | null;
   tiers: CatalogTierDraft[];
@@ -35,6 +38,9 @@ export const INITIAL_CATALOG_DRAFT: CatalogDraft = {
   category: "",
   description: "",
   targetQuantity: 50,
+  capacityQuantity: 100,
+  unit: "pcs",
+  paymentWindowHours: 24,
   productPhoto: null,
   productPhotoUrl: null,
   tiers: [

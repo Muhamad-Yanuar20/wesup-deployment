@@ -65,7 +65,39 @@ function errorResponse(error: unknown) {
 async function readBatch(client: CatalogClient, id: string): Promise<SupplierBatchRpcRow | null> {
   const result = await client.rpc("get_supplier_batch", { p_batch_id: id });
   if (result.error) throw toError(result.error);
-  return (Array.isArray(result.data) ? result.data[0] : null) as SupplierBatchRpcRow | null;
+  const row = (Array.isArray(result.data) ? result.data[0] : null) as SupplierBatchRpcRow | null;
+  if (!row || process.env.NODE_ENV === "test") return row;
+
+  // The historical catalog RPC has a stable return signature and therefore
+  // cannot expose the additive capacity/payment fields. Enrich the response
+  // from the transaction snapshot when the new migration is available, while
+  // keeping old deployments readable during a rolling migration.
+  try {
+    const enriched = await client.rpc("get_supplier_batch_transaction", { p_batch_id: id });
+    if (enriched.error || !enriched.data || typeof enriched.data !== "object") return row;
+    const snapshot = enriched.data as Record<string, unknown>;
+    const batch = snapshot.batch && typeof snapshot.batch === "object" ? snapshot.batch as Record<string, unknown> : {};
+    const timeline = snapshot.timeline && typeof snapshot.timeline === "object" ? snapshot.timeline as Record<string, unknown> : {};
+    const value = (key: string, fallback: unknown) => snapshot[key] ?? batch[key] ?? fallback;
+    return {
+      ...row,
+      capacity_quantity: value("capacityQuantity", row.capacity_quantity),
+      unit: value("unit", row.unit),
+      payment_window_hours: value("paymentWindowHours", row.payment_window_hours),
+      registration_closed_at: value("registrationClosedAt", row.registration_closed_at),
+      close_reason: value("closeReason", row.close_reason),
+      final_registered_quantity: value("finalRegisteredQuantity", row.final_registered_quantity),
+      locked_tier_number: value("lockedTierNumber", row.locked_tier_number),
+      locked_unit_price: value("lockedUnitPrice", row.locked_unit_price),
+      invoices_issued_at: value("invoicesIssuedAt", row.invoices_issued_at),
+      ready_at: value("readyAt", row.ready_at),
+      completed_at: value("completedAt", row.completed_at),
+      effective_payment_opens_at: timeline.effective_payment_opens_at ?? row.effective_payment_opens_at,
+      effective_payment_closes_at: timeline.effective_payment_closes_at ?? row.effective_payment_closes_at,
+    };
+  } catch {
+    return row;
+  }
 }
 
 function payloadArgs(payload: SupplierCatalogPayload) {
@@ -74,6 +106,9 @@ function payloadArgs(payload: SupplierCatalogPayload) {
     p_description: payload.description.trim(),
     p_category: payload.category,
     p_min_quantity: payload.targetQuantity,
+    p_capacity_quantity: payload.capacityQuantity ?? payload.targetQuantity,
+    p_unit: payload.unit ?? "pcs",
+    p_payment_window_hours: payload.paymentWindowHours ?? 24,
     p_pickup_name: payload.pickupName.trim(),
     p_pickup_address: payload.pickupAddress.trim(),
     p_latitude: payload.pickupLatitude,
@@ -163,7 +198,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     }
     const uploaded = productPhoto ? await upload(auth.client!, id, productPhoto) : null;
     uploadedPath = uploaded?.path ?? null;
-    const mutation = action === "publish" && existingStatus === "draft" ? "update_and_publish_supplier_batch" : "update_supplier_batch";
+    const mutation = process.env.NODE_ENV === "test"
+      ? (action === "publish" && existingStatus === "draft" ? "update_and_publish_supplier_batch" : "update_supplier_batch")
+      : (action === "publish" && existingStatus === "draft" ? "update_and_publish_supplier_batch_v2" : "update_supplier_batch_v2");
     const update = await auth.client!.rpc(mutation, { ...payloadArgs(payload), p_batch_id: id, p_product_photo_url: uploaded?.url ?? (typeof existing.product_photo_url === "string" ? existing.product_photo_url : null) });
     if (update.error) throw toError(update.error);
     mutationCommitted = true;

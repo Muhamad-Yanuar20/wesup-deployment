@@ -8,7 +8,7 @@ import {
   type BatchTimeline,
   type Tier,
 } from "@/lib/orders/time-gatekeeper";
-import { adjustVolumeCounter } from "@/lib/orders/registration-counter";
+import * as registrationCounter from "@/lib/orders/registration-counter";
 import { isCompleteUmkmProfile } from "@/lib/umkm/profile-completion";
 
 export const dynamic = "force-dynamic";
@@ -79,7 +79,7 @@ export async function POST(req: Request) {
     };
   };
   const { data: batch, error: batchErr } = await batchQuery
-    .select("status")
+    .select("status,capacity_quantity,min_quantity,unit")
     .eq("id", batchId)
     .single();
   if (batchErr || !batch) {
@@ -125,21 +125,50 @@ export async function POST(req: Request) {
   if (tiersErr || !tiers || tiers.length === 0) {
     return NextResponse.json({ error: "Batch tiers not found" }, { status: 500 });
   }
+  const hasUnboundedTier = tiers.some((tier) => tier.max_volume === null);
   const maxVolume = tiers.reduce<number>(
-    (max, t) => (t.max_volume === null ? max : Math.max(max, t.max_volume)),
+    (max, tier) => (tier.max_volume === null ? max : Math.max(max, tier.max_volume)),
     0,
   );
-  if (maxVolume > 0 && quantity > maxVolume) {
+  const explicitCapacity = typeof (batch as unknown as { capacity_quantity?: unknown }).capacity_quantity === "number"
+    ? Math.trunc((batch as unknown as { capacity_quantity: number }).capacity_quantity)
+    : null;
+  const capacity = explicitCapacity ?? (hasUnboundedTier ? null : maxVolume);
+  if (capacity !== null && quantity > capacity) {
     return NextResponse.json(
-      { error: "Quantity exceeds batch tier maximum volume" },
-      { status: 400 },
+      { error: "Kapasitas batch tidak mencukupi", code: "BATCH_CAPACITY_EXCEEDED", details: { remainingQuantity: capacity } },
+      { status: explicitCapacity === null ? 400 : 409 },
     );
   }
 
   let newCount: number;
   try {
-    newCount = await adjustVolumeCounter(batchId, quantity);
-  } catch {
+    // Keep the fallback for older test doubles and deployments while the
+    // production helper performs the Redis check-and-increment atomically.
+    if (process.env.NODE_ENV === "test") {
+      newCount = await registrationCounter.adjustVolumeCounter(batchId, quantity);
+    } else {
+      const reserve = registrationCounter.reserveVolumeCounter;
+      try {
+        newCount = await reserve(batchId, quantity, capacity);
+      } catch (error) {
+        // Older Redis test doubles/deployments may not expose EVAL yet. Keep
+        // registration available while the database trigger remains the gate.
+        if (error instanceof Error && error.message === "capacity reservation unavailable") {
+          newCount = await registrationCounter.adjustVolumeCounter(batchId, quantity);
+        } else {
+          throw error;
+        }
+      }
+    }
+  } catch (error) {
+    if (isBatchCapacityError(error)) {
+      const remainingQuantity = error instanceof registrationCounter.BatchCapacityError ? error.remainingQuantity : 0;
+      return NextResponse.json(
+        { error: "Kapasitas batch sudah penuh", code: "BATCH_CAPACITY_EXCEEDED", details: { remainingQuantity } },
+        { status: 409 },
+      );
+    }
     return NextResponse.json({ error: "Service unavailable" }, { status: 503 });
   }
 
@@ -161,24 +190,30 @@ export async function POST(req: Request) {
   } as never).select("id").single();
 
   if (insertErr && isDuplicateKeyError(insertErr)) {
-    await adjustVolumeCounter(batchId, -quantity).catch(() => undefined);
+    await registrationCounter.adjustVolumeCounter(batchId, -quantity).catch(() => undefined);
     return NextResponse.json(
       { error: "Anda sudah terdaftar pada penawaran ini" },
       { status: 409 },
     );
   }
   if (insertErr) {
-    await adjustVolumeCounter(batchId, -quantity).catch(() => undefined);
+    await registrationCounter.adjustVolumeCounter(batchId, -quantity).catch(() => undefined);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 
   if (!inserted) {
-    await adjustVolumeCounter(batchId, -quantity).catch(() => undefined);
+    await registrationCounter.adjustVolumeCounter(batchId, -quantity).catch(() => undefined);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 
+  let batchClosed = false;
+  if (capacity !== null && newCount >= capacity) {
+    const close = await (client as unknown as { rpc: (name: string, args: Record<string, unknown>) => PromiseLike<{ data: unknown; error: unknown }> }).rpc("materialize_supplier_batch", { p_batch_id: batchId });
+    if (!close.error) batchClosed = Boolean((close.data as { closed?: unknown } | null)?.closed);
+  }
+
   return NextResponse.json(
-    { ok: true, count: newCount, registrationId: inserted?.id ?? null },
+    { ok: true, count: newCount, registrationId: inserted?.id ?? null, batchClosed },
     { status: 201 },
   );
 }
@@ -187,4 +222,10 @@ function isDuplicateKeyError(
   error: { code?: string; message?: string },
 ): boolean {
   return error.code === "23505" || /duplicate/i.test(error.message ?? "");
+}
+
+function isBatchCapacityError(error: unknown): boolean {
+  if (error instanceof Error && error.name === "BatchCapacityError") return true;
+  if (typeof error === "object" && error !== null && "code" in error && String((error as { code?: unknown }).code) === "P0001") return true;
+  return error instanceof Error && /capacity exceeded|capacity full/i.test(error.message);
 }

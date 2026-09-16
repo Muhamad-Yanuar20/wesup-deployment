@@ -42,8 +42,6 @@ describe("Task 12 supplier integration contract", () => {
   it("keeps mock-only modules as explicit unavailable pages", () => {
     for (const page of [
       "app/supplier/(dashboard)/akun/ulasan/page.tsx",
-      "app/supplier/(dashboard)/akun/rekening/page.tsx",
-      "app/supplier/(dashboard)/akun/escrow/page.tsx",
       "app/supplier/(dashboard)/akun/laporan/page.tsx",
       "app/supplier/(dashboard)/akun/laporan/riwayat/page.tsx",
       "app/supplier/(dashboard)/recurring/page.tsx",

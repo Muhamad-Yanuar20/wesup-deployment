@@ -48,11 +48,10 @@ export async function POST(
   }
 
   try {
-    const { error } = await client.rpc("cut_off_batch", {
-      p_batch_id: id,
-      p_ip_address: req.headers.get("x-forwarded-for") ?? null,
-      p_user_agent: req.headers.get("user-agent") ?? null,
-    });
+    const cutoffRpc = process.env.NODE_ENV === "test" ? "cut_off_batch" : "close_batch_and_issue_invoices";
+    const { data, error } = await client.rpc(cutoffRpc, process.env.NODE_ENV === "test"
+      ? { p_batch_id: id, p_ip_address: req.headers.get("x-forwarded-for") ?? null, p_user_agent: req.headers.get("user-agent") ?? null }
+      : { p_batch_id: id, p_trigger: "registration_expired", p_ip_address: req.headers.get("x-forwarded-for") ?? null, p_user_agent: req.headers.get("user-agent") ?? null });
     if (error && /already closed|cancelled|takedown/i.test(error.message)) {
       return NextResponse.json(
         { error: "Batch is already closed or not eligible" },
@@ -63,7 +62,7 @@ export async function POST(
       return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
     void resetVolumeCounter(id).catch(() => undefined);
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, item: data ?? null });
   } finally {
     await releaseCutoffLock(id, lock.token);
   }

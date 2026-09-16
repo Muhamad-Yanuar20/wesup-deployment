@@ -68,6 +68,10 @@ const WAIT_BANNER: Record<
     description:
       "Barang sudah Anda ambil dan tervalidasi Supplier. Hitung mundur escrow 1×24 jam telah berjalan sejak pengambilan.",
   },
+  completed: {
+    label: "Pesanan Selesai",
+    description: "Masa escrow selesai tanpa komplain yang dibuka.",
+  },
   no_show: {
     label: "Tidak Hadir — Dana Hangus",
     description:
@@ -77,6 +81,14 @@ const WAIT_BANNER: Record<
     label: "Pesanan Dibatalkan",
     description:
       "Pesanan ini dibatalkan. Jika sudah pernah membayar, refund akan diproses oleh Admin.",
+  },
+  refund_pending: {
+    label: "Refund Diproses",
+    description: "Dana sedang menunggu proses refund manual oleh Admin.",
+  },
+  refunded: {
+    label: "Refund Selesai",
+    description: "Dana telah ditandai dikembalikan oleh Admin.",
   },
 };
 
