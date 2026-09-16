@@ -1,20 +1,9 @@
 import { NextResponse } from "next/server";
 import { resolveActiveUmkm } from "@/lib/umkm/workspace-auth";
 import { buildOrderSummary, toUmkmOrderListItem, type OrderReadRow } from "@/lib/orders/read-model";
+import { ORDER_SELECT } from "@/lib/orders/selects";
 
 export const dynamic = "force-dynamic";
-
-const ORDER_SELECT = [
-  "id,batch_id,quantity,status,final_amount,locked_tier_number,created_at",
-  "batch:batches(id,title,status,unit,pickup_name,pickup_address,supplier:profiles(full_name),batch_timeline(registration_opens_at,registration_closes_at,payment_opens_at,payment_closes_at,effective_payment_opens_at,effective_payment_closes_at,estimated_ready_at))",
-  "payment:payments(id,midtrans_order_id,gross_amount,status,qr_code_url,qr_code_expires_at,paid_at)",
-  "payment_attempt:payment_attempts(id,provider_order_id,status,qr_code_url,expires_at)",
-  "pickup_code:pickup_codes(qr_code_token,pin_code,generated_at,used_at)",
-  "escrow:escrow_holds(id,amount,status,pickup_confirmed_at,auto_release_at)",
-  "dispute:disputes(id,complaint_category,description,photo_urls,status,created_at,decided_at)",
-  "rating:ratings(score,comment,created_at)",
-  "refund:refund_requests(id,amount,status,trigger_type,umkm_bank_account_id)",
-].join(",");
 
 interface OrdersQuery {
   select: (columns: string) => {
@@ -26,8 +15,13 @@ interface RpcCapableClient {
   rpc?: (fn: string, args: Record<string, unknown>) => PromiseLike<{ error?: unknown | null }>;
 }
 
-function responseError(message: string, code: string, status: number, details?: unknown) {
-  return NextResponse.json({ error: message, code, ...(details === undefined ? {} : { details }) }, { status });
+function errorCode(error: unknown): string {
+  if (error && typeof error === "object" && "code" in error) return String((error as Record<string, unknown>).code ?? "UNKNOWN");
+  return "UNKNOWN";
+}
+
+function responseError(message: string, code: string, status: number, details?: unknown, requestId = crypto.randomUUID()) {
+  return NextResponse.json({ error: message, code, ...(details === undefined ? {} : { details }), requestId }, { status });
 }
 
 function fullResponseRequested(request?: Request): boolean {
@@ -56,16 +50,12 @@ export async function GET(request?: Request) {
   const rpcClient = viewer.client as RpcCapableClient;
   const baseQuery = viewer.client.from("registrations") as OrdersQuery;
   const first = await baseQuery.select(ORDER_SELECT).eq("umkm_id", viewer.context.userId);
-  let rows = first.data ?? [];
   if (first.error) {
-    // Keep the endpoint usable against projects where optional relationships
-    // have not been generated yet; the detail DTO simply falls back to null.
-    const fallback = await (viewer.client.from("registrations") as OrdersQuery)
-      .select("id,batch_id,quantity,status,final_amount,locked_tier_number,created_at,batch:batches(id,title,status)")
-      .eq("umkm_id", viewer.context.userId);
-    if (fallback.error) return responseError("Unable to load UMKM orders", "ORDERS_READ_FAILED", 500);
-    rows = fallback.data ?? [];
+    const requestId = crypto.randomUUID();
+    console.error("[umkm-orders] read failed", { operation: "list", code: errorCode(first.error), requestId });
+    return responseError("Daftar pesanan belum dapat dimuat. Coba lagi.", "ORDERS_READ_FAILED", 503, undefined, requestId);
   }
+  let rows = first.data ?? [];
 
   // Lazy lifecycle reconciliation is deliberately best-effort. A read should
   // never fail because one stale registration has a malformed provider record.

@@ -10,31 +10,33 @@ describe("Supplier transaction schema guard", () => {
       relations: ["public.payment_attempts"],
     });
     expect(missing).toEqual([
-      "migration:20260916000000",
+      "migration:20260917000000",
       "function:public.get_supplier_batch_transaction(uuid)",
+      "function:public.apply_midtrans_payment_event(uuid)",
       "column:public.batches.payment_window_hours",
       "relation:public.batch_status_events",
       "relation:public.supplier_ledger_entries",
       "relation:public.supplier_payouts",
+      "relation:public.payment_checkout_sessions",
     ]);
   });
 
   it("returns no missing objects when the required schema is present", () => {
     expect(findMissingSupplierTransactionObjects({
-      migrationVersions: ["20260916000000"],
-      functions: ["materialize_supplier_batch", "get_supplier_batch_transaction"],
+      migrationVersions: ["20260917000000"],
+      functions: ["materialize_supplier_batch", "get_supplier_batch_transaction", "apply_midtrans_payment_event"],
       columns: ["public.batches.capacity_quantity", "public.batches.payment_window_hours"],
-      relations: ["public.payment_attempts", "public.batch_status_events", "public.supplier_ledger_entries", "public.supplier_payouts"],
+      relations: ["public.payment_attempts", "public.batch_status_events", "public.supplier_ledger_entries", "public.supplier_payouts", "public.payment_checkout_sessions"],
       functionDefinitions: { close_batch_and_issue_invoices: "insert into public.payments as existing ... existing.status" },
     })).toEqual([]);
   });
 
   it("reports an invoice RPC definition that still has an unqualified status reference", () => {
     const missing = findMissingSupplierTransactionObjects({
-      migrationVersions: ["20260916000000"],
-      functions: ["materialize_supplier_batch", "get_supplier_batch_transaction"],
+      migrationVersions: ["20260917000000"],
+      functions: ["materialize_supplier_batch", "get_supplier_batch_transaction", "apply_midtrans_payment_event"],
       columns: ["public.batches.capacity_quantity", "public.batches.payment_window_hours"],
-      relations: ["public.payment_attempts", "public.batch_status_events", "public.supplier_ledger_entries", "public.supplier_payouts"],
+      relations: ["public.payment_attempts", "public.batch_status_events", "public.supplier_ledger_entries", "public.supplier_payouts", "public.payment_checkout_sessions"],
       functionDefinitions: { close_batch_and_issue_invoices: "insert into public.payments (...) case when status = 'paid' then status else excluded.status end" },
     });
     expect(missing.some((value) => value.startsWith("function-definition:public.close_batch_and_issue_invoices"))).toBe(true);
@@ -48,13 +50,13 @@ describe("Supplier transaction schema guard", () => {
         active = true;
         await new Promise((resolve) => setTimeout(resolve, 0));
         active = false;
-        if (sql.includes("schema_migrations")) return { rows: [{ version: "20260916000000" }] };
+        if (sql.includes("schema_migrations")) return { rows: [{ version: "20260917000000" }] };
         if (sql.includes("pg_get_functiondef")) return { rows: [{ proname: "close_batch_and_issue_invoices", definition: "insert into public.payments as existing ... existing.status" }] };
-        if (sql.includes("pg_proc")) return { rows: [{ proname: "materialize_supplier_batch" }, { proname: "get_supplier_batch_transaction" }] };
+        if (sql.includes("pg_proc")) return { rows: [{ proname: "materialize_supplier_batch" }, { proname: "get_supplier_batch_transaction" }, { proname: "apply_midtrans_payment_event" }] };
         if (sql.includes("information_schema.columns")) return { rows: [{ qualified_name: "public.batches.capacity_quantity" }, { qualified_name: "public.batches.payment_window_hours" }] };
-        return { rows: [{ qualified_name: "public.payment_attempts" }, { qualified_name: "public.batch_status_events" }, { qualified_name: "public.supplier_ledger_entries" }, { qualified_name: "public.supplier_payouts" }] };
+        return { rows: [{ qualified_name: "public.payment_attempts" }, { qualified_name: "public.batch_status_events" }, { qualified_name: "public.supplier_ledger_entries" }, { qualified_name: "public.supplier_payouts" }, { qualified_name: "public.payment_checkout_sessions" }] };
       },
     };
-    await expect(readSnapshot(client)).resolves.toMatchObject({ migrationVersions: ["20260916000000"], functionDefinitions: { close_batch_and_issue_invoices: expect.stringContaining("existing.status") } });
+    await expect(readSnapshot(client)).resolves.toMatchObject({ migrationVersions: ["20260917000000"], functionDefinitions: { close_batch_and_issue_invoices: expect.stringContaining("existing.status") } });
   });
 });

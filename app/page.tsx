@@ -62,19 +62,12 @@ export default function Home() {
                 href="/register?role=umkm"
                 className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-7 py-3.5 text-base font-semibold text-white shadow hover:bg-blue-700 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 transition-all active:scale-[0.98] sm:w-auto"
               >
-                Mulai Belanja sebagai UMKM
+                Bergabung dengan Wesup
                 <ShoppingBag className="h-5 w-5" />
               </Link>
               <Link
-                href="/register?role=supplier"
-                className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-white px-7 py-3.5 text-base font-semibold text-slate-900 shadow-sm ring-1 ring-inset ring-slate-200 hover:bg-slate-50 hover:ring-slate-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 transition-all active:scale-[0.98] sm:w-auto"
-              >
-                Jadi Supplier
-                <ArrowRight className="h-5 w-5 text-blue-600" />
-              </Link>
-              <Link
                 href="/marketplace"
-                className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl px-7 py-3.5 text-base font-semibold text-blue-700 hover:bg-blue-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 transition-all active:scale-[0.98] sm:w-auto"
+                className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-blue-200 px-7 py-3.5 text-base font-semibold text-blue-700 hover:bg-blue-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 transition-all active:scale-[0.98] sm:w-auto"
               >
                 Lihat Marketplace
               </Link>

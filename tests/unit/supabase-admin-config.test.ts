@@ -43,4 +43,16 @@ describe("Supabase admin configuration", () => {
       adminKey: "service-key",
     });
   });
+
+  it("exposes a generic stable code for missing server admin configuration", () => {
+    let caught: unknown;
+    try {
+      resolveSupabaseAdminConfiguration({ NEXT_PUBLIC_SUPABASE_URL: "https://example.supabase.co" });
+    } catch (error) {
+      caught = error;
+    }
+    expect(caught).toBeInstanceOf(SupabaseAdminConfigurationError);
+    expect(caught).toMatchObject({ name: "SupabaseAdminConfigurationError", code: "SUPABASE_ADMIN_CONFIG_MISSING" });
+    expect((caught as Error).message).toBe("Missing Supabase admin key configuration.");
+  });
 });

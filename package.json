@@ -12,6 +12,7 @@
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
     "db:check:supplier-transactions": "node scripts/check-supplier-transaction-schema.mjs",
+    "payments:check": "node scripts/check-payment-readiness.mjs",
     "db:recover:supplier-transactions": "node scripts/recover-supplier-transaction-incident.mjs"
   },
   "dependencies": {

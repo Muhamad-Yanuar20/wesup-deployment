@@ -18,6 +18,7 @@ export type PaymentStatus =
   "pending" | "paid" | "expired" | "failed" | "refunded";
 export type EscrowStatus = "held" | "frozen" | "released" | "refunded" | "forfeited";
 export type PaymentAttemptStatus = "pending" | "paid" | "expired" | "failed";
+export type PaymentIntegrationType = "core_qris" | "snap";
 export type ComplaintCategory = "cacat" | "busuk";
 export type SupplierLedgerBucket = "escrow" | "frozen" | "available" | "paid_out" | "refunded";
 export type SupplierPayoutStatus = "requested" | "approved" | "transferred" | "rejected";
@@ -590,6 +591,10 @@ export interface Database {
           provider_order_id: string;
           provider_transaction_id: string | null;
           status: PaymentAttemptStatus;
+          integration_type: PaymentIntegrationType;
+          provider_status: string | null;
+          payment_type: string | null;
+          provider_fraud_status: string | null;
           qr_code_url: string | null;
           expires_at: string | null;
           idempotency_key: string;
@@ -603,6 +608,10 @@ export interface Database {
           provider_order_id: string;
           provider_transaction_id?: string | null;
           status?: PaymentAttemptStatus;
+          integration_type?: PaymentIntegrationType;
+          provider_status?: string | null;
+          payment_type?: string | null;
+          provider_fraud_status?: string | null;
           qr_code_url?: string | null;
           expires_at?: string | null;
           idempotency_key: string;
@@ -611,6 +620,30 @@ export interface Database {
           updated_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["payment_attempts"]["Insert"]>;
+        Relationships: [];
+      };
+      payment_checkout_sessions: {
+        Row: {
+          id: string;
+          payment_attempt_id: string;
+          snap_token: string;
+          redirect_url: string | null;
+          expires_at: string;
+          created_at: string;
+          updated_at: string;
+          cancelled_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          payment_attempt_id: string;
+          snap_token: string;
+          redirect_url?: string | null;
+          expires_at: string;
+          created_at?: string;
+          updated_at?: string;
+          cancelled_at?: string | null;
+        };
+        Update: Partial<Database["public"]["Tables"]["payment_checkout_sessions"]["Insert"]>;
         Relationships: [];
       };
       pickup_codes: {
@@ -1162,7 +1195,17 @@ export interface Database {
         Args: { p_batch_id: string };
         Returns: Record<string, unknown>;
       };
-      close_batch_and_issue_invoices: {
+      apply_midtrans_payment_event: {
+        Args: {
+          p_payment_attempt_id: string;
+          p_provider_status: string;
+          p_provider_transaction_id?: string | null;
+          p_payment_type?: string | null;
+          p_fraud_status?: string | null;
+          p_payload?: Record<string, unknown>;
+        };
+        Returns: Record<string, unknown>;
+      };      close_batch_and_issue_invoices: {
         Args: { p_batch_id: string; p_trigger: string; p_ip_address?: string | null; p_user_agent?: string | null };
         Returns: Record<string, unknown>;
       };

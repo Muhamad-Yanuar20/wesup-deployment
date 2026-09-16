@@ -44,4 +44,22 @@ describe("UMKM order read model", () => {
     expect(detail.dispute?.photoUrls).toEqual(["disputes/a.webp"]);
     expect(detail.refund?.id).toBe("refund-1");
   });
+
+  it("reads the active attempt through the payment relationship", () => {
+    const detail = toUmkmOrderDetail({
+      ...base,
+      status: "pending_payment",
+      payment: {
+        id: "pay-1",
+        gross_amount: "125000",
+        status: "pending",
+        payment_attempts: [
+          { id: "attempt-old", status: "failed", provider_order_id: "WESUP-OLD", created_at: "2026-09-01T00:00:00.000Z" },
+          { id: "attempt-active", status: "pending", provider_order_id: "WESUP-ACTIVE", payment_type: "qris", created_at: "2026-09-02T00:00:00.000Z" },
+        ],
+      },
+    }, "2026-09-02T20:00:00.000Z");
+    expect(detail.paymentAttempt?.id).toBe("attempt-active");
+    expect(detail.paymentAttempt?.paymentMethod).toBe("qris");
+  });
 });
