@@ -33,6 +33,19 @@ function firstObject(value: unknown): Record<string, unknown> | null {
   return value && typeof value === "object" ? value as Record<string, unknown> : null;
 }
 
+function paymentAttemptFromRow(row: OrderReadRow): Record<string, unknown> | null {
+  const payment = firstObject(row.payment);
+  const attempts = Array.isArray(payment?.payment_attempts)
+    ? payment.payment_attempts.filter((value): value is Record<string, unknown> => Boolean(value && typeof value === "object"))
+    : [];
+  attempts.sort((left, right) => {
+    const leftPending = left.status === "pending" || left.status === "creating" ? 1 : 0;
+    const rightPending = right.status === "pending" || right.status === "creating" ? 1 : 0;
+    if (leftPending !== rightPending) return rightPending - leftPending;
+    return String(right.created_at ?? "").localeCompare(String(left.created_at ?? ""));
+  });
+  return attempts[0] ?? firstObject(row.payment_attempt);
+}
 function timelineFromBatch(batch: Record<string, unknown> | null): BatchTimeline | null {
   const timeline = firstObject(batch?.batch_timeline ?? batch?.timeline);
   if (!timeline) return null;
@@ -122,7 +135,7 @@ export function toUmkmOrderListItem(row: OrderReadRow, serverNow: string): UmkmO
 export function toUmkmOrderDetail(row: OrderReadRow, serverNow: string): UmkmOrderDetail {
   const item = toUmkmOrderListItem(row, serverNow);
   const payment = firstObject(row.payment);
-  const attempt = firstObject(row.payment_attempt);
+  const attempt = paymentAttemptFromRow(row);
   const pickup = firstObject(row.pickup_code);
   const escrow = firstObject(row.escrow);
   const dispute = firstObject(row.dispute);
@@ -131,7 +144,7 @@ export function toUmkmOrderDetail(row: OrderReadRow, serverNow: string): UmkmOrd
   return {
     ...item,
     invoice: payment ? { paymentId: String(payment.id), grossAmount: moneyNumber(payment.gross_amount) ?? 0, status: String(payment.status ?? "pending"), midtransOrderId: String(payment.midtrans_order_id ?? ""), qrCodeUrl: stringValue(payment.qr_code_url), qrCodeExpiresAt: stringValue(payment.qr_code_expires_at), paidAt: stringValue(payment.paid_at) } : null,
-    paymentAttempt: attempt ? { id: String(attempt.id), providerOrderId: String(attempt.provider_order_id ?? ""), status: String(attempt.status ?? "pending"), qrCodeUrl: stringValue(attempt.qr_code_url), expiresAt: stringValue(attempt.expires_at) } : null,
+    paymentAttempt: attempt ? { id: String(attempt.id), providerOrderId: String(attempt.provider_order_id ?? ""), status: String(attempt.status ?? "pending"), checkoutMode: attempt.integration_type === "snap" ? "snap" : "core_qris", providerStatus: stringValue(attempt.provider_status), paymentMethod: stringValue(attempt.payment_type), qrCodeUrl: stringValue(attempt.qr_code_url), expiresAt: stringValue(attempt.expires_at) } : null,
     pickup: pickup ? { qrCodeToken: stringValue(pickup.qr_code_token), pinCode: stringValue(pickup.pin_code), generatedAt: stringValue(pickup.generated_at), usedAt: stringValue(pickup.used_at), address: stringValue(firstObject(row.batch)?.pickup_address) } : item.capabilities.canViewPickup ? { qrCodeToken: null, pinCode: null, generatedAt: null, usedAt: null, address: stringValue(firstObject(row.batch)?.pickup_address) } : null,
     escrow: escrow ? { id: String(escrow.id), amount: moneyNumber(escrow.amount) ?? 0, status: String(escrow.status ?? "held"), pickupConfirmedAt: stringValue(escrow.pickup_confirmed_at), autoReleaseAt: stringValue(escrow.auto_release_at) } : null,
     dispute: dispute ? { id: String(dispute.id), complaintCategory: dispute.complaint_category === "busuk" ? "busuk" : "cacat", description: String(dispute.description ?? ""), photoUrls: Array.isArray(dispute.photo_urls) ? dispute.photo_urls.map(String) : [], status: String(dispute.status ?? "pending"), createdAt: String(dispute.created_at ?? ""), decidedAt: stringValue(dispute.decided_at) } : null,

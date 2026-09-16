@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse } from "next/server";
 import { NextRequest } from "next/server";
 import type { Database } from "@/types/database";
-import { buildContentSecurityPolicy, generateNonce } from "@/lib/security/csp";
+import { buildContentSecurityPolicy, generateNonce, shouldAllowMidtransCsp } from "@/lib/security/csp";
 
 export async function updateSession(
   request: NextRequest,
@@ -47,7 +47,8 @@ export async function updateSession(
 
 export default async function proxy(request: NextRequest) {
   const nonce = generateNonce();
-  const { policy } = buildContentSecurityPolicy(nonce);
+  const allowMidtrans = shouldAllowMidtransCsp(request.nextUrl.pathname);
+  const { policy } = buildContentSecurityPolicy(nonce, { allowMidtrans });
 
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-nonce", nonce);

@@ -3,20 +3,9 @@ import { isUuid } from "@/lib/admin/validation";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { resolveActiveUmkm } from "@/lib/umkm/workspace-auth";
 import { toUmkmOrderDetail, type OrderReadRow } from "@/lib/orders/read-model";
+import { DETAIL_SELECT } from "@/lib/orders/selects";
 
 export const dynamic = "force-dynamic";
-
-const DETAIL_SELECT = [
-  "id,batch_id,quantity,status,final_amount,locked_tier_number,created_at",
-  "batch:batches(id,title,status,unit,pickup_name,pickup_address,supplier:profiles(full_name),batch_timeline(registration_opens_at,registration_closes_at,payment_opens_at,payment_closes_at,effective_payment_opens_at,effective_payment_closes_at,estimated_ready_at))",
-  "payment:payments(id,midtrans_order_id,gross_amount,status,qr_code_url,qr_code_expires_at,paid_at)",
-  "payment_attempt:payment_attempts(id,provider_order_id,status,qr_code_url,expires_at)",
-  "pickup_code:pickup_codes(qr_code_token,pin_code,generated_at,used_at)",
-  "escrow:escrow_holds(id,amount,status,pickup_confirmed_at,auto_release_at)",
-  "dispute:disputes(id,complaint_category,description,photo_urls,status,created_at,decided_at)",
-  "rating:ratings(score,comment,created_at)",
-  "refund:refund_requests(id,amount,status,trigger_type,umkm_bank_account_id)",
-].join(",");
 
 interface DetailQuery {
   select: (columns: string) => {
@@ -31,8 +20,12 @@ interface DetailQuery {
 
 interface RpcCapableClient { rpc?: (fn: string, args: Record<string, unknown>) => PromiseLike<{ error?: unknown | null }> }
 
-function errorResponse(error: string, code: string, status: number) {
-  return NextResponse.json({ error, code }, { status });
+function errorCode(error: unknown): string {
+  if (error && typeof error === "object" && "code" in error) return String((error as Record<string, unknown>).code ?? "UNKNOWN");
+  return "UNKNOWN";
+}
+function errorResponse(error: string, code: string, status: number, requestId = crypto.randomUUID()) {
+  return NextResponse.json({ error, code, requestId }, { status, headers: status >= 500 ? { "Retry-After": "5" } : undefined });
 }
 
 export async function GET(
@@ -47,10 +40,13 @@ export async function GET(
   const query = viewer.client.from("registrations") as DetailQuery;
   let result = await query.select(DETAIL_SELECT).eq("id", orderId).eq("umkm_id", viewer.context.userId).maybeSingle();
   if (result.error) {
-    const fallback = await (viewer.client.from("registrations") as DetailQuery).select("id,batch_id,quantity,status,final_amount,locked_tier_number,created_at,batch:batches(id,title,status)").eq("id", orderId).eq("umkm_id", viewer.context.userId).maybeSingle();
-    result = fallback;
+    const raw = result.error as { code?: unknown };
+    const code = String(raw.code ?? "");
+    const requestId = crypto.randomUUID();
+    console.error("[umkm-orders] detail read failed", { operation: "detail", code: errorCode(result.error), requestId });
+    const schemaFailure = ["PGRST200", "PGRST201", "PGRST202", "42883", "42P01"].includes(code);
+    return errorResponse(schemaFailure ? "Data pembayaran pesanan sedang disiapkan. Coba lagi beberapa saat." : "Detail pesanan belum dapat dimuat. Coba lagi.", schemaFailure ? "ORDER_DETAIL_SCHEMA_NOT_READY" : "ORDER_READ_FAILED", schemaFailure ? 503 : 500, requestId);
   }
-  if (result.error) return errorResponse("Unable to load order", "ORDER_READ_FAILED", 500);
   if (!result.data) return errorResponse("Pesanan tidak ditemukan", "ORDER_NOT_FOUND", 404);
 
   const rpcClient = viewer.client as RpcCapableClient;

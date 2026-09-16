@@ -17,12 +17,13 @@ export interface SupabaseAdminConfiguration {
 }
 
 export class SupabaseAdminConfigurationError extends Error {
-  constructor(message = "Missing Supabase secret-key configuration for supplier registration.") {
+  readonly code = "SUPABASE_ADMIN_CONFIG_MISSING" as const;
+
+  constructor(message = "Missing Supabase admin key configuration.") {
     super(message);
     this.name = "SupabaseAdminConfigurationError";
   }
 }
-
 export function resolveSupabaseAdminConfiguration(
   env: SupabaseAdminEnvironment = process.env,
 ): SupabaseAdminConfiguration {

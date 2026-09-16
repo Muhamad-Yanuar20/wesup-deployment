@@ -5,10 +5,11 @@ import pg from "pg";
 
 const { Client } = pg;
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const REQUIRED_MIGRATION = "20260916000000";
+const REQUIRED_MIGRATION = "20260917000000";
 const REQUIRED_FUNCTIONS = [
   "materialize_supplier_batch",
   "get_supplier_batch_transaction",
+  "apply_midtrans_payment_event",
 ];
 const REQUIRED_COLUMNS = [
   "public.batches.capacity_quantity",
@@ -19,6 +20,7 @@ const REQUIRED_RELATIONS = [
   "public.batch_status_events",
   "public.supplier_ledger_entries",
   "public.supplier_payouts",
+  "public.payment_checkout_sessions",
 ];
 const REQUIRED_FUNCTION_DEFINITION = "close_batch_and_issue_invoices";
 

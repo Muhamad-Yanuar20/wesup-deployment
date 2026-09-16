@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ArrowRight, CheckCircle2, Clock3, PackageCheck, RefreshCw, ShoppingBag, Star, WalletCards } from "lucide-react";
+import PaymentPageLink from "@/components/payments/PaymentPageLink";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Skeleton } from "@/components/ui/SkeletonLoading";
 import type { OrderCapabilities, OrderSummary, UmkmOrderListItem } from "@/lib/orders/api-types";
@@ -61,7 +62,7 @@ function StatusBadge({ status }: { status: string }) {
 
 function ActionLinks({ order }: { order: ClientOrder }) {
   const capabilities = capabilitiesFor(order);
-  if (capabilities.canPay) return <Link href={`/pesanan/${order.id}/bayar`} className="inline-flex min-h-9 items-center rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700">Bayar Sekarang</Link>;
+  if (capabilities.canPay) return <PaymentPageLink href={`/pesanan/${order.id}/bayar`} className="inline-flex min-h-9 items-center rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700">Bayar Sekarang</PaymentPageLink>;
   if (capabilities.canViewPickup && (order.status === "paid" || order.phase === "ready_for_pickup")) return <Link href={`/pesanan/${order.id}/serah-terima`} className="inline-flex min-h-9 items-center rounded-lg bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700 hover:bg-blue-100">Serah Terima</Link>;
   if (capabilities.canTrackDispute) return <Link href={`/pesanan/${order.id}/sengketa`} className="inline-flex min-h-9 items-center rounded-lg bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-700 hover:bg-amber-100">Lacak Sengketa</Link>;
   if (capabilities.canComplain) return <Link href={`/pesanan/${order.id}/komplain`} className="inline-flex min-h-9 items-center rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-100">Ajukan Komplain</Link>;
@@ -81,18 +82,23 @@ export default function UmkmOrdersClient() {
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [errorRequestId, setErrorRequestId] = useState("");
   const [retry, setRetry] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
 
   const load = useCallback(async (signal: AbortSignal) => {
     setLoading(true);
     setError("");
+    setErrorRequestId("");
     try {
       const params = new URLSearchParams({ limit: "20" });
       if (filter !== "all") params.set("status", filter);
       const response = await fetch(`/api/umkm/orders?${params.toString()}`, { cache: "no-store", signal });
       const body = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(body.error ?? "Pesanan belum dapat dimuat.");
+      if (!response.ok) {
+        setErrorRequestId(typeof body.requestId === "string" ? body.requestId : "");
+        throw new Error(body.error ?? "Pesanan belum dapat dimuat.");
+      }
       const rawOrders = Array.isArray(body.items) ? body.items : Array.isArray(body.orders) ? body.orders : [];
       setOrders(rawOrders as ClientOrder[]);
       setSummary(body.summary ?? EMPTY_SUMMARY);
@@ -124,7 +130,7 @@ export default function UmkmOrdersClient() {
   const countFor = (key: FilterKey) => key === "all" ? (counts.all ?? summary.total ?? orders.length) : key === "picked_up" ? (counts.picked_up ?? summary.pickedUp) : key === "refund" ? (counts.refund ?? summary.refund) : (counts[key] ?? orders.filter((order) => filterMatches(order, key)).length);
 
   if (loading && orders.length === 0) return <div className="space-y-4" role="status" aria-label="Memuat pesanan"><div className="grid grid-cols-2 gap-3 lg:grid-cols-4">{[1, 2, 3, 4].map((item) => <Skeleton key={item} className="h-20 rounded-xl" />)}</div><Skeleton className="h-16 rounded-xl" /><Skeleton className="h-72 rounded-xl" /></div>;
-  if (error && orders.length === 0) return <section role="alert" className="rounded-xl border border-red-200 bg-red-50 p-5 text-sm text-red-700"><p>{error}</p><button type="button" onClick={() => setRetry((value) => value + 1)} className="mt-3 inline-flex min-h-10 items-center gap-2 rounded-lg bg-red-600 px-3 py-2 font-semibold text-white hover:bg-red-700"><RefreshCw className="size-4" aria-hidden="true" />Coba lagi</button></section>;
+  if (error && orders.length === 0) return <section role="alert" className="rounded-xl border border-red-200 bg-red-50 p-5 text-sm text-red-700"><p>{error}</p>{errorRequestId && <p className="mt-2 text-xs text-red-600">Referensi: {errorRequestId}</p>}<button type="button" onClick={() => setRetry((value) => value + 1)} className="mt-3 inline-flex min-h-10 items-center gap-2 rounded-lg bg-red-600 px-3 py-2 font-semibold text-white hover:bg-red-700"><RefreshCw className="size-4" aria-hidden="true" />Coba lagi</button></section>;
   if (!loading && visibleOrders.length === 0 && filter === "all") return <section className="rounded-xl border border-dashed border-slate-300 bg-white"><EmptyState heading="Belum ada pesanan" description="Pesanan yang Anda ikuti akan muncul di sini setelah Join Batch berhasil." action={<Link href="/marketplace" className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700">Jelajahi Marketplace<ArrowRight className="size-4" aria-hidden="true" /></Link>} /></section>;
 
   return <section aria-label="Daftar pesanan UMKM" className="space-y-5">
@@ -139,8 +145,8 @@ export default function UmkmOrdersClient() {
     </div>
     {error && <p role="alert" className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">{error}</p>}
     <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-      {!isMobile && <div className="overflow-x-auto"><table className="w-full min-w-[760px] text-left text-sm"><thead className="border-b border-slate-100 bg-slate-50 text-xs text-slate-500"><tr><th className="px-4 py-3 font-medium">Batch</th><th className="px-4 py-3 font-medium">Mitra</th><th className="px-4 py-3 font-medium">Qty</th><th className="px-4 py-3 font-medium">Total</th><th className="px-4 py-3 font-medium">Status</th><th className="px-4 py-3 text-right font-medium">Aksi</th></tr></thead><tbody className="divide-y divide-slate-100">{visibleOrders.map((order) => <tr key={order.id} className="align-middle"><td className="px-4 py-3"><Link href={`/pesanan/${order.id}/bayar`} className="font-semibold text-slate-900 hover:text-blue-700">{order.batchTitle}</Link><p className="mt-1 text-[11px] text-slate-400">{order.batchDisplayCode}</p></td><td className="px-4 py-3 text-xs text-slate-600">{order.supplierName ?? "Supplier"}</td><td className="px-4 py-3 font-semibold text-slate-700">{order.quantity} {order.unit}</td><td className="px-4 py-3 font-semibold text-slate-800">{order.finalAmount === null || order.finalAmount === undefined ? "Belum ditentukan" : money.format(order.finalAmount)}</td><td className="px-4 py-3"><StatusBadge status={order.status} /></td><td className="px-4 py-3 text-right"><ActionLinks order={order} /></td></tr>)}</tbody></table></div>}
-      {isMobile && <div className="divide-y divide-slate-100">{visibleOrders.map((order) => <article key={order.id} className="space-y-3 p-4"><div className="flex items-start justify-between gap-3"><div><Link href={`/pesanan/${order.id}/bayar`} className="font-semibold text-slate-900">{order.batchTitle}</Link><p className="mt-1 text-xs text-slate-500">{order.quantity} {order.unit} · {order.supplierName ?? "Supplier"}</p></div><StatusBadge status={order.status} /></div><div className="flex items-center justify-between gap-3 text-sm"><span className="text-slate-500">Total <strong className="text-slate-900">{order.finalAmount === null || order.finalAmount === undefined ? "—" : money.format(order.finalAmount)}</strong></span><ActionLinks order={order} /></div></article>)}</div>}
+      {!isMobile && <div className="overflow-x-auto"><table className="w-full min-w-[760px] text-left text-sm"><thead className="border-b border-slate-100 bg-slate-50 text-xs text-slate-500"><tr><th className="px-4 py-3 font-medium">Batch</th><th className="px-4 py-3 font-medium">Mitra</th><th className="px-4 py-3 font-medium">Qty</th><th className="px-4 py-3 font-medium">Total</th><th className="px-4 py-3 font-medium">Status</th><th className="px-4 py-3 text-right font-medium">Aksi</th></tr></thead><tbody className="divide-y divide-slate-100">{visibleOrders.map((order) => <tr key={order.id} className="align-middle"><td className="px-4 py-3"><PaymentPageLink href={`/pesanan/${order.id}/bayar`} className="font-semibold text-slate-900 hover:text-blue-700">{order.batchTitle}</PaymentPageLink><p className="mt-1 text-[11px] text-slate-400">{order.batchDisplayCode}</p></td><td className="px-4 py-3 text-xs text-slate-600">{order.supplierName ?? "Supplier"}</td><td className="px-4 py-3 font-semibold text-slate-700">{order.quantity} {order.unit}</td><td className="px-4 py-3 font-semibold text-slate-800">{order.finalAmount === null || order.finalAmount === undefined ? "Belum ditentukan" : money.format(order.finalAmount)}</td><td className="px-4 py-3"><StatusBadge status={order.status} /></td><td className="px-4 py-3 text-right"><ActionLinks order={order} /></td></tr>)}</tbody></table></div>}
+      {isMobile && <div className="divide-y divide-slate-100">{visibleOrders.map((order) => <article key={order.id} className="space-y-3 p-4"><div className="flex items-start justify-between gap-3"><div><PaymentPageLink href={`/pesanan/${order.id}/bayar`} className="font-semibold text-slate-900">{order.batchTitle}</PaymentPageLink><p className="mt-1 text-xs text-slate-500">{order.quantity} {order.unit} · {order.supplierName ?? "Supplier"}</p></div><StatusBadge status={order.status} /></div><div className="flex items-center justify-between gap-3 text-sm"><span className="text-slate-500">Total <strong className="text-slate-900">{order.finalAmount === null || order.finalAmount === undefined ? "—" : money.format(order.finalAmount)}</strong></span><ActionLinks order={order} /></div></article>)}</div>}
     </div>
     {!loading && visibleOrders.length === 0 && <p className="rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-500">Tidak ada pesanan pada filter “{FILTERS.find((item) => item.key === filter)?.label}”.</p>}
     {loading && <p className="text-center text-xs text-slate-400">Memperbarui pesanan…</p>}

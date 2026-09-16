@@ -11,7 +11,28 @@ export interface MidtransChargeResult {
   raw: Record<string, unknown>;
 }
 
+
+export interface MidtransSnapTransactionInput {
+  orderId: string;
+  grossAmount: number;
+  itemName: string;
+  itemQuantity: number;
+  itemUnitPrice: number;
+  expiresAt: string;
+  finishUrl?: string;
+  idempotencyKey?: string;
+}
+
+export interface MidtransSnapTransactionResult {
+  orderId: string;
+  token: string;
+  redirectUrl: string | null;
+  expiresAt: string;
+  raw: Record<string, unknown>;
+}
+
 export class MidtransProviderError extends Error {
+
   readonly status: number;
   readonly retryable: boolean;
   constructor(message: string, status = 502, retryable = true) {
@@ -22,7 +43,7 @@ export class MidtransProviderError extends Error {
   }
 }
 
-interface MidtransConfig { serverKey: string; baseUrl: string; timeoutMs: number }
+interface MidtransConfig { serverKey: string; baseUrl: string; snapBaseUrl: string; timeoutMs: number }
 
 function config(env: NodeJS.ProcessEnv = process.env): MidtransConfig {
   const serverKey = env.MIDTRANS_SERVER_KEY?.trim();
@@ -31,20 +52,21 @@ function config(env: NodeJS.ProcessEnv = process.env): MidtransConfig {
   if (production !== "true" && production !== "false") throw new MidtransProviderError("MIDTRANS_IS_PRODUCTION must be true or false", 503, false);
   const defaultBase = production === "true" ? "https://api.midtrans.com" : "https://api.sandbox.midtrans.com";
   const baseUrl = (env.MIDTRANS_BASE_URL?.trim() || defaultBase).replace(/\/$/, "");
+  const snapBaseUrl = (env.MIDTRANS_SNAP_BASE_URL?.trim() || (production === "true" ? "https://app.midtrans.com" : "https://app.sandbox.midtrans.com")).replace(/\/$/, "");
   const timeoutMs = Math.min(15_000, Math.max(1_000, Number(env.MIDTRANS_TIMEOUT_MS ?? 8_000)));
-  return { serverKey, baseUrl, timeoutMs };
+  return { serverKey, baseUrl, snapBaseUrl, timeoutMs };
 }
 
 function authHeader(serverKey: string): string {
   return `Basic ${Buffer.from(`${serverKey}:`).toString("base64")}`;
 }
 
-async function request<T>(path: string, init: RequestInit = {}, env?: NodeJS.ProcessEnv): Promise<T> {
+async function request<T>(path: string, init: RequestInit = {}, env?: NodeJS.ProcessEnv, baseUrlOverride?: string): Promise<T> {
   const cfg = config(env);
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), cfg.timeoutMs);
   try {
-    const response = await fetch(`${cfg.baseUrl}${path}`, {
+    const response = await fetch(`${baseUrlOverride ?? cfg.baseUrl}${path}`, {
       ...init,
       signal: controller.signal,
       headers: {
@@ -73,6 +95,66 @@ function qrUrl(body: Record<string, unknown>): string | null {
   const action = actions.find((entry) => entry && typeof entry === "object" && (entry as Record<string, unknown>).name === "generate-qr-code-v2") as Record<string, unknown> | undefined;
   const url = action?.url;
   return typeof url === "string" ? url : null;
+}
+
+
+function formatMidtransTimestamp(value: Date): string {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Jakarta",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(value).reduce<Record<string, string>>((result, part) => {
+    if (part.type !== "literal") result[part.type] = part.value;
+    return result;
+  }, {});
+  return `${parts.year}-${parts.month}-${parts.day} ${parts.hour}:${parts.minute}:${parts.second} +0700`;
+}
+
+function snapExpiry(expiresAt: string): { duration: number; unit: "minute" } {
+  const expires = Date.parse(expiresAt);
+  const remainingMinutes = Math.floor((expires - Date.now()) / 60_000);
+  if (!Number.isFinite(expires) || remainingMinutes < 5) {
+    throw new MidtransProviderError("Snap checkout requires at least five minutes before payment cutoff", 403, false);
+  }
+  return { duration: remainingMinutes, unit: "minute" };
+}
+
+export async function createSnapTransaction(input: MidtransSnapTransactionInput, env?: NodeJS.ProcessEnv): Promise<MidtransSnapTransactionResult> {
+  if (!input.orderId.trim() || input.orderId.length > 50) throw new MidtransProviderError("Invalid Snap order id", 400, false);
+  if (!Number.isSafeInteger(input.grossAmount) || input.grossAmount <= 0) throw new MidtransProviderError("Invalid gross amount", 400, false);
+  if (!Number.isSafeInteger(input.itemQuantity) || input.itemQuantity <= 0) throw new MidtransProviderError("Invalid item quantity", 400, false);
+  if (!Number.isSafeInteger(input.itemUnitPrice) || input.itemUnitPrice <= 0 || input.itemUnitPrice * input.itemQuantity !== input.grossAmount) {
+    throw new MidtransProviderError("Item details do not match gross amount", 400, false);
+  }
+  const expiry = snapExpiry(input.expiresAt);
+  const itemName = input.itemName.trim().slice(0, 50) || "Wesup order";
+  const payload: Record<string, unknown> = {
+    transaction_details: { order_id: input.orderId, gross_amount: input.grossAmount },
+    item_details: [{ id: input.orderId, price: input.itemUnitPrice, quantity: input.itemQuantity, name: itemName }],
+    expiry: { start_time: formatMidtransTimestamp(new Date()), duration: expiry.duration, unit: expiry.unit },
+  };
+  if (input.finishUrl) {
+    payload.callbacks = { finish: input.finishUrl, unfinish: input.finishUrl, error: input.finishUrl };
+  }
+  const body = await request<Record<string, unknown>>("/snap/v1/transactions", {
+    method: "POST",
+    ...(input.idempotencyKey ? { headers: { "Idempotency-Key": input.idempotencyKey } } : {}),
+    body: JSON.stringify(payload),
+  }, env, config(env).snapBaseUrl);
+  const token = typeof body.token === "string" ? body.token : "";
+  if (!token) throw new MidtransProviderError("Midtrans did not return a Snap token", 502, true);
+  return {
+    orderId: String(body.order_id ?? input.orderId),
+    token,
+    redirectUrl: typeof body.redirect_url === "string" ? body.redirect_url : null,
+    expiresAt: input.expiresAt,
+    raw: body,
+  };
 }
 
 export async function chargeQris(input: { orderId: string; grossAmount: number; idempotencyKey: string; expiresAt?: string | null }, env?: NodeJS.ProcessEnv): Promise<MidtransChargeResult> {

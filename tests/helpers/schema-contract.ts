@@ -656,6 +656,7 @@ export const REQUIRED_FUNCTIONS = [
   "get_supplier_dashboard_summary",
   "materialize_supplier_batch",
   "get_supplier_batch_transaction",
+  "apply_midtrans_payment_event",
 ];
 
 export const REQUIRED_TRIGGERS = [

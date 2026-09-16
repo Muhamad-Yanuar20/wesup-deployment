@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
-import { ArrowLeft, CalendarClock, CheckCircle2, Clock3, Copy, CreditCard, MapPin, QrCode, RefreshCw, ShieldAlert, ShieldCheck, Star, Upload, WalletCards } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Copy, MapPin, QrCode, RefreshCw, ShieldAlert, ShieldCheck, Star, Upload, WalletCards } from "lucide-react";
 import type { UmkmOrderDetail } from "@/lib/orders/api-types";
 import PickupQrBlock from "@/components/orders/PickupQrBlock";
 import { compressImage } from "@/lib/image-compression";
+import type { MidtransSnapConfig } from "@/components/payments/MidtransSnapLoader";
+import UmkmPaymentPanel from "@/components/payments/UmkmPaymentPanel";
 
 export type UmkmOrderDetailMode = "payment" | "pickup" | "complaint" | "dispute" | "rating" | "refund";
 
@@ -15,23 +17,6 @@ const statusLabel: Record<string, string> = { registered: "Terdaftar", pending_p
 
 function formatDate(value: string | null | undefined): string { if (!value) return "—"; const parsed = new Date(value); return Number.isNaN(parsed.getTime()) ? "—" : dateTime.format(parsed); }
 function apiError(body: unknown, fallback: string): string { return body && typeof body === "object" && "error" in body ? String((body as { error?: unknown }).error ?? fallback) : fallback; }
-
-function useServerCountdown(serverTime: string | null, deadline: string | null) {
-  const [remaining, setRemaining] = useState(0);
-  useEffect(() => {
-    if (!serverTime || !deadline) {
-      const reset = window.setTimeout(() => setRemaining(0), 0);
-      return () => window.clearTimeout(reset);
-    }
-    const offset = Date.parse(serverTime) - Date.now();
-    const tick = () => setRemaining(Math.max(0, Date.parse(deadline) - (Date.now() + offset)));
-    const initial = window.setTimeout(tick, 0);
-    const timer = window.setInterval(tick, 1_000);
-    return () => { window.clearTimeout(initial); window.clearInterval(timer); };
-  }, [serverTime, deadline]);
-  const totalSeconds = Math.floor(remaining / 1_000);
-  return `${String(Math.floor(totalSeconds / 3_600)).padStart(2, "0")}:${String(Math.floor((totalSeconds % 3_600) / 60)).padStart(2, "0")}:${String(totalSeconds % 60).padStart(2, "0")}`;
-}
 
 function useOrderDetail(orderId: string) {
   const [order, setOrder] = useState<UmkmOrderDetail | null>(null);
@@ -60,25 +45,6 @@ function PageHeader({ order, mode }: { order: UmkmOrderDetail; mode: UmkmOrderDe
 
 function Summary({ order }: { order: UmkmOrderDetail }) {
   return <section className="rounded-xl border border-slate-200 bg-white shadow-sm"><header className="border-b border-slate-100 bg-slate-50 px-5 py-3 text-sm font-bold uppercase tracking-wide text-slate-700">Ringkasan Pesanan</header><dl className="grid grid-cols-2 gap-4 px-5 py-4 text-sm sm:grid-cols-4"><div><dt className="text-xs text-slate-500">Status</dt><dd className="mt-1 font-semibold text-slate-900">{statusLabel[order.status] ?? order.status}</dd></div><div><dt className="text-xs text-slate-500">Kuantitas</dt><dd className="mt-1 font-semibold text-slate-900">{order.quantity} {order.unit}</dd></div><div><dt className="text-xs text-slate-500">Tier terkunci</dt><dd className="mt-1 font-semibold text-slate-900">Tier {order.lockedTier ?? 1}</dd></div><div><dt className="text-xs text-slate-500">Total tagihan</dt><dd className="mt-1 font-semibold text-slate-900">{order.finalAmount === null ? "Belum ditentukan" : money.format(order.finalAmount)}</dd></div></dl></section>;
-}
-
-function PaymentPanel({ order, onReload }: { order: UmkmOrderDetail; onReload: () => void }) {
-  const [attempt, setAttempt] = useState(order.paymentAttempt);
-  const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState("");
-  const deadline = order.phase === "payment_open" ? order.timeline.paymentClosesAt : order.timeline.paymentOpensAt;
-  const countdown = useServerCountdown(order.serverTime, deadline);
-  const charge = async () => {
-    setBusy(true); setMessage("");
-    try { const response = await fetch(`/api/umkm/orders/${order.id}/payment/charge`, { method: "POST" }); const body = await response.json().catch(() => ({})); if (!response.ok) throw new Error(apiError(body, "Pembayaran belum dapat dibuat.")); setAttempt(body.attempt ?? null); } catch (reason: unknown) { setMessage(reason instanceof Error ? reason.message : "Pembayaran belum dapat dibuat."); } finally { setBusy(false); }
-  };
-  const reconcile = useCallback(async () => {
-    setBusy(true); setMessage("");
-    try { const response = await fetch(`/api/umkm/orders/${order.id}/payment/reconcile`, { method: "POST" }); const body = await response.json().catch(() => ({})); if (!response.ok) throw new Error(apiError(body, "Status pembayaran belum dapat dicek.")); if (body.localStatus === "paid") onReload(); else setMessage(`Status provider: ${body.status ?? "pending"}`); } catch (reason: unknown) { setMessage(reason instanceof Error ? reason.message : "Status pembayaran belum dapat dicek."); } finally { setBusy(false); }
-  }, [onReload, order.id]);
-  useEffect(() => { if (!attempt || order.status !== "pending_payment") return; let runs = 0; const timer = window.setInterval(() => { runs += 1; if (runs > 4) window.clearInterval(timer); else void reconcile(); }, 15_000); return () => window.clearInterval(timer); }, [attempt, order.status, reconcile]);
-  const amount = order.invoice?.grossAmount ?? order.finalAmount;
-  return <div className="space-y-5"><section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"><div className="flex flex-wrap items-center justify-between gap-3"><div className="flex items-center gap-2 text-sm font-bold text-slate-800"><Clock3 className="size-4 text-slate-400" />{order.phase === "payment_open" ? "Sisa waktu pembayaran" : order.phase === "waiting_payment_window" ? "Menunggu jendela pembayaran dibuka" : "Jendela pembayaran ditutup"}</div>{(order.phase === "payment_open" || order.phase === "waiting_payment_window") && <span className="rounded-full bg-blue-50 px-3 py-1 font-mono text-sm font-bold text-blue-700">{countdown}</span>}</div><div className="mt-4 grid gap-2 text-xs text-slate-500 sm:grid-cols-2"><p><CalendarClock className="mr-1 inline size-3.5" />Buka: <strong className="text-slate-700">{formatDate(order.timeline.paymentOpensAt)}</strong></p><p><CalendarClock className="mr-1 inline size-3.5" />Batas akhir: <strong className="text-slate-700">{formatDate(order.timeline.paymentClosesAt)}</strong></p></div></section><section className="rounded-xl border border-slate-200 bg-white shadow-sm"><header className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-5 py-3"><span className="text-sm font-bold uppercase tracking-wide text-slate-700">Tagihan Final</span><span className="font-mono text-xs text-blue-600">{order.batchDisplayCode}</span></header><div className="space-y-3 p-5"><div className="flex justify-between text-sm"><span>Kuantitas</span><strong>{order.quantity} {order.unit}</strong></div><div className="flex justify-between text-sm"><span>Harga terkunci (Tier {order.lockedTier ?? 1})</span><strong>{order.finalAmount === null ? "—" : money.format(order.finalAmount)}</strong></div><div className="flex justify-between border-t border-dashed pt-3 text-base"><strong>Total Tagihan</strong><strong className="text-xl">{amount === null ? "—" : money.format(amount)}</strong></div><p className="text-xs text-slate-500"><MapPin className="mr-1 inline size-3.5" />{order.pickup?.address ?? "Lokasi pickup mengikuti detail batch."}</p></div></section><section aria-label="Bayar via QRIS" className="rounded-xl border border-slate-200 bg-white p-5 text-center shadow-sm"><p className="text-sm font-bold uppercase tracking-wide text-slate-700">Bayar via QRIS</p>{attempt?.qrCodeUrl ? <img src={attempt.qrCodeUrl} alt="QRIS pembayaran Midtrans" className="mx-auto my-5 size-56 rounded-lg border border-slate-200 object-contain" /> : <div className="mx-auto my-5 grid size-44 place-items-center rounded-lg border border-dashed border-slate-300 text-xs text-slate-400"><QrCode className="size-8" aria-hidden="true" />QRIS belum dibuat</div>}<p className="text-sm text-slate-500">Nominal tagihan</p><p className="text-2xl font-extrabold text-slate-900">{amount === null ? "—" : money.format(amount)}</p><div className="mt-4 flex flex-wrap justify-center gap-2">{order.capabilities.canPay && <button type="button" disabled={busy || order.phase !== "payment_open"} onClick={() => void charge()} className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:bg-slate-300"><CreditCard className="size-4" aria-hidden="true" />{busy ? "Memproses…" : attempt ? "Buat QRIS Baru" : "Bayar via QRIS"}</button>}{attempt && <button type="button" disabled={busy} onClick={() => void reconcile()} className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 disabled:opacity-50"><RefreshCw className="size-4" aria-hidden="true" />Cek status</button>}</div>{message && <p role="alert" className="mt-3 text-xs text-red-600">{message}</p>}</section></div>;
 }
 
 function PickupPanel({ order }: { order: UmkmOrderDetail }) {
@@ -121,9 +87,9 @@ function RefundPanel({ order, onReload }: { order: UmkmOrderDetail; onReload: ()
   return <form onSubmit={submit} className="space-y-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm"><h2 className="font-bold uppercase tracking-wide text-slate-700">Rekening Pengembalian Dana</h2><p className="text-sm text-slate-600">Transfer refund dilakukan manual oleh Admin setelah rekening terverifikasi.</p><label className="block text-sm font-semibold">Nama bank<input required value={bankName} onChange={(event) => setBankName(event.target.value)} className="mt-1 w-full rounded-lg border border-slate-300 p-3" /></label><label className="block text-sm font-semibold">Nomor rekening<input required inputMode="numeric" value={accountNumber} onChange={(event) => setAccountNumber(event.target.value)} className="mt-1 w-full rounded-lg border border-slate-300 p-3" /></label><label className="block text-sm font-semibold">Nama pemilik rekening<input required value={accountHolderName} onChange={(event) => setAccountHolderName(event.target.value)} className="mt-1 w-full rounded-lg border border-slate-300 p-3" /></label>{message && <p role="alert" className="text-sm text-red-600">{message}</p>}<button type="submit" disabled={busy} className="inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white disabled:bg-slate-300">{busy ? "Menyimpan…" : "Simpan Rekening"}</button></form>;
 }
 
-export default function UmkmOrderDetailClient({ orderId, mode }: { orderId: string; mode: UmkmOrderDetailMode }) {
+export default function UmkmOrderDetailClient({ orderId, mode, snapConfig }: { orderId: string; mode: UmkmOrderDetailMode; snapConfig?: MidtransSnapConfig }) {
   const { order, loading, error, reload } = useOrderDetail(orderId);
   if (loading) return <div role="status" className="rounded-xl border border-slate-200 bg-white p-8 text-center text-sm text-slate-500">Memuat detail pesanan…</div>;
   if (error || !order) return <section role="alert" className="rounded-xl border border-red-200 bg-red-50 p-5 text-sm text-red-700">{error || "Pesanan tidak ditemukan."}<button type="button" onClick={reload} className="mt-3 inline-flex items-center gap-2 rounded-lg bg-red-600 px-3 py-2 font-semibold text-white"><RefreshCw className="size-4" />Coba lagi</button></section>;
-  return <div className="mx-auto w-full max-w-4xl space-y-6"><PageHeader order={order} mode={mode} />{mode === "payment" && <PaymentPanel order={order} onReload={reload} />}{mode === "pickup" && <PickupPanel order={order} />}{mode === "complaint" && <><Summary order={order} /><ComplaintPanel order={order} /></>}{mode === "dispute" && <><Summary order={order} /><DisputePanel order={order} /></>}{mode === "rating" && <><Summary order={order} /><RatingPanel order={order} onReload={reload} /></>}{mode === "refund" && <><Summary order={order} /><RefundPanel order={order} onReload={reload} /></>}</div>;
+  return <div className="mx-auto w-full max-w-4xl space-y-6"><PageHeader order={order} mode={mode} />{mode === "payment" && <UmkmPaymentPanel key={`${order.id}-${order.serverTime}`} order={order} onReload={reload} snapConfig={snapConfig} />}{mode === "pickup" && <PickupPanel order={order} />}{mode === "complaint" && <><Summary order={order} /><ComplaintPanel order={order} /></>}{mode === "dispute" && <><Summary order={order} /><DisputePanel order={order} /></>}{mode === "rating" && <><Summary order={order} /><RatingPanel order={order} onReload={reload} /></>}{mode === "refund" && <><Summary order={order} /><RefundPanel order={order} onReload={reload} /></>}</div>;
 }

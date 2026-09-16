@@ -27,6 +27,7 @@ import type {
 import { getComplaintScenario } from "@/lib/dispute/mock-data";
 import PickupQrBlock from "./PickupQrBlock";
 import EscrowCountdown from "@/components/disputes/EscrowCountdown";
+import PaymentPageLink from "@/components/payments/PaymentPageLink";
 
 const ESCROW_WINDOW_MS = 24 * 60 * 60 * 1000;
 
@@ -149,13 +150,13 @@ export default function PickupCredentialClient({
                 {banner.description}
               </p>
               {credential.status === "pending_payment" && (
-                <Link
+                <PaymentPageLink
                   href={`/pesanan/${credential.orderId}/bayar`}
                   className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700"
                 >
                   <CreditCard aria-hidden="true" size={16} />
                   Bayar Sekarang
-                </Link>
+                </PaymentPageLink>
               )}
               {credential.status === "picked_up" && (
                 <PickupCompletedSection credential={credential} />
