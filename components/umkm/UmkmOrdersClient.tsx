@@ -39,7 +39,7 @@ const EMPTY_SUMMARY: OrderSummary = { total: 0, pendingPayment: 0, paidReady: 0,
 
 function capabilitiesFor(order: ClientOrder): OrderCapabilities {
   return order.capabilities ?? {
-    canPay: order.status === "pending_payment",
+    canPay: order.status === "pending_payment" && order.phase === "payment_open",
     canViewPickup: order.status === "paid" || order.status === "picked_up" || order.status === "completed",
     canComplain: order.status === "picked_up",
     canTrackDispute: false,

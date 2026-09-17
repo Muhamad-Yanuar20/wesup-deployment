@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { screen } from "@testing-library/react";
+import { act, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import UmkmPaymentPanel from "@/components/payments/UmkmPaymentPanel";
 import type { UmkmOrderDetail } from "@/lib/orders/api-types";
@@ -60,4 +60,30 @@ describe("UmkmPaymentPanel", () => {
     expect(screen.getByText("Menunggu pembayaran")).toBeInTheDocument();
     expect(screen.getByText("Metode dipilih: QRIS")).toBeInTheDocument();
   });
+  it("refreshes once when the waiting window reaches its opening", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-09-17T01:00:00.000Z"));
+    const onReload = vi.fn();
+    try {
+      render(<UmkmPaymentPanel order={{ ...baseOrder, phase: "waiting_payment_window", paymentAttempt: null }} onReload={onReload} />);
+      act(() => { vi.advanceTimersByTime(1); });
+      expect(onReload).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("does not reload a terminal expired payment page", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-09-17T01:00:00.000Z"));
+    const onReload = vi.fn();
+    try {
+      render(<UmkmPaymentPanel order={{ ...baseOrder, phase: "payment_expired", paymentAttempt: null }} onReload={onReload} />);
+      act(() => { vi.advanceTimersByTime(1); });
+      expect(onReload).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
 });

@@ -32,6 +32,12 @@ describe("UMKM order read model", () => {
     expect(item.unit).toBe("kg");
   });
 
+  it("does not expose the payment CTA after the payment window expires", () => {
+    const item = toUmkmOrderListItem({ ...base, status: "pending_payment" }, "2026-08-28T00:00:00.000Z");
+    expect(item.phase).toBe("payment_expired");
+    expect(item.capabilities.canPay).toBe(false);
+  });
+
   it("does not expose refund-account CTA after a bank account is attached", () => {
     const item = toUmkmOrderListItem({ ...base, status: "refund_pending", refund: { umkm_bank_account_id: "bank-1" } }, "2026-09-02T20:00:00.000Z");
     expect(item.capabilities.canSubmitRefundAccount).toBe(false);

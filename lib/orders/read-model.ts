@@ -87,7 +87,7 @@ function capabilitiesFor(status: string, phase: OrderPresentationPhase, row: Ord
   const hasPickedUp = status === "picked_up" || status === "completed";
   const complaintOpen = hasPickedUp && deadline !== null && Date.parse(now) <= Date.parse(deadline);
   return {
-    canPay: status === "pending_payment" && (payment?.status === undefined || payment.status === "pending"),
+    canPay: phase === "payment_open" && status === "pending_payment" && (payment?.status === undefined || payment.status === "pending"),
     canViewPickup: status === "paid" || hasPickedUp,
     canComplain: complaintOpen && !dispute,
     canTrackDispute: Boolean(dispute),
