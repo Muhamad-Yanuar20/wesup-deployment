@@ -160,8 +160,32 @@ export async function POST(request: Request) {
       await markLog("failed", codeOf(result.error) || "PAYMENT_FINALIZE_FAILED");
       return failure("Pembayaran belum dapat difinalisasi", "PAYMENT_FINALIZE_FAILED", 503);
     }
+    await admin.rpc("record_transaction_log", {
+      p_registration_id: String(payment.registration_id),
+      p_payment_id: String(payment.id),
+      p_payment_attempt_id: null,
+      p_event_type: "payment_status_change",
+      p_from_status: "pending",
+      p_to_status: "paid",
+      p_provider_status: providerStatus,
+      p_gateway_transaction_id: typeof payload.transaction_id === "string" ? payload.transaction_id : null,
+      p_source: "webhook",
+      p_payload: redactedPayload,
+    });
   } else if (["expire", "deny", "cancel"].includes(providerStatus)) {
     await admin.from("payments").update({ status: providerStatus === "expire" ? "expired" : "failed", reconciled_at: new Date().toISOString(), webhook_payload: redactedPayload, updated_at: new Date().toISOString() }).eq("id", String(payment.id));
+    await admin.rpc("record_transaction_log", {
+      p_registration_id: String(payment.registration_id),
+      p_payment_id: String(payment.id),
+      p_payment_attempt_id: null,
+      p_event_type: "gateway_event",
+      p_from_status: String(payment.status),
+      p_to_status: providerStatus === "expire" ? "expired" : "failed",
+      p_provider_status: providerStatus,
+      p_gateway_transaction_id: typeof payload.transaction_id === "string" ? payload.transaction_id : null,
+      p_source: "webhook",
+      p_payload: redactedPayload,
+    });
     await admin.rpc("materialize_umkm_order", { p_registration_id: String(payment.registration_id) });
   }
   await markLog("processed");

@@ -115,6 +115,18 @@ export async function POST(request: Request, { params }: { params: Promise<{ ord
   } else if (isAccepted) {
     const event = await admin.rpc("finalize_payment", { p_registration_id: orderId, p_midtrans_transaction_id: provider.transactionId, p_payload: provider.raw });
     if (event.error) return fail("Pembayaran terdeteksi tetapi belum dapat difinalisasi", "PAYMENT_FINALIZE_FAILED", 503);
+    await admin.rpc("record_transaction_log", {
+      p_registration_id: orderId,
+      p_payment_id: payment.id,
+      p_payment_attempt_id: null,
+      p_event_type: "payment_status_change",
+      p_from_status: payment.status,
+      p_to_status: "paid",
+      p_provider_status: status,
+      p_gateway_transaction_id: provider.transactionId,
+      p_source: "reconcile",
+      p_payload: safeProviderPayload(provider.raw),
+    });
     localStatus = "paid";
     reconciled = true;
   } else if (isExpiredTransaction(status)) {
@@ -124,6 +136,18 @@ export async function POST(request: Request, { params }: { params: Promise<{ ord
     } else {
       await admin.from("payments").update({ status: status === "expire" ? "expired" : "failed", reconciled_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq("id", payment.id);
       await admin.from("payment_attempts").update({ status: status === "expire" ? "expired" : "failed", provider_status: status, updated_at: new Date().toISOString() }).eq("payment_id", payment.id).eq("status", "pending");
+      await admin.rpc("record_transaction_log", {
+        p_registration_id: orderId,
+        p_payment_id: payment.id,
+        p_payment_attempt_id: null,
+        p_event_type: "gateway_event",
+        p_from_status: payment.status,
+        p_to_status: status === "expire" ? "expired" : "failed",
+        p_provider_status: status,
+        p_gateway_transaction_id: provider.transactionId,
+        p_source: "reconcile",
+        p_payload: safeProviderPayload(provider.raw),
+      });
     }
     // Materialization applies the absolute payment-window gate. While the window is open,
     // a denied/expired attempt remains retryable and the aggregate payment stays pending.

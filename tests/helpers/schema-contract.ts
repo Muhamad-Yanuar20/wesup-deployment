@@ -608,6 +608,27 @@ export const EXPECTED_TABLES: Record<string, ExpectedTable> = {
     unique: [],
     references: { admin_id: "profiles" },
   },
+  transaction_logs: {
+    columns: {
+      id: "uuid",
+      registration_id: "uuid",
+      payment_id: "uuid",
+      payment_attempt_id: "uuid",
+      event_type: "text",
+      from_status: "payment_status",
+      to_status: "payment_status",
+      provider_status: "text",
+      gateway_transaction_id: "text",
+      payload: "jsonb",
+      source: "text",
+      actor_id: "uuid",
+      created_at: "timestamptz",
+    },
+    notNull: ["id", "registration_id", "event_type", "payload", "source", "created_at"],
+    unique: [],
+    references: { registration_id: "registrations", payment_id: "payments", payment_attempt_id: "payment_attempts", actor_id: "profiles" },
+    checks: [["event_type"], ["source"]],
+  },
 };
 
 export const CRITICAL_INDEXES = [
@@ -623,6 +644,7 @@ export const CRITICAL_INDEXES = [
   "notifications_user_read_idx",
   "ratings_supplier_idx",
   "admin_audit_logs_admin_created_idx",
+  "transaction_logs_registration_created_idx",
 ];
 
 export const REQUIRED_FUNCTIONS = [
@@ -657,6 +679,7 @@ export const REQUIRED_FUNCTIONS = [
   "materialize_supplier_batch",
   "get_supplier_batch_transaction",
   "apply_midtrans_payment_event",
+  "record_transaction_log",
 ];
 
 export const REQUIRED_TRIGGERS = [

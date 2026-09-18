@@ -78,4 +78,28 @@ describe("OpenAPI document", () => {
       }
     }
   });
+
+  it("documents an absolute serverTime in every billing/countdown payload", () => {
+    const schemas = openApiDocument.components?.schemas ?? {};
+    const schemaProperties = (name: string) => (schemas[name] as { properties?: Record<string, unknown> }).properties ?? {};
+
+    expect(schemaProperties("Order")).toHaveProperty("serverTime");
+    expect(schemaProperties("PaymentAttempt")).toHaveProperty("expiresAt");
+
+    for (const path of [
+      "/api/batches/{id}/progress",
+      "/api/suppliers/batches/{id}/orders",
+      "/api/suppliers/batches/{id}/transactions",
+      "/api/umkm/orders",
+      "/api/umkm/orders/{orderId}/payment/charge",
+      "/api/umkm/orders/{orderId}/payment/reconcile",
+    ]) {
+      for (const [method, operation] of Object.entries(openApiDocument.paths[path] ?? {})) {
+        if (!["get", "post", "put", "patch"].includes(method)) continue;
+        const success = (operation as { responses?: Record<string, { content?: Record<string, { schema?: unknown }> }> }).responses?.["200"] ?? (operation as { responses?: Record<string, { content?: Record<string, { schema?: unknown }> }> }).responses?.["201"];
+        expect(success?.content?.["application/json"]?.schema, `${method} ${path} success schema`).toBeDefined();
+        expect(JSON.stringify(success?.content?.["application/json"]?.schema), `${method} ${path} serverTime`).toContain("serverTime");
+      }
+    }
+  });
 });

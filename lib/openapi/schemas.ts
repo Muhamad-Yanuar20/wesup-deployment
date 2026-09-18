@@ -45,6 +45,7 @@ export const schemas: OpenAPIV3.ComponentsObject["schemas"] = {
       status: { type: "string", example: "pending_payment" },
       quantity: { type: "integer", minimum: 1 },
       total: { type: "integer", minimum: 0, example: 1440000 },
+      serverTime: { type: "string", format: "date-time", description: "Waktu absolut server — sumber countdown, bukan jam perangkat." },
     },
   },
   OrderDetail: {
