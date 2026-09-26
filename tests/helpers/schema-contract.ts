@@ -692,6 +692,7 @@ export const REQUIRED_FUNCTIONS = [
   "get_supplier_batch_transaction",
   "apply_midtrans_payment_event",
   "record_transaction_log",
+  "sum_registered_quantity",
 ];
 
 export const REQUIRED_TRIGGERS = [

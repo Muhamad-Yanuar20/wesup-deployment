@@ -899,6 +899,10 @@ export interface Database {
     };
     Views: Record<string, never>;
     Functions: {
+      sum_registered_quantity: {
+        Args: { p_batch_id: string };
+        Returns: number;
+      };
       is_admin: {
         Args: Record<PropertyKey, never>;
         Returns: boolean;

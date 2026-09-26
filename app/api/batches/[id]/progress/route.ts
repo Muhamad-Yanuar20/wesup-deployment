@@ -26,10 +26,6 @@ interface TierRow {
   price_per_unit: number;
 }
 
-interface RegistrationRow {
-  quantity: number;
-}
-
 interface QueryResult<T> {
   data: T | null;
   error: Error | null;
@@ -46,14 +42,6 @@ interface SingleQuery<T> {
 interface ListQuery<T> {
   select: (columns: string) => {
     eq: (column: string, value: string) => PromiseLike<QueryResult<T[]>>;
-  };
-}
-
-interface RegistrationListQuery {
-  select: (columns: string) => {
-    eq: (column: string, value: string) => {
-      in: (column: string, values: string[]) => PromiseLike<QueryResult<RegistrationRow[]>>;
-    };
   };
 }
 
@@ -123,26 +111,19 @@ export async function GET(
     if (cachedQuantity !== null) {
       registeredQuantity = Math.max(0, cachedQuantity);
     } else {
+      // Redis is the fast path and stays authoritative when present. Only on a
+      // miss do we reconcile from the durable table, and that reconciliation is
+      // a single aggregate rather than a full row fetch reduced in JS.
+      // The status filter lives inside the RPC so it tracks cut_off_batch.
       const adminClient = getAdminClient();
-      const registrationsQuery = adminClient.from(
-        "registrations",
-      ) as unknown as RegistrationListQuery;
-      const { data: registrations, error: registrationsError } =
-        await registrationsQuery
-          .select("quantity")
-          .eq("batch_id", id)
-          .in("status", ["registered", "pending_payment"]);
-      if (registrationsError) throw registrationsError;
-
-      registeredQuantity = (registrations ?? []).reduce(
-        (total, registration) => {
-          const quantity = Number(registration.quantity);
-          return Number.isSafeInteger(quantity) && quantity > 0
-            ? total + quantity
-            : total;
-        },
-        0,
+      const { data: total, error: totalError } = await adminClient.rpc(
+        "sum_registered_quantity",
+        { p_batch_id: id },
       );
+      if (totalError) throw totalError;
+
+      const reconciled = Number(total ?? 0);
+      registeredQuantity = Number.isFinite(reconciled) && reconciled > 0 ? reconciled : 0;
       await restoreVolumeCounter(id, registeredQuantity);
     }
   } catch {

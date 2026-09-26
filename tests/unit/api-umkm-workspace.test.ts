@@ -43,9 +43,21 @@ function mockClient(options: {
       };
     }
     if (table === "registrations") {
+      // The orders route awaits .eq() directly; the dashboard route chains .in()
+      // onto it. The fake has to support both shapes.
       return {
         select: vi.fn(() => ({
-          eq: vi.fn(async () => ({ data: options.registrations ?? [], error: null })),
+          eq: vi.fn(() => {
+            const all = options.registrations ?? [];
+            const direct = Promise.resolve({ data: all, error: null }) as unknown as PromiseLike<{ data: unknown[]; error: null }> & {
+              in: (column: string, values: string[]) => PromiseLike<{ data: unknown[]; error: null }>;
+            };
+            direct.in = vi.fn(async (_column: string, values: string[]) => ({
+              data: all.filter((row) => values.includes(String(row.status))),
+              error: null,
+            }));
+            return direct;
+          }),
         })),
       };
     }
@@ -55,7 +67,11 @@ function mockClient(options: {
           eq: vi.fn((column: string) => {
             if (column === "user_id") {
               return {
-                is: vi.fn(async () => ({ data: (options.notifications ?? []).filter((row) => !row.read_at), error: null })),
+                is: vi.fn(async () => ({
+                  data: null,
+                  count: (options.notifications ?? []).filter((row) => !row.read_at).length,
+                  error: null,
+                })),
                 order: vi.fn(async () => ({ data: options.notifications ?? [], error: null })),
               };
             }
