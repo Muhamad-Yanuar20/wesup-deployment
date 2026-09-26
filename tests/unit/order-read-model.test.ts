@@ -68,4 +68,22 @@ describe("UMKM order read model", () => {
     expect(detail.paymentAttempt?.id).toBe("attempt-active");
     expect(detail.paymentAttempt?.paymentMethod).toBe("qris");
   });
+
+  it("keeps the complaint window open 24h after pickup even past the pickup tolerance", () => {
+    const item = toUmkmOrderListItem(base, "2026-09-03T01:00:00.000Z");
+    expect(item.timeline.pickupDeadlineAt).toBe("2026-09-02T12:00:00.000Z");
+    expect(item.timeline.complaintDeadlineAt).toBe("2026-09-03T08:00:00.000Z");
+    expect(item.capabilities.canComplain).toBe(true);
+  });
+
+  it("closes the complaint window once 24h after confirmed pickup has passed", () => {
+    const item = toUmkmOrderListItem(base, "2026-09-03T08:00:01.000Z");
+    expect(item.capabilities.canComplain).toBe(false);
+  });
+
+  it("does not expose the complaint CTA when the escrow pickup timestamp is unknown", () => {
+    const item = toUmkmOrderListItem({ ...base, escrow: null }, "2026-09-02T06:00:00.000Z");
+    expect(item.timeline.complaintDeadlineAt).toBeNull();
+    expect(item.capabilities.canComplain).toBe(false);
+  });
 });

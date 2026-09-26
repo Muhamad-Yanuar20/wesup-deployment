@@ -71,11 +71,13 @@ function asPhase(status: string, timeline: BatchTimeline | null, serverNow: stri
   return deriveOrderPhase(status as Parameters<typeof deriveOrderPhase>[0], timeline, serverNow) as OrderPhase;
 }
 
-function getDeadlines(timeline: BatchTimeline | null): UmkmOrderListItem["timeline"] {
+function getDeadlines(timeline: BatchTimeline | null, pickupConfirmedAt: string | null): UmkmOrderListItem["timeline"] {
   if (!timeline) return { registrationClosesAt: null, paymentOpensAt: null, paymentClosesAt: null, estimatedReadyAt: null, pickupDeadlineAt: null, complaintDeadlineAt: null };
   const ready = Date.parse(timeline.estimated_ready_at);
   const pickupDeadlineAt = Number.isFinite(ready) ? new Date(ready + 12 * 60 * 60 * 1000).toISOString() : null;
-  return { registrationClosesAt: timeline.registration_closes_at, paymentOpensAt: timeline.effective_payment_opens_at ?? timeline.payment_opens_at, paymentClosesAt: timeline.effective_payment_closes_at ?? timeline.payment_closes_at, estimatedReadyAt: timeline.estimated_ready_at, pickupDeadlineAt, complaintDeadlineAt: null };
+  const pickupAt = pickupConfirmedAt ? Date.parse(pickupConfirmedAt) : Number.NaN;
+  const complaintDeadlineAt = Number.isFinite(pickupAt) ? new Date(pickupAt + 24 * 60 * 60 * 1000).toISOString() : null;
+  return { registrationClosesAt: timeline.registration_closes_at, paymentOpensAt: timeline.effective_payment_opens_at ?? timeline.payment_opens_at, paymentClosesAt: timeline.effective_payment_closes_at ?? timeline.payment_closes_at, estimatedReadyAt: timeline.estimated_ready_at, pickupDeadlineAt, complaintDeadlineAt };
 }
 
 function capabilitiesFor(status: string, phase: OrderPresentationPhase, row: OrderReadRow, now: string): OrderCapabilities {
@@ -83,9 +85,10 @@ function capabilitiesFor(status: string, phase: OrderPresentationPhase, row: Ord
   const dispute = firstObject(row.dispute);
   const rating = firstObject(row.rating);
   const refund = firstObject(row.refund);
-  const deadline = getDeadlines(timelineFromBatch(firstObject(row.batch))).pickupDeadlineAt;
+  const pickupConfirmedAt = stringValue(firstObject(row.escrow)?.pickup_confirmed_at);
+  const complaintDeadlineAt = getDeadlines(timelineFromBatch(firstObject(row.batch)), pickupConfirmedAt).complaintDeadlineAt;
   const hasPickedUp = status === "picked_up" || status === "completed";
-  const complaintOpen = hasPickedUp && deadline !== null && Date.parse(now) <= Date.parse(deadline);
+  const complaintOpen = hasPickedUp && complaintDeadlineAt !== null && Date.parse(now) <= Date.parse(complaintDeadlineAt);
   return {
     canPay: phase === "payment_open" && status === "pending_payment" && (payment?.status === undefined || payment.status === "pending"),
     canViewPickup: status === "paid" || hasPickedUp,
@@ -106,6 +109,7 @@ export function toUmkmOrderListItem(row: OrderReadRow, serverNow: string): UmkmO
   const status = row.status as UmkmOrderListItem["status"];
   const phase = asPhase(status, timeline, serverNow);
   const supplier = firstObject(batch?.supplier ?? batch?.profile);
+  const pickupConfirmedAt = stringValue(firstObject(row.escrow)?.pickup_confirmed_at);
   const item = {
     id: row.id,
     batchId: row.batch_id,
@@ -120,15 +124,11 @@ export function toUmkmOrderListItem(row: OrderReadRow, serverNow: string): UmkmO
     finalAmount: moneyNumber(row.final_amount),
     lockedTier: row.locked_tier_number ?? null,
     createdAt: row.created_at,
-    timeline: getDeadlines(timeline),
+    timeline: getDeadlines(timeline, pickupConfirmedAt),
     capabilities: capabilitiesFor(status, phase, row, serverNow),
     paymentStatus: stringValue(firstObject(row.payment)?.status),
-    pickupConfirmedAt: stringValue(firstObject(row.escrow)?.pickup_confirmed_at),
+    pickupConfirmedAt,
   } satisfies UmkmOrderListItem;
-  if (item.timeline.pickupDeadlineAt && item.pickupConfirmedAt) {
-    item.timeline.complaintDeadlineAt = new Date(Date.parse(item.pickupConfirmedAt) + 24 * 60 * 60 * 1000).toISOString();
-    item.capabilities.canComplain = (status === "picked_up" || status === "completed") && Date.parse(serverNow) <= Date.parse(item.timeline.complaintDeadlineAt) && !row.dispute;
-  }
   return item;
 }
 
