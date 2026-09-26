@@ -94,17 +94,25 @@ describe.skipIf(noDbUrl)("live get_supplier_finance scan consolidation", () => {
   });
 
   afterAll(async () => {
+    const failures: string[] = [];
     if (session) {
       const ids = [supplierId, emptySupplierId].filter((id): id is string => Boolean(id));
-      await session
-        .query(`delete from public.supplier_ledger_entries where supplier_id = any($1::uuid[])`, [ids])
-        .catch(() => undefined);
-      await session
-        .query(`delete from auth.users where id = any($1::uuid[])`, [ids])
-        .catch(() => undefined);
+      // Swallowing a teardown failure hides a leak that the next live suite then
+      // trips over, so each statement is checked and reported at the end.
+      for (const [label, text] of [
+        ["supplier_ledger_entries", `delete from public.supplier_ledger_entries where supplier_id = any($1::uuid[])`],
+        ["auth.users", `delete from auth.users where id = any($1::uuid[])`],
+      ] as Array<[string, string]>) {
+        try {
+          await session.query(text, [ids]);
+        } catch (error) {
+          failures.push(`${label}: ${(error as Error).message}`);
+        }
+      }
       session.release();
     }
     await pool?.end();
+    expect(failures, "live teardown must fully remove its fixtures").toEqual([]);
   });
 
   it("agrees with an independently computed grouped aggregate", async () => {
