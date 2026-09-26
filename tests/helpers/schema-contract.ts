@@ -645,6 +645,18 @@ export const CRITICAL_INDEXES = [
   "ratings_supplier_idx",
   "admin_audit_logs_admin_created_idx",
   "transaction_logs_registration_created_idx",
+  "batches_title_trgm_idx",
+  "batches_description_trgm_idx",
+  "batches_status_created_idx",
+  "notifications_user_created_idx",
+  "notifications_user_unread_idx",
+  "admin_audit_logs_created_idx",
+  "refund_requests_requested_idx",
+  "refund_requests_status_requested_idx",
+  "escrow_holds_pending_release_idx",
+  "supplier_ledger_entries_supplier_bucket_idx",
+  "supplier_payouts_supplier_created_idx",
+  "supplier_bank_accounts_supplier_primary_idx",
 ];
 
 export const REQUIRED_FUNCTIONS = [

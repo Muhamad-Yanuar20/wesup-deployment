@@ -171,6 +171,26 @@ ow()` is within `[registration_opens_at, registration_closes_at)`. Both the gate
 
 Grant model: EXECUTE on all of the above is revoked from `public`/`anon` and granted only to `authenticated`; `write_audit_log` additionally requires the caller to be an admin. `admin_audit_logs` keeps FORCE RLS with client access read-only (SELECT for admins); the INSERT policy was dropped so client-side rows cannot be forged.
 
+### Module 16 — Read-Path Indexes (migration 0021)
+
+Additive indexes that back the list, count and search endpoints. Each one serves a sort/filter that already exists in application or RPC code; none change query semantics, only the plan the planner may choose.
+
+| Index | Serves |
+| --- | --- |
+| `batches_title_trgm_idx`, `batches_description_trgm_idx` | `search_batches()` unanchored `ILIKE '%…%'`, which no btree can serve |
+| `batches_status_created_idx` | `search_batches()` status filter + `created_at desc` tiebreak when no coordinates are given |
+| `notifications_user_created_idx` | Notification centre list, newest first |
+| `notifications_user_unread_idx` | Unread badge count and bulk mark-read |
+| `admin_audit_logs_created_idx` | Admin audit list, which may omit the `admin_id` filter that `admin_audit_logs_admin_created_idx` needs |
+| `refund_requests_requested_idx` | Refund queue ordering by `requested_at` |
+| `refund_requests_status_requested_idx` | Refund queue narrowed by `status` |
+| `escrow_holds_pending_release_idx` | Escrow auto-release sweep, partial on `status = 'held'` |
+| `supplier_ledger_entries_supplier_bucket_idx` | `get_supplier_finance()` per-bucket balance sums |
+| `supplier_payouts_supplier_created_idx` | `get_supplier_finance()` payout history ordering |
+| `supplier_bank_accounts_supplier_primary_idx` | `get_supplier_finance()` account list, primary-first |
+
+`pg_trgm` is enabled by this migration. The indexes are plain `create index` (not `concurrently`, no `include (...)` columns) so the file stays valid inside the transactional migration runner and inside the `pgsql-ast-parser` contract test in `tests/migrations/schema.test.ts`.
+
 ## 3. How Tables Relate — The Transaction Spine
 
 ```
