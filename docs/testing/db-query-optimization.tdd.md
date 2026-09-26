@@ -106,5 +106,5 @@ The live suite shares one database. This work added a test that creates *publish
 
 - `get_supplier_batch_transaction` is refactored and live-verified, but the admin **write** routes that consume its capability flags were not re-tested against the new body; they are covered only through the function's own tests.
 - Migrations were applied with Node `pg` in explicit transactions (`ssl.rejectUnauthorized: false`) because neither the `supabase` CLI nor `psql` is available here. Whether `supabase_migrations.schema_migrations` recorded all of them is **unverified**.
-- The global order-list `counts`/`summary` contract still has no dedicated regression test. It is unchanged by this work, but that is untested rather than proven.
+- The global order-list `counts`/`summary` contract is now covered by `tests/unit/api-umkm-orders-global-counts.test.ts` (10 tests), added after the fact and verified to fail if `counts` is derived from the filtered set rather than every order.
 - Notification reads are indexed but still unbounded; pagination there is an API-contract decision, out of scope here.
