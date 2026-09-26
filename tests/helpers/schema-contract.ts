@@ -692,6 +692,9 @@ export const REQUIRED_FUNCTIONS = [
   "get_supplier_batch_transaction",
   "apply_midtrans_payment_event",
   "record_transaction_log",
+  "apply_hit_and_run_escalation",
+  "lazy_lift_expired_suspension",
+  "reconcile_batch_payment_window",
   "sum_registered_quantity",
   "materialize_umkm_orders",
 ];
