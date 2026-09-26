@@ -15,6 +15,22 @@ export const dynamic = "force-dynamic";
 
 interface UmkmProfileCheck { user_id: string; business_name: string | null; address: string | null; latitude: number | string | null; longitude: number | string | null }
 
+interface RegistrationBatchRow {
+  status: string;
+  capacity_quantity?: number | null;
+  min_quantity?: number | null;
+  unit?: string | null;
+  batch_timeline?: BatchTimeline | BatchTimeline[] | null;
+  batch_tiers?: Tier[] | null;
+}
+
+/** PostgREST returns embedded to-one relations as either a bare object or a
+ * single-element array depending on cardinality inference. */
+function firstObject<T>(value: T | T[] | null | undefined): T | null {
+  if (value === null || value === undefined) return null;
+  return Array.isArray(value) ? (value[0] ?? null) : value;
+}
+
 interface RegistrationBody {
   batchId?: unknown;
   quantity?: unknown;
@@ -73,29 +89,31 @@ export async function POST(req: Request) {
   const consentLng =
     typeof body.consentLng === "number" ? body.consentLng : null;
 
+  // One read of the batch and everything the gate needs from it. This is the
+  // hottest correctness path in the app, so the check order below is
+  // unchanged: missing batch -> 404, missing timeline -> 500, window -> 403,
+  // missing tiers -> 500. The database trigger
+  // prevent_registration_outside_window remains the TOCTOU backstop regardless
+  // of how many rows this reads.
   const batchQuery = client.from("batches") as never as {
     select: (cols: string) => {
-      eq: (col: string, v: string) => { single: () => PromiseLike<{ data: { status: string } | null; error: Error | null }> };
+      eq: (col: string, v: string) => { single: () => PromiseLike<{ data: RegistrationBatchRow | null; error: Error | null }> };
     };
   };
   const { data: batch, error: batchErr } = await batchQuery
-    .select("status,capacity_quantity,min_quantity,unit")
+    .select(
+      "status,capacity_quantity,min_quantity,unit," +
+        "batch_timeline(registration_opens_at,registration_closes_at,payment_opens_at,payment_closes_at,estimated_ready_at,effective_payment_opens_at,effective_payment_closes_at)," +
+        "batch_tiers(tier_number,min_volume,max_volume,price_per_unit)",
+    )
     .eq("id", batchId)
     .single();
   if (batchErr || !batch) {
     return NextResponse.json({ error: "Batch not found" }, { status: 404 });
   }
 
-  const timelineQuery = client.from("batch_timeline") as never as {
-    select: (cols: string) => {
-      eq: (col: string, v: string) => { single: () => PromiseLike<{ data: BatchTimeline | null; error: Error | null }> };
-    };
-  };
-  const { data: timeline, error: timelineErr } = await timelineQuery
-    .select("*")
-    .eq("batch_id", batchId)
-    .single();
-  if (timelineErr || !timeline) {
+  const timeline = firstObject(batch.batch_timeline);
+  if (!timeline) {
     return NextResponse.json({ error: "Batch timeline not found" }, { status: 500 });
   }
 
@@ -114,15 +132,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: message }, { status: 403 });
   }
 
-  const tiersQuery = client.from("batch_tiers") as never as {
-    select: (cols: string) => {
-      eq: (col: string, v: string) => PromiseLike<{ data: Tier[] | null; error: Error | null }>;
-    };
-  };
-  const { data: tiers, error: tiersErr } = await tiersQuery
-    .select("tier_number,min_volume,max_volume,price_per_unit")
-    .eq("batch_id", batchId);
-  if (tiersErr || !tiers || tiers.length === 0) {
+  const tiers = batch.batch_tiers ?? [];
+  if (tiers.length === 0) {
     return NextResponse.json({ error: "Batch tiers not found" }, { status: 500 });
   }
   const hasUnboundedTier = tiers.some((tier) => tier.max_volume === null);

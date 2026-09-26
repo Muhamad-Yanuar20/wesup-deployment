@@ -66,13 +66,21 @@ function mockClient(options: {
         };
       }
       if (table === "batches") {
-        return { select: vi.fn(() => ({ eq: vi.fn(() => ({ single: vi.fn(async () => ({ data: { status: "published" }, error: null })) })) })) };
-      }
-      if (table === "batch_timeline") {
-        return { select: vi.fn(() => ({ eq: vi.fn(() => ({ single: vi.fn(async () => ({ data: TIMELINE, error: null })) })) })) };
-      }
-      if (table === "batch_tiers") {
-        return { select: vi.fn(() => ({ eq: vi.fn(async () => ({ data: [{ tier_number: 1, min_volume: 1, max_volume: null, price_per_unit: 1000 }], error: null })) })) };
+        // One nested read: batch + timeline + tiers together.
+        return {
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              single: vi.fn(async () => ({
+                data: {
+                  status: "published",
+                  batch_timeline: TIMELINE,
+                  batch_tiers: [{ tier_number: 1, min_volume: 1, max_volume: null, price_per_unit: 1000 }],
+                },
+                error: null,
+              })),
+            })),
+          })),
+        };
       }
       if (table === "registrations") {
         return {
