@@ -1245,6 +1245,10 @@ export interface Database {
         Args: { p_registration_id: string };
         Returns: RegistrationStatus;
       };
+      materialize_umkm_orders: {
+        Args: { p_registration_ids: string[] };
+        Returns: number;
+      };
       get_supplier_dashboard_summary: {
         Args: Record<PropertyKey, never>;
         Returns: {

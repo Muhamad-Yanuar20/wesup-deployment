@@ -693,6 +693,7 @@ export const REQUIRED_FUNCTIONS = [
   "apply_midtrans_payment_event",
   "record_transaction_log",
   "sum_registered_quantity",
+  "materialize_umkm_orders",
 ];
 
 export const REQUIRED_TRIGGERS = [
