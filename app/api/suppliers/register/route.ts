@@ -38,6 +38,8 @@ export async function POST(request: Request) {
     const result = await registerSupplier(parsed.fields);
     return NextResponse.json(result, { status: 201 });
   } catch (error) {
+    console.error(">>> ERROR REGISTER SUPPLIER DETAIL:", error);
+
     if (isSupplierEmailRateLimitError(error)) {
       return NextResponse.json(
         { error: "Kuota email konfirmasi sedang penuh. Coba lagi nanti." },
