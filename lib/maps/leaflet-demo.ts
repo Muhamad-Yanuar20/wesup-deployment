@@ -1,22 +1,12 @@
-export interface MapCoordinate {
-  lat: number;
-  lng: number;
-}
+import { BANDUNG_SERVICE_CENTER, isValidGeoCoordinate, type GeoCoordinate } from "@/lib/geo/service-center";
 
-export const BANDUNG_CENTER: Readonly<MapCoordinate> = {
-  lat: -6.9175,
-  lng: 107.6191,
-};
+export type MapCoordinate = GeoCoordinate;
+
+/** Compatibility export for the demo map; the source of truth is canonical. */
+export const BANDUNG_CENTER: Readonly<MapCoordinate> = BANDUNG_SERVICE_CENTER;
 
 export function isValidCoordinate(coordinate: MapCoordinate): boolean {
-  return (
-    Number.isFinite(coordinate.lat) &&
-    Number.isFinite(coordinate.lng) &&
-    coordinate.lat >= -90 &&
-    coordinate.lat <= 90 &&
-    coordinate.lng >= -180 &&
-    coordinate.lng <= 180
-  );
+  return isValidGeoCoordinate(coordinate);
 }
 
 export function formatCoordinate(coordinate: MapCoordinate): string {

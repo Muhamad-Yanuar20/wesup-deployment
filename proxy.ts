@@ -1,7 +1,9 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import { NextRequest } from "next/server";
 import type { Database } from "@/types/database";
+import { buildContentSecurityPolicy, generateNonce, shouldAllowMidtransCsp } from "@/lib/security/csp";
+import { authorizeDocsRequest, isDocsPath } from "@/lib/docs/basic-auth";
 
 export async function updateSession(
   request: NextRequest,
@@ -45,11 +47,41 @@ export async function updateSession(
 }
 
 export default async function proxy(request: NextRequest) {
-  return updateSession(request);
+  if (isDocsPath(request.nextUrl.pathname)) {
+    const denied = authorizeDocsRequest(request);
+    if (denied) return denied;
+  }
+
+  const nonce = generateNonce();
+  const allowMidtrans = shouldAllowMidtransCsp(request.nextUrl.pathname);
+  const { policy } = buildContentSecurityPolicy(nonce, { allowMidtrans });
+
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-nonce", nonce);
+  requestHeaders.set("Content-Security-Policy", policy);
+
+  const requestWithCsp = new NextRequest(request.url, {
+    method: request.method,
+    headers: requestHeaders,
+  });
+
+  const refreshed = await updateSession(requestWithCsp);
+  const response = refreshed ?? NextResponse.next({ request: requestWithCsp });
+  response.headers.set("Content-Security-Policy", policy);
+
+  return response;
 }
 
 export const config = {
   matcher: [
-    "/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)",
+    "/docs/:path*",
+    {
+      source:
+        "/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)",
+      missing: [
+        { type: "header", key: "next-router-prefetch" },
+        { type: "header", key: "purpose", value: "prefetch" },
+      ],
+    },
   ],
 };

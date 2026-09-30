@@ -1,0 +1,4 @@
+# Normalize all text files to LF in the repo and in the working tree.
+# The repo previously carried a mix of CRLF and LF files, which produced
+# whole-file diffs (notably a 24k-line diff in package-lock.json).
+* text=auto eol=lf

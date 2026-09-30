@@ -1,5 +1,13 @@
 import { NextResponse } from "next/server";
-import { getAdminClient } from "@/lib/supabase/admin";
+import {
+  requireRole,
+  toAuthResponse,
+  type AuthClient,
+} from "@/lib/supabase/auth";
+import { getServerClient } from "@/lib/supabase/server";
+import { isUuid, parseJsonBody } from "@/lib/admin/validation";
+
+export const dynamic = "force-dynamic";
 
 export async function POST(
   request: Request,
@@ -19,7 +27,6 @@ export async function POST(
 
     const supabase = getAdminClient();
 
-    // 1. Simpan alasan takedown & update status batch menjadi 'takedown'
     const { error: batchError } = await supabase
       .from("batches")
       .update({
@@ -30,7 +37,6 @@ export async function POST(
       .eq("id", id);
 
     if (batchError) {
-      // Fallback jika kolom takedown_reason belum tersedia
       await supabase
         .from("batches")
         .update({
@@ -40,7 +46,6 @@ export async function POST(
         .eq("id", id);
     }
 
-    // 2. Ambil semua registrasi UMKM pada batch ini yang berstatus 'paid'
     const { data: paidRegistrations } = await supabase
       .from("registrations")
       .select("id, final_amount")
@@ -50,7 +55,6 @@ export async function POST(
     if (paidRegistrations && paidRegistrations.length > 0) {
       const regIds = paidRegistrations.map((r) => r.id);
 
-      // Update status registrasi menjadi refund_pending
       await supabase
         .from("registrations")
         .update({
@@ -59,7 +63,6 @@ export async function POST(
         })
         .in("id", regIds);
 
-      // Insert ke refund_requests sesuai skema tabel murni (tanpa atribut reason yang tidak ada di tabel)
       const refundEntries = paidRegistrations.map((r) => ({
         registration_id: r.id,
         batch_id: id,
@@ -85,8 +88,27 @@ export async function POST(
   } catch (err: any) {
     console.error("Takedown API Error:", err);
     return NextResponse.json(
-      { error: err.message || "Gagal melakukan takedown katalog." },
-      { status: 500 }
+      { error: "Takedown reason is required" },
+      { status: 400 },
     );
   }
+
+  const client = await getServerClient();
+  try {
+    await requireRole(client as unknown as AuthClient, ["admin"]);
+  } catch (err) {
+    return toAuthResponse(err);
+  }
+
+  const { error } = await client.rpc("takedown_batch", {
+    p_batch_id: id,
+    p_reason: body.reason.trim(),
+    p_ip_address: req.headers.get("x-forwarded-for") ?? null,
+    p_user_agent: req.headers.get("user-agent") ?? null,
+  });
+  if (error) {
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+
+  return NextResponse.json({ ok: true });
 }

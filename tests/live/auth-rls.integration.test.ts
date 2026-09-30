@@ -163,6 +163,18 @@ describe.skipIf(noDbUrl || noRestUrl)("live auth & RLS hardening", () => {
       expect(res.status).toBeLessThan(300);
     });
 
+    it("rejects UMKM registration RPC for authenticated users", async () => {
+      const res = await rest("/rest/v1/rpc/create_umkm_registration", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          p_user_id: uid,
+          p_latitude: -6.914744,
+          p_longitude: 107.60981,
+        }),
+      });
+      expect(res.status).toBeGreaterThanOrEqual(400);
+    });
     it("rejects approve_supplier rpc for non-admin", async () => {
       const res = await rest("/rest/v1/rpc/approve_supplier", {
         method: "POST",
@@ -191,8 +203,63 @@ describe.skipIf(noDbUrl || noRestUrl)("live auth & RLS hardening", () => {
       expect(res.status).toBeGreaterThanOrEqual(400);
     });
 
+    it("keeps umkm_bank_accounts owner-readable without direct writes", async () => {
+      await pool!.query(
+        `insert into public.umkm_bank_accounts (umkm_id, bank_name, account_number, account_holder_name)
+         values ($1, 'Test Bank', '1234567890', 'Rls Tester')`,
+        [uid],
+      );
+      const select = await rest("/rest/v1/umkm_bank_accounts?umkm_id=eq." + uid + "&select=id,bank_name");
+      expect(select.status).toBe(200);
+      const rows = (await select.json()) as Array<{ id: string; bank_name: string }>;
+      expect(rows).toHaveLength(1);
+      expect(rows[0].bank_name).toBe("Test Bank");
+
+      const insert = await rest("/rest/v1/umkm_bank_accounts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Prefer: "return=minimal" },
+        body: JSON.stringify({ umkm_id: uid, bank_name: "Test Bank 2", account_number: "0987654321", account_holder_name: "Rls Tester" }),
+      });
+      expect(insert.status).toBeGreaterThanOrEqual(400);
+
+      const update = await rest("/rest/v1/umkm_bank_accounts?umkm_id=eq." + uid, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Prefer: "return=minimal" },
+        body: JSON.stringify({ bank_name: "Mutated" }),
+      });
+      // RLS-filtered PATCHes match zero rows and still answer 204; the
+      // meaningful assertion is that the stored value is untouched.
+      expect(update.status).toBeLessThan(500);
+      const after = await rest("/rest/v1/umkm_bank_accounts?umkm_id=eq." + uid + "&select=bank_name");
+      const afterRows = (await after.json()) as Array<{ bank_name: string }>;
+      expect(afterRows).toHaveLength(1);
+      expect(afterRows[0].bank_name).toBe("Test Bank");
+    });
+
+    it("keeps supplier_bank_accounts owner-readable only for approved suppliers", async () => {
+      await pool!.query(
+        `insert into public.supplier_bank_accounts (supplier_id, bank_name, account_number, account_holder_name, is_primary)
+         values ($1, 'Test Bank', '4567890123', 'Rls Tester', true)`,
+        [uid],
+      );
+      const select = await rest("/rest/v1/supplier_bank_accounts?supplier_id=eq." + uid + "&select=id");
+      expect(select.status).toBe(200);
+      const rows = (await select.json()) as Array<{ id: string }>;
+      expect(rows).toHaveLength(0);
+
+      const update = await rest("/rest/v1/supplier_bank_accounts?supplier_id=eq." + uid, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Prefer: "return=minimal" },
+        body: JSON.stringify({ bank_name: "Mutated" }),
+      });
+      // Non-approved suppliers match zero rows under RLS (204 no-op).
+      expect(update.status).toBeLessThan(500);
+      const after = await rest("/rest/v1/supplier_bank_accounts?supplier_id=eq." + uid + "&select=bank_name");
+      expect(((await after.json()) as unknown[])).toHaveLength(0);
+    });
+
     it.skipIf(!freshUser?.uid)(
-      "promotes fresh user via pool insert of approved supplier profile",
+      "does not promote a fresh UMKM when supplier profile is approved",
       async () => {
         const nik = `rls-${Math.random().toString(36).slice(2, 14)}`;
         await pool!.query(
@@ -206,7 +273,9 @@ describe.skipIf(noDbUrl || noRestUrl)("live auth & RLS hardening", () => {
           [freshUser!.uid],
         );
         expect(res.rows).toHaveLength(1);
-        expect(res.rows[0].role).toBe("supplier");
+        // Supplier identity is assigned during supplier registration.
+        // Approval changes capability only and must never promote an existing UMKM.
+        expect(res.rows[0].role).toBe("umkm");
       },
     );
 

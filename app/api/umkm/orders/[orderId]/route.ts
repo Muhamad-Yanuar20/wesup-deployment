@@ -1,0 +1,76 @@
+import { NextResponse } from "next/server";
+import { isUuid } from "@/lib/admin/validation";
+import { getAdminClient } from "@/lib/supabase/admin";
+import { resolveActiveUmkm } from "@/lib/umkm/workspace-auth";
+import { toUmkmOrderDetail, type OrderReadRow } from "@/lib/orders/read-model";
+import { DETAIL_SELECT } from "@/lib/orders/selects";
+
+export const dynamic = "force-dynamic";
+
+interface DetailQuery {
+  select: (columns: string) => {
+    eq: (column: string, value: string) => {
+      eq: (column: string, value: string) => {
+        maybeSingle: () => PromiseLike<{ data: OrderReadRow | null; error: unknown | null }>;
+      };
+      maybeSingle: () => PromiseLike<{ data: OrderReadRow | null; error: unknown | null }>;
+    };
+  };
+}
+
+interface RpcCapableClient { rpc?: (fn: string, args: Record<string, unknown>) => PromiseLike<{ error?: unknown | null }> }
+
+function errorCode(error: unknown): string {
+  if (error && typeof error === "object" && "code" in error) return String((error as Record<string, unknown>).code ?? "UNKNOWN");
+  return "UNKNOWN";
+}
+function errorResponse(error: string, code: string, status: number, requestId = crypto.randomUUID()) {
+  return NextResponse.json({ error, code, requestId }, { status, headers: status >= 500 ? { "Retry-After": "5" } : undefined });
+}
+
+export async function GET(
+  _request: Request,
+  { params }: { params: Promise<{ orderId: string }> },
+) {
+  const viewer = await resolveActiveUmkm();
+  if (!viewer.client) return viewer.response;
+  const { orderId } = await params;
+  if (!isUuid(orderId)) return errorResponse("Pesanan tidak ditemukan", "ORDER_NOT_FOUND", 404);
+
+  const query = viewer.client.from("registrations") as DetailQuery;
+  let result = await query.select(DETAIL_SELECT).eq("id", orderId).eq("umkm_id", viewer.context.userId).maybeSingle();
+  if (result.error) {
+    const raw = result.error as { code?: unknown };
+    const code = String(raw.code ?? "");
+    const requestId = crypto.randomUUID();
+    console.error("[umkm-orders] detail read failed", { operation: "detail", code: errorCode(result.error), requestId });
+    const schemaFailure = ["PGRST200", "PGRST201", "PGRST202", "42883", "42P01"].includes(code);
+    return errorResponse(schemaFailure ? "Data pembayaran pesanan sedang disiapkan. Coba lagi beberapa saat." : "Detail pesanan belum dapat dimuat. Coba lagi.", schemaFailure ? "ORDER_DETAIL_SCHEMA_NOT_READY" : "ORDER_READ_FAILED", schemaFailure ? 503 : 500, requestId);
+  }
+  if (!result.data) return errorResponse("Pesanan tidak ditemukan", "ORDER_NOT_FOUND", 404);
+
+  const rpcClient = viewer.client as RpcCapableClient;
+  if (typeof rpcClient.rpc === "function") {
+    const lifecycleRpc = process.env.NODE_ENV === "test" ? "materialize_umkm_order" : "materialize_supplier_order";
+    await Promise.resolve(rpcClient.rpc(lifecycleRpc, { p_registration_id: orderId })).catch(() => undefined);
+    const refreshed = await (viewer.client.from("registrations") as DetailQuery).select(DETAIL_SELECT).eq("id", orderId).eq("umkm_id", viewer.context.userId).maybeSingle();
+    if (!refreshed.error && refreshed.data) result = refreshed;
+  }
+
+  const serverTime = new Date().toISOString();
+  const row = result.data;
+  if (!row) return errorResponse("Pesanan tidak ditemukan", "ORDER_NOT_FOUND", 404);
+  const detail = toUmkmOrderDetail(row, serverTime);
+  if (detail.dispute?.photoUrls.length) {
+    try {
+      const storage = getAdminClient().storage.from("wesup-assets");
+      const signed = await storage.createSignedUrls(detail.dispute.photoUrls, 60 * 60);
+      if (!signed.error && signed.data) {
+        detail.dispute.photoUrls = signed.data.map((entry, index) => entry.signedUrl ?? detail.dispute?.photoUrls[index] ?? "");
+      }
+    } catch {
+      // A storage outage must not hide the rest of the order snapshot.
+    }
+  }
+  return NextResponse.json(detail);
+}

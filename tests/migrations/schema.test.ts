@@ -28,11 +28,14 @@ interface ParsedSchema {
 
 function stripUnsupported(sql: string): string {
   return sql
+    .replace(/(ALTER\s+TYPE\s+(?:public\.)?[a-zA-Z0-9_]+\s+ADD\s+VALUE)\s+IF\s+NOT\s+EXISTS/gi, "$1")
     .replace(/--[^\n]*/g, "")
     .replace(/CREATE\s+(?:OR\s+REPLACE\s+)?FUNCTION[\s\S]*?\$\$\s*;/gi, "")
     .replace(/CREATE\s+TRIGGER[^;]+;/gi, "")
     .replace(/CREATE\s+POLICY[^;]+;/gi, "")
     .replace(/DROP\s+POLICY[^;]+;/gi, "")
+    .replace(/DROP\s+TRIGGER[^;]+;/gi, "")
+    .replace(/DROP\s+FUNCTION[^;]+;/gi, "")
     .replace(/GRANT\s+[^;]+;/gi, "")
     .replace(/REVOKE\s+[^;]+;/gi, "")
     .replace(/ALTER\s+TABLE[^;]*ENABLE\s+ROW\s+LEVEL\s+SECURITY[^;]*;/gi, "")
@@ -49,6 +52,53 @@ function collectRefs(expr: unknown, acc: Set<string>): void {
   }
 }
 
+interface ParseTable {
+  columns: Map<string, ColumnDef>;
+  checks: unknown[];
+  tableUniques: string[][];
+}
+
+function ingestColumn(table: ParseTable, rawCol: unknown): void {
+  const col = rawCol as {
+    kind?: string;
+    name: { name: string };
+    dataType?: { name: string; kind?: string; arrayOf?: { name: string } };
+    constraints?: Array<{
+      type: string;
+      foreignTable?: { schema?: string; name: string };
+      expr?: unknown;
+      columns?: Array<{ name: string }>;
+    }>;
+  };
+  if (col.kind !== "column") return;
+  const dataType = col.dataType as
+    | { name: string; kind?: string; arrayOf?: { name: string } }
+    | undefined;
+  const typeName =
+    dataType?.kind === "array" ? "array" : (dataType?.name ?? "unknown");
+  const constraints = (col.constraints ?? []) as Array<{
+    type: string;
+    foreignTable?: { schema?: string; name: string };
+    expr?: unknown;
+    columns?: Array<{ name: string }>;
+  }>;
+  const ref = constraints.find((c) => c.type === "reference")?.foreignTable;
+  table.columns.set(col.name.name, {
+    type: typeName,
+    notNull: constraints.some(
+      (c) => c.type === "not null" || c.type === "primary key",
+    ),
+    references: ref
+      ? ref.schema === "public"
+        ? ref.name
+        : `${ref.schema}.${ref.name}`
+      : undefined,
+    unique: constraints.some((c) => c.type === "unique"),
+  });
+  const check = constraints.find((c) => c.type === "check");
+  if (check) table.checks.push(check);
+}
+
 function loadSchema(): ParsedSchema {
   const files = listMigrationFiles();
   const schema: ParsedSchema = {
@@ -58,6 +108,13 @@ function loadSchema(): ParsedSchema {
   };
   for (const file of files) {
     const sql = readFileSync(join(MIGRATIONS_DIR, file), "utf8");
+    const addValueRe =
+      /ALTER\s+TYPE\s+(?:public\.)?([a-zA-Z0-9_]+)\s+ADD\s+VALUE\s+(?:IF\s+NOT\s+EXISTS\s+)?'([^']+)'/gi;
+    for (const m of sql.matchAll(addValueRe)) {
+      const values = schema.enums.get(m[1]) ?? [];
+      if (!values.includes(m[2])) values.push(m[2]);
+      schema.enums.set(m[1], values);
+    }
     const clean = stripUnsupported(sql);
     if (clean.trim().length === 0) continue;
     const ast = parse(clean);
@@ -70,35 +127,7 @@ function loadSchema(): ParsedSchema {
           tableUniques: [] as string[][],
         };
         for (const rawCol of stmt.columns) {
-          if (rawCol.kind !== "column") continue;
-          const col = rawCol;
-          const dataType = col.dataType as
-            | { name: string; kind?: string; arrayOf?: { name: string } }
-            | undefined;
-          const typeName =
-            dataType?.kind === "array" ? "array" : (dataType?.name ?? "unknown");
-          const constraints = (col.constraints ?? []) as Array<{
-            type: string;
-            foreignTable?: { schema?: string; name: string };
-            expr?: unknown;
-            columns?: Array<{ name: string }>;
-          }>;
-          const ref = constraints.find((c) => c.type === "reference")
-            ?.foreignTable;
-          table.columns.set(col.name.name, {
-            type: typeName,
-            notNull: constraints.some(
-              (c) => c.type === "not null" || c.type === "primary key",
-            ),
-            references: ref
-              ? ref.schema === "public"
-                ? ref.name
-                : `${ref.schema}.${ref.name}`
-              : undefined,
-            unique: constraints.some((c) => c.type === "unique"),
-          });
-          const check = constraints.find((c) => c.type === "check");
-          if (check) table.checks.push(check);
+          ingestColumn(table, rawCol);
         }
         const tableConstraints = (stmt.constraints ?? []) as Array<{
           type: string;
@@ -117,6 +146,18 @@ function loadSchema(): ParsedSchema {
       if (stmt.type === "create enum") {
         schema.enums.set(stmt.name.name, stmt.values.map((v) => v.value));
       }
+      if (stmt.type === "alter table") {
+        const name = stmt.table.name;
+        const table = schema.tables.get(name) ?? {
+          columns: new Map<string, ColumnDef>(),
+          checks: [] as unknown[],
+          tableUniques: [] as string[][],
+        };
+        for (const change of stmt.changes ?? []) {
+          if (change.type === "add column") ingestColumn(table, change.column);
+        }
+        schema.tables.set(name, table);
+      }
       if (stmt.type === "create index" && stmt.indexName && stmt.expressions) {
         schema.indexes.set(
           stmt.indexName.name,
@@ -126,8 +167,28 @@ function loadSchema(): ParsedSchema {
         );
       }
     }
+    applyAlterColumns(sql, schema);
   }
   return schema;
+}
+
+function applyAlterColumns(sql: string, schema: ParsedSchema): void {
+  const addColumnRe = /ALTER\s+TABLE\s+(?:public\.)?([a-zA-Z0-9_]+)\s+ADD\s+COLUMN\s+(?:IF\s+NOT\s+EXISTS\s+)?([a-zA-Z0-9_]+)\s+([a-zA-Z0-9_.]+)([^;]*);/gi;
+  for (const match of sql.matchAll(addColumnRe)) {
+    const table = schema.tables.get(match[1]);
+    if (!table) continue;
+    const tail = match[4] ?? "";
+    table.columns.set(match[2], {
+      type: match[3].includes("[]") ? "array" : match[3].split(".").at(-1) ?? match[3],
+      notNull: /\bNOT\s+NULL\b/i.test(tail),
+      unique: /\bUNIQUE\b/i.test(tail),
+    });
+  }
+  const dropNotNullRe = /ALTER\s+TABLE\s+(?:public\.)?([a-zA-Z0-9_]+)\s+ALTER\s+COLUMN\s+([a-zA-Z0-9_]+)\s+DROP\s+NOT\s+NULL\s*;/gi;
+  for (const match of sql.matchAll(dropNotNullRe)) {
+    const column = schema.tables.get(match[1])?.columns.get(match[2]);
+    if (column) column.notNull = false;
+  }
 }
 
 function listMigrationFiles(): string[] {

@@ -1,12 +1,17 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database";
 import { POST as login } from "@/app/api/auth/login/route";
 import { getServerClient } from "@/lib/supabase/server";
+import { enforceRateLimit } from "@/lib/rate-limit";
 
 vi.mock("@/lib/supabase/server", () => ({
   getServerClient: vi.fn(),
+}));
+
+vi.mock("@/lib/rate-limit", () => ({
+  enforceRateLimit: vi.fn(),
 }));
 
 const mockGetServerClient = vi.mocked(getServerClient);
@@ -78,6 +83,22 @@ function mockLoginClient(options: LoginClientOptions = {}) {
 describe("POST /api/auth/login role-aware contract", () => {
   beforeEach(() => {
     mockGetServerClient.mockReset();
+    vi.mocked(enforceRateLimit).mockReset();
+    vi.mocked(enforceRateLimit).mockResolvedValue(null);
+  });
+
+  it("returns 429 when the rate limiter blocks the request", async () => {
+    const { auth } = mockLoginClient();
+    vi.mocked(enforceRateLimit).mockResolvedValueOnce(
+      NextResponse.json({ error: "rate_limited" }, { status: 429 }),
+    );
+    const res = await login(postJson({
+      email: "buyer@example.com",
+      password: "password123",
+      role: "umkm",
+    }));
+    expect(res.status).toBe(429);
+    expect(auth.signInWithPassword).not.toHaveBeenCalled();
   });
 
   it("returns the signed-in user and active profile", async () => {
@@ -93,7 +114,7 @@ describe("POST /api/auth/login role-aware contract", () => {
     await expect(res.json()).resolves.toEqual({
       user: { email: "buyer@example.com" },
       profile: { role: "umkm", status: "active", fullName: "Budi UMKM" },
-      redirectTo: "/",
+      redirectTo: "/umkm",
     });
     expect(auth.signInWithPassword).toHaveBeenCalledWith({
       email: "buyer@example.com",
@@ -226,6 +247,7 @@ describe("POST /api/auth/login role-aware contract", () => {
   it("allows an approved supplier whose profile role is supplier", async () => {
     const { auth, supplierMaybeSingle } = mockLoginClient({
       profile: { role: "supplier", status: "active", full_name: "Sari Supplier" },
+      supplierVerification: "approved",
     });
     const res = await login(postJson({
       email: "supplier@example.com",
@@ -236,9 +258,9 @@ describe("POST /api/auth/login role-aware contract", () => {
     await expect(res.json()).resolves.toEqual({
       user: { email: "buyer@example.com" },
       profile: { role: "supplier", status: "active", fullName: "Sari Supplier" },
-      redirectTo: "/",
+      redirectTo: "/supplier",
     });
-    expect(supplierMaybeSingle).not.toHaveBeenCalled();
+    expect(supplierMaybeSingle).toHaveBeenCalledTimes(1);
     expect(auth.signOut).not.toHaveBeenCalled();
   });
 });

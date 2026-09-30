@@ -1,59 +1,71 @@
 import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabase/admin";
+import {
+  requireRole,
+  toAuthResponse,
+  type AuthClient,
+  type AuthContext,
+} from "@/lib/supabase/auth";
+import { getServerClient } from "@/lib/supabase/server";
+import { enforceRateLimit } from "@/lib/rate-limit";
+import { isUuid, parseJsonBody } from "@/lib/admin/validation";
+
+export const dynamic = "force-dynamic";
+
+const WINNERS = ["supplier", "umkm"] as const;
 
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  try {
-    const { id } = await params;
-    const body = await request.json().catch(() => ({}));
-    const { decision, notes } = body; // decision: 'resolved_refund' | 'resolved_payout' | 'rejected'
-
-    if (!decision || !["resolved_refund", "resolved_payout", "rejected"].includes(decision)) {
-      return NextResponse.json(
-        { error: "Keputusan resolusi tidak valid." },
-        { status: 400 }
-      );
-    }
-
-    const supabase = getAdminClient();
-
-    const { data: dispute, error: disputeError } = await supabase
-      .from("disputes")
-      .select("id, registration_id, status")
-      .eq("id", id)
-      .single();
-
-    if (disputeError || !dispute) {
-      return NextResponse.json(
-        { error: "Data sengketa tidak ditemukan." },
-        { status: 404 }
-      );
-    }
-
-  // Tentukan kandidat nilai status (misal 'resolved_refund' vs 'refund')
-  let primaryStatus = decision;
-  let fallbackStatus = decision;
-
-  if (decision === "resolved_refund") fallbackStatus = "refund";
-  if (decision === "resolved_payout") fallbackStatus = "payout";
-  if (decision === "rejected") fallbackStatus = "resolved_rejected";
-
-  const updatePayload: any = {
-    status: primaryStatus,
-    updated_at: new Date().toISOString(),
-  };
-
-  if (notes) {
-    updatePayload.resolution_notes = notes;
+  const { id } = await params;
+  if (!isUuid(id)) {
+    return NextResponse.json({ error: "Invalid dispute id" }, { status: 400 });
   }
 
-    // 1. Coba update status utama
-    let { error: updateDisputeError } = await supabase
-      .from("disputes")
-      .update(updatePayload as any)
-      .eq("id", id);
+  const body = await parseJsonBody(req);
+  if (
+    !body ||
+    typeof body.winner !== "string" ||
+    !WINNERS.includes(body.winner as (typeof WINNERS)[number])
+  ) {
+    return NextResponse.json(
+      { error: "winner must be supplier or umkm" },
+      { status: 400 },
+    );
+  }
+  const notes = body.notes === undefined ? null : body.notes;
+  if (notes !== null && typeof notes !== "string") {
+    return NextResponse.json(
+      { error: "notes must be a string" },
+      { status: 400 },
+    );
+  }
+
+  const client = await getServerClient();
+  let authCtx: AuthContext;
+  try {
+    authCtx = await requireRole(client as unknown as AuthClient, ["admin"]);
+  } catch (err) {
+    return toAuthResponse(err);
+  }
+
+  const limited = await enforceRateLimit(req, "admin", authCtx.userId);
+  if (limited) return limited;
+
+  const { error } = await client.rpc("resolve_dispute", {
+    p_dispute_id: id,
+    p_winner: body.winner,
+    p_notes: notes,
+    p_ip_address: req.headers.get("x-forwarded-for") ?? null,
+    p_user_agent: req.headers.get("user-agent") ?? null,
+  });
+  if (error) {
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+
+  return NextResponse.json({ ok: true });
 
     // Jika gagal karena Enum mismatch, coba fallback status
     if (updateDisputeError && updateDisputeError.message.includes("enum")) {

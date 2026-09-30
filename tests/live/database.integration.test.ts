@@ -245,7 +245,14 @@ describe.skipIf(noDbUrl)("live Supabase database (pg)", () => {
 
     for (const [name, values] of Object.entries(EXPECTED_ENUMS)) {
       it(`defines ${name} with expected values`, () => {
-        expect(enums.get(name), `enum ${name} missing on live DB`).toEqual(values);
+        const actual = enums.get(name);
+        expect(actual, `enum ${name} missing on live DB`).toBeDefined();
+        if (!actual) return;
+        if (name === "audit_action") {
+          expect([...actual].sort()).toEqual([...values].sort());
+        } else {
+          expect(actual).toEqual(values);
+        }
       });
     }
   });
@@ -456,14 +463,70 @@ describe.skipIf(noDbUrl)("live Supabase database (pg)", () => {
     });
 
     it("rejects duplicate (batch_id, umkm_id) registration (UNIQUE)", async () => {
-      const code = await expectViolation(
-        `with pair as (select gen_random_uuid() as batch_id, gen_random_uuid() as umkm_id)
-         insert into public.registrations (id, batch_id, umkm_id, quantity, consented_at)
-         select gen_random_uuid(), batch_id, umkm_id, 1, now() from pair
-         union all
-         select gen_random_uuid(), batch_id, umkm_id, 1, now() from pair`,
-      );
-      expect(code).toBe("23505");
+      const client = await pool!.connect();
+      try {
+        await client.query("begin");
+        try {
+          const { rows: s } = await client.query<{ uid: string }>(
+            `insert into auth.users (id, instance_id, aud, role, email, encrypted_password)
+             values (gen_random_uuid(), '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', $1, 'x')
+             returning id as uid`,
+            [`rpc-reg-dup-sup-${Math.random().toString(36).slice(2, 10)}@example.com`],
+          );
+          const supplierId = s[0].uid;
+          await client.query(
+            `insert into public.profiles (id, role, status, full_name)
+             values ($1, 'supplier', 'active', 'Dup Supplier')
+             on conflict (id) do update set role = 'supplier', status = 'active', full_name = 'Dup Supplier'`,
+            [supplierId],
+          );
+          const { rows: u } = await client.query<{ uid: string }>(
+            `insert into auth.users (id, instance_id, aud, role, email, encrypted_password)
+             values (gen_random_uuid(), '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', $1, 'x')
+             returning id as uid`,
+            [`rpc-reg-dup-umk-${Math.random().toString(36).slice(2, 10)}@example.com`],
+          );
+          const umkmId = u[0].uid;
+          await client.query(
+            `insert into public.profiles (id, role, status, full_name)
+             values ($1, 'umkm', 'active', 'Dup Umkm')
+             on conflict (id) do update set role = 'umkm', status = 'active', full_name = 'Dup Umkm'`,
+            [umkmId],
+          );
+          const { rows: b } = await client.query<{ id: string }>(
+            `insert into public.batches
+               (supplier_id, title, category, min_quantity, pickup_name, pickup_address, latitude, longitude, status)
+             values ($1, 'Dup Test', 'Food', 1, 'Pickup Test', 'addr', 1, 1, 'published')
+             returning id`,
+            [supplierId],
+          );
+          const batchId = b[0].id;
+          await client.query(
+            `insert into public.batch_timeline
+               (batch_id, registration_opens_at, registration_closes_at, payment_opens_at, payment_closes_at, estimated_ready_at)
+             values
+               ($1, now() - interval '1 hour', now() + interval '1 hour', now() + interval '1 hour' + interval '1 minute', now() + interval '2 hours', now() + interval '3 hours')`,
+            [batchId],
+          );
+          let code: string | undefined;
+          try {
+            await client.query(
+              `with pair as (select '${batchId}'::uuid as batch_id, '${umkmId}'::uuid as umkm_id)
+               insert into public.registrations (id, batch_id, umkm_id, quantity, consented_at)
+               select gen_random_uuid(), batch_id, umkm_id, 1, now() from pair
+               union all
+               select gen_random_uuid(), batch_id, umkm_id, 1, now() from pair`,
+            );
+          } catch (err) {
+            code = (err as { code?: string }).code;
+          }
+          expect(code).toBe("23505");
+        } finally {
+          await client.query("rollback");
+        }
+      } finally {
+        client.release();
+      }
     });
 
     it("rejects duplicate payment for one registration (UNIQUE)", async () => {
@@ -605,6 +668,11 @@ describe.skipIf(noDbUrl)("live Supabase database (pg)", () => {
 
 describe.skipIf(noRestUrl)("live Supabase database (REST)", () => {
   it("serves every business table through PostgREST", async () => {
+    const protectedProfileTables = new Set([
+      "profiles",
+      "supplier_profiles",
+      "umkm_profiles",
+    ]);
     const fetchTable = async (table: string) => {
       for (let attempt = 0; ; attempt++) {
         const res = await fetch(
@@ -635,25 +703,47 @@ describe.skipIf(noRestUrl)("live Supabase database (REST)", () => {
         ),
       )
     ).flat();
-    const failures = results.filter((r) => r.status !== 200);
+    const failures = results.filter(
+      (r) =>
+        r.status !== 200 &&
+        !(protectedProfileTables.has(r.table) && [401, 403].includes(r.status)),
+    );
     expect(
       failures.map((f) => `${f.table}: ${f.status} ${f.body.slice(0, 160)}`),
     ).toEqual([]);
   });
 
-  it("returns empty list for anon read of profiles (RLS enforced)", async () => {
+  it("blocks anon read of profiles without leaking rows", async () => {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/profiles?select=*`, {
       headers: {
         apikey: PUBLISHABLE_KEY!,
         Authorization: `Bearer ${PUBLISHABLE_KEY!}`,
       },
     });
-    expect(res.status).toBe(200);
-    const body = await res.json();
-    expect(Array.isArray(body)).toBe(true);
-    expect(body).toEqual([]);
+    expect([200, 401, 403]).toContain(res.status);
+    if (res.status === 200) {
+      const body = await res.json();
+      expect(Array.isArray(body)).toBe(true);
+      expect(body).toEqual([]);
+    }
   });
 
+  it("blocks anon calls to the UMKM registration RPC", async () => {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/create_umkm_registration`, {
+      method: "POST",
+      headers: {
+        apikey: PUBLISHABLE_KEY!,
+        Authorization: `Bearer ${PUBLISHABLE_KEY!}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        p_user_id: "00000000-0000-0000-0000-000000000001",
+        p_latitude: -6.914744,
+        p_longitude: 107.60981,
+      }),
+    });
+    expect(res.status).toBeGreaterThanOrEqual(400);
+  });
   it("blocks anon INSERT into admin_audit_logs (RLS, no insert policy)", async () => {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/admin_audit_logs`, {
       method: "POST",

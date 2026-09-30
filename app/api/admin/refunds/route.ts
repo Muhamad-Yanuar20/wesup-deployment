@@ -1,77 +1,100 @@
 import { NextResponse } from "next/server";
-import { getAdminClient } from "@/lib/supabase/admin";
+import { NextResponse } from "next/server";
+import {
+  requireRole,
+  toAuthResponse,
+  type AuthClient,
+  type AuthContext,
+} from "@/lib/supabase/auth";
+import { getServerClient } from "@/lib/supabase/server";
+import { enforceRateLimit } from "@/lib/rate-limit";
+import { parsePositiveInt } from "@/lib/admin/validation";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
-  try {
-    const supabase = getAdminClient();
+const REFUND_STATUSES = [
+  "pending",
+  "waiting_bank_account",
+  "processing",
+  "completed",
+  "failed",
+] as const;
 
-    // Query registrasi berstatus refund_pending langsung gabung dengan batch & profile
-    const { data: regData, error: regError } = await supabase
-      .from("registrations")
-      .select(`
-        id,
-        final_amount,
-        status,
-        updated_at,
-        batches (
-          id,
-          title,
-          takedown_reason
-        ),
-        profiles:umkm_id (
-          full_name,
-          email
-        )
-      `)
-      .eq("status", "refund_pending")
-      .order("updated_at", { ascending: false });
+interface RefundsQuery {
+  eq: (column: string, value: string) => RefundsQuery;
+  order: (
+    column: string,
+    options?: { ascending?: boolean },
+  ) => {
+    range: (from: number, to: number) => PromiseLike<{
+      data: unknown[] | null;
+      error: Error | { message: string } | null;
+    }>;
+  };
+}
 
-    if (!regError && regData && regData.length > 0) {
-      const formatted = regData.map((r: any) => ({
-        id: r.id,
-        umkmName: r.profiles?.full_name || "UMKM Korban",
-        email: r.profiles?.email || "—",
-        batchTitle: r.batches?.title || "Katalog Takedown",
-        amount: r.final_amount,
-        reason: r.batches?.takedown_reason || "Pelanggaran Ketentuan Katalog (Takedown)",
-        status: "pending",
-        createdAt: r.updated_at,
-      }));
+export async function GET(req: Request) {
+  const url = new URL(req.url);
 
-      return NextResponse.json(formatted);
-    }
-
-    // Secondary Check: Query dari refund_requests jika registrasi tidak ditemukan
-    const { data: refundRequestsData } = await supabase
-      .from("refund_requests")
-      .select(`
-        id,
-        amount,
-        status,
-        created_at,
-        registrations (
-          umkm_id,
-          batches ( title, takedown_reason ),
-          profiles:umkm_id ( full_name, email )
-        )
-      `)
-      .order("created_at", { ascending: false });
-
-    const refunds = (refundRequestsData || []).map((item: any) => ({
-      id: item.id,
-      umkmName: item.registrations?.profiles?.full_name || "UMKM Korban",
-      email: item.registrations?.profiles?.email || "—",
-      batchTitle: item.registrations?.batches?.title || "Katalog Takedown",
-      amount: item.amount,
-      reason: item.registrations?.batches?.takedown_reason || "Pelanggaran Ketentuan Katalog",
-      status: item.status,
-      createdAt: item.created_at,
-    }));
-
-    return NextResponse.json(refunds);
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message || "Internal Server Error" }, { status: 500 });
+  const limitParam = url.searchParams.get("limit");
+  const offsetParam = url.searchParams.get("offset");
+  const limit = limitParam === null ? 50 : parsePositiveInt(limitParam);
+  const offset = offsetParam === null ? 0 : parsePositiveInt(offsetParam);
+  if (limit === null || offset === null || limit < 1 || limit > 100) {
+    return NextResponse.json(
+      { error: "limit must be an integer between 1 and 100" },
+      { status: 400 },
+    );
   }
+  if (offset < 0) {
+    return NextResponse.json(
+      { error: "offset must be a non-negative integer" },
+      { status: 400 },
+    );
+  }
+
+  const status = url.searchParams.get("status");
+  if (status !== null && !(REFUND_STATUSES as readonly string[]).includes(status)) {
+    return NextResponse.json({ error: "invalid status" }, { status: 400 });
+  }
+
+  const client = await getServerClient();
+  let authCtx: AuthContext;
+  try {
+    authCtx = await requireRole(client as unknown as AuthClient, ["admin"]);
+  } catch (err) {
+    return toAuthResponse(err);
+  }
+
+  const limited = await enforceRateLimit(req, "admin", authCtx.userId);
+  if (limited) return limited;
+
+  let query = client
+    .from("refund_requests")
+    .select(
+      "*, batch:batches(id,title,category,takedown_reason), registration:registrations(id,status,quantity,umkm:profiles(full_name,email))",
+    ) as unknown as RefundsQuery;
+  if (status) {
+    query = query.eq("status", status);
+  }
+
+  const { data, error } = await query
+    .order("requested_at", { ascending: false })
+    .range(offset, offset + limit - 1);
+  if (error && typeof error === "object" && "message" in error) {
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+
+  const refunds = (data ?? []).map((item: any) => ({
+    id: item.id,
+    umkmName: item.registration?.umkm?.full_name || "UMKM Korban",
+    email: item.registration?.umkm?.email || "—",
+    batchTitle: item.batch?.title || "Katalog Takedown",
+    amount: item.amount,
+    reason: item.batch?.takedown_reason || "Pelanggaran Ketentuan Katalog",
+    status: item.status,
+    createdAt: item.requested_at,
+  }));
+
+  return NextResponse.json(refunds);
 }
