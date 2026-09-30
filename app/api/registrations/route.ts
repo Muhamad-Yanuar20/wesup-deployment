@@ -122,6 +122,17 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Batch timeline not found" }, { status: 500 });
   }
 
+  if (batch.transaction_policy_version === 2) {
+    if (body.consentAccepted !== true) return NextResponse.json({ error: "Setujui lokasi, harga maksimum, dan jadwal sebelum ikut pesanan." }, { status: 400 });
+    try {
+      const joined = await joinVersionedBatch(client as unknown as TransactionRpcClient, { batchId, quantity, capacity: batch.capacity_quantity ?? 0, consentLat, consentLng,consentSnapshot: body.consentSnapshot && typeof body.consentSnapshot==='object'&&!Array.isArray(body.consentSnapshot)?body.consentSnapshot as Record<string,unknown>:{} });
+      return NextResponse.json({ ok: true, ...joined,serverTime:new Date().toISOString(),phase:joined.phase??"waiting_payment_window",deadlineAt:joined.deadlineAt??timeline.registration_closes_at,capabilities:joined.capabilities??{canWithdraw:!joined.batchClosed,canPay:!!joined.batchClosed},blockedReason:joined.blockedReason??(joined.batchClosed?null:"Pembayaran belum dibuka.") }, { status: 201 });
+    } catch (error) {
+      if (isBatchCapacityError(error)) return NextResponse.json({ error: "Kapasitas penawaran tidak mencukupi.", code: "BATCH_CAPACITY_EXCEEDED" }, { status: 409 });
+      return transactionError(error);
+    }
+  }
+
   const gate = evaluateRegistrationWindow(
     timeline,
     new Date().toISOString(),
@@ -135,17 +146,6 @@ export async function POST(req: Request) {
           ? "Pendaftaran telah ditutup"
           : "Penawaran tidak tersedia";
     return NextResponse.json({ error: message }, { status: 403 });
-  }
-
-  if (batch.transaction_policy_version === 2) {
-    if (body.consentAccepted !== true) return NextResponse.json({ error: "Setujui lokasi, harga maksimum, dan jadwal sebelum ikut pesanan." }, { status: 400 });
-    try {
-      const joined = await joinVersionedBatch(client as unknown as TransactionRpcClient, { batchId, quantity, capacity: batch.capacity_quantity ?? 0, consentLat, consentLng,consentSnapshot: body.consentSnapshot && typeof body.consentSnapshot==='object'&&!Array.isArray(body.consentSnapshot)?body.consentSnapshot as Record<string,unknown>:{} });
-      return NextResponse.json({ ok: true, ...joined,serverTime:new Date().toISOString(),phase:"waiting_payment_window",deadlineAt:timeline.registration_closes_at,capabilities:{canWithdraw:true,canPay:false},blockedReason:"Pembayaran dibuka pada batas ikut." }, { status: 201 });
-    } catch (error) {
-      if (isBatchCapacityError(error)) return NextResponse.json({ error: "Kapasitas penawaran tidak mencukupi.", code: "BATCH_CAPACITY_EXCEEDED" }, { status: 409 });
-      return transactionError(error);
-    }
   }
 
   const tiers = batch.batch_tiers ?? [];

@@ -1,5 +1,8 @@
 import { defineConfig, devices } from "@playwright/test";
 
+const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3100";
+const port = new URL(baseURL).port || "3100";
+
 // E2E for the supplier dashboard flow. Uses Playwright's bundled Chromium
 // (installed via `npx playwright install chromium`) — the `msedge` channel is
 // not usable on WSL without a system Edge, so keep the default browser.
@@ -14,14 +17,14 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   reporter: [["list"]],
   use: {
-    baseURL: "http://localhost:3100",
+    baseURL,
     headless: true,
     trace: "retain-on-failure",
   },
   projects: [{ name: "Supplier Flow", use: { ...devices["Desktop Chrome"] } }],
   webServer: {
-    command: "npm run dev -- --port 3100",
-    url: "http://localhost:3100",
+    command: `npm run dev -- --port ${port}`,
+    url: baseURL,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
   },

@@ -200,9 +200,9 @@ export function mapSupplierBatchRow(row: SupplierBatchRpcRow): SupplierBatchDeta
     tiers,
     timeline: {
       registrationOpensAt: string(row.registration_opens_at, ""),
-      registrationClosesAt: string(row.registration_closes_at, ""),
-      paymentOpensAt: string(row.payment_opens_at, ""),
-      paymentClosesAt: string(row.payment_closes_at, ""),
+      registrationClosesAt: string(row.registration_closed_at ?? row.registration_closes_at, ""),
+      paymentOpensAt: string(row.effective_payment_opens_at ?? row.payment_opens_at, ""),
+      paymentClosesAt: string(row.effective_payment_closes_at ?? row.payment_closes_at, ""),
       estimatedReadyAt: string(row.estimated_ready_at, ""),
       effectivePaymentOpensAt: typeof row.effective_payment_opens_at === "string" ? row.effective_payment_opens_at : null,
       effectivePaymentClosesAt: typeof row.effective_payment_closes_at === "string" ? row.effective_payment_closes_at : null,

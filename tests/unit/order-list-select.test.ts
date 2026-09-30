@@ -4,7 +4,7 @@ import { DETAIL_SELECT, ORDER_SELECT } from "@/lib/orders/selects";
 describe("order list projection", () => {
   it("keeps every field the list item and its action capabilities read", () => {
     // scalars rendered on the card
-    expect(ORDER_SELECT).toContain("id,batch_id,quantity,status,final_amount,locked_tier_number,created_at");
+    expect(ORDER_SELECT).toContain("id,batch_id,quantity,status,final_amount,locked_tier_number,locked_price_per_unit,created_at");
     // batch + timeline drive phase, deadlines and the next action
     expect(ORDER_SELECT).toContain("batch:batches(");
     expect(ORDER_SELECT).toContain("batch_timeline(");
@@ -28,7 +28,7 @@ describe("order list projection", () => {
   });
 
   it("reads minimal attempt status so lists never invite duplicate payments",()=>{
-    expect(ORDER_SELECT).toContain("payment_attempts(id,status,provider_status,payment_type,created_at)");
+    expect(ORDER_SELECT).toContain("payment_attempts(id,status,provider_status,provider_checked_at,payment_type,created_at)");
     expect(ORDER_SELECT).not.toContain("provider_order_id");
     expect(ORDER_SELECT).not.toContain("qr_code_url");
   });

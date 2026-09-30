@@ -1,0 +1,18 @@
+{
+  "dateWib": "2026-10-01",
+  "target": "http://localhost:3000",
+  "supabaseProject": "woxgghuoeljagnkldqtf",
+  "provider": "Midtrans sandbox",
+  "migration": "20260930211221_payment_clarity_capacity_opening",
+  "backupSha256": "bd93d64b1fd84ff04dec93d0f3c860d381ded6cd0c42df6d4144af094c4f0402",
+  "vitest": {"command": "npm test", "filesPassed": 188, "testsPassed": 1697, "failed": 0, "includesLiveIntegration": true},
+  "sqlReplay": {"command": "node scripts/test-transaction-ux-sql.mjs", "migrationReplayPassed": true, "lifecycleScenariosPassed": 19},
+  "playwrightGuards": {"baseUrl": "http://localhost:3000", "spec": "tests/e2e/transaction-ux-v2.spec.ts", "passed": 4},
+  "authenticatedBrowserEvidence": {"mockedApi": false, "viewport": "390x844", "files": ["offer-join.json", "payment.json", "pending.json", "expired.json", "race.json", "late-payment.json", "safety.json", "suspended.json", "final-browser.json"]},
+  "scopedCoverage": {"files": ["lib/payments/progress.ts", "lib/payments/provider-validation.ts"], "statements": 93.93, "branches": 81.39, "functions": 100, "lines": 95.83},
+  "lint": {"errors": 0, "warnings": 199},
+  "productionBuild": {"passed": true, "includesSchemaPreflight": true, "includesTypecheck": true},
+  "secretsExcluded": true,
+  "prdCommitted": false,
+  "cronAdded": false
+}

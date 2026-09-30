@@ -45,10 +45,25 @@ const payload={title:"Beras",category:"Sayur & Buah",description:"Beras segar",u
 const complete=await query("select public.save_supplier_offer_draft($1,$2,4::smallint,1) item",[draftId,payload]);
 await db.exec(`insert into storage.objects(bucket_id,name) values('wesup-public','products/${draftId}/test.webp');`);
 const published=await query("select public.publish_supplier_offer($1,$2,'https://example.test/storage/v1/object/public/wesup-public/products/30000000-0000-4000-8000-000000000001/test.webp') id",[draftId,complete.item.revision]);
-const batchId=published.id;
-assert.equal((await query("select transaction_policy_version from public.batches where id=$1",[batchId])).transaction_policy_version,2);
-assert.equal((await query("select public.publish_supplier_offer($1,$2,'https://example.test/storage/v1/object/public/wesup-public/products/30000000-0000-4000-8000-000000000001/test.webp') id",[draftId,complete.item.revision])).id,batchId);
+const capacityBatchId=published.id;
+assert.equal((await query("select transaction_policy_version from public.batches where id=$1",[capacityBatchId])).transaction_policy_version,2);
+assert.equal((await query("select public.publish_supplier_offer($1,$2,'https://example.test/storage/v1/object/public/wesup-public/products/30000000-0000-4000-8000-000000000001/test.webp') id",[draftId,complete.item.revision])).id,capacityBatchId);
 console.log("PASS: atomic idempotent publication");
+await asUser(buyer);
+const capacityConsent=(await query("select jsonb_build_object('accepted',true,'paymentOpeningPolicy','capacity_or_cutoff','maximumUnitPrice',10000,'unit','kg','pickupAddress','Bandung','paymentOpensAt',payment_opens_at,'paymentClosesAt',payment_closes_at,'pickupStartsAt',estimated_ready_at,'pickupEndsAt',pickup_ends_at) terms from public.batch_timeline where batch_id=$1",[capacityBatchId])).terms;
+const full=(await query("select public.join_batch_v2($1,10,$2,null,null) item",[capacityBatchId,capacityConsent])).item;
+assert.equal(full.batchClosed,true);assert.equal(full.phase,'payment_open');
+assert.equal(Number((await query("select extract(epoch from effective_payment_closes_at-effective_payment_opens_at) hours from public.batch_timeline where batch_id=$1",[capacityBatchId])).hours),86400);
+assert.equal((await query("select count(*)::int n from public.payments where registration_id=$1",[full.registrationId])).n,1);
+assert.equal((await query("select public.join_batch_v2($1,10,$2,null,null) item",[capacityBatchId,capacityConsent])).item.registrationId,full.registrationId);
+await assert.rejects(()=>db.query("select public.withdraw_batch_registration($1)",[full.registrationId]),/closed|cutoff/);
+console.log("PASS: new full offer closes atomically with one invoice, 24 hours and idempotent join");
+// A pre-existing v2 offer uses the default fixed_cutoff policy. Insert a separate
+// historical fixture instead of rewriting the immutable new-offer policy.
+await asUser(supplier);
+const batchId=(await query("insert into public.batches(supplier_id,title,description,category,min_quantity,capacity_quantity,unit,payment_window_hours,product_photo_url,pickup_name,pickup_address,latitude,longitude,status,transaction_policy_version) select supplier_id,title,description,category,min_quantity,capacity_quantity,unit,payment_window_hours,product_photo_url,pickup_name,pickup_address,latitude,longitude,'published',2 from public.batches where id=$1 returning id",[capacityBatchId])).id;
+await db.query("insert into public.batch_timeline(batch_id,registration_opens_at,registration_closes_at,payment_opens_at,payment_closes_at,estimated_ready_at,pickup_ends_at) select $1,registration_opens_at,registration_closes_at,payment_opens_at,payment_closes_at,estimated_ready_at,pickup_ends_at from public.batch_timeline where batch_id=$2",[batchId,capacityBatchId]);
+await db.query("insert into public.batch_tiers(batch_id,tier_number,min_volume,max_volume,price_per_unit) select $1,tier_number,min_volume,max_volume,price_per_unit from public.batch_tiers where batch_id=$2",[batchId,capacityBatchId]);
 await asUser(buyer);
 const consent=(await query("select jsonb_build_object('accepted',true,'maximumUnitPrice',10000,'unit','kg','pickupAddress','Bandung','paymentOpensAt',payment_opens_at,'paymentClosesAt',payment_closes_at,'pickupStartsAt',estimated_ready_at,'pickupEndsAt',pickup_ends_at) terms from public.batch_timeline where batch_id=$1",[batchId])).terms;
 const joined=await query("select public.join_batch_v2($1,10,$2,null,null) item",[batchId,consent]);

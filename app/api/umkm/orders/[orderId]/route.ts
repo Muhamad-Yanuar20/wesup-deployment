@@ -32,7 +32,7 @@ export async function GET(
   _request: Request,
   { params }: { params: Promise<{ orderId: string }> },
 ) {
-  const viewer = await resolveActiveUmkm();
+  const viewer = await resolveActiveUmkm({allowSuspended:true});
   if (!viewer.client) return viewer.response;
   const { orderId } = await params;
   if (!isUuid(orderId)) return errorResponse("Pesanan tidak ditemukan", "ORDER_NOT_FOUND", 404);
@@ -61,7 +61,7 @@ export async function GET(
   const serverTime = new Date().toISOString();
   const row = result.data;
   if (!row) return errorResponse("Pesanan tidak ditemukan", "ORDER_NOT_FOUND", 404);
-  const detail = toUmkmOrderDetail(row, serverTime);
+  const detail = toUmkmOrderDetail(row, serverTime, viewer.context.status === "active");
   if (detail.dispute?.photoUrls.length) {
     try {
       const storage = getAdminClient().storage.from("wesup-assets");

@@ -4,7 +4,7 @@ import nextEnv from "@next/env";
 import pg from "pg";
 import { createClient } from "@supabase/supabase-js";
 
-export const REQUIRED_COLUMNS = ["batches.transaction_policy_version", "batch_timeline.pickup_ends_at",
+export const REQUIRED_COLUMNS = ["batches.transaction_policy_version", "batches.payment_opening_policy", "payment_attempts.provider_checked_at", "batch_timeline.pickup_ends_at",
   "registrations.cancellation_reason", "registrations.consent_terms", "registrations.accepted_pickup_revision", "registrations.payment_penalty_exempt"];
 export const REQUIRED_TABLES = ["supplier_offer_drafts", "pickup_replacements", "pickup_replacement_decisions", "transaction_support_requests"];
 export const REQUIRED_FUNCTIONS = ["save_supplier_offer_draft", "publish_supplier_offer", "join_batch_v2",
@@ -50,7 +50,7 @@ export async function main() {
     const key = process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !key) { console.error("Transaction REST check requires Supabase URL and server key."); return 1; }
     const api = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, key, { auth: { persistSession: false, autoRefreshToken: false } });
-    const result = await api.from("registrations").select("id,cancellation_reason,accepted_pickup_revision,batch:batches(transaction_policy_version,batch_timeline(pickup_ends_at),pickup_replacements(id))").limit(0);
+    const result = await api.from("registrations").select("id,cancellation_reason,accepted_pickup_revision,payment:payments(payment_attempts(provider_checked_at)),batch:batches(payment_opening_policy,transaction_policy_version,batch_timeline(pickup_ends_at),pickup_replacements(id))").limit(0);
     if (result.error) { console.error(`Transaction REST schema is not ready (${result.error.code}).`); return 1; }
     console.log("Transaction UX schema, RLS, grants and REST relationships are ready.");
     return 0;

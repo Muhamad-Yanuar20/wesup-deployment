@@ -7,6 +7,7 @@ import { enforceRateLimit } from "@/lib/rate-limit";
 import { evaluatePaymentWindow, type BatchTimeline } from "@/lib/orders/time-gatekeeper";
 import { acquirePaymentLock, releasePaymentLock } from "@/lib/payments/order-lock";
 import { createSnapTransaction, MidtransProviderError } from "@/lib/payments/midtrans";
+import { derivePaymentProgress } from "@/lib/payments/progress";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +16,7 @@ interface RegistrationSnapshot {
   status: string;
   quantity: number | string;
   final_amount: number | string | null;
+  locked_price_per_unit?: number | string | null;
   batch?: { title?: string | null; unit?: string | null; batch_timeline?: BatchTimeline | BatchTimeline[] | null } | null;
   payment?: Record<string, unknown> | Record<string, unknown>[] | null;
 }
@@ -33,7 +35,7 @@ type AnyClient = {
   rpc?: (fn: string, args: Record<string, unknown>) => PromiseLike<{ data?: unknown; error?: unknown | null }>;
 };
 
-const REGISTRATION_SELECT = "id,status,quantity,final_amount,batch:batches(title,unit,batch_timeline(registration_opens_at,registration_closes_at,payment_opens_at,payment_closes_at,effective_payment_opens_at,effective_payment_closes_at,estimated_ready_at)),payment:payments(id,midtrans_order_id,gross_amount,status,qr_code_url,qr_code_expires_at)";
+const REGISTRATION_SELECT = "id,status,quantity,final_amount,locked_price_per_unit,batch:batches(title,unit,batch_timeline(registration_opens_at,registration_closes_at,payment_opens_at,payment_closes_at,effective_payment_opens_at,effective_payment_closes_at,estimated_ready_at)),payment:payments(id,midtrans_order_id,gross_amount,status,qr_code_url,qr_code_expires_at,reconciled_at)";
 
 function requestId(): string { return randomUUID(); }function adminFailure(error: unknown, operation: string, requestIdValue: string) {
   const missingConfiguration = error instanceof SupabaseAdminConfigurationError;
@@ -64,8 +66,11 @@ function timelineOf(snapshot: RegistrationSnapshot): BatchTimeline | null {
 
 function stringValue(value: unknown): string | null { return typeof value === "string" && value.length > 0 ? value : null; }
 
-function attemptResponse(attempt: Record<string, unknown>, session: Record<string, unknown> | null, serverTime: string) {
+function attemptResponse(attempt: Record<string, unknown>, session: Record<string, unknown> | null, serverTime: string, snapshot: RegistrationSnapshot, status = 200) {
   const checkoutMode = attempt.integration_type === "snap" ? "snap" : "core_qris";
+  const timeline = timelineOf(snapshot);
+  const payment = firstObject(snapshot.payment);
+  const progress = derivePaymentProgress({status:snapshot.status,invoiceStatus:payment?.status,attempt,now:serverTime,opensAt:timeline?.effective_payment_opens_at ?? timeline?.payment_opens_at ?? null,closesAt:timeline?.effective_payment_closes_at ?? timeline?.payment_closes_at ?? null,lastCheckedAt:stringValue(payment?.reconciled_at)});
   return NextResponse.json({
     attempt: {
       id: attempt.id,
@@ -76,9 +81,13 @@ function attemptResponse(attempt: Record<string, unknown>, session: Record<strin
       redirectUrl: checkoutMode === "snap" ? stringValue(session?.redirect_url) : null,
       qrCodeUrl: checkoutMode === "core_qris" ? stringValue(attempt.qr_code_url) : null,
       expiresAt: stringValue(session?.expires_at ?? attempt.expires_at),
+      providerStatus: stringValue(attempt.provider_status),
+      paymentMethod: stringValue(attempt.payment_type),
     },
     serverTime,
-  });
+    paymentProgress:progress,lastCheckedAt:progress.lastCheckedAt,canOpenCheckout:progress.canOpenCheckout,canCheckStatus:progress.canCheckStatus,blockedReason:progress.blockedReason,
+    lockedUnitPrice:snapshot.locked_price_per_unit == null ? Number(snapshot.final_amount ?? payment?.gross_amount)/Number(snapshot.quantity) : Number(snapshot.locked_price_per_unit),
+  },{status});
 }
 
 function providerCode(error: unknown): { code: string; status: number; message: string } {
@@ -166,8 +175,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ ord
     }
     if (!paymentRow?.id) return fail("Invoice pembayaran tidak ditemukan", "PAYMENT_INVOICE_FAILED", 503);
 
-    const attemptResult = await admin.from("payment_attempts").select("id,provider_order_id,status,integration_type,provider_status,qr_code_url,expires_at,created_at,payment_checkout_sessions(snap_token,redirect_url,expires_at,cancelled_at)").eq("payment_id", String(paymentRow.id)).eq("status", "pending").maybeSingle();
-    if (attemptResult.error && !String((attemptResult.error as Record<string, unknown>)?.code ?? "").startsWith("PGRST")) return fail("Percobaan pembayaran belum dapat dimuat", "PAYMENT_ATTEMPT_READ_FAILED", 503);
+    const attemptResult = await admin.from("payment_attempts").select("id,provider_order_id,status,integration_type,provider_status,provider_checked_at,payment_type,qr_code_url,expires_at,created_at,payment_checkout_sessions(snap_token,redirect_url,expires_at,cancelled_at)").eq("payment_id", String(paymentRow.id)).eq("status", "pending").maybeSingle();
+    if (attemptResult.error) return fail("Percobaan pembayaran sebelumnya belum dapat dimuat. Coba periksa lagi sebelum membayar.", "PAYMENT_ATTEMPT_READ_FAILED", 503);
     const active = attemptResult.data as Record<string, unknown> | null;
     const activeSession = firstObject(active?.payment_checkout_sessions ?? active?.payment_checkout_session);
     const activeExpires = Date.parse(String(activeSession?.expires_at ?? active?.expires_at ?? ""));
@@ -176,7 +185,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ ord
     }
     if (active && (!Number.isFinite(activeExpires) || activeExpires > Date.now()) && (!activeSession?.cancelled_at)) {
       const integration = active.integration_type === "snap" ? "snap" : "core_qris";
-      if (integration === "core_qris" || activeSession?.snap_token) return attemptResponse(active, activeSession, serverTime);
+      if (integration === "core_qris" || activeSession?.snap_token) return attemptResponse(active, activeSession, serverTime,snapshot);
       const createdAt = Date.parse(String(active.created_at ?? ""));
       if (!Number.isFinite(createdAt) || Date.now() - createdAt < 2 * 60 * 1000) return fail("Permintaan checkout sedang diproses", "PAYMENT_IN_PROGRESS", 409);
       return fail("Hasil pembuatan tagihan belum pasti. Periksa status atau minta bantuan Admin.", "PAYMENT_IN_PROGRESS", 409);
@@ -212,7 +221,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ ord
       await Promise.resolve(admin.from("payment_attempts").update({ status: "pending", provider_status: "session_persist_failed", updated_at: new Date().toISOString() }).eq("id", attemptId)).catch(() => undefined);
       return fail("Sesi checkout belum dapat disimpan", "PAYMENT_CHECKOUT_SESSION_FAILED", 503);
     }
-    return NextResponse.json({ attempt: { id: attemptId, providerOrderId: localProviderOrderId, status: "pending", checkoutMode: "snap", snapToken: checkout.token, redirectUrl: checkout.redirectUrl, qrCodeUrl: null, expiresAt: closesAt }, serverTime }, { status: 201 });
+    return attemptResponse({id:attemptId,provider_order_id:localProviderOrderId,status:"pending",integration_type:"snap",provider_status:"pending",expires_at:closesAt},{snap_token:checkout.token,redirect_url:checkout.redirectUrl,expires_at:closesAt},serverTime,snapshot,201);
   } finally {
     await releasePaymentLock(orderId, lock.token).catch(() => undefined);
   }

@@ -1,4 +1,5 @@
 import { deriveTransactionPresentation } from "@/lib/transactions/presentation";
+import { derivePaymentProgress, selectPaymentAttempt } from "@/lib/payments/progress";
 import { deriveOrderPhase, type OrderPhase } from "./lifecycle";
 import type { BatchTimeline } from "./time-gatekeeper";
 import type { OrderCapabilities, OrderPresentationPhase, UmkmOrderDetail, UmkmOrderListItem } from "./api-types";
@@ -10,6 +11,7 @@ export interface OrderReadRow {
   status: string;
   final_amount: number | string | null;
   locked_tier_number: number | null;
+  locked_price_per_unit?: number | string | null;
   created_at: string;
   cancellation_reason?: string | null;
   accepted_pickup_revision?: string | null;
@@ -41,13 +43,7 @@ function paymentAttemptFromRow(row: OrderReadRow): Record<string, unknown> | nul
   const attempts = Array.isArray(payment?.payment_attempts)
     ? payment.payment_attempts.filter((value): value is Record<string, unknown> => Boolean(value && typeof value === "object"))
     : [];
-  attempts.sort((left, right) => {
-    const leftPending = left.status === "pending" || left.status === "creating" ? 1 : 0;
-    const rightPending = right.status === "pending" || right.status === "creating" ? 1 : 0;
-    if (leftPending !== rightPending) return rightPending - leftPending;
-    return String(right.created_at ?? "").localeCompare(String(left.created_at ?? ""));
-  });
-  return attempts[0] ?? firstObject(row.payment_attempt);
+  return selectPaymentAttempt(attempts) ?? firstObject(row.payment_attempt);
 }
 function timelineFromBatch(batch: Record<string, unknown> | null): BatchTimeline | null {
   const timeline = firstObject(batch?.batch_timeline ?? batch?.timeline);
@@ -106,7 +102,7 @@ function displayCode(batchId: string): string {
   return `BATCH-${batchId.replaceAll("-", "").slice(0, 10).toUpperCase()}`;
 }
 
-export function toUmkmOrderListItem(row: OrderReadRow, serverNow: string): UmkmOrderListItem {
+export function toUmkmOrderListItem(row: OrderReadRow, serverNow: string, canTransact = true): UmkmOrderListItem {
   const batch = firstObject(row.batch);
   const timeline = timelineFromBatch(batch);
   const status = row.status as UmkmOrderListItem["status"];
@@ -114,6 +110,7 @@ export function toUmkmOrderListItem(row: OrderReadRow, serverNow: string): UmkmO
   const supplier = firstObject(batch?.supplier ?? batch?.profile);
   const pickupConfirmedAt = stringValue(firstObject(row.escrow)?.pickup_confirmed_at);
   const deadlines = getDeadlines(timeline, pickupConfirmedAt);
+  deadlines.registrationClosesAt = stringValue(batch?.registration_closed_at) ?? deadlines.registrationClosesAt;
   const policyVersion = Number(batch?.transaction_policy_version ?? 1);
   const replacements = Array.isArray(batch?.pickup_replacements) ? batch.pickup_replacements as Array<Record<string,unknown>> : [];
   const accepted = replacements.find(p => p.id === row.accepted_pickup_revision);
@@ -123,16 +120,20 @@ export function toUmkmOrderListItem(row: OrderReadRow, serverNow: string): UmkmO
   }
   const readyAt = stringValue(accepted ? accepted.ready_at : batch?.ready_at);
   const attempt = paymentAttemptFromRow(row);
-  const presentation = deriveTransactionPresentation({policyVersion,status,now:serverNow,orderId:row.id,registrationClosesAt:deadlines.registrationClosesAt,paymentOpensAt:deadlines.paymentOpensAt,paymentClosesAt:deadlines.paymentClosesAt,pickupStartsAt:deadlines.estimatedReadyAt,pickupEndsAt:deadlines.pickupDeadlineAt,readyAt,pendingAttempt:attempt?.status==='creating'||(attempt?.status==='pending'&&(Boolean(attempt.payment_type)||['creating','creation_unknown','session_persist_failed','order_id_mismatch'].includes(String(attempt.provider_status))||Boolean(deadlines.paymentClosesAt&&Date.parse(serverNow)>=Date.parse(deadlines.paymentClosesAt)))),hasDispute:['pending','under_review'].includes(String(firstObject(row.dispute)?.status)),needsRefundAccount:!firstObject(row.refund)?.umkm_bank_account_id,complaintDeadlineAt:deadlines.complaintDeadlineAt});
-  if(policyVersion===2) phase=presentation.phase;
+  const payment = firstObject(row.payment);
+  const paymentProgress = derivePaymentProgress({ status, invoiceStatus: payment?.status, providerOrderId: payment?.midtrans_order_id, attempt, now: serverNow, opensAt: deadlines.paymentOpensAt, closesAt: deadlines.paymentClosesAt, lastCheckedAt: stringValue(payment?.reconciled_at), hasLegacyCheckout: Boolean(payment?.qr_code_url || payment?.midtrans_transaction_id) });
+  const presentation = deriveTransactionPresentation({policyVersion,status,now:serverNow,orderId:row.id,registrationClosesAt:deadlines.registrationClosesAt,paymentOpensAt:deadlines.paymentOpensAt,paymentClosesAt:deadlines.paymentClosesAt,pickupStartsAt:deadlines.estimatedReadyAt,pickupEndsAt:deadlines.pickupDeadlineAt,readyAt,paymentState:paymentProgress.state,pendingAttempt:paymentProgress.state==='status_unknown',hasDispute:['pending','under_review'].includes(String(firstObject(row.dispute)?.status)),needsRefundAccount:!firstObject(row.refund)?.umkm_bank_account_id,complaintDeadlineAt:deadlines.complaintDeadlineAt});
+  phase=presentation.phase;
   const caps = capabilitiesFor(status,phase,row,serverNow);
+  caps.canPay = paymentProgress.canOpenCheckout;
   if(policyVersion===2) {
     caps.canViewPickup = phase==='ready_for_pickup' || status==='picked_up' || status==='completed';
     caps.canWithdraw = status==='registered' && Boolean(deadlines.registrationClosesAt && Date.parse(serverNow)<Date.parse(deadlines.registrationClosesAt));
     caps.canChoosePickup = phase==='supplier_delayed';
   }
+  if (!canTransact) { caps.canPay = false; caps.canWithdraw = false; paymentProgress.canOpenCheckout = false; paymentProgress.blockedReason = "Akun ditangguhkan. Anda tetap dapat memeriksa pembayaran pesanan ini."; presentation.blockedReason = paymentProgress.blockedReason; presentation.primaryAction.label = "Lihat detail pesanan"; }
   const item = {
-    policyVersion, readyAt, cancellationReason:row.cancellation_reason ?? null, presentation,
+    policyVersion, paymentProgress, lastCheckedAt:paymentProgress.lastCheckedAt,canOpenCheckout:paymentProgress.canOpenCheckout,canCheckStatus:paymentProgress.canCheckStatus,blockedReason:paymentProgress.blockedReason, paymentOpeningPolicy: String(batch?.payment_opening_policy ?? 'fixed_cutoff'), closeReason: stringValue(batch?.close_reason), lockedUnitPrice: moneyNumber(row.locked_price_per_unit), readyAt, cancellationReason:row.cancellation_reason ?? null, presentation,
     id: row.id,
     batchId: row.batch_id,
     batchTitle: stringValue(batch?.title) ?? "Batch tanpa judul",
@@ -154,8 +155,8 @@ export function toUmkmOrderListItem(row: OrderReadRow, serverNow: string): UmkmO
   return item;
 }
 
-export function toUmkmOrderDetail(row: OrderReadRow, serverNow: string): UmkmOrderDetail {
-  const item = toUmkmOrderListItem(row, serverNow);
+export function toUmkmOrderDetail(row: OrderReadRow, serverNow: string, canTransact = true): UmkmOrderDetail {
+  const item = toUmkmOrderListItem(row, serverNow, canTransact);
   const payment = firstObject(row.payment);
   const attempt = paymentAttemptFromRow(row);
   const pickup = firstObject(row.pickup_code);

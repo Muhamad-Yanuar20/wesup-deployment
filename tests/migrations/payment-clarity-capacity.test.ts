@@ -16,6 +16,6 @@ describe("capacity-opening migration contract",()=>{
     expect(source()).toContain("'batchClosed'");
     expect(source()).toContain("'deadlineAt'");
     expect(source()).toContain("provider_checked_at");
-    expect(source()).toContain("r.umkm_id=auth.uid()");
+    expect(source()).toMatch(/\.umkm_id=auth\.uid\(\)/);
   });
 });

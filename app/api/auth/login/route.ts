@@ -81,8 +81,10 @@ export async function POST(request: NextRequest) {
 
   if (context.status !== "active") {
     // A suspension blocks transactions, but must not block an appeal.
-    if(returnTo==='/bantuan'&&context.role==='umkm'&&selectedRole==='umkm'&&['suspended_temporary','suspended_permanent'].includes(context.status)) {
-      return NextResponse.json({user:{email:context.email},profile:{role:context.role,status:context.status,fullName:context.fullName},redirectTo:'/bantuan'});
+    const readReturnTo=sanitizeReturnTo(returnTo,'umkm');
+    const isReadOnlyReturn=readReturnTo==='/bantuan'||Boolean(readReturnTo&&/^\/umkm\/pesanan(?:\/[a-fA-F0-9-]{36})?(?:[?#].*)?$/.test(readReturnTo));
+    if(isReadOnlyReturn&&context.role==='umkm'&&selectedRole==='umkm'&&['suspended_temporary','suspended_permanent'].includes(context.status)) {
+      return NextResponse.json({user:{email:context.email},profile:{role:context.role,status:context.status,fullName:context.fullName},redirectTo:readReturnTo});
     }
     const errorMessage = getAccountStatusMessage(context.status);
     await client.auth.signOut();

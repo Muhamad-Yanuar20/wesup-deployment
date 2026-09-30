@@ -13,6 +13,12 @@ export interface ExpectedTable {
   checks?: string[][];
 }
 
+// Historical additions already present on Wesup; retain these during recovery.
+// Keep the original migration contract separate from the deployed extension.
+export const DEPLOYED_ENUM_EXTENSIONS: Record<string, string[]> = {
+  dispute_status: ["rejected", "resolved_refund", "resolved_payout", "refund", "payout"],
+};
+
 export const EXPECTED_ENUMS: Record<string, string[]> = {
   user_role: ["supplier", "umkm", "admin"],
   account_status: [
@@ -708,5 +714,4 @@ export const REQUIRED_TRIGGERS = [
 ];
 
 export const EXPECTED_TABLE_NAMES = Object.keys(EXPECTED_TABLES);
-
 

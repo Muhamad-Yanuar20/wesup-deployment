@@ -8,11 +8,11 @@ export async function withRegistrationLock<T>(batchId: string, operation: () => 
   try { return await operation(); } finally { await releaseCutoffLock(batchId, lock.token); }
 }
 
-export async function joinVersionedBatch(client: TransactionRpcClient, input: { batchId: string; quantity: number; capacity: number; consentLat: number | null; consentLng: number | null; consentSnapshot:Record<string,unknown> }) {
+export async function joinVersionedBatch(client: TransactionRpcClient, input: { batchId: string; quantity: number; capacity: number; consentLat: number | null; consentLng: number | null; consentSnapshot:Record<string,unknown> }): Promise<Record<string,unknown> & {count:number;batchClosed:boolean}> {
   return withRegistrationLock(input.batchId, async () => {
     const volume = await client.rpc("get_registration_volume_v2", { p_batch_id: input.batchId });
     if (volume.error) throw volume.error;
-    const snapshot = volume.data as { quantity: number; registrationId: string | null; registered: boolean };
+    const snapshot = volume.data as { quantity: number; registrationId: string | null; registered: boolean; batchClosed?:boolean;phase?:string;deadlineAt?:string;capabilities?:Record<string,boolean>;blockedReason?:string|null };
     await restoreVolumeCounter(input.batchId, snapshot.quantity);
     if (!snapshot.registered) await reserveVolumeCounter(input.batchId, input.quantity, input.capacity);
     let joined:{data:unknown;error:unknown}={data:null,error:null};
@@ -24,10 +24,10 @@ export async function joinVersionedBatch(client: TransactionRpcClient, input: { 
     if (!current.error) await restoreVolumeCounter(input.batchId, (current.data as { quantity: number }).quantity).catch(() => undefined);
     if (joined.error) throw joined.error;
     if(transportError) {
-      const recovered=current.data as {quantity:number;registered:boolean;registrationId:string|null}|null;
-      if(!current.error&&recovered?.registered&&recovered.registrationId) return {registrationId:recovered.registrationId,count:recovered.quantity,batchClosed:false,recovered:true};
+      const recovered=current.data as {quantity:number;registered:boolean;registrationId:string|null;batchClosed?:boolean;phase?:string;deadlineAt?:string}|null;
+      if(!current.error&&recovered?.registered&&recovered.registrationId) return {...recovered,registrationId:recovered.registrationId,count:recovered.quantity,batchClosed:recovered.batchClosed??false,recovered:true};
       throw transportError;
     }
-    return { ...(joined.data as Record<string, unknown>), count: (current.data as { quantity: number } | null)?.quantity ?? snapshot.quantity, batchClosed: false };
+    return { ...(joined.data as Record<string, unknown>), count: (current.data as { quantity: number } | null)?.quantity ?? snapshot.quantity, batchClosed: Boolean((joined.data as Record<string,unknown>)?.batchClosed ?? (current.data as Record<string,unknown>)?.batchClosed) };
   });
 }

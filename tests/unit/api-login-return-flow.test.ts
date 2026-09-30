@@ -57,6 +57,11 @@ function mockClient(options: {
 }
 
 describe("login return flow", () => {
+  it.each(['suspended_temporary','suspended_permanent'] as const)('allows %s buyers to return to their orders without lifting suspension',async status=>{
+    const {signOut}=mockClient({role:'umkm',status});
+    const response=await login(request({email:'budi@example.com',password:'password123',role:'umkm',returnTo:'/umkm/pesanan'}));
+    expect(response.status).toBe(200);expect(await response.json()).toMatchObject({redirectTo:'/umkm/pesanan',profile:{status}});expect(signOut).not.toHaveBeenCalled();
+  });
   it.each(['suspended_temporary','suspended_permanent'] as const)('allows %s buyers to authenticate only to the appeal page',async status=>{
     const {signOut}=mockClient({role:'umkm',status});
     const response=await login(request({email:'budi@example.com',password:'password123',role:'umkm',returnTo:'/bantuan'}));

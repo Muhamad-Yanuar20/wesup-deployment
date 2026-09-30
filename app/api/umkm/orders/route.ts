@@ -44,7 +44,7 @@ function decodeCursor(request?: Request): number {
 }
 
 export async function GET(request?: Request) {
-  const viewer = await resolveActiveUmkm();
+  const viewer = await resolveActiveUmkm({allowSuspended:true});
   if (!viewer.client) return viewer.response;
 
   const rpcClient = viewer.client as RpcCapableClient;
@@ -72,7 +72,7 @@ export async function GET(request?: Request) {
   }
 
   const serverTime = new Date().toISOString();
-  const allItems = rows.map((row) => toUmkmOrderListItem(row, serverTime));
+  const allItems = rows.map((row) => toUmkmOrderListItem(row, serverTime, viewer.context.status === "active"));
   const status = request ? new URL(request.url).searchParams.get("status") : null;
   const group=request?new URL(request.url).searchParams.get("group"):null;
   const filtered = group ? allItems.filter(item=>item.presentation?.group===group) : status && status !== "all"
