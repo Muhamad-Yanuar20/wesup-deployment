@@ -1,7 +1,8 @@
 import { defineConfig, devices } from "@playwright/test";
 
-// E2E for the supplier dashboard flow. Uses the locally installed Edge (channel:
-// "msedge") so no extra Playwright browser binaries need to be downloaded.
+// E2E for the supplier dashboard flow. Uses Playwright's bundled Chromium
+// (installed via `npx playwright install chromium`) — the `msedge` channel is
+// not usable on WSL without a system Edge, so keep the default browser.
 export default defineConfig({
   testDir: "./tests/e2e",
   // Full execution only when explicitly asked via `npm run test:e2e`.
@@ -14,7 +15,6 @@ export default defineConfig({
   reporter: [["list"]],
   use: {
     baseURL: "http://localhost:3100",
-    channel: "msedge",
     headless: true,
     trace: "retain-on-failure",
   },

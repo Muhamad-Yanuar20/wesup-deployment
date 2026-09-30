@@ -13,6 +13,10 @@
   --wesup-success: #059669;
   --wesup-warning: #d97706;
   --wesup-danger: #dc2626;
+  /* Hero readability wash, as channel values so it can take an alpha directly.
+   * Deliberately equal to the WebGL scene's COVE_COLOR: the wash has to vanish
+   * against the cove it veils, and the two were two or three 255ths apart. */
+  --hero-wash: 246 248 251;
 }
 
 @theme inline {
@@ -20,6 +24,7 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-landing-display: var(--font-newsreader);
 }
 
 body {
@@ -28,6 +33,11 @@ body {
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
   min-width: 320px;
   text-rendering: optimizeLegibility;
+  /* Newsreader carries an opsz axis, loaded in app/layout.tsx. Sizing it per
+   * text size is what lets one family set 2.75rem hero headlines and 0.9375rem
+   * body copy without either looking borrowed. Explicit rather than inherited
+   * from the initial value, so a future reset cannot quietly turn it off. */
+  font-optical-sizing: auto;
 }
 
 :where(a, button, input, select, textarea):focus-visible {
@@ -69,4 +79,303 @@ input[type="radio"] {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+/* ------------------------------------------------------------------ */
+/* Landing hero scene                                                  */
+/* ------------------------------------------------------------------ */
+
+/*
+ * The scene root is a tall scroll track; its child viewport is sticky. The
+ * length is published as a custom property so the track can be tuned per
+ * breakpoint without touching the component.
+ */
+.hero-scene {
+  height: var(--scene-length-mobile, 380vh);
+}
+
+@media (min-width: 768px) {
+  .hero-scene {
+    height: var(--scene-length, 560vh);
+  }
+}
+
+/*
+ * Readability wash. Its own full-bleed layer rather than a background on the
+ * type overlay: the overlay is the page container, so a gradient painted there
+ * was clipped to that container. Above 1152px the white therefore began dead at
+ * the container's left edge with nothing beside it, and its fade finished before
+ * the screen edge. Anchored at 0 and reaching zero alpha at this element's own
+ * right edge, the band dissolves into the scene with no seam at any width.
+ */
+.hero-scene__wash {
+  /* Full-bleed on mobile, 52vw from the viewport's left edge on desktop. The
+   * gradient reaches zero alpha at this element's own right edge, so the seam
+   * only reappears if a cap or a percentage of anything but the viewport is
+   * introduced here. */
+  width: 100%;
+  background: linear-gradient(
+    to top,
+    rgb(var(--hero-wash) / 0.96) 0%,
+    rgb(var(--hero-wash) / 0.82) 42%,
+    rgb(var(--hero-wash) / 0) 72%
+  );
+}
+
+@media (min-width: 768px) {
+  .hero-scene__wash {
+    width: 52vw;
+    background: linear-gradient(
+      to right,
+      rgb(var(--hero-wash) / 0.95) 0%,
+      rgb(var(--hero-wash) / 0.93) 62%,
+      rgb(var(--hero-wash) / 0.6) 82%,
+      rgb(var(--hero-wash) / 0) 100%
+    );
+  }
+}
+
+/*
+ * Overlay is a reserved type column: bottom panel on small screens, left column
+ * on desktop. Carries no background, so the wash can span the viewport while the
+ * type still lines up with the fixed header.
+ */
+.hero-scene__overlay {
+  display: flex;
+  align-items: flex-end;
+  padding-block: 1rem calc(1rem + env(safe-area-inset-bottom, 0px));
+}
+
+.hero-scene__column {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 1.25rem;
+}
+
+@media (min-width: 768px) {
+  .hero-scene__overlay {
+    align-items: stretch;
+    padding-block: 5.5rem 1.75rem;
+  }
+
+  .hero-scene__column {
+    /* The two constraints, not one: a flat 40% left the headline stranded in a
+       narrow slot on a laptop and pushed the volume meter into the cab. */
+    max-width: min(32rem, 34vw);
+    height: 100%;
+    justify-content: space-between;
+    gap: 1.5rem;
+  }
+}
+
+/* Beats are stacked in one grid cell and cross-faded by the active stage. */
+.hero-scene__beats {
+  display: grid;
+}
+
+.hero-beat {
+  grid-area: 1 / 1;
+  opacity: 0;
+  visibility: hidden;
+  /* Exits rise, entries rise. The old exit sank, so a beat leaving and the next
+     arriving both moved down and the swap read as a single slide. */
+  transform: translateY(-0.4rem);
+  transition:
+    opacity 500ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 500ms cubic-bezier(0.22, 1, 0.36, 1),
+    visibility 500ms;
+}
+
+.hero-beat[data-active="true"] {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.hero-beat__word {
+  display: inline-block;
+}
+
+/*
+ * Beat entrance. --i orders the stack top to bottom: eyebrow, headline, body,
+ * chip, volume meter. Gated on data-webgl (the single scene kill switch) rather
+ * than left implicit, so the static fallback and reduced motion both land on
+ * the resting state with nothing half-animated. Transform and opacity only:
+ * animating the words' own width would relayout the headline on every frame.
+ */
+.hero-scene[data-webgl="on"] .hero-beat[data-active="true"] .hero-beat__eyebrow,
+.hero-scene[data-webgl="on"] .hero-beat[data-active="true"] .hero-beat__body,
+.hero-scene[data-webgl="on"] .hero-beat[data-active="true"] .hero-beat__chip,
+.hero-scene[data-webgl="on"] .hero-beat[data-active="true"] .hero-beat__meter {
+  animation: hero-beat-block 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: calc(var(--i, 0) * 60ms);
+}
+
+.hero-scene[data-webgl="on"] .hero-beat[data-active="true"] .hero-beat__word {
+  animation: hero-beat-word 500ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: calc(var(--i, 0) * 40ms);
+}
+
+@keyframes hero-beat-word {
+  from {
+    opacity: 0;
+    transform: translateY(0.4rem);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes hero-beat-block {
+  from {
+    opacity: 0;
+    transform: translateY(0.75rem);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* The eyebrow rule draws itself in behind the label. */
+.hero-scene[data-webgl="on"] .hero-beat[data-active="true"] .hero-beat__rule {
+  animation: hero-beat-rule 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  transform-origin: left center;
+}
+
+@keyframes hero-beat-rule {
+  from {
+    transform: scaleX(0);
+  }
+
+  to {
+    transform: scaleX(1);
+  }
+}
+
+/*
+ * Stage rail. The steps keep a constant pitch and the active one scales instead
+ * of widening, so a single index maps to an exact pixel offset and the underline
+ * below tracks the stage rather than drifting behind it.
+ */
+.hero-scene__rail {
+  position: relative;
+}
+
+.hero-scene__rail::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -0.5rem;
+  width: 1.5rem;
+  height: 2px;
+  border-radius: 999px;
+  background-color: rgb(37 99 235 / 0.9);
+  transform: translateX(calc(var(--rail-index, 0) * 2rem));
+  transition: transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
+  opacity: 0;
+}
+
+.hero-scene[data-webgl="on"] .hero-scene__rail::after {
+  opacity: 1;
+}
+
+.hero-scene__rail-step {
+  width: 1.5rem;
+  background-color: rgb(148 163 184 / 0.45);
+  transform-origin: center;
+  transition:
+    transform 300ms cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 300ms ease;
+}
+
+.hero-scene__rail-step[data-active="true"] {
+  background-color: var(--color-blue-600, #2563eb);
+  transform: scaleX(1.6);
+  animation: hero-rail-breathe 3.2s ease-in-out infinite alternate;
+}
+
+@keyframes hero-rail-breathe {
+  from {
+    opacity: 0.75;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+/*
+ * Fallback: no WebGL, reduced motion, or a data saver. The beats stop being an
+ * overlay and become an ordinary readable stack, and the calls to action sit
+ * directly under it. Nothing is hidden and nothing animates.
+ */
+.hero-scene[data-webgl="off"] {
+  height: auto;
+}
+
+.hero-scene[data-webgl="off"] .hero-scene__viewport {
+  position: static;
+  height: auto;
+  overflow: visible;
+}
+
+/* The wash veils a canvas. With no canvas there is nothing to veil, and leaving
+   it in place would just paint half the fallback a flat colour. */
+.hero-scene[data-webgl="off"] .hero-scene__wash {
+  display: none;
+}
+
+.hero-scene[data-webgl="off"] .hero-scene__overlay {
+  height: auto;
+  align-items: stretch;
+  padding-block: 5.5rem 2.5rem;
+}
+
+.hero-scene[data-webgl="off"] .hero-scene__column {
+  width: 100%;
+  max-width: 36rem;
+  height: auto;
+  justify-content: flex-start;
+  gap: 2.5rem;
+}
+
+.hero-scene[data-webgl="off"] .hero-scene__beats {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+.hero-scene[data-webgl="off"] .hero-beat {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  transition: none;
+}
+
+.hero-scene[data-webgl="off"] .hero-scene__rail {
+  display: none;
+}
+
+/* The single kill switch. Every entrance above is scoped to data-webgl="on", so
+   one attribute covers the beat stagger, the rule draw, and the rail underline
+   without enumerating each selector again. */
+.hero-scene[data-webgl="off"] .hero-beat__word,
+.hero-scene[data-webgl="off"] .hero-beat__eyebrow,
+.hero-scene[data-webgl="off"] .hero-beat__body,
+.hero-scene[data-webgl="off"] .hero-beat__chip,
+.hero-scene[data-webgl="off"] .hero-beat__meter,
+.hero-scene[data-webgl="off"] .hero-beat__rule,
+.hero-scene[data-webgl="off"] .hero-scene__rail-step {
+  animation: none;
+  opacity: 1;
+  transform: none;
+}
+
+.hero-scene[data-webgl="off"] .hero-scene__rail::after {
+  display: none;
 }
