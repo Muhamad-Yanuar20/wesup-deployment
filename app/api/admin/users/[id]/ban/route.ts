@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import {
   requireRole,
   toAuthResponse,
@@ -41,4 +42,54 @@ export async function POST(
   }
 
   return NextResponse.json({ ok: true });
+}
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json(users || []);
+  } catch (err: any) {
+    return NextResponse.json(
+      { error: err.message || "Internal Server Error" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PATCH(request: Request) {
+  try {
+    const body = await request.json().catch(() => ({}));
+    const { userId, suspend } = body;
+
+    if (!userId || typeof suspend !== "boolean") {
+      return NextResponse.json(
+        { error: "Parameter userId dan status suspend wajib disertakan." },
+        { status: 400 }
+      );
+    }
+
+    const supabase = getAdminClient();
+
+    const { error } = await supabase
+      .from("profiles")
+      .update({ is_suspended: suspend } as any)
+      .eq("id", userId);
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: `Status pengguna berhasil diperbarui menjadi ${
+        suspend ? "DIBEKUKAN (Suspended)" : "AKTIF"
+      }`,
+    });
+  } catch (err: any) {
+    return NextResponse.json(
+      { error: err.message || "Internal Server Error" },
+      { status: 500 }
+    );
+  }
 }
