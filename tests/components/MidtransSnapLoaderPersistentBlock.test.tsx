@@ -24,7 +24,6 @@ describe("MidtransSnapLoader persistent CSP block", () => {
       />,
     );
 
-    window.sessionStorage.setItem(paymentRecoveryStorageKey("order-2"), "1");
     act(() => {
       const event = new Event("securitypolicyviolation") as Event & { blockedURI?: string; effectiveDirective?: string };
       Object.defineProperties(event, {
@@ -36,5 +35,6 @@ describe("MidtransSnapLoader persistent CSP block", () => {
 
     expect(states).toContain("blocked");
     expect(exhausted).toHaveBeenCalledOnce();
+    expect(window.sessionStorage.getItem(paymentRecoveryStorageKey("order-2"))).toBe("1");
   });
 });
