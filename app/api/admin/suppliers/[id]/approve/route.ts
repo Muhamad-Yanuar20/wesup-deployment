@@ -1,6 +1,4 @@
 import { NextResponse } from "next/server";
-import { NextResponse } from "next/server";
-import { getAdminClient } from "@/lib/supabase/admin";
 import {
   requireRole,
   toAuthResponse,
@@ -14,7 +12,7 @@ import { isUuid } from "@/lib/admin/validation";
 export const dynamic = "force-dynamic";
 
 export async function POST(
-  request: Request,
+  req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
@@ -43,23 +41,4 @@ export async function POST(
   }
 
   return NextResponse.json({ ok: true });
-
-    if (updateError) {
-      console.error("Gagal update supplier_profiles:", updateError);
-      return NextResponse.json({ error: updateError.message }, { status: 500 });
-    }
-
-    await supabase
-      .from("profiles")
-      .update({ role: "supplier", updated_at: new Date().toISOString() })
-      .eq("id", id);
-
-    return NextResponse.json({ success: true, message: "Supplier disetujui." });
-  } catch (err: any) {
-    console.error("Approve API Error:", err);
-    return NextResponse.json(
-      { error: err.message || "Gagal memproses persetujuan." },
-      { status: 500 }
-    );
-  }
 }

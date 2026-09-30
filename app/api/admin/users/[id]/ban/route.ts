@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { NextResponse } from "next/server";
 import {
   requireRole,
   toAuthResponse,
@@ -44,19 +43,6 @@ export async function POST(
   return NextResponse.json({ ok: true });
 }
 
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-
-    return NextResponse.json(users || []);
-  } catch (err: any) {
-    return NextResponse.json(
-      { error: err.message || "Internal Server Error" },
-      { status: 500 }
-    );
-  }
-}
-
 export async function PATCH(request: Request) {
   try {
     const body = await request.json().catch(() => ({}));
@@ -69,12 +55,16 @@ export async function PATCH(request: Request) {
       );
     }
 
-    const supabase = getAdminClient();
-
-    const { error } = await supabase
-      .from("profiles")
-      .update({ is_suspended: suspend } as any)
-      .eq("id", userId);
+    if (!isUuid(userId)) return NextResponse.json({error:"Invalid user id"},{status:400});
+    const client = await getServerClient();
+    let authCtx: AuthContext;
+    try { authCtx = await requireRole(client as unknown as AuthClient, ["admin"]); } catch (err) { return toAuthResponse(err); }
+    const limited = await enforceRateLimit(request, "admin", authCtx.userId);
+    if (limited) return limited;
+    const audit = {p_user_id:userId,p_ip_address:request.headers.get("x-forwarded-for"),p_user_agent:request.headers.get("user-agent")};
+    const {error} = suspend
+      ? await client.rpc("suspend_user", {...audit,p_suspended_until:new Date(Date.now()+7*24*60*60*1000).toISOString()})
+      : await client.rpc("unban_user",audit);
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
@@ -86,9 +76,9 @@ export async function PATCH(request: Request) {
         suspend ? "DIBEKUKAN (Suspended)" : "AKTIF"
       }`,
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     return NextResponse.json(
-      { error: err.message || "Internal Server Error" },
+      { error: err instanceof Error ? err.message : "Internal Server Error" },
       { status: 500 }
     );
   }

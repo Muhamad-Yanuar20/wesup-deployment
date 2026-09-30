@@ -1,9 +1,12 @@
+import { authorizeAdminQueue } from "@/lib/admin/queue-access";
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(request: Request) {
+  const denied = await authorizeAdminQueue(request);
+  if (denied) return denied;
   try {
     const supabase = getAdminClient();
 
@@ -28,7 +31,7 @@ export async function GET() {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    const catalog = (data || []).map((item: any) => ({
+    const catalog = (data || []).map((item) => ({
       id: item.id,
       title: item.title,
       supplierName: item.profiles?.full_name || "Supplier",
@@ -39,7 +42,7 @@ export async function GET() {
     }));
 
     return NextResponse.json(catalog);
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message || "Internal Server Error" }, { status: 500 });
+  } catch (err: unknown) {
+    return NextResponse.json({ error: err instanceof Error ? err.message : "Internal Server Error" }, { status: 500 });
   }
 }
