@@ -160,6 +160,7 @@ export async function registerSupplier(
     if (insertError) {
       throw new SupplierRegistrationError("Supplier profile insert failed", "profile_insert");
     }
+    }
 
     return {
       ok: true,
