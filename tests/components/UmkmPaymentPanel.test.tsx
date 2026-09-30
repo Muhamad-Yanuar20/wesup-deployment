@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, screen } from "@testing-library/react";
+import { act, fireEvent, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import UmkmPaymentPanel from "@/components/payments/UmkmPaymentPanel";
 import type { UmkmOrderDetail } from "@/lib/orders/api-types";
@@ -48,9 +48,30 @@ const baseOrder = {
 } satisfies Omit<UmkmOrderDetail, "paymentAttempt">;
 
 describe("UmkmPaymentPanel", () => {
+  it("keeps the four-check budget across refreshed props, then permits a manual check", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(baseOrder.serverTime));
+    const fetcher = vi.fn(async () => ({ok:true,json:async()=>({status:"pending",localStatus:"pending_payment",attemptStatus:"pending"})}));
+    vi.stubGlobal("fetch",fetcher);
+    const order = {...baseOrder,paymentAttempt:{id:"attempt-budget",providerOrderId:"WESUP-1",status:"pending" as const,checkoutMode:"snap" as const,providerStatus:"pending",paymentMethod:"qris",qrCodeUrl:null,expiresAt:"2026-09-17T00:00:00Z"}};
+    const onReload=vi.fn();
+    try {
+      const view=render(<UmkmPaymentPanel order={order} onReload={onReload} />);
+      for(let i=0;i<4;i++) {
+        await act(async()=>{await vi.advanceTimersByTimeAsync(15_000);});
+        view.rerender(<UmkmPaymentPanel order={{...order,serverTime:new Date().toISOString(),paymentAttempt:{...order.paymentAttempt}}} onReload={onReload} />);
+        await act(async()=>{await vi.advanceTimersByTimeAsync(1);});
+      }
+      expect(fetcher).toHaveBeenCalledTimes(4);
+      await act(async()=>{await vi.advanceTimersByTimeAsync(60_000);});
+      expect(fetcher).toHaveBeenCalledTimes(4);
+      await act(async()=>{fireEvent.click(screen.getByRole("button",{name:"Cek status pembayaran"}));});
+      expect(fetcher).toHaveBeenCalledTimes(5);
+    } finally {vi.useRealTimers();vi.unstubAllGlobals();}
+  });
   it("keeps a real provider-check action visible after the deadline", () => {
     render(<UmkmPaymentPanel order={{ ...baseOrder, phase: "payment_verifying", serverTime: "2026-09-18T01:00:00Z", capabilities: {...baseOrder.capabilities,canPay:false}, paymentAttempt: { id: "attempt", providerOrderId: "WESUP-1", status: "pending", checkoutMode: "snap", providerStatus: "pending", paymentMethod: "bank_transfer", qrCodeUrl: null, expiresAt: "2026-09-17T00:00:00Z" } }} onReload={vi.fn()} />);
-    expect(screen.getByRole("button",{name:"Cek status pembayaran",exact:true})).toBeInTheDocument();
+    expect(screen.getByRole("button",{name:"Cek status pembayaran"})).toBeInTheDocument();
     expect(screen.queryByText("Memeriksa status pembayaran…")).not.toBeInTheDocument();
   });
   it("explains that a created checkout still needs a method", () => {

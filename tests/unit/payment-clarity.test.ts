@@ -3,7 +3,7 @@ import { toUmkmOrderDetail, type OrderReadRow } from "@/lib/orders/read-model";
 import { validateProviderPayment } from "@/lib/payments/provider-validation";
 
 const timeline = { registration_opens_at: "2026-09-29T08:00:00Z", registration_closes_at: "2026-10-01T07:40:00Z", payment_opens_at: "2026-10-01T07:40:00Z", payment_closes_at: "2026-10-02T07:40:00Z", effective_payment_opens_at: "2026-09-29T11:50:00Z", effective_payment_closes_at: "2026-09-30T11:50:00Z", estimated_ready_at: "2026-10-05T07:40:00Z" };
-function row(attempt = {}) : OrderReadRow { return { id: "order", batch_id: "batch", quantity: 24, status: "pending_payment", final_amount: 1680000, locked_price_per_unit: 70000, locked_tier_number: 2, created_at: "2026-09-29T08:00:00Z", batch: { transaction_policy_version: 1, registration_closed_at: "2026-09-29T11:50:00Z", close_reason: "capacity_reached", batch_timeline: timeline }, payment: { id: "payment", status: "pending", gross_amount: 1680000, payment_attempts: [{ id: "attempt", status: "pending", provider_status: "pending", payment_type: "bank_transfer", created_at: "2026-09-30T09:00:00Z", ...attempt }] } }; }
+function row(attempt = {}) : OrderReadRow { return { id: "order", batch_id: "batch", quantity: 24, status: "pending_payment", final_amount: 1680000, locked_price_per_unit: 70000, locked_tier_number: 2, created_at: "2026-09-29T08:00:00Z", batch: { transaction_policy_version: 1, registration_closed_at: "2026-09-29T11:50:00Z", close_reason: "capacity_reached", batch_timeline: timeline }, payment: { id: "payment", status: "pending", gross_amount: 1680000, payment_attempts: [{ id: "attempt", provider_order_id:"WESUP-test", status: "pending", provider_status: "pending", payment_type: "bank_transfer", created_at: "2026-09-30T09:00:00Z", ...attempt }] } }; }
 
 describe("one authoritative payment presentation", () => {
   it("keeps expired legacy attempts checkable and matches the banner phase", () => {
@@ -18,6 +18,8 @@ describe("one authoritative payment presentation", () => {
   it("pending bank transfer is awaiting payment, not an ongoing verification", () => {
     const order = toUmkmOrderDetail(row({ provider_checked_at: "2026-09-30T09:10:00Z" }), "2026-09-30T09:11:00Z");
     expect(order.phase).toBe("payment_open");
+    expect(order.presentation?.label).toBe("Menunggu pembayaran");
+    expect(order.presentation?.primaryAction.label).toBe("Lanjutkan pembayaran");
     expect(order.paymentProgress).toMatchObject({ state: "awaiting_payment", canOpenCheckout: true, lastCheckedAt: "2026-09-30T09:10:00Z" });
   });
   it("confirmed paid attempts take precedence over another pending attempt", () => {
@@ -35,6 +37,11 @@ describe("one authoritative payment presentation", () => {
   it("refund remains distinct from successfully collected payment", () => {
     const data = row({ status: "paid" }); data.status = "refund_pending"; data.payment!.status = "paid";
     expect(toUmkmOrderDetail(data, "2026-10-01T00:00:00Z").paymentProgress?.state).toBe("refund_pending");
+  });
+  it("a suspended owner can check an invoice but cannot open checkout", () => {
+    const order = toUmkmOrderDetail(row(), "2026-09-30T09:11:00Z", false);
+    expect(order.paymentProgress).toMatchObject({canOpenCheckout:false,canCheckStatus:true});
+    expect(order.capabilities.canPay).toBe(false);
   });
 });
 
