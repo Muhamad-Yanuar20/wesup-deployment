@@ -5,6 +5,16 @@ vi.mock('@/lib/orders/registration-counter',()=>({acquireCutoffLock:vi.fn(),rele
 const input={batchId:'batch',quantity:2,capacity:10,consentLat:null,consentLng:null,consentSnapshot:{maximumUnitPrice:10000}};
 beforeEach(()=>{vi.resetAllMocks();vi.mocked(acquireCutoffLock).mockResolvedValue({acquired:true,token:'owned-token'});vi.mocked(restoreVolumeCounter).mockResolvedValue();vi.mocked(releaseCutoffLock).mockResolvedValue();vi.mocked(reserveVolumeCounter).mockResolvedValue(2);});
 describe('authoritative registration recovery',()=>{
+ it('preserves an atomic full-capacity closure and its effective deadline',async()=>{
+  const state={quantity:10,registered:true,registrationId:'last-order',batchClosed:true,phase:'payment_open',deadlineAt:'2026-10-02T00:00:00Z'};
+  const rpc=vi.fn().mockResolvedValueOnce({data:{quantity:8,registered:false},error:null}).mockResolvedValueOnce({data:state,error:null}).mockResolvedValueOnce({data:state,error:null});
+  expect(await joinVersionedBatch({rpc},input)).toMatchObject({batchClosed:true,phase:'payment_open',deadlineAt:state.deadlineAt});
+  expect(restoreVolumeCounter).toHaveBeenLastCalledWith('batch',10);
+ });
+ it('recovers the final participant after the batch closed and the response was lost',async()=>{
+  const rpc=vi.fn().mockResolvedValueOnce({data:{quantity:8,registered:false},error:null}).mockRejectedValueOnce(new Error('network lost')).mockResolvedValueOnce({data:{quantity:10,registered:true,registrationId:'last-order',batchClosed:true,phase:'payment_open'},error:null});
+  expect(await joinVersionedBatch({rpc},input)).toMatchObject({registrationId:'last-order',batchClosed:true,phase:'payment_open',recovered:true});
+ });
  it('recovers a committed registration when the response was lost',async()=>{
   const rpc=vi.fn().mockResolvedValueOnce({data:{quantity:0,registered:false},error:null}).mockRejectedValueOnce(new Error('network lost')).mockResolvedValueOnce({data:{quantity:2,registered:true,registrationId:'same-order'},error:null});
   expect(await joinVersionedBatch({rpc},input)).toMatchObject({registrationId:'same-order',count:2});

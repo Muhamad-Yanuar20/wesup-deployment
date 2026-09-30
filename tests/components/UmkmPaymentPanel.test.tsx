@@ -48,6 +48,11 @@ const baseOrder = {
 } satisfies Omit<UmkmOrderDetail, "paymentAttempt">;
 
 describe("UmkmPaymentPanel", () => {
+  it("keeps a real provider-check action visible after the deadline", () => {
+    render(<UmkmPaymentPanel order={{ ...baseOrder, phase: "payment_verifying", serverTime: "2026-09-18T01:00:00Z", capabilities: {...baseOrder.capabilities,canPay:false}, paymentAttempt: { id: "attempt", providerOrderId: "WESUP-1", status: "pending", checkoutMode: "snap", providerStatus: "pending", paymentMethod: "bank_transfer", qrCodeUrl: null, expiresAt: "2026-09-17T00:00:00Z" } }} onReload={vi.fn()} />);
+    expect(screen.getByRole("button",{name:"Cek status pembayaran",exact:true})).toBeInTheDocument();
+    expect(screen.queryByText("Memeriksa status pembayaran…")).not.toBeInTheDocument();
+  });
   it("explains that a created checkout still needs a method", () => {
     render(<UmkmPaymentPanel order={{ ...baseOrder, paymentAttempt: { id: "attempt-1", providerOrderId: "WESUP-1", status: "pending", checkoutMode: "snap", providerStatus: "pending", paymentMethod: null, qrCodeUrl: null, expiresAt: "2026-09-17T00:00:00.000Z" } }} onReload={vi.fn()} snapConfig={{ clientKey: "client", scriptUrl: "https://example.test/snap.js", nonce: null }} />);
     expect(screen.getByText("Checkout sudah dibuat")).toBeInTheDocument();
