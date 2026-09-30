@@ -89,16 +89,18 @@ function buildClient(opts: ClientOpts) {
 
   const batchSingle = vi.fn(async () => {
     if (opts.batchStatus === "missing") return { data: null, error: null };
-    return { data: { id: BATCH_ID, status: batchStatus }, error: null };
+    // One nested read supplies the batch, its timeline and its tiers, replacing
+    // the three sequential reads the route used to make.
+    return {
+      data: {
+        id: BATCH_ID,
+        status: batchStatus,
+        batch_timeline: timeline,
+        batch_tiers: tiers,
+      },
+      error: null,
+    };
   });
-
-  const timelineSingle = vi.fn(async () =>
-    timeline ? { data: timeline, error: null } : { data: null, error: null },
-  );
-
-  const tiersSelect = vi.fn(async () =>
-    tiers ? { data: tiers, error: null } : { data: null, error: null },
-  );
 
   const upsert = vi.fn(async () => ({ error: null }));
   const insertSingle = vi.fn(async () => ({
@@ -124,11 +126,10 @@ function buildClient(opts: ClientOpts) {
     if (table === "batches") {
       return { select: vi.fn(() => ({ eq: vi.fn(() => ({ single: batchSingle })) })) };
     }
-    if (table === "batch_timeline") {
-      return { select: vi.fn(() => ({ eq: vi.fn(() => ({ single: timelineSingle })) })) };
-    }
-    if (table === "batch_tiers") {
-      return { select: vi.fn(() => ({ eq: tiersSelect })) };
+    if (table === "batch_timeline" || table === "batch_tiers") {
+      // Both are embedded on the batch read now. Reaching for either table
+      // directly is a regression, so fail loudly rather than quietly serving it.
+      throw new Error(`${table} must be read through the batch embed`);
     }
     if (table === "registration_counters") {
       return { upsert };
@@ -164,6 +165,43 @@ describe("POST /api/registrations (atomic register)", () => {
 
   afterEach(() => {
     vi.useRealTimers();
+  });
+
+  it("reads the batch, its timeline and its tiers in one query", async () => {
+    const { client, batchSingle } = buildClient({});
+    incrbyMock.mockResolvedValue(17);
+
+    await register(postJson(validBody) as unknown as Request);
+
+    expect(batchSingle).toHaveBeenCalledTimes(1);
+    // The timeline and tiers are embedded on the batch read, so neither table
+    // is read on its own any more.
+    const tables = vi.mocked(client.from).mock.calls.map((call) => call[0]);
+    expect(tables).not.toContain("batch_timeline");
+    expect(tables).not.toContain("batch_tiers");
+  });
+
+  it("selects the window columns explicitly instead of every timeline column", async () => {
+    const { client } = buildClient({});
+    incrbyMock.mockResolvedValue(17);
+
+    await register(postJson(validBody) as unknown as Request);
+
+    const fromMock = vi.mocked(client.from);
+    const batchesIndex = fromMock.mock.calls.findIndex((call) => call[0] === "batches");
+    const selectMock = (fromMock.mock.results[batchesIndex]?.value as { select: ReturnType<typeof vi.fn> }).select;
+    const columns = String(selectMock.mock.calls[0]?.[0] ?? "");
+    expect(columns).toContain("batch_timeline(");
+    expect(columns).toContain("batch_tiers(");
+    for (const column of [
+      "registration_opens_at",
+      "registration_closes_at",
+      "payment_opens_at",
+      "payment_closes_at",
+      "estimated_ready_at",
+    ]) {
+      expect(columns).toContain(column);
+    }
   });
 
   it("atomically increments the Redis counter and records the registration within the window", async () => {
@@ -208,6 +246,22 @@ describe("POST /api/registrations (atomic register)", () => {
     buildClient({ batchStatus: "missing" });
     const res = await register(postJson(validBody) as unknown as Request);
     expect(res.status).toBe(404);
+  });
+
+  it("fails closed with 500 when the batch has no timeline", async () => {
+    buildClient({ timeline: null });
+    const res = await register(postJson(validBody) as unknown as Request);
+    expect(res.status).toBe(500);
+    await expect(res.json()).resolves.toEqual({ error: "Batch timeline not found" });
+    expect(incrbyMock).not.toHaveBeenCalled();
+  });
+
+  it("fails closed with 500 when the batch has no tiers", async () => {
+    buildClient({ tiers: null });
+    const res = await register(postJson(validBody) as unknown as Request);
+    expect(res.status).toBe(500);
+    await expect(res.json()).resolves.toEqual({ error: "Batch tiers not found" });
+    expect(incrbyMock).not.toHaveBeenCalled();
   });
 
   it("rejects quantity above the tier maximum", async () => {

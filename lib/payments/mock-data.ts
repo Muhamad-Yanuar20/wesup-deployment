@@ -2,7 +2,7 @@ import type { PaymentInvoice } from "./types";
 
 /**
  * Static invoice fixtures for the Payment Window UI base.
- * `serverTimestamp` acts as the authoritative API Gatekeeper time — the
+ * `serverTime` acts as the authoritative API Gatekeeper time — the
  * countdown and gate states derive from it, never from the device clock.
  * A later role replaces this module with the real Supabase + Midtrans data.
  */
@@ -23,7 +23,7 @@ export const PAYMENT_INVOICE_MOCKS: readonly PaymentInvoice[] = [
     grossAmount: 760_000,
     midtransOrderId: "WS-20260828-000213",
     pickupAddress: "Jl. Asia Afrika No. 123, Bandung",
-    serverTimestamp: "2026-08-28T14:00:00.000Z",
+    serverTime: "2026-08-28T14:00:00.000Z",
     paymentOpensAt: "2026-08-28T10:00:01.000Z",
     paymentClosesAt: "2026-08-29T08:00:00.000Z",
     estimatedReadyAt: "2026-08-30T07:00:00.000Z",
@@ -45,7 +45,7 @@ export const PAYMENT_INVOICE_MOCKS: readonly PaymentInvoice[] = [
     grossAmount: 1_000_000,
     midtransOrderId: "WS-20260830-000087",
     pickupAddress: "Jl. Dago No. 45, Bandung",
-    serverTimestamp: "2026-08-28T07:00:00.000Z",
+    serverTime: "2026-08-28T07:00:00.000Z",
     paymentOpensAt: "2026-08-28T10:00:01.000Z",
     paymentClosesAt: "2026-08-29T08:00:00.000Z",
     estimatedReadyAt: "2026-08-30T07:00:00.000Z",
@@ -67,7 +67,7 @@ export const PAYMENT_INVOICE_MOCKS: readonly PaymentInvoice[] = [
     grossAmount: 900_000,
     midtransOrderId: "WS-20260824-000142",
     pickupAddress: "Jl. Buah Batu No. 88, Bandung",
-    serverTimestamp: "2026-08-29T09:00:00.000Z",
+    serverTime: "2026-08-29T09:00:00.000Z",
     paymentOpensAt: "2026-08-25T10:00:01.000Z",
     paymentClosesAt: "2026-08-26T08:00:00.000Z",
     estimatedReadyAt: "2026-08-27T07:00:00.000Z",
@@ -90,7 +90,7 @@ export const PAYMENT_INVOICE_MOCKS: readonly PaymentInvoice[] = [
     grossAmount: 1_140_000,
     midtransOrderId: "WS-20260826-000094",
     pickupAddress: "Jl. Asia Afrika No. 123, Bandung",
-    serverTimestamp: "2026-08-27T09:00:00.000Z",
+    serverTime: "2026-08-27T09:00:00.000Z",
     paymentOpensAt: "2026-08-26T10:00:01.000Z",
     paymentClosesAt: "2026-08-27T08:00:00.000Z",
     estimatedReadyAt: "2026-08-28T07:00:00.000Z",

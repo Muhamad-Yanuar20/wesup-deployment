@@ -13,4 +13,22 @@ export const DETAIL_SELECT = [
   "refund:refund_requests(id,amount,status,trigger_type,umkm_bank_account_id)",
 ].join(",");
 
-export const ORDER_SELECT = DETAIL_SELECT;
+// The list view only needs enough of each relation to render a card and decide
+// which action buttons to show. toUmkmOrderListItem -> capabilitiesFor reads
+// payment.status, escrow.pickup_confirmed_at, dispute/rating existence and
+// refund.umkm_bank_account_id, and nothing else.
+//
+// Dropped relative to DETAIL_SELECT, all of it a per-row join or aggregate that
+// the list never reads:
+//   - pickup_codes        (detail-only; also carried the 4-digit pickup PIN)
+//   - payment_attempts    (detail-only nested array aggregate)
+//   - disputes.photo_urls / description, rating text, refund amounts
+export const ORDER_SELECT = [
+  "id,batch_id,quantity,status,final_amount,locked_tier_number,created_at",
+  ORDER_BATCH_RELATION_SELECT,
+  "payment:payments(id,status)",
+  "escrow:escrow_holds(id,pickup_confirmed_at)",
+  "dispute:disputes(id)",
+  "rating:ratings(id)",
+  "refund:refund_requests(id,umkm_bank_account_id)",
+].join(",");

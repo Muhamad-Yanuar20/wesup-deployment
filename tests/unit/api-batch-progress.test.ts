@@ -39,7 +39,7 @@ interface BuildOptions {
   batchMissing?: boolean;
   timeline?: typeof TIMELINE | null;
   tiers?: typeof TIERS | null;
-  registrationRows?: Array<{ quantity: number; status: string }>;
+  registeredTotal?: number | null;
   registrationError?: Error | null;
 }
 
@@ -79,23 +79,16 @@ function buildClients(options: BuildOptions = {}) {
   const client = { from };
   mockGetServerClient.mockResolvedValue(client as never);
 
-  const registrationQuery = vi.fn(async () => ({
-    data: options.registrationRows ?? [],
+  const rpc = vi.fn(async () => ({
+    data: options.registeredTotal ?? null,
     error: options.registrationError ?? null,
   }));
   const adminFrom = vi.fn((table: string) => {
-    if (table !== "registrations") throw new Error(`unexpected table ${table}`);
-    return {
-      select: vi.fn(() => ({
-        eq: vi.fn(() => ({
-          in: registrationQuery,
-        })),
-      })),
-    };
+    throw new Error(`unexpected table ${table}`);
   });
-  mockGetAdminClient.mockReturnValue({ from: adminFrom } as never);
+  mockGetAdminClient.mockReturnValue({ from: adminFrom, rpc } as never);
 
-  return { from, adminFrom, registrationQuery };
+  return { from, adminFrom, rpc };
 }
 
 describe("GET /api/batches/[id]/progress", () => {
@@ -159,13 +152,8 @@ describe("GET /api/batches/[id]/progress", () => {
     expect(mockGetAdminClient).not.toHaveBeenCalled();
   });
 
-  it("hydrates a missing Redis counter from registered and pending-payment rows", async () => {
-    buildClients({
-      registrationRows: [
-        { quantity: 5, status: "registered" },
-        { quantity: 7, status: "pending_payment" },
-      ],
-    });
+  it("hydrates a missing Redis counter from the database aggregate", async () => {
+    buildClients({ registeredTotal: 12 });
     getMock.mockResolvedValue(null);
     setMock.mockResolvedValue("OK");
 
@@ -173,6 +161,28 @@ describe("GET /api/batches/[id]/progress", () => {
     expect(res.status).toBe(200);
     expect((await res.json()).registeredQuantity).toBe(12);
     expect(setMock).toHaveBeenCalledWith(`batch:${BATCH_ID}:count`, 12);
+  });
+
+  it("reconciles through one aggregate call and fetches no registration rows", async () => {
+    const { rpc, adminFrom } = buildClients({ registeredTotal: 4 });
+    getMock.mockResolvedValue(null);
+    setMock.mockResolvedValue("OK");
+
+    await getProgress(new Request("http://localhost"), routeParams(BATCH_ID));
+
+    expect(rpc).toHaveBeenCalledTimes(1);
+    expect(rpc).toHaveBeenCalledWith("sum_registered_quantity", { p_batch_id: BATCH_ID });
+    expect(adminFrom).not.toHaveBeenCalled();
+  });
+
+  it("treats a null aggregate as zero rather than leaking NaN", async () => {
+    buildClients({ registeredTotal: null });
+    getMock.mockResolvedValue(null);
+    setMock.mockResolvedValue("OK");
+
+    const res = await getProgress(new Request("http://localhost"), routeParams(BATCH_ID));
+    expect(res.status).toBe(200);
+    expect((await res.json()).registeredQuantity).toBe(0);
   });
 
   it("returns 503 when the authoritative fallback query fails", async () => {

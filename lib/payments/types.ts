@@ -29,7 +29,7 @@ export interface PaymentInvoice {
   midtransOrderId: string;
   pickupAddress: string;
   /** Waktu absolut dari API Gatekeeper (mock server) — sumber kebenaran countdown. */
-  serverTimestamp: string;
+  serverTime: string;
   paymentOpensAt: string;
   paymentClosesAt: string;
   estimatedReadyAt: string;

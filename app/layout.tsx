@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Newsreader } from "next/font/google";
 import "./globals.css";
 import { ToastProvider } from "@/components/ui/GlobalToast";
 
@@ -11,6 +11,19 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+});
+
+const newsreader = Newsreader({
+  variable: "--font-newsreader",
+  subsets: ["latin"],
+  display: "swap",
+  // Optical sizing, not a weight pin. Newsreader is a variable font with an
+  // opsz axis, and the hero headlines sit large while the same family sets
+  // 0.9375rem body copy lower down. One static weight cannot serve both: pinned,
+  // the big headlines render with the hairlines and open apertures of the text
+  // cut and the hero reads thin. The browser then picks the correct optical
+  // design per size, with the display cut at the large sizes.
+  axes: ["opsz"],
 });
 
 export const metadata: Metadata = {
@@ -30,7 +43,7 @@ export default function RootLayout({
   return (
     <html
       lang="id"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${newsreader.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">
         <ToastProvider>{children}</ToastProvider>

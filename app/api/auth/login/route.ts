@@ -7,8 +7,8 @@ import {
   parseLoginPayload,
 } from "@/lib/auth/login-contract";
 import { sanitizeReturnTo } from "@/lib/auth/access-state";
-import { getCurrentUser } from "@/lib/supabase/auth";
-import type { AuthClient } from "@/lib/supabase/auth";
+import { getCurrentUser, maybeLiftExpiredTemporarySuspension } from "@/lib/supabase/auth";
+import type { AuthClient, RpcLiftClient } from "@/lib/supabase/auth";
 import { getServerClient } from "@/lib/supabase/server";
 import type { VerificationStatus } from "@/types/database";
 import { enforceRateLimit } from "@/lib/rate-limit";
@@ -73,6 +73,11 @@ export async function POST(request: NextRequest) {
       { status: 500 },
     );
   }
+
+  context = await maybeLiftExpiredTemporarySuspension(
+    client as unknown as RpcLiftClient,
+    context,
+  );
 
   if (context.status !== "active") {
     const errorMessage = getAccountStatusMessage(context.status);

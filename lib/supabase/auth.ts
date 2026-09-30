@@ -46,6 +46,48 @@ export interface AuthClient {
   };
 }
 
+export interface RpcLiftClient extends AuthClient {
+  rpc: (
+    fn: "lazy_lift_expired_suspension",
+    args: { p_user_id: string },
+  ) => Promise<{ data: boolean | null; error: { message: string } | null }>;
+}
+
+/**
+ * Lazy lift for expired temporary suspensions (auto-suspend lazy evaluation).
+ * PostgREST only executes this RPC when the temp-suspension window has elapsed
+ * and the user is still blocked; otherwise it is a cheap no-op that leaves
+ * status intact so the caller's gate still rejects non-active accounts.
+ * Returns a fresh AuthContext when the lift actually transitioned the account,
+ * or the original context when nothing changed.
+ */
+export async function maybeLiftExpiredTemporarySuspension(
+  client: RpcLiftClient,
+  context: AuthContext,
+): Promise<AuthContext> {
+  if (context.status === "active" || context.status === "suspended_permanent") {
+    return context;
+  }
+
+  let lifted: boolean | null = null;
+  try {
+    const result = await client.rpc("lazy_lift_expired_suspension", {
+      p_user_id: context.userId,
+    });
+    if (result.error) {
+      return context;
+    }
+    lifted = result.data;
+  } catch {
+    return context;
+  }
+
+  if (!lifted) {
+    return context;
+  }
+  return (await getCurrentUser(client)) ?? context;
+}
+
 export async function getCurrentUser(client: AuthClient): Promise<AuthContext | null> {
   const { data, error } = await client.auth.getUser();
   if (error || !data.user) {

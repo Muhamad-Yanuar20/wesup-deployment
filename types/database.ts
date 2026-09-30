@@ -1,3 +1,11 @@
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[];
+
 export type UserRole = "supplier" | "umkm" | "admin";
 export type AccountStatus =
   "active" | "suspended_temporary" | "suspended_permanent" | "banned";
@@ -899,6 +907,26 @@ export interface Database {
     };
     Views: Record<string, never>;
     Functions: {
+      apply_hit_and_run_escalation: {
+        Args: {
+          p_umkm_id: string;
+          p_payment_window_closed_at: string;
+          p_registration_id?: string | null;
+        };
+        Returns: undefined;
+      };
+      lazy_lift_expired_suspension: {
+        Args: { p_user_id: string };
+        Returns: boolean;
+      };
+      reconcile_batch_payment_window: {
+        Args: { p_batch_id: string };
+        Returns: Json;
+      };
+      sum_registered_quantity: {
+        Args: { p_batch_id: string };
+        Returns: number;
+      };
       is_admin: {
         Args: Record<PropertyKey, never>;
         Returns: boolean;
@@ -1240,6 +1268,10 @@ export interface Database {
       materialize_supplier_order: {
         Args: { p_registration_id: string };
         Returns: RegistrationStatus;
+      };
+      materialize_umkm_orders: {
+        Args: { p_registration_ids: string[] };
+        Returns: number;
       };
       get_supplier_dashboard_summary: {
         Args: Record<PropertyKey, never>;

@@ -31,12 +31,20 @@ interface ProfileQuery {
 }
 
 interface RegistrationQuery {
-  select: (columns: string) => { eq: (column: string, value: string) => PromiseLike<QueryResult<RegistrationRow[]>> };
+  select: (columns: string) => { eq: (column: string, value: string) => { in: (column: string, values: string[]) => PromiseLike<QueryResult<RegistrationRow[]>> } };
+}
+
+interface CountResult {
+  data: null;
+  error: unknown | null;
+  count: number | null;
 }
 
 interface NotificationQuery {
-  select: (columns: string) => { eq: (column: string, value: string) => { is: (column: string, value: null) => PromiseLike<QueryResult<Array<{ id: string }>>> } };
+  select: (columns: string, options: { head: true; count: "exact" }) => { eq: (column: string, value: string) => { is: (column: string, value: null) => PromiseLike<CountResult> } };
 }
+
+const ACTIVE_ORDER_STATUSES = ["registered", "pending_payment", "paid"] as const;
 
 function isActiveOrder(status: string): boolean {
   return status === "registered" || status === "pending_payment" || status === "paid";
@@ -82,15 +90,22 @@ export async function GET() {
     .maybeSingle();
   if (profileError) return NextResponse.json({ error: "Unable to load UMKM profile" }, { status: 500 });
 
+  // Only active orders can be counted or become the next action, so the query
+  // is narrowed to them instead of streaming the whole order history into JS.
+  // registrations_umkm_status_created_idx (umkm_id, status, created_at) covers
+  // both predicates.
   const registrationsQuery = client.from("registrations") as RegistrationQuery;
   const { data: registrations, error: registrationsError } = await registrationsQuery
     .select("id,batch_id,status,quantity,final_amount,created_at,batch:batches(id,title,batch_timeline(registration_closes_at,payment_opens_at,estimated_ready_at))")
-    .eq("umkm_id", viewer.context.userId);
+    .eq("umkm_id", viewer.context.userId)
+    .in("status", [...ACTIVE_ORDER_STATUSES]);
   if (registrationsError) return NextResponse.json({ error: "Unable to load UMKM orders" }, { status: 500 });
 
+  // A COUNT with head: true returns no rows at all, where the previous shape
+  // transferred every unread notification just to take its length.
   const notificationQuery = client.from("notifications") as NotificationQuery;
-  const { data: unreadNotifications, error: notificationError } = await notificationQuery
-    .select("id")
+  const { count: unreadNotificationCount, error: notificationError } = await notificationQuery
+    .select("id", { head: true, count: "exact" })
     .eq("user_id", viewer.context.userId)
     .is("read_at", null);
   if (notificationError) return NextResponse.json({ error: "Unable to load UMKM notifications" }, { status: 500 });
@@ -101,7 +116,7 @@ export async function GET() {
     profileComplete,
     profile: profileComplete && profile ? { businessName: profile.business_name ?? "", address: profile.address ?? "" } : null,
     activeOrderCount: rows.filter((row) => isActiveOrder(row.status)).length,
-    unreadNotificationCount: (unreadNotifications ?? []).length,
+    unreadNotificationCount: unreadNotificationCount ?? 0,
     nextAction: resolveNextAction(rows),
   });
 }

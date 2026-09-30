@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { NextRequest } from "next/server";
 import type { Database } from "@/types/database";
 import { buildContentSecurityPolicy, generateNonce, shouldAllowMidtransCsp } from "@/lib/security/csp";
+import { authorizeDocsRequest, isDocsPath } from "@/lib/docs/basic-auth";
 
 export async function updateSession(
   request: NextRequest,
@@ -46,6 +47,11 @@ export async function updateSession(
 }
 
 export default async function proxy(request: NextRequest) {
+  if (isDocsPath(request.nextUrl.pathname)) {
+    const denied = authorizeDocsRequest(request);
+    if (denied) return denied;
+  }
+
   const nonce = generateNonce();
   const allowMidtrans = shouldAllowMidtransCsp(request.nextUrl.pathname);
   const { policy } = buildContentSecurityPolicy(nonce, { allowMidtrans });
@@ -68,6 +74,7 @@ export default async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
+    "/docs/:path*",
     {
       source:
         "/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)",

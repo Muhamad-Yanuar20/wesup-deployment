@@ -64,6 +64,15 @@ export default function UmkmPaymentPanel({ order, onReload, snapConfig }: { orde
   const [snapState, setSnapState] = useState<SnapLoaderState>(snapConfig ? "loading" : "error");
   const [reconcileState, setReconcileState] = useState<PaymentReconcileState>("idle");
   const [serverTime, setServerTime] = useState(order.serverTime);
+  useEffect(() => {
+    const nextAttempt = order.paymentAttempt as CheckoutAttempt | null;
+    const task = window.setTimeout(() => {
+      setAttempt(nextAttempt);
+      setRedirectUrl(nextAttempt?.redirectUrl ?? null);
+      setServerTime(order.serverTime);
+    }, 0);
+    return () => window.clearTimeout(task);
+  }, [order.paymentAttempt, order.serverTime]);
   const handleSnapState = useCallback((state: SnapLoaderState) => {
     setSnapState(state);
     if (state === "blocked") setMessage("Menyiapkan ulang checkout Midtrans…");
@@ -137,7 +146,10 @@ export default function UmkmPaymentPanel({ order, onReload, snapConfig }: { orde
   useEffect(() => {
     if (countdown.state !== "expired" || expiryReconciled.current) return;
     expiryReconciled.current = true;
-    const task = window.setTimeout(() => { if (order.phase === "payment_open") void reconcile(); else onReload(); }, 0);
+    const task = window.setTimeout(() => {
+      if (order.phase === "payment_open") void reconcile();
+      else if (order.phase === "waiting_payment_window") void onReload();
+    }, 0);
     return () => window.clearTimeout(task);
   }, [countdown.state, order.phase, onReload, reconcile]);
 

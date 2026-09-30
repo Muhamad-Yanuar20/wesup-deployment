@@ -59,9 +59,12 @@ export async function GET(request?: Request) {
 
   // Lazy lifecycle reconciliation is deliberately best-effort. A read should
   // never fail because one stale registration has a malformed provider record.
+  // One batched call covers the whole page: the per-order fan-out used to cost
+  // a round-trip per order and re-ran the batch sweep once per row.
   if (typeof rpcClient.rpc === "function" && rows.length > 0) {
-    const lifecycleRpc = process.env.NODE_ENV === "test" ? "materialize_umkm_order" : "materialize_supplier_order";
-    await Promise.allSettled(rows.map((row) => rpcClient.rpc!(lifecycleRpc, { p_registration_id: row.id })));
+    await Promise.allSettled([
+      rpcClient.rpc("materialize_umkm_orders", { p_registration_ids: rows.map((row) => row.id) }),
+    ]);
     const refreshed = await (viewer.client.from("registrations") as OrdersQuery)
       .select(ORDER_SELECT)
       .eq("umkm_id", viewer.context.userId);

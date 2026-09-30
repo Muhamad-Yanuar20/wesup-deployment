@@ -22,20 +22,30 @@ function useOrderDetail(orderId: string) {
   const [order, setOrder] = useState<UmkmOrderDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const hasLoaded = useRef(false);
   const load = useCallback(async (signal?: AbortSignal) => {
-    setLoading(true); setError("");
+    const initialLoad = !hasLoaded.current;
+    if (initialLoad) setLoading(true);
+    setError("");
     try {
       const response = await fetch(`/api/umkm/orders/${encodeURIComponent(orderId)}`, { cache: "no-store", signal });
       const body = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(apiError(body, "Pesanan belum dapat dimuat."));
       setOrder(body as UmkmOrderDetail);
+      hasLoaded.current = true;
     } catch (reason: unknown) {
       if (reason instanceof DOMException && reason.name === "AbortError") return;
       setError(reason instanceof Error ? reason.message : "Pesanan belum dapat dimuat.");
-    } finally { if (!signal?.aborted) setLoading(false); }
+    } finally { if (initialLoad && !signal?.aborted) setLoading(false); }
   }, [orderId]);
-  useEffect(() => { const controller = new AbortController(); const task = window.setTimeout(() => { void load(controller.signal); }, 0); return () => { window.clearTimeout(task); controller.abort(); }; }, [load]);
-  return { order, loading, error, reload: () => load() };
+  useEffect(() => {
+    hasLoaded.current = false;
+    const controller = new AbortController();
+    const task = window.setTimeout(() => { void load(controller.signal); }, 0);
+    return () => { window.clearTimeout(task); controller.abort(); };
+  }, [load]);
+  const reload = useCallback(() => { void load(); }, [load]);
+  return { order, loading, error, reload };
 }
 
 function PageHeader({ order, mode }: { order: UmkmOrderDetail; mode: UmkmOrderDetailMode }) {
@@ -90,6 +100,6 @@ function RefundPanel({ order, onReload }: { order: UmkmOrderDetail; onReload: ()
 export default function UmkmOrderDetailClient({ orderId, mode, snapConfig }: { orderId: string; mode: UmkmOrderDetailMode; snapConfig?: MidtransSnapConfig }) {
   const { order, loading, error, reload } = useOrderDetail(orderId);
   if (loading) return <div role="status" className="rounded-xl border border-slate-200 bg-white p-8 text-center text-sm text-slate-500">Memuat detail pesanan…</div>;
-  if (error || !order) return <section role="alert" className="rounded-xl border border-red-200 bg-red-50 p-5 text-sm text-red-700">{error || "Pesanan tidak ditemukan."}<button type="button" onClick={reload} className="mt-3 inline-flex items-center gap-2 rounded-lg bg-red-600 px-3 py-2 font-semibold text-white"><RefreshCw className="size-4" />Coba lagi</button></section>;
-  return <div className="mx-auto w-full max-w-4xl space-y-6"><PageHeader order={order} mode={mode} />{mode === "payment" && <UmkmPaymentPanel key={`${order.id}-${order.serverTime}`} order={order} onReload={reload} snapConfig={snapConfig} />}{mode === "pickup" && <PickupPanel order={order} />}{mode === "complaint" && <><Summary order={order} /><ComplaintPanel order={order} /></>}{mode === "dispute" && <><Summary order={order} /><DisputePanel order={order} /></>}{mode === "rating" && <><Summary order={order} /><RatingPanel order={order} onReload={reload} /></>}{mode === "refund" && <><Summary order={order} /><RefundPanel order={order} onReload={reload} /></>}</div>;
+  if ((error && !order) || !order) return <section role="alert" className="rounded-xl border border-red-200 bg-red-50 p-5 text-sm text-red-700">{error || "Pesanan tidak ditemukan."}<button type="button" onClick={reload} className="mt-3 inline-flex items-center gap-2 rounded-lg bg-red-600 px-3 py-2 font-semibold text-white"><RefreshCw className="size-4" />Coba lagi</button></section>;
+  return <div className="mx-auto w-full max-w-4xl space-y-6"><PageHeader order={order} mode={mode} />{mode === "payment" && <UmkmPaymentPanel order={order} onReload={reload} snapConfig={snapConfig} />}{mode === "pickup" && <PickupPanel order={order} />}{mode === "complaint" && <><Summary order={order} /><ComplaintPanel order={order} /></>}{mode === "dispute" && <><Summary order={order} /><DisputePanel order={order} /></>}{mode === "rating" && <><Summary order={order} /><RatingPanel order={order} onReload={reload} /></>}{mode === "refund" && <><Summary order={order} /><RefundPanel order={order} onReload={reload} /></>}</div>;
 }

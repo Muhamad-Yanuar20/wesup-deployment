@@ -466,6 +466,25 @@ describe("GET /api/admin/audit-logs", () => {
     expect(eq).toHaveBeenCalledWith("admin_id", ADMIN_ID);
   });
 
+  it("selects an explicit column list instead of every column", async () => {
+    const { select } = mockAuditLogsClient([]);
+    await listAuditLogs(new NextRequest("http://localhost/api/admin/audit-logs"));
+    const columns = ((select.mock.calls as unknown) as string[][])[0]?.[0] ?? "";
+    expect(columns).not.toBe("*");
+    for (const kept of ["id", "admin_id", "action_type", "target_type", "target_id", "created_at"]) {
+      expect(columns).toContain(kept);
+    }
+  });
+
+  it("omits the heavy jsonb payload and request PII from the list", async () => {
+    const { select } = mockAuditLogsClient([]);
+    await listAuditLogs(new NextRequest("http://localhost/api/admin/audit-logs"));
+    const columns = ((select.mock.calls as unknown) as string[][])[0]?.[0] ?? "";
+    expect(columns).not.toContain("details");
+    expect(columns).not.toContain("ip_address");
+    expect(columns).not.toContain("user_agent");
+  });
+
   it("returns 400 for an invalid limit", async () => {
     mockAuditLogsClient();
     const res = await listAuditLogs(

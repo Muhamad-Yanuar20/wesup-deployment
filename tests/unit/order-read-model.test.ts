@@ -32,6 +32,12 @@ describe("UMKM order read model", () => {
     expect(item.unit).toBe("kg");
   });
 
+  it("does not expose the payment CTA after the payment window expires", () => {
+    const item = toUmkmOrderListItem({ ...base, status: "pending_payment" }, "2026-08-28T00:00:00.000Z");
+    expect(item.phase).toBe("payment_expired");
+    expect(item.capabilities.canPay).toBe(false);
+  });
+
   it("does not expose refund-account CTA after a bank account is attached", () => {
     const item = toUmkmOrderListItem({ ...base, status: "refund_pending", refund: { umkm_bank_account_id: "bank-1" } }, "2026-09-02T20:00:00.000Z");
     expect(item.capabilities.canSubmitRefundAccount).toBe(false);
@@ -61,5 +67,23 @@ describe("UMKM order read model", () => {
     }, "2026-09-02T20:00:00.000Z");
     expect(detail.paymentAttempt?.id).toBe("attempt-active");
     expect(detail.paymentAttempt?.paymentMethod).toBe("qris");
+  });
+
+  it("keeps the complaint window open 24h after pickup even past the pickup tolerance", () => {
+    const item = toUmkmOrderListItem(base, "2026-09-03T01:00:00.000Z");
+    expect(item.timeline.pickupDeadlineAt).toBe("2026-09-02T12:00:00.000Z");
+    expect(item.timeline.complaintDeadlineAt).toBe("2026-09-03T08:00:00.000Z");
+    expect(item.capabilities.canComplain).toBe(true);
+  });
+
+  it("closes the complaint window once 24h after confirmed pickup has passed", () => {
+    const item = toUmkmOrderListItem(base, "2026-09-03T08:00:01.000Z");
+    expect(item.capabilities.canComplain).toBe(false);
+  });
+
+  it("does not expose the complaint CTA when the escrow pickup timestamp is unknown", () => {
+    const item = toUmkmOrderListItem({ ...base, escrow: null }, "2026-09-02T06:00:00.000Z");
+    expect(item.timeline.complaintDeadlineAt).toBeNull();
+    expect(item.capabilities.canComplain).toBe(false);
   });
 });

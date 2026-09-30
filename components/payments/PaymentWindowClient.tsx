@@ -25,7 +25,7 @@ export default function PaymentWindowClient({
 }: {
   invoice: PaymentInvoice;
 }) {
-  // State Gate dihitung dari serverTimestamp mock — bukan jam perangkat.
+  // State Gate dihitung dari serverTime mock — bukan jam perangkat.
   const gate = evaluatePaymentWindow(
     {
       registration_opens_at: invoice.paymentOpensAt,
@@ -34,7 +34,7 @@ export default function PaymentWindowClient({
       payment_closes_at: invoice.paymentClosesAt,
       estimated_ready_at: invoice.estimatedReadyAt,
     },
-    invoice.serverTimestamp,
+    invoice.serverTime,
   );
 
   const isPaid = invoice.resolution === "paid";
@@ -121,14 +121,14 @@ export default function PaymentWindowClient({
             </div>
             {isWaiting && (
               <PaymentCountdown
-                serverNowIso={invoice.serverTimestamp}
+                serverNowIso={invoice.serverTime}
                 deadlineIso={invoice.paymentOpensAt}
                 tone="info"
               />
             )}
             {isOpen && (
               <PaymentCountdown
-                serverNowIso={invoice.serverTimestamp}
+                serverNowIso={invoice.serverTime}
                 deadlineIso={invoice.paymentClosesAt}
                 tone="danger"
               />

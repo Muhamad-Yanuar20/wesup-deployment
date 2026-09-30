@@ -81,9 +81,14 @@ export async function GET(req: Request) {
   const limited = await enforceRateLimit(req, "admin", authCtx.userId);
   if (limited) return limited;
 
+  // Explicit columns: the list renders identity plus what was acted on. The
+  // unbounded `details` jsonb and the per-request PII (ip_address, user_agent)
+  // belong to a single audit record's detail view, not to a paginated list.
   let query = client
     .from("admin_audit_logs")
-    .select("*") as unknown as AuditLogsQuery;
+    .select(
+      "id,admin_id,action_type,target_type,target_id,created_at",
+    ) as unknown as AuditLogsQuery;
   if (actionType) {
     query = query.eq("action_type", actionType);
   }
