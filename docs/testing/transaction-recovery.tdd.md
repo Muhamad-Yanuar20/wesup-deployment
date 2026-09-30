@@ -21,7 +21,7 @@ The payment and pickup stages use separate, clearly named QA fixtures, as author
 | Preserve RPC binding and the product unit | `23b0938`: detached `rpc` lost its receiver; pickup API defaulted kg orders to pcs | Bound client call and offer-context unit; supplier Ready POST 200 and handover displays 1 kg |
 | Checkout works on canonical order detail | `5cfb053`: canonical route lacked Midtrans CSP allowance; recovery marker was cleared and reload continued | Canonical route allowance added; recovery remains limited to one per order/session; actual checkout POST 201, QRIS settlement and reconciliation 200 |
 
-The GREEN implementation checkpoint accompanying this report contains the remaining fixes; RED commits are preserved on the active branch. Additional regression checks exercise the real SQL migrations instead of relying on the SQL AST parser for unsupported DO/NOTIFY statements.
+The GREEN implementation checkpoint `3e589d9` contains the remaining fixes; RED commits are preserved on the active branch. Additional regression checks exercise the real SQL migrations instead of relying on the SQL AST parser for unsupported DO/NOTIFY statements. The live pickup regression creates a fresh rollback-only fixture, so it does not expire with the browser QA order.
 
 ## Database deployment
 
