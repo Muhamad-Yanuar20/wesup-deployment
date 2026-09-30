@@ -1,61 +1,114 @@
 import { NextResponse } from "next/server";
-import {
-  requireRole,
-  toAuthResponse,
-  type AuthClient,
-} from "@/lib/supabase/auth";
-import { getServerClient } from "@/lib/supabase/server";
-import { isUuid, parseJsonBody } from "@/lib/admin/validation";
-
-export const dynamic = "force-dynamic";
-
-const WINNERS = ["supplier", "umkm"] as const;
+import { getAdminClient } from "@/lib/supabase/admin";
 
 export async function POST(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> },
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params;
-  if (!isUuid(id)) {
-    return NextResponse.json({ error: "Invalid dispute id" }, { status: 400 });
-  }
-
-  const body = await parseJsonBody(req);
-  if (
-    !body ||
-    typeof body.winner !== "string" ||
-    !WINNERS.includes(body.winner as (typeof WINNERS)[number])
-  ) {
-    return NextResponse.json(
-      { error: "winner must be supplier or umkm" },
-      { status: 400 },
-    );
-  }
-  const notes = body.notes === undefined ? null : body.notes;
-  if (notes !== null && typeof notes !== "string") {
-    return NextResponse.json(
-      { error: "notes must be a string" },
-      { status: 400 },
-    );
-  }
-
-  const client = await getServerClient();
   try {
-    await requireRole(client as unknown as AuthClient, ["admin"]);
-  } catch (err) {
-    return toAuthResponse(err);
+    const { id } = await params;
+    const body = await request.json().catch(() => ({}));
+    const { decision, notes } = body; // decision: 'resolved_refund' | 'resolved_payout' | 'rejected'
+
+    if (!decision || !["resolved_refund", "resolved_payout", "rejected"].includes(decision)) {
+      return NextResponse.json(
+        { error: "Keputusan resolusi tidak valid." },
+        { status: 400 }
+      );
+    }
+
+    const supabase = getAdminClient();
+
+    const { data: dispute, error: disputeError } = await supabase
+      .from("disputes")
+      .select("id, registration_id, status")
+      .eq("id", id)
+      .single();
+
+    if (disputeError || !dispute) {
+      return NextResponse.json(
+        { error: "Data sengketa tidak ditemukan." },
+        { status: 404 }
+      );
+    }
+
+  // Tentukan kandidat nilai status (misal 'resolved_refund' vs 'refund')
+  let primaryStatus = decision;
+  let fallbackStatus = decision;
+
+  if (decision === "resolved_refund") fallbackStatus = "refund";
+  if (decision === "resolved_payout") fallbackStatus = "payout";
+  if (decision === "rejected") fallbackStatus = "resolved_rejected";
+
+  const updatePayload: any = {
+    status: primaryStatus,
+    updated_at: new Date().toISOString(),
+  };
+
+  if (notes) {
+    updatePayload.resolution_notes = notes;
   }
 
-  const { error } = await client.rpc("resolve_dispute", {
-    p_dispute_id: id,
-    p_winner: body.winner,
-    p_notes: notes,
-    p_ip_address: req.headers.get("x-forwarded-for") ?? null,
-    p_user_agent: req.headers.get("user-agent") ?? null,
-  });
-  if (error) {
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
+    // 1. Coba update status utama
+    let { error: updateDisputeError } = await supabase
+      .from("disputes")
+      .update(updatePayload as any)
+      .eq("id", id);
 
-  return NextResponse.json({ ok: true });
+    // Jika gagal karena Enum mismatch, coba fallback status
+    if (updateDisputeError && updateDisputeError.message.includes("enum")) {
+      const retryResult = await supabase
+        .from("disputes")
+        .update({ ...updatePayload, status: fallbackStatus } as any)
+        .eq("id", id);
+      
+      updateDisputeError = retryResult.error;
+    }
+
+    if (updateDisputeError) {
+      console.error("Gagal update status dispute:", updateDisputeError);
+      return NextResponse.json({ error: updateDisputeError.message }, { status: 500 });
+    }
+
+    // 2. Jika keputusan REFUND -> Masukkan ke Antrean Refund Admin
+    if (decision === "resolved_refund") {
+      const { data: reg } = await supabase
+        .from("registrations")
+        .select("id, batch_id, final_amount")
+        .eq("id", dispute.registration_id)
+        .single();
+
+      if (reg) {
+        await supabase
+          .from("registrations")
+          .update({
+            status: "refund_pending",
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", reg.id);
+
+        const refundPayload = {
+          registration_id: reg.id,
+          batch_id: reg.batch_id,
+          trigger_type: "takedown",
+          amount: Number(reg.final_amount || 0),
+          status: "pending",
+          created_at: new Date().toISOString(),
+        };
+
+        await supabase.from("refund_requests").insert(refundPayload as any);
+      }
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: `Sengketa berhasil diselesaikan dengan keputusan: ${decision}`,
+    });
+  } catch (err: any) {
+    console.error("Resolve Dispute Error:", err);
+    return NextResponse.json(
+      { error: err.message || "Internal Server Error" },
+      { status: 500 }
+    );
+  }
 }

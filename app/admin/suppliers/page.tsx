@@ -24,7 +24,7 @@ export default function AdminSuppliersPage() {
         }
         const data = await res.json();
         console.log("Data dari API:", data);
-        
+
         if (Array.isArray(data)) {
           setSuppliers(data);
         } else {
@@ -80,16 +80,16 @@ export default function AdminSuppliersPage() {
   }
 
   return (
-    <div className="flex min-h-screen bg-[#f4f2ec]">
+    <div className="flex h-screen overflow-hidden bg-[#f4f2ec]">
       <AdminSidebar pendingSuppliersCount={pendingCount} />
 
-      <div className="flex flex-1 flex-col">
+      <div className="flex flex-1 flex-col overflow-hidden">
         <AdminHeader
           title="Antrean Supplier"
           description="Tinjau dan verifikasi pendaftaran Supplier baru"
         />
 
-        <main className="flex-1 px-8 py-6">
+        <main className="flex-1 overflow-y-auto px-8 py-6">
           {loading ? (
             <p className="font-mono text-sm text-[#8a8478]">Memuat data antrean...</p>
           ) : errorMessage ? (
