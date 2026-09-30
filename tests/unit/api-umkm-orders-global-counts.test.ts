@@ -119,7 +119,7 @@ describe("GET /api/umkm/orders global counts and summary", () => {
   it("maps each status to its documented count bucket", async () => {
     const { counts } = await load("status=all&limit=50");
 
-    expect(counts).toEqual({
+    expect(counts).toMatchObject({
       all: 10,
       registered: 1,
       pending_payment: 1,

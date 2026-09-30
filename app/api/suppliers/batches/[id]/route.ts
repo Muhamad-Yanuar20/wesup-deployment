@@ -1,3 +1,5 @@
+import { getOfferContext } from "@/lib/transactions/offer-context";
+import type { TransactionRpcClient } from "@/lib/transactions/api";
 import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { requireRole, toAuthResponse, type AuthClient } from "@/lib/supabase/auth";
@@ -175,7 +177,8 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   try {
     const row = await readBatch(auth.client!, id);
     if (!row) return NextResponse.json({ error: "Katalog tidak ditemukan." }, { status: 404 });
-    return NextResponse.json({ item: mapSupplierBatchRow(row) });
+    const context=await getOfferContext(auth.client! as unknown as TransactionRpcClient,id);
+    return NextResponse.json({ item: {...mapSupplierBatchRow(row),...(context?{policyVersion:context.policyVersion,commercialLocked:context.commercialLocked}: {})} });
   } catch (error) { return errorResponse(error); }
 }
 

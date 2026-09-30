@@ -1,3 +1,4 @@
+import { enrichOffer } from "@/lib/transactions/offer-context";
 import { mapMarketplaceRpcRow, type MarketplaceRpcRow } from "./api-mapper";
 import type { MarketplaceItem } from "./types";
 
@@ -23,5 +24,5 @@ export async function fetchMarketplaceDetail(
   });
   if (error) throw error;
   const row = (data?.[0] ?? null) as MarketplaceRpcRow | null;
-  return row ? mapMarketplaceRpcRow(row) : null;
+  return row ? enrichOffer(client, mapMarketplaceRpcRow(row)) : null;
 }

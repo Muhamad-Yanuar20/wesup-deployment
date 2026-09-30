@@ -11,6 +11,7 @@ export interface CatalogTierMutationInput {
 }
 
 export interface CatalogMutationInput {
+  transactionPolicyVersion?: number;
   title: string;
   category: BatchCategory | "";
   description: string;
@@ -138,7 +139,7 @@ function validateTimeline(
     fieldErrors.timelineOrder = "Semua waktu wajib menggunakan format tanggal yang valid.";
     return;
   }
-  if (times.some((time, index) => index > 0 && time <= times[index - 1])) {
+  if (times.some((time, index) => index > 0 && (input.transactionPolicyVersion === 2 && index === 2 ? time < times[index - 1] : time <= times[index - 1]))) {
     fieldErrors.timelineOrder = "Urutan waktu tidak logis.";
   }
   if (!allowPast && times.some((time) => time <= Date.now())) {

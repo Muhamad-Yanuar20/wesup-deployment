@@ -27,10 +27,10 @@ describe("order list projection", () => {
     expect(ORDER_SELECT).not.toContain("pin_code");
   });
 
-  it("does not aggregate payment attempts for a list of orders", () => {
-    // payment_attempts is a nested array aggregate per row; only the detail
-    // view reads it (toUmkmOrderDetail -> paymentAttemptFromRow).
-    expect(ORDER_SELECT).not.toContain("payment_attempts(");
+  it("reads minimal attempt status so lists never invite duplicate payments",()=>{
+    expect(ORDER_SELECT).toContain("payment_attempts(id,status,provider_status,payment_type,created_at)");
+    expect(ORDER_SELECT).not.toContain("provider_order_id");
+    expect(ORDER_SELECT).not.toContain("qr_code_url");
   });
 
   it("does not ship dispute payloads the list never renders", () => {

@@ -22,4 +22,16 @@ describe("guided supplier offer", () => {
     expect(screen.getByLabelText("Langkah pembuatan penawaran").querySelectorAll("li")).toHaveLength(4);
     expect(screen.queryByText("Mulai Payment Window")).not.toBeInTheDocument();
   });
+  it('keeps a copied offer separate from another unfinished local draft',async()=>{
+    localStorage.setItem('wesup:offer:supplier-test',JSON.stringify({draft:{title:'Draft lama'},step:1,schedule:{openingMode:'immediate',collectionDays:1,pickupStartsAt:'',pickupEndsAt:''}}));
+    render(<OfferWizard ownerId="supplier-test" initialDraft={{title:'Penawaran serupa'}} copySourceId="source-batch" />);
+    await waitFor(()=>expect(screen.getByLabelText(/Nama Produk/)).toHaveValue('Penawaran serupa'));
+    expect(localStorage.getItem('wesup:offer:supplier-test')).toContain('Draft lama');
+  });
+  it('offers the saved server draft when the save response is lost',async()=>{
+    vi.mocked(fetch).mockRejectedValue(new Error('Respons jaringan hilang'));
+    render(<OfferWizard ownerId="supplier-test" />);fireEvent.click(screen.getByRole('button',{name:'Simpan Draft'}));
+    await waitFor(()=>expect(screen.getByRole('alert')).toHaveTextContent('Respons jaringan hilang'));
+    expect(screen.getByRole('link',{name:/Buka versi Draft tersimpan/})).toHaveAttribute('href',expect.stringContaining('/supplier/catalog/new?draft='));
+  });
 });

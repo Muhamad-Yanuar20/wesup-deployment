@@ -120,7 +120,7 @@ export function resolveHomePath(accessState: UserAccessState): string {
   return "/umkm";
 }
 
-const PUBLIC_RETURN_PATHS = ["/", "/marketplace"];
+const PUBLIC_RETURN_PATHS = ["/", "/marketplace", "/bantuan"];
 
 export function sanitizeReturnTo(
   value: unknown,

@@ -59,6 +59,7 @@ export interface MarketplaceProgressResponse {
 }
 
 export interface MarketplaceItem {
+  policyVersion?:number;capacityQuantity?:number|null;unit?:string;paymentOpensAt?:string;paymentClosesAt?:string;pickupStartsAt?:string;pickupEndsAt?:string|null;
   id: string;
   title: string;
   supplierName: string;

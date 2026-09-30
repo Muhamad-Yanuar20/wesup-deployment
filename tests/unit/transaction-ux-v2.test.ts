@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildOfferSchedule, normalizePriceTiers, validatePickupWindow } from "@/lib/transactions/schedule";
+import { buildOfferSchedule, normalizePriceTiers, validatePickupWindow,fromWibInput,toWibInput,formatTransactionDate } from "@/lib/transactions/schedule";
 import { deriveTransactionPresentation } from "@/lib/transactions/presentation";
 
 describe("jadwal penawaran versi 2", () => {
@@ -27,6 +27,34 @@ describe("jadwal penawaran versi 2", () => {
     ]);
     expect(() => normalizePriceTiers([{ minimumQuantity: 1, pricePerUnit: 10000 }, { minimumQuantity: 1, pricePerUnit: 9000 }])).toThrow();
   });
+});
+
+describe('transaction boundaries and terminal states',()=>{
+ const base={policyVersion:2,status:'registered',now:'2026-10-02T01:00:00Z',orderId:'order',paymentOpensAt:'2026-10-02T01:00:00Z',paymentClosesAt:'2026-10-03T01:00:00Z'};
+ it('opens payment exactly at cutoff and expires exactly at the fixed deadline',()=>{
+  expect(deriveTransactionPresentation({...base,now:'2026-10-02T00:59:59Z'}).phase).toBe('waiting_payment_window');
+  expect(deriveTransactionPresentation(base).phase).toBe('payment_open');
+  expect(deriveTransactionPresentation({...base,now:base.paymentClosesAt}).phase).toBe('payment_expired');
+ });
+ it.each(['completed','cancelled','no_show','refunded'])('places %s in a terminal group',status=>{
+  expect(deriveTransactionPresentation({...base,status}).group).toBe(['cancelled','no_show'].includes(status)?'cancelled':'completed');
+ });
+ it.each([true,false])('refund next action follows the bank-account requirement (%s)',needsRefundAccount=>{
+  expect(deriveTransactionPresentation({...base,status:'refund_pending',needsRefundAccount}).group).toBe(needsRefundAccount?'needs_action':'ongoing');
+ });
+ it('tracks a pending dispute without inviting a second complaint',()=>{expect(deriveTransactionPresentation({...base,status:'picked_up',hasDispute:true}).phase).toBe('disputed');});
+ it('converts WIB input without using local device timezone',()=>{
+  expect(fromWibInput('2026-10-04T08:00')).toBe('2026-10-04T08:00:00+07:00');
+  expect(toWibInput('2026-10-04T01:00:00Z')).toBe('2026-10-04T08:00');
+  expect(toWibInput('invalid')).toBe('');expect(formatTransactionDate(null)).toBe('Belum ditentukan');
+ });
+ it('rejects malformed pickup times, unsupported duration and non-decreasing discounts',()=>{
+  expect(validatePickupWindow('invalid','invalid')).not.toBeNull();
+  expect(validatePickupWindow('2026-10-04T08:00','2026-10-04T22:01')).not.toBeNull();
+  expect(()=>normalizePriceTiers([{minimumQuantity:1,pricePerUnit:10000}])).toThrow();
+  expect(()=>normalizePriceTiers([{minimumQuantity:1,pricePerUnit:10000},{minimumQuantity:5,pricePerUnit:11000}])).toThrow();
+  expect(()=>buildOfferSchedule({openingMode:'scheduled',scheduledOpensAt:'2026-10-02T08:00',collectionDays:4,pickupStartsAt:'2026-10-08T08:00',pickupEndsAt:'2026-10-08T20:00'},'2026-10-01T01:00:00Z')).toThrow();
+ });
 });
 
 describe("transaction next action", () => {

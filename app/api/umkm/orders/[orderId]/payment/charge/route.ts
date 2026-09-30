@@ -172,14 +172,14 @@ export async function POST(request: Request, { params }: { params: Promise<{ ord
     const activeSession = firstObject(active?.payment_checkout_sessions ?? active?.payment_checkout_session);
     const activeExpires = Date.parse(String(activeSession?.expires_at ?? active?.expires_at ?? ""));
     if (active && (activeSession?.cancelled_at || (Number.isFinite(activeExpires) && activeExpires <= Date.now()))) {
-      await admin.from("payment_attempts").update({ status: "failed", provider_status: activeSession?.cancelled_at ? "cancelled" : "expire", updated_at: serverTime }).eq("id", String(active.id)).eq("status", "pending");
+      return fail("Periksa status tagihan sebelumnya sebelum membuat pembayaran baru.", "PAYMENT_IN_PROGRESS", 409);
     }
     if (active && (!Number.isFinite(activeExpires) || activeExpires > Date.now()) && (!activeSession?.cancelled_at)) {
       const integration = active.integration_type === "snap" ? "snap" : "core_qris";
       if (integration === "core_qris" || activeSession?.snap_token) return attemptResponse(active, activeSession, serverTime);
       const createdAt = Date.parse(String(active.created_at ?? ""));
       if (!Number.isFinite(createdAt) || Date.now() - createdAt < 2 * 60 * 1000) return fail("Permintaan checkout sedang diproses", "PAYMENT_IN_PROGRESS", 409);
-      await admin.from("payment_attempts").update({ status: "failed", provider_status: "creation_timeout", updated_at: serverTime }).eq("id", String(active.id)).eq("status", "pending");
+      return fail("Hasil pembuatan tagihan belum pasti. Periksa status atau minta bantuan Admin.", "PAYMENT_IN_PROGRESS", 409);
     }
 
     const closesAt = timeline.effective_payment_closes_at ?? timeline.payment_closes_at;
@@ -197,18 +197,19 @@ export async function POST(request: Request, { params }: { params: Promise<{ ord
       checkout = await createSnapTransaction({ orderId: localProviderOrderId, grossAmount, itemName: String(snapshot.batch?.title ?? "Pesanan Wesup"), itemQuantity: quantity, itemUnitPrice: grossAmount / quantity, expiresAt: closesAt, finishUrl: `${siteUrl}/pesanan/${orderId}/bayar`, idempotencyKey }, process.env);
     } catch (error) {
       const mapped = providerCode(error);
-      await Promise.resolve(admin.from("payment_attempts").update({ status: "failed", provider_status: "failed", updated_at: new Date().toISOString() }).eq("id", attemptId)).catch(() => undefined);
+      const uncertain=!(error instanceof MidtransProviderError)||error.retryable;
+      await Promise.resolve(admin.from("payment_attempts").update({ status: uncertain?"pending":"failed", provider_status: uncertain?"creation_unknown":"failed", updated_at: new Date().toISOString() }).eq("id", attemptId)).catch(() => undefined);
       return fail(mapped.message, mapped.code, mapped.status);
     }
     if (checkout.orderId !== localProviderOrderId) {
-      await Promise.resolve(admin.from("payment_attempts").update({ status: "failed", provider_status: "order_id_mismatch", updated_at: new Date().toISOString() }).eq("id", attemptId)).catch(() => undefined);
+      await Promise.resolve(admin.from("payment_attempts").update({ status: "pending", provider_status: "order_id_mismatch", updated_at: new Date().toISOString() }).eq("id", attemptId)).catch(() => undefined);
       return fail("Provider mengembalikan order pembayaran yang tidak sesuai", "PAYMENT_PROVIDER_REJECTED", 502);
     }
     const updateResult = await admin.from("payment_attempts").update({ provider_status: "pending", provider_payload: safeProviderPayload(checkout.raw), updated_at: new Date().toISOString() }).eq("id", attemptId);
     if (updateResult?.error) return fail("Percobaan pembayaran belum dapat diperbarui", "PAYMENT_ATTEMPT_FAILED", 503);
     const sessionInsert = await admin.from("payment_checkout_sessions").insert({ id: randomUUID(), payment_attempt_id: attemptId, snap_token: checkout.token, redirect_url: checkout.redirectUrl, expires_at: closesAt });
     if (sessionInsert?.error) {
-      await Promise.resolve(admin.from("payment_attempts").update({ status: "failed", provider_status: "session_persist_failed", updated_at: new Date().toISOString() }).eq("id", attemptId)).catch(() => undefined);
+      await Promise.resolve(admin.from("payment_attempts").update({ status: "pending", provider_status: "session_persist_failed", updated_at: new Date().toISOString() }).eq("id", attemptId)).catch(() => undefined);
       return fail("Sesi checkout belum dapat disimpan", "PAYMENT_CHECKOUT_SESSION_FAILED", 503);
     }
     return NextResponse.json({ attempt: { id: attemptId, providerOrderId: localProviderOrderId, status: "pending", checkoutMode: "snap", snapToken: checkout.token, redirectUrl: checkout.redirectUrl, qrCodeUrl: null, expiresAt: closesAt }, serverTime }, { status: 201 });

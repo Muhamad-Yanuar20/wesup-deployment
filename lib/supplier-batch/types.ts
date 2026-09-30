@@ -35,6 +35,7 @@ export interface SupplierBatchCancellation {
 }
 
 export interface SupplierBatchDetail {
+  policyVersion?:number;commercialLocked?:boolean;
   id: string;
   displayCode: string;
   title: string;

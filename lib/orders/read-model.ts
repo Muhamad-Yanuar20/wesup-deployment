@@ -1,3 +1,4 @@
+import { deriveTransactionPresentation } from "@/lib/transactions/presentation";
 import { deriveOrderPhase, type OrderPhase } from "./lifecycle";
 import type { BatchTimeline } from "./time-gatekeeper";
 import type { OrderCapabilities, OrderPresentationPhase, UmkmOrderDetail, UmkmOrderListItem } from "./api-types";
@@ -10,6 +11,8 @@ export interface OrderReadRow {
   final_amount: number | string | null;
   locked_tier_number: number | null;
   created_at: string;
+  cancellation_reason?: string | null;
+  accepted_pickup_revision?: string | null;
   batch?: Record<string, unknown> | null;
   payment?: Record<string, unknown> | null;
   payment_attempt?: Record<string, unknown> | null;
@@ -107,10 +110,29 @@ export function toUmkmOrderListItem(row: OrderReadRow, serverNow: string): UmkmO
   const batch = firstObject(row.batch);
   const timeline = timelineFromBatch(batch);
   const status = row.status as UmkmOrderListItem["status"];
-  const phase = asPhase(status, timeline, serverNow);
+  let phase = asPhase(status, timeline, serverNow);
   const supplier = firstObject(batch?.supplier ?? batch?.profile);
   const pickupConfirmedAt = stringValue(firstObject(row.escrow)?.pickup_confirmed_at);
+  const deadlines = getDeadlines(timeline, pickupConfirmedAt);
+  const policyVersion = Number(batch?.transaction_policy_version ?? 1);
+  const replacements = Array.isArray(batch?.pickup_replacements) ? batch.pickup_replacements as Array<Record<string,unknown>> : [];
+  const accepted = replacements.find(p => p.id === row.accepted_pickup_revision);
+  if (policyVersion === 2) {
+    deadlines.estimatedReadyAt = stringValue(accepted?.starts_at) ?? deadlines.estimatedReadyAt;
+    deadlines.pickupDeadlineAt = stringValue(accepted?.ends_at) ?? stringValue(firstObject(batch?.batch_timeline)?.pickup_ends_at);
+  }
+  const readyAt = stringValue(accepted ? accepted.ready_at : batch?.ready_at);
+  const attempt = paymentAttemptFromRow(row);
+  const presentation = deriveTransactionPresentation({policyVersion,status,now:serverNow,orderId:row.id,registrationClosesAt:deadlines.registrationClosesAt,paymentOpensAt:deadlines.paymentOpensAt,paymentClosesAt:deadlines.paymentClosesAt,pickupStartsAt:deadlines.estimatedReadyAt,pickupEndsAt:deadlines.pickupDeadlineAt,readyAt,pendingAttempt:attempt?.status==='creating'||(attempt?.status==='pending'&&(Boolean(attempt.payment_type)||['creating','creation_unknown','session_persist_failed','order_id_mismatch'].includes(String(attempt.provider_status))||Boolean(deadlines.paymentClosesAt&&Date.parse(serverNow)>=Date.parse(deadlines.paymentClosesAt)))),hasDispute:['pending','under_review'].includes(String(firstObject(row.dispute)?.status)),needsRefundAccount:!firstObject(row.refund)?.umkm_bank_account_id,complaintDeadlineAt:deadlines.complaintDeadlineAt});
+  if(policyVersion===2) phase=presentation.phase;
+  const caps = capabilitiesFor(status,phase,row,serverNow);
+  if(policyVersion===2) {
+    caps.canViewPickup = phase==='ready_for_pickup' || status==='picked_up' || status==='completed';
+    caps.canWithdraw = status==='registered' && Boolean(deadlines.registrationClosesAt && Date.parse(serverNow)<Date.parse(deadlines.registrationClosesAt));
+    caps.canChoosePickup = phase==='supplier_delayed';
+  }
   const item = {
+    policyVersion, readyAt, cancellationReason:row.cancellation_reason ?? null, presentation,
     id: row.id,
     batchId: row.batch_id,
     batchTitle: stringValue(batch?.title) ?? "Batch tanpa judul",
@@ -124,8 +146,8 @@ export function toUmkmOrderListItem(row: OrderReadRow, serverNow: string): UmkmO
     finalAmount: moneyNumber(row.final_amount),
     lockedTier: row.locked_tier_number ?? null,
     createdAt: row.created_at,
-    timeline: getDeadlines(timeline, pickupConfirmedAt),
-    capabilities: capabilitiesFor(status, phase, row, serverNow),
+    timeline: deadlines,
+    capabilities: caps,
     paymentStatus: stringValue(firstObject(row.payment)?.status),
     pickupConfirmedAt,
   } satisfies UmkmOrderListItem;
@@ -143,6 +165,9 @@ export function toUmkmOrderDetail(row: OrderReadRow, serverNow: string): UmkmOrd
   const refund = firstObject(row.refund);
   return {
     ...item,
+    pickupAddress: stringValue(firstObject(row.batch)?.pickup_address),
+    acceptedPickupRevision:row.accepted_pickup_revision ?? null,
+    pickupReplacements: (Array.isArray(firstObject(row.batch)?.pickup_replacements) ? firstObject(row.batch)!.pickup_replacements as Array<Record<string,unknown>> : []).map(p=>({id:String(p.id),revision:Number(p.revision),startsAt:String(p.starts_at),endsAt:String(p.ends_at),reason:String(p.reason),readyAt:stringValue(p.ready_at)})),
     invoice: payment ? { paymentId: String(payment.id), grossAmount: moneyNumber(payment.gross_amount) ?? 0, status: String(payment.status ?? "pending"), midtransOrderId: String(payment.midtrans_order_id ?? ""), qrCodeUrl: stringValue(payment.qr_code_url), qrCodeExpiresAt: stringValue(payment.qr_code_expires_at), paidAt: stringValue(payment.paid_at) } : null,
     paymentAttempt: attempt ? { id: String(attempt.id), providerOrderId: String(attempt.provider_order_id ?? ""), status: String(attempt.status ?? "pending"), checkoutMode: attempt.integration_type === "snap" ? "snap" : "core_qris", providerStatus: stringValue(attempt.provider_status), paymentMethod: stringValue(attempt.payment_type), qrCodeUrl: stringValue(attempt.qr_code_url), expiresAt: stringValue(attempt.expires_at) } : null,
     pickup: pickup ? { qrCodeToken: stringValue(pickup.qr_code_token), pinCode: stringValue(pickup.pin_code), generatedAt: stringValue(pickup.generated_at), usedAt: stringValue(pickup.used_at), address: stringValue(firstObject(row.batch)?.pickup_address) } : item.capabilities.canViewPickup ? { qrCodeToken: null, pinCode: null, generatedAt: null, usedAt: null, address: stringValue(firstObject(row.batch)?.pickup_address) } : null,

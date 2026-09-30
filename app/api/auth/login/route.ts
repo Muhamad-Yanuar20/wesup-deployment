@@ -80,6 +80,10 @@ export async function POST(request: NextRequest) {
   );
 
   if (context.status !== "active") {
+    // A suspension blocks transactions, but must not block an appeal.
+    if(returnTo==='/bantuan'&&context.role==='umkm'&&selectedRole==='umkm'&&['suspended_temporary','suspended_permanent'].includes(context.status)) {
+      return NextResponse.json({user:{email:context.email},profile:{role:context.role,status:context.status,fullName:context.fullName},redirectTo:'/bantuan'});
+    }
     const errorMessage = getAccountStatusMessage(context.status);
     await client.auth.signOut();
     return NextResponse.json(

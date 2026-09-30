@@ -8,6 +8,7 @@ import type {
 } from "./types";
 
 interface ApiOrderRow {
+  can_confirm_pickup?:boolean;
   registration_id: string;
   umkm_name: string;
   quantity: number;
@@ -37,6 +38,7 @@ async function readError(response: Response, fallback: string): Promise<string> 
 
 function mapOrder(batchId: string, row: ApiOrderRow): FulfillmentOrder {
   return {
+    canConfirmPickup:row.can_confirm_pickup,
     registrationId: row.registration_id,
     batchId,
     displayCode: `REG-${row.registration_id.slice(0, 8).toUpperCase()}`,

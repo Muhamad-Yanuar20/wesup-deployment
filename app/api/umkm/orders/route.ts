@@ -74,7 +74,8 @@ export async function GET(request?: Request) {
   const serverTime = new Date().toISOString();
   const allItems = rows.map((row) => toUmkmOrderListItem(row, serverTime));
   const status = request ? new URL(request.url).searchParams.get("status") : null;
-  const filtered = status && status !== "all"
+  const group=request?new URL(request.url).searchParams.get("group"):null;
+  const filtered = group ? allItems.filter(item=>item.presentation?.group===group) : status && status !== "all"
     ? allItems.filter((item) => item.status === status || (status === "picked_up" && ["picked_up", "completed"].includes(item.status)) || (status === "refund" && ["refund_pending", "refunded"].includes(item.status)))
     : allItems;
   const offset = decodeCursor(request);
@@ -92,11 +93,15 @@ export async function GET(request?: Request) {
     summary: buildOrderSummary(allItems),
     counts: {
       all: allItems.length,
+      needs_action:allItems.filter(i=>i.presentation?.group==='needs_action').length,
+      ongoing:allItems.filter(i=>i.presentation?.group==='ongoing').length,
+      completed:allItems.filter(i=>i.presentation?.group==='completed').length,
       registered: allItems.filter((item) => item.status === "registered").length,
       pending_payment: allItems.filter((item) => item.status === "pending_payment").length,
       paid: allItems.filter((item) => item.status === "paid").length,
       picked_up: allItems.filter((item) => item.status === "picked_up" || item.status === "completed").length,
       cancelled: allItems.filter((item) => item.status === "cancelled").length,
+      cancelled_group:allItems.filter(item=>item.presentation?.group==='cancelled').length,
       no_show: allItems.filter((item) => item.status === "no_show").length,
       refund: allItems.filter((item) => item.status === "refund_pending" || item.status === "refunded").length,
     },

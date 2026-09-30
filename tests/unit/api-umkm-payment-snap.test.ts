@@ -77,6 +77,16 @@ describe("UMKM Snap payment charge", () => {
     vi.clearAllMocks();
     vi.mocked(createSnapTransaction).mockImplementation(async (input) => ({ orderId: input.orderId, token: "snap-token", redirectUrl: "https://app.sandbox.midtrans.com/snap/v2/vtweb/snap-token", expiresAt: input.expiresAt, raw: {} }));
   });
+  it('keeps an uncertain provider request pending for reconciliation',async()=>{
+    const {attempt}=setup();vi.mocked(createSnapTransaction).mockRejectedValue(new Error('lost provider response'));
+    const response=await POST(new NextRequest('http://localhost/api/umkm/orders/'+ORDER_ID+'/payment/charge',{method:'POST'}),{params:Promise.resolve({orderId:ORDER_ID})});
+    expect(response.status).toBe(502);expect(attempt.update).toHaveBeenCalledWith(expect.objectContaining({status:'pending',provider_status:'creation_unknown'}));
+  });
+  it('does not replace an old unknown checkout with a second bill',async()=>{
+    const {attempt}=setup({activeAttempt:{id:'attempt-1',provider_order_id:'WESUP-unknown',status:'pending',provider_status:'creating',integration_type:'snap',created_at:'2026-09-01T00:00:00Z',expires_at:'2099-09-15T00:00:00Z'}});
+    const response=await POST(new NextRequest('http://localhost/api/umkm/orders/'+ORDER_ID+'/payment/charge',{method:'POST'}),{params:Promise.resolve({orderId:ORDER_ID})});
+    expect(response.status).toBe(409);expect(createSnapTransaction).not.toHaveBeenCalled();expect(attempt.update).not.toHaveBeenCalled();
+  });
 
   it("reuses an active Snap session and returns the token without charging twice", async () => {
     setup({ activeAttempt: { id: "attempt-1", provider_order_id: "WESUP-111111111111411181111111111111-1", status: "pending", integration_type: "snap", expires_at: "2099-09-15T00:00:00.000Z", payment_checkout_session: { snap_token: "existing-token", redirect_url: "https://checkout", expires_at: "2099-09-15T00:00:00.000Z" } } });
