@@ -73,6 +73,11 @@ function setup(options: { activeAttempt?: Record<string, unknown> | null; active
 }
 
 describe("UMKM Snap payment charge", () => {
+  it("never treats an unreadable attempt relation as permission to create another bill",async()=>{
+    setup({activeAttemptError:{code:"PGRST200",message:"schema relationship unavailable"}});
+    const response=await POST(new NextRequest("http://localhost/api/umkm/orders/"+ORDER_ID+"/payment/charge",{method:"POST"}),{params:Promise.resolve({orderId:ORDER_ID})});
+    expect(response.status).toBe(503);expect(await response.json()).toMatchObject({code:"PAYMENT_ATTEMPT_READ_FAILED"});expect(createSnapTransaction).not.toHaveBeenCalled();
+  });
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(createSnapTransaction).mockImplementation(async (input) => ({ orderId: input.orderId, token: "snap-token", redirectUrl: "https://app.sandbox.midtrans.com/snap/v2/vtweb/snap-token", expiresAt: input.expiresAt, raw: {} }));
