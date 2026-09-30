@@ -1,0 +1,3 @@
+import {describe,it,expect} from "vitest";
+import {getOfferContext} from "@/lib/transactions/offer-context";
+describe('offer context',()=>{it('normalizes the authoritative SQL fields without device timezone assumptions',async()=>{const result=await getOfferContext({rpc:async()=>({error:null,data:{transaction_policy_version:2,commercial_locked:true,ready_at:null,capacity_quantity:10,unit:'kg',payment_opens_at:'2026-10-02T01:00:00Z',payment_closes_at:'2026-10-03T01:00:00Z',estimated_ready_at:'2026-10-04T01:00:00Z',pickup_ends_at:'2026-10-04T09:00:00Z',replacements:[]}})},'batch');expect(result).toMatchObject({policyVersion:2,commercialLocked:true,capacityQuantity:10,pickupStartsAt:'2026-10-04T01:00:00Z'});});});
