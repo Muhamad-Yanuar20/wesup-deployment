@@ -1,3 +1,5 @@
+import type { TransactionRpcClient } from "@/lib/transactions/api";
+import { getOfferContext } from "@/lib/transactions/offer-context";
 import { NextResponse } from "next/server";
 import { requireRole, toAuthResponse, type AuthClient } from "@/lib/supabase/auth";
 import { getServerClient } from "@/lib/supabase/server";
@@ -63,7 +65,23 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
       console.error("[supplier-transactions] snapshot failed", { requestId: requestIdValue, ...errorDetails(snapshot.error) });
       return errorResponse(snapshot.error, requestIdValue);
     }
-    return NextResponse.json({ item: snapshot.data });
+    const item=snapshot.data as {batch:Record<string,unknown>;capabilities:Record<string,boolean>;orders:Array<{status:string;registrationId:string;canConfirmPickup?:boolean}>;readyAt?:string|null;timeline:Record<string,unknown>};
+    const context=await getOfferContext(rpcClient as unknown as TransactionRpcClient,batchId);
+    if(context?.policyVersion===2&&item?.batch&&item.capabilities) {
+      item.batch.transaction_policy_version=2;
+      item.timeline={...item.timeline,pickup_ends_at:context.pickupEndsAt};
+      const effective=context.replacements[0];
+      const ready=effective?effective.ready_at:context.readyAt;
+      const paid=item.orders.some(o=>o.status==='paid');
+      for(const order of item.orders) order.canConfirmPickup=context.pickupActions?.find(action=>action.registrationId===order.registrationId)?.canConfirm??false;
+      item.capabilities.canCloseBatch=false;
+      item.capabilities.canEditCommercialFields=!context.commercialLocked&&item.batch.status==='published';
+      item.capabilities.canMarkReady=paid&&item.batch.status==='closed'&&!ready;
+      item.capabilities.canCancelBatch=['published','closed'].includes(String(item.batch.status));
+      item.capabilities.canConfirmPickup=item.orders.some(order=>order.canConfirmPickup);
+      item.readyAt=ready;
+    }
+    return NextResponse.json({ item: {...item,offerContext:context} });
   } catch (error) {
     console.error("[supplier-transactions] request failed", { requestId: requestIdValue, ...errorDetails(error) });
     return errorResponse(error, requestIdValue);

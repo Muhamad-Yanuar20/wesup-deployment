@@ -1,78 +1,24 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabase/admin";
-
+import { authorizeAdminQueue } from "@/lib/admin/queue-access";
 export const dynamic = "force-dynamic";
-
-export async function GET() {
-  try {
-    const supabase = getAdminClient();
-
-    const { data: disputes, error } = await supabase
-      .from("disputes")
-      .select("*")
-      .order("created_at", { ascending: false });
-
-    if (error) {
-      console.error("Supabase Error (disputes):", error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-
-    if (!disputes || disputes.length === 0) {
-      return NextResponse.json([]);
-    }
-
-    const registrationIds = Array.from(
-      new Set(disputes.map((d: any) => d.registration_id).filter(Boolean))
-    );
-    const profileIds = Array.from(
-      new Set(
-        disputes
-          .flatMap((d: any) => [d.umkm_id, d.supplier_id])
-          .filter(Boolean)
-      )
-    );
-
-    // Fetch Registrations + Batches
-    const { data: registrations } = await supabase
-      .from("registrations")
-      .select("id, final_amount, batch_id, batches(title)")
-      .in("id", registrationIds);
-
-    const { data: profiles } = await supabase
-      .from("profiles")
-      .select("id, full_name, email")
-      .in("id", profileIds);
-
-    const regMap = new Map((registrations || []).map((r: any) => [r.id, r]));
-    const profileMap = new Map((profiles || []).map((p: any) => [p.id, p]));
-
-    const formatted = disputes.map((item: any) => {
-      const reg: any = regMap.get(item.registration_id) || {};
-      const umkm: any = profileMap.get(item.umkm_id) || {};
-      const supplier: any = profileMap.get(item.supplier_id) || {};
-
-      return {
-        id: item.id,
-        batchTitle: reg.batches?.title || "Katalog Tidak Ditemukan",
-        amount: reg.final_amount || 0,
-        umkmName: umkm.full_name || "UMKM",
-        umkmEmail: umkm.email || "—",
-        supplierName: supplier.full_name || "Supplier",
-        supplierEmail: supplier.email || "—",
-        reason: item.reason || item.description || "Tidak ada rincian alasan.",
-        evidenceUrls: item.evidence_urls || item.photo_urls || [],
-        status: item.status || "open",
-        resolutionNotes: item.resolution_notes || null,
-        createdAt: item.created_at,
-      };
-    });
-
-    return NextResponse.json(formatted);
-  } catch (err: any) {
-    console.error("Server Error (/api/admin/disputes):", err);
-    return NextResponse.json(
-      { error: err.message || "Internal Server Error" },
-      { status: 500 }
-    );
-  }
+export async function GET(request: Request) {
+  const denied = await authorizeAdminQueue(request);
+  if (denied) return denied;
+  const { data, error } = await getAdminClient().from("disputes").select("*,registration:registrations(final_amount,umkm:profiles!registrations_umkm_id_fkey(full_name,email),batch:batches(title,supplier:profiles!batches_supplier_id_fkey(full_name,email)))").order("created_at", { ascending: false });
+  if (error) return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  return NextResponse.json((data ?? []).map((item) => ({
+    id: item.id,
+    batchTitle: item.registration?.batch?.title ?? "Penawaran",
+    amount: item.registration?.final_amount ?? 0,
+    umkmName: item.registration?.umkm?.full_name ?? "UMKM",
+    umkmEmail: item.registration?.umkm?.email ?? "—",
+    supplierName: item.registration?.batch?.supplier?.full_name ?? "Supplier",
+    supplierEmail: item.registration?.batch?.supplier?.email ?? "—",
+    reason: item.description,
+    evidenceUrls: item.photo_urls,
+    status: item.status === "resolved_umkm" ? "resolved_refund" : item.status === "resolved_supplier" ? "resolved_payout" : item.status === "pending" ? "open" : item.status,
+    resolutionNotes: item.admin_notes,
+    createdAt: item.created_at,
+  })));
 }

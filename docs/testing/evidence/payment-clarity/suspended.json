@@ -1,0 +1,11 @@
+{
+  "orderId": "5e9a2512-a470-4ce1-a214-5468ac5375e9",
+  "login": 200,
+  "detail": 200,
+  "reconcile": 200,
+  "paymentStatus": "paid",
+  "canOpenCheckout": false,
+  "charge": 403,
+  "newRegistration": 403,
+  "profileRestored": true
+}

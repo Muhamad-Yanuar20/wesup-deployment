@@ -1,0 +1,21 @@
+{
+  "pendingOrderId": "64625262-fa24-4cb5-92eb-a2c072a3a215",
+  "detail": 200,
+  "checkoutResume": 200,
+  "sameAttempt": true,
+  "attemptId": "b6247839-c354-4982-be47-07b9aa54cab8",
+  "progress": {
+    "state": "awaiting_payment",
+    "lastCheckedAt": "2026-09-30T22:12:31.728+00:00",
+    "canOpenCheckout": true,
+    "canCheckStatus": true,
+    "blockedReason": null
+  },
+  "lockedUnitPrice": 9000,
+  "detailAndChargeAgree": true,
+  "paidOrderId": "5e9a2512-a470-4ce1-a214-5468ac5375e9",
+  "list": 200,
+  "listStatus": "paid",
+  "listPhase": "paid_waiting_ready",
+  "refreshedPaidDetail": true
+}

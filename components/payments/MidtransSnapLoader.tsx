@@ -4,7 +4,6 @@ import Script from "next/script";
 import { useEffect } from "react";
 import {
   claimPaymentRecovery,
-  clearPaymentRecovery,
   isMidtransFramePolicyViolation,
   isUnexpectedPaymentDocumentNavigation,
   paymentRecoveryStorageKey,
@@ -62,8 +61,6 @@ export default function MidtransSnapLoader({
         window.location.replace(window.location.href);
         return;
       }
-    } else if (key && storage) {
-      clearPaymentRecovery(storage, key);
     }
 
     const onPolicyViolation = (event: Event) => {
@@ -73,7 +70,6 @@ export default function MidtransSnapLoader({
       if (key && storage && claimPaymentRecovery(storage, key)) {
         window.location.replace(window.location.href);
       } else {
-        if (key && storage) clearPaymentRecovery(storage, key);
         onRecoveryExhausted?.();
       }
     };

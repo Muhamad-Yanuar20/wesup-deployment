@@ -24,4 +24,10 @@ describe("payment page Content Security Policy", () => {
     expect(shouldAllowMidtransCsp("/pesanan/registration-id/serah-terima")).toBe(false);
     expect(shouldAllowMidtransCsp("/supplier/batches/registration-id/transaksi")).toBe(false);
   });
+  it("allows checkout on the canonical order page without granting it to order lists", () => {
+    expect(shouldAllowMidtransCsp("/umkm/pesanan/registration-id")).toBe(true);
+    expect(shouldAllowMidtransCsp("/umkm/pesanan/registration-id/")).toBe(true);
+    expect(shouldAllowMidtransCsp("/umkm/pesanan")).toBe(false);
+    expect(shouldAllowMidtransCsp("/umkm/pesanan/registration-id/other")).toBe(false);
+  });
 });

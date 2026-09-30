@@ -27,7 +27,7 @@ export default function AdminRefundsPage() {
         setLoading(true);
         setErrorMessage(null);
 
-        const res = await fetch("/api/admin/refunds", {
+        const res = await fetch("/api/admin/refunds?format=queue", {
           cache: "no-store",
         });
 

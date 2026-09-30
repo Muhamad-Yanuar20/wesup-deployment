@@ -73,7 +73,7 @@ export async function reserveVolumeCounter(
   if (!Number.isFinite(count)) {
     throw new Error("capacity reservation unavailable");
   }
-  if (count < 0) throw new BatchCapacityError(Math.max(0, -count));
+  if (count <= 0) throw new BatchCapacityError(Math.max(0, -count));
   return count;
 }
 

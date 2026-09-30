@@ -4,7 +4,7 @@ import { DETAIL_SELECT, ORDER_SELECT } from "@/lib/orders/selects";
 describe("order list projection", () => {
   it("keeps every field the list item and its action capabilities read", () => {
     // scalars rendered on the card
-    expect(ORDER_SELECT).toContain("id,batch_id,quantity,status,final_amount,locked_tier_number,created_at");
+    expect(ORDER_SELECT).toContain("id,batch_id,quantity,status,final_amount,locked_tier_number,locked_price_per_unit,created_at");
     // batch + timeline drive phase, deadlines and the next action
     expect(ORDER_SELECT).toContain("batch:batches(");
     expect(ORDER_SELECT).toContain("batch_timeline(");
@@ -27,10 +27,10 @@ describe("order list projection", () => {
     expect(ORDER_SELECT).not.toContain("pin_code");
   });
 
-  it("does not aggregate payment attempts for a list of orders", () => {
-    // payment_attempts is a nested array aggregate per row; only the detail
-    // view reads it (toUmkmOrderDetail -> paymentAttemptFromRow).
-    expect(ORDER_SELECT).not.toContain("payment_attempts(");
+  it("reads minimal attempt status so lists never invite duplicate payments",()=>{
+    expect(ORDER_SELECT).toContain("payment_attempts(id,status,provider_status,provider_checked_at,payment_type,created_at)");
+    expect(ORDER_SELECT).not.toContain("provider_order_id");
+    expect(ORDER_SELECT).not.toContain("qr_code_url");
   });
 
   it("does not ship dispute payloads the list never renders", () => {

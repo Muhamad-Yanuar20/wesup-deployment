@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import AdminTransactionSupport from "@/components/orders/AdminTransactionSupport";
 import { redirect } from "next/navigation";
 import { getViewerAccessState, resolveHomePath, type AccessStateClient } from "@/lib/auth/access-state";
 import { getServerClient } from "@/lib/supabase/server";
@@ -38,6 +39,7 @@ export default async function AdminPage() {
           <h2 className="text-xl font-bold">Akses Admin aktif</h2>
           <p className="mt-2 text-sm leading-6 text-slate-300">Dashboard operasional Admin dapat dihubungkan ke modul moderasi berikutnya tanpa mencampurkan navigasi UMKM atau Supplier.</p>
         </section>
+        <AdminTransactionSupport />
       </div>
     </main>
   );

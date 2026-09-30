@@ -12,7 +12,7 @@ export function generateNonce(): string {
 }
 
 export function shouldAllowMidtransCsp(pathname: string): boolean {
-  return /^\/pesanan\/[^/]+\/bayar\/?$/.test(pathname);
+  return /^\/pesanan\/[^/]+\/bayar\/?$/.test(pathname) || /^\/umkm\/pesanan\/[^/]+\/?$/.test(pathname);
 }
 export function buildContentSecurityPolicy(
   nonce: string = generateNonce(),

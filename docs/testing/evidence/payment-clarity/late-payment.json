@@ -1,0 +1,31 @@
+{
+  "batchId": "a27482d5-cb49-4137-93f4-56a9a3ea845f",
+  "orderId": "63db3fc8-87b5-4b57-a05a-b5aed8475363",
+  "attemptId": "4ca513d4-d9c6-4c39-a311-71cd1bcc4946",
+  "checkout": 200,
+  "repeatedCheckout": 200,
+  "sameAttempt": true,
+  "cancelled": 200,
+  "initialReconcile": 200,
+  "providerStatus": "settlement",
+  "localStatus": "refund_pending",
+  "repeatedChecks": [
+    {
+      "http": 200,
+      "localStatus": "refund_pending",
+      "canOpenCheckout": false
+    },
+    {
+      "http": 200,
+      "localStatus": "refund_pending",
+      "canOpenCheckout": false
+    }
+  ],
+  "database": {
+    "status": "refund_pending",
+    "payment_status": "paid",
+    "refund_count": 1,
+    "pickup_code_count": 0,
+    "attempt_count": 1
+  }
+}

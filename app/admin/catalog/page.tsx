@@ -28,23 +28,15 @@ export default function AdminCatalogPage() {
   const [selectedBatch, setSelectedBatch] =
     useState<CatalogItem | null>(null);
 
-  async function loadCatalog() {
-    try {
-      setLoading(true);
-
-      const res = await fetch("/api/admin/catalog", {
-        cache: "no-store",
-      });
-
-      if (res.ok) {
+  function loadCatalog() {
+    return fetch("/api/admin/catalog", { cache: "no-store" })
+      .then(async (res) => {
+        if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
         const data: CatalogItem[] = await res.json();
         setItems(data);
-      }
-    } catch (err) {
-      console.error("Gagal memuat katalog:", err);
-    } finally {
-      setLoading(false);
-    }
+      })
+      .catch((err: unknown) => console.error("Gagal memuat katalog:", err))
+      .finally(() => setLoading(false));
   }
 
   useEffect(() => {
@@ -72,6 +64,7 @@ export default function AdminCatalogPage() {
 
     if (res.ok) {
       setSelectedBatch(null);
+      setLoading(true);
       await loadCatalog();
     } else {
       alert("Gagal melakukan takedown katalog.");

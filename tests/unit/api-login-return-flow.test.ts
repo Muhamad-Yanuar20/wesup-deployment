@@ -21,6 +21,7 @@ function request(body: unknown) {
 
 function mockClient(options: {
   role: "umkm" | "supplier";
+  status?:'active'|'suspended_temporary'|'suspended_permanent';
   verificationStatus?: "pending" | "approved" | "rejected";
   returnTo?: string;
 }) {
@@ -34,7 +35,7 @@ function mockClient(options: {
   const from = vi.fn((table: string) =>
     table === "profiles"
       ? { select: vi.fn(() => ({ eq: vi.fn(() => ({ single: vi.fn(async () => ({
-        data: { role: options.role, status: "active", full_name: "Budi" },
+        data: { role: options.role, status: options.status??"active", full_name: "Budi" },
         error: null,
       })) })) })) }
       : { select: vi.fn(() => ({ eq: vi.fn(() => ({ maybeSingle: supplierMaybeSingle })) })) },
@@ -56,6 +57,16 @@ function mockClient(options: {
 }
 
 describe("login return flow", () => {
+  it.each(['suspended_temporary','suspended_permanent'] as const)('allows %s buyers to return to their orders without lifting suspension',async status=>{
+    const {signOut}=mockClient({role:'umkm',status});
+    const response=await login(request({email:'budi@example.com',password:'password123',role:'umkm',returnTo:'/umkm/pesanan'}));
+    expect(response.status).toBe(200);expect(await response.json()).toMatchObject({redirectTo:'/umkm/pesanan',profile:{status}});expect(signOut).not.toHaveBeenCalled();
+  });
+  it.each(['suspended_temporary','suspended_permanent'] as const)('allows %s buyers to authenticate only to the appeal page',async status=>{
+    const {signOut}=mockClient({role:'umkm',status});
+    const response=await login(request({email:'budi@example.com',password:'password123',role:'umkm',returnTo:'/bantuan'}));
+    expect(response.status).toBe(200);expect(await response.json()).toMatchObject({redirectTo:'/bantuan',profile:{status}});expect(signOut).not.toHaveBeenCalled();
+  });
   it("lets pending Supplier accounts sign in to /supplier/status", async () => {
     const { signOut } = mockClient({ role: "supplier", verificationStatus: "pending" });
     const response = await login(request({

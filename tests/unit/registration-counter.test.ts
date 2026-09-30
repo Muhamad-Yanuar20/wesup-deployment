@@ -84,6 +84,11 @@ describe("adjustVolumeCounter (quantity-aware atomic INCRBY)", () => {
 describe("reserveVolumeCounter (atomic capacity gate)", () => {
   beforeEach(() => evalMock.mockReset());
 
+  it("rejects an exactly-full capacity without treating negative zero as a reservation", async () => {
+    evalMock.mockResolvedValue(0);
+    await expect(reserveVolumeCounter(BATCH_ID, 1, 20)).rejects.toBeInstanceOf(BatchCapacityError);
+  });
+
   it("uses Lua check-and-increment and returns the resulting count", async () => {
     evalMock.mockResolvedValue(10);
     await expect(reserveVolumeCounter(BATCH_ID, 5, 20)).resolves.toBe(10);

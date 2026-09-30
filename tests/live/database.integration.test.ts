@@ -3,6 +3,7 @@ import { Pool } from "pg";
 import {
   CRITICAL_INDEXES,
   EXPECTED_ENUMS,
+  DEPLOYED_ENUM_EXTENSIONS,
   EXPECTED_TABLE_NAMES,
   EXPECTED_TABLES,
   REQUIRED_FUNCTIONS,
@@ -251,7 +252,7 @@ describe.skipIf(noDbUrl)("live Supabase database (pg)", () => {
         if (name === "audit_action") {
           expect([...actual].sort()).toEqual([...values].sort());
         } else {
-          expect(actual).toEqual(values);
+          expect(actual).toEqual([...values, ...(DEPLOYED_ENUM_EXTENSIONS[name] ?? [])]);
         }
       });
     }

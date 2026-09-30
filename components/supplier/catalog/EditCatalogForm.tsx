@@ -8,6 +8,7 @@ import { supplierBatchApiRepository } from "@/lib/supplier-catalog/api-repositor
 import type { SupplierBatchDetail, SupplierBatchStatus } from "@/lib/supplier-batch/types";
 import type { CatalogDraft } from "@/lib/supplier-catalog/types";
 import { isTierSchemeLocked } from "@/lib/supplier-catalog/lock";
+import PublishedOfferEditor from "./PublishedOfferEditor";
 import CreateCatalogForm from "@/components/supplier/catalog/CreateCatalogForm";
 
 function batchToDraft(batch: SupplierBatchDetail): CatalogDraft {
@@ -62,6 +63,8 @@ export default function EditCatalogForm() {
   const [phase, setPhase] = useState<LoadPhase>("loading");
   const [initialDraft, setInitialDraft] = useState<CatalogDraft | null>(null);
   const [batchStatus, setBatchStatus] = useState<SupplierBatchStatus | null>(null);
+  const [policyVersion,setPolicyVersion]=useState(1);
+  const [commercialLocked,setCommercialLocked]=useState(false);
   const [locationLocked, setLocationLocked] = useState(false);
   const [tiersLocked, setTiersLocked] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -81,7 +84,10 @@ export default function EditCatalogForm() {
           setPhase("read-only");
           return;
         }
-        setInitialDraft(batchToDraft(batch));
+        const draft=batchToDraft(batch);
+        if(batch.policyVersion===2){draft.registrationOpensAt=batch.timeline.registrationOpensAt;draft.registrationClosesAt=batch.timeline.registrationClosesAt;draft.paymentOpensAt=batch.timeline.paymentOpensAt;draft.paymentClosesAt=batch.timeline.paymentClosesAt;draft.estimatedReadyAt=batch.timeline.estimatedReadyAt;}
+        setInitialDraft(draft);
+        setPolicyVersion(batch.policyVersion??1);setCommercialLocked(batch.commercialLocked??false);
         setBatchStatus(batch.status);
         setLocationLocked(batch.participantCount > 0);
         setTiersLocked(isTierSchemeLocked(batch.participantCount));
@@ -155,6 +161,7 @@ export default function EditCatalogForm() {
     );
   }
 
+  if(policyVersion===2&&initialDraft)return <PublishedOfferEditor batchId={batchId} initialDraft={initialDraft} locked={commercialLocked}/>;
   return (
     <>
       {/* Back link */}

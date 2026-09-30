@@ -71,7 +71,10 @@ export type AuditAction =
   | "confirm_pickup"
   | "create_recurring_config";
 
-export interface Database {
+export type Database = import("./database.generated").Database;
+
+/** Historical hand-written contract retained for DTO compatibility reference. */
+export interface LegacyDatabase {
   public: {
     Tables: {
       profiles: {

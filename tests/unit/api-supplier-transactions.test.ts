@@ -101,7 +101,8 @@ describe("Supplier transaction APIs", () => {
     const { rpc } = clientWithBoundRpc();
     const response = await getTransactions(new NextRequest(`http://localhost/api/suppliers/batches/${BATCH_ID}/transactions`), { params: Promise.resolve({ id: BATCH_ID }) });
     expect(response.status).toBe(200);
-    expect(rpc).toHaveBeenCalledTimes(2);
+    expect(rpc).toHaveBeenCalledTimes(3);
+    expect(rpc).toHaveBeenLastCalledWith("get_offer_context",{p_batch_id:BATCH_ID});
   });
 
   it.each(["PGRST202", "42883", "42P01", "PGRST205"])("maps schema error %s to a retryable response", async (code) => {

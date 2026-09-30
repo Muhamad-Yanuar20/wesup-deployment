@@ -1,3 +1,5 @@
+import { enrichOffer } from "@/lib/transactions/offer-context";
+import type { TransactionRpcClient } from "@/lib/transactions/api";
 import { NextResponse } from "next/server";
 import { getServerClient } from "@/lib/supabase/server";
 import {
@@ -211,7 +213,7 @@ export async function GET(req: Request) {
   }
 
   const rows = (data ?? []) as MarketplaceRpcRow[];
-  const items = mapMarketplaceRpcRows(rows);
+  const items = await Promise.all(mapMarketplaceRpcRows(rows).map(item=>enrichOffer(client as unknown as TransactionRpcClient,item)));
   const total = rows.length > 0 ? Math.max(0, Number(rows[0].total_count ?? 0)) : 0;
   const totalPages = total === 0 ? 0 : Math.ceil(total / limit);
 

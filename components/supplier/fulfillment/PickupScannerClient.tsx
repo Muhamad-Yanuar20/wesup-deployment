@@ -95,12 +95,12 @@ export default function PickupScannerClient({ batchId }: { batchId: string }) {
   );
 
   const paidOrders = useMemo(
-    () => state.orders.filter((o) => o.status === "paid"),
+    () => state.orders.filter((o) => o.status === "paid" && o.canConfirmPickup !== false),
     [state.orders],
   );
 
   const confirmPickup = () => {
-    if (!selectedOrder || state.confirmPhase === "loading") return;
+    if (!selectedOrder || selectedOrder.canConfirmPickup === false || state.confirmPhase === "loading") return;
     if (!state.code.trim()) {
       toast("Mohon masukkan kode terlebih dahulu.", "warning");
       return;
@@ -235,7 +235,7 @@ export default function PickupScannerClient({ batchId }: { batchId: string }) {
             <strong>Sudah Diambil</strong> dan memulai hitung mundur escrow 1×24 jam.
           </li>
           <li>
-            Sediakan jendela 12 jam toleransi sejak estimasi ready untuk melayani pengambilan.
+              Layani pengambilan sesuai rentang waktu yang tercantum pada detail batch.
           </li>
         </ul>
       </section>
@@ -444,7 +444,7 @@ export default function PickupScannerClient({ batchId }: { batchId: string }) {
 
           <button
             type="button"
-            disabled={!selectedOrder || state.confirmPhase === "loading" || selectedOrder.status !== "paid"}
+            disabled={!selectedOrder || selectedOrder.canConfirmPickup === false || state.confirmPhase === "loading" || selectedOrder.status !== "paid"}
             onClick={confirmPickup}
             className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
           >

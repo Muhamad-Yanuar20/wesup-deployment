@@ -1,0 +1,16 @@
+{
+  "orderId": "8248ab4f-c433-4e5d-a1a8-1710ab76c666",
+  "quantity": 24,
+  "amount": 1680000,
+  "providerHttp": 200,
+  "providerStatus": "expire",
+  "localStatus": "cancelled",
+  "invoiceStatus": "expired",
+  "attemptStatus": "expired",
+  "source": "administrative_provider_reconciliation",
+  "applied": {
+    "processed": true,
+    "providerStatus": "expire",
+    "registrationStatus": "pending_payment"
+  }
+}

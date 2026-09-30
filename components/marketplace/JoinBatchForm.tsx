@@ -1,9 +1,12 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useState, useEffect } from "react";
 import Link from "next/link";
 import { readApiError } from "@/lib/marketplace/api-repository";
 import type { MarketplaceItem } from "@/lib/marketplace/types";
+
+import { useRouter } from "next/navigation";
+import { formatTransactionDate } from "@/lib/transactions/schedule";
 
 interface ViewerLocation {
   latitude: number;
@@ -28,14 +31,17 @@ export default function JoinBatchForm({
   viewerLocation = null,
   onSuccess,
 }: JoinBatchFormProps) {
+  const router=useRouter();
+  const [terms,setTerms]=useState(false);
   const [quantity, setQuantity] = useState<number | "">(1);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [succeeded, setSucceeded] = useState(false);
 
+  useEffect(()=>{ const timer=setTimeout(()=>{try{const stored=Number(sessionStorage.getItem(`wesup:join:${item.id}`));if(Number.isSafeInteger(stored)&&stored>0)setQuantity(stored);}catch{}},0);return()=>clearTimeout(timer);},[item.id]);
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!consentGiven || submitting) return;
+    if (!consentGiven || submitting || (item.policyVersion===2&&!terms)) return;
 
     if (typeof quantity !== "number" || !Number.isSafeInteger(quantity) || quantity <= 0) {
       setError("Masukkan jumlah porsi yang valid.");
@@ -52,11 +58,14 @@ export default function JoinBatchForm({
         body: JSON.stringify({
           batchId: item.id,
           quantity,
+          consentAccepted:item.policyVersion===2?terms:undefined,
+          consentSnapshot:item.policyVersion===2?{paymentOpeningPolicy:item.paymentOpeningPolicy??"fixed_cutoff",maximumUnitPrice:item.basePrice,unit:item.unit,pickupAddress:item.pickupAddress,paymentOpensAt:item.paymentOpensAt,paymentClosesAt:item.paymentClosesAt,pickupStartsAt:item.pickupStartsAt,pickupEndsAt:item.pickupEndsAt}:undefined,
           consentLat: viewerLocation?.latitude ?? null,
           consentLng: viewerLocation?.longitude ?? null,
         }),
       });
 
+      if(response.status===401){router.push(`/login?role=umkm&returnTo=${encodeURIComponent(`/marketplace/${item.id}`)}`);return;}
       if (!response.ok) throw new Error(await readApiError(response));
       const result = (await response.json()) as Partial<RegistrationResult>;
       if (
@@ -68,6 +77,7 @@ export default function JoinBatchForm({
       }
 
       setSucceeded(true);
+      if(item.policyVersion===2) {sessionStorage.removeItem(`wesup:join:${item.id}`);router.push(`/umkm/pesanan/${result.registrationId}`);}
       onSuccess({ count: result.count, registrationId: result.registrationId });
     } catch (reason: unknown) {
       setError(reason instanceof Error ? reason.message : "Pendaftaran gagal. Coba lagi.");
@@ -97,7 +107,7 @@ export default function JoinBatchForm({
     <form onSubmit={handleSubmit} className="flex flex-col gap-3" noValidate>
       <div className="flex flex-col gap-1.5">
         <label htmlFor="join-batch-quantity" className="text-sm font-semibold text-slate-700">
-          Jumlah porsi
+          {item.policyVersion===2?`Jumlah (${item.unit ?? "pcs"})`:"Jumlah porsi"}
         </label>
         <input
           id="join-batch-quantity"
@@ -109,12 +119,15 @@ export default function JoinBatchForm({
           onChange={(event) => {
             const raw = event.target.value;
             setQuantity(raw === "" ? "" : Number(raw));
+            try {sessionStorage.setItem(`wesup:join:${item.id}`,raw);} catch {}
+            setTerms(false);
           }}
           disabled={submitting}
           className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
         />
       </div>
 
+      {item.policyVersion===2 && <section className="space-y-3 rounded-xl border bg-blue-50 p-4 text-sm"><p>Jumlah: {quantity || 0} {item.unit}. Total maksimum: <strong>{new Intl.NumberFormat("id-ID",{style:"currency",currency:"IDR",maximumFractionDigits:0}).format(Number(quantity)*item.basePrice)}</strong></p><p>Estimasi saat ini: {new Intl.NumberFormat("id-ID",{style:"currency",currency:"IDR",maximumFractionDigits:0}).format(Number(quantity)*item.currentTierPrice)}. Harga belum final.</p>{item.paymentOpeningPolicy==="capacity_or_cutoff"?<p>Pembayaran dibuka segera ketika kapasitas penuh, atau paling lambat {formatTransactionDate(item.paymentOpensAt)}. Batas bayar 24 jam sejak pengumpulan ditutup. Jadwal pengambilan tetap.</p>:<p>Bayar {formatTransactionDate(item.paymentOpensAt)} sampai {formatTransactionDate(item.paymentClosesAt)}.</p>}<p>Ambil di {item.pickupAddress}, {formatTransactionDate(item.pickupStartsAt)} sampai {formatTransactionDate(item.pickupEndsAt)}.</p><label className="flex items-start gap-3"><input className="mt-1 size-5 shrink-0" type="checkbox" checked={terms} onChange={e=>setTerms(e.target.checked)}/>Saya memahami harga dapat berubah sampai batas ikut; saya boleh batal tanpa penalti selama pengumpulan masih dibuka. {item.paymentOpeningPolicy === "capacity_or_cutoff" ? "Pengumpulan dapat ditutup lebih awal ketika kapasitas penuh. " : ""}Sesudahnya harga final terkunci dan saya wajib membayar. Tidak membayar dapat memicu peringatan, suspend 7 hari, lalu permanen. Tidak mengambil pada jadwal yang disetujui saat supplier siap membuat dana diberikan kepada supplier.</label></section>}
       {error ? (
         <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700" role="alert">
           {error}
@@ -123,14 +136,14 @@ export default function JoinBatchForm({
 
       <button
         type="submit"
-        disabled={!consentGiven || submitting}
+        disabled={!consentGiven || submitting || (item.policyVersion===2&&!terms)}
         className={`inline-flex w-full items-center justify-center rounded-xl px-4 py-3 text-sm font-bold transition-colors ${
           consentGiven && !submitting
             ? "bg-blue-600 text-white hover:bg-blue-700"
             : "cursor-not-allowed bg-slate-200 text-slate-500"
         }`}
       >
-        {submitting ? "Mendaftarkan…" : "Daftar Sekarang"}
+        {submitting ? "Mendaftarkan…" : item.policyVersion===2 ? "Konfirmasi ikut pesanan" : "Daftar Sekarang"}
       </button>
 
       {!consentGiven ? (

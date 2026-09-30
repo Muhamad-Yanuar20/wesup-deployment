@@ -32,6 +32,7 @@ export async function POST(
     if (/sign in required|only the UMKM owner/i.test(msg)) {
       return NextResponse.json({ error: msg, code: "PICKUP_FORBIDDEN" }, { status: 403 });
     }
+    if (/not eligible for pickup/i.test(msg))return NextResponse.json({error:"Barang belum siap atau periode pengambilan belum berlaku. Buka detail pesanan untuk melihat jadwal dan pilihan Anda.",code:"PICKUP_NOT_READY"},{status:409});
     if (/only available after payment/i.test(msg)) {
       return NextResponse.json({ error: msg, code: "PICKUP_STATE_CONFLICT" }, { status: 409 });
     }

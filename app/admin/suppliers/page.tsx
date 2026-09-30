@@ -23,16 +23,16 @@ export default function AdminSuppliersPage() {
           throw new Error(`HTTP Error: ${res.status}`);
         }
         const data = await res.json();
-        console.log("Data dari API:", data);
+
 
         if (Array.isArray(data)) {
           setSuppliers(data);
         } else {
           setSuppliers([]);
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error("Gagal load antrean supplier:", err);
-        setErrorMessage(err.message || "Gagal memuat data dari server");
+        setErrorMessage(err instanceof Error ? err.message : "Gagal memuat data dari server");
       } finally {
         setLoading(false);
       }

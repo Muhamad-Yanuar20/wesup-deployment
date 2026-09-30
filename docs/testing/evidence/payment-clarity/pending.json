@@ -1,0 +1,16 @@
+{
+  "orderId": "64625262-fa24-4cb5-92eb-a2c072a3a215",
+  "attemptId": "b6247839-c354-4982-be47-07b9aa54cab8",
+  "charge": 201,
+  "reconcile": 200,
+  "providerStatus": "pending",
+  "localStatus": "pending_payment",
+  "paymentType": "qris",
+  "progress": {
+    "state": "awaiting_payment",
+    "lastCheckedAt": "2026-09-30T22:12:31.728+00:00",
+    "canOpenCheckout": true,
+    "canCheckStatus": true,
+    "blockedReason": null
+  }
+}

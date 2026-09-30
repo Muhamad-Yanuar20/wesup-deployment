@@ -34,26 +34,14 @@ export default function AdminDisputesPage() {
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
 
-  const fetchDisputes = async () => {
-    setLoading(true);
-
-    try {
-      const res = await fetch("/api/admin/disputes", {
-        cache: "no-store",
-      });
-
-      if (!res.ok) {
-        throw new Error(`HTTP Error: ${res.status}`);
-      }
-
+  const fetchDisputes = () => fetch("/api/admin/disputes", { cache: "no-store" })
+    .then(async (res) => {
+      if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
       const data = await res.json();
       setDisputes(Array.isArray(data) ? data : []);
-    } catch (err) {
-      console.error("Gagal memuat data disputes:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+    })
+    .catch((err: unknown) => console.error("Gagal memuat data disputes:", err))
+    .finally(() => setLoading(false));
 
   useEffect(() => {
     fetchDisputes();
@@ -88,6 +76,7 @@ export default function AdminDisputesPage() {
 
       if (res.ok) {
         alert("Keputusan sengketa berhasil diproses!");
+        setLoading(true);
         await fetchDisputes();
       } else {
         const errorData = await res.json().catch(() => ({}));

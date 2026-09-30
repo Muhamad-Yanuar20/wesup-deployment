@@ -1,6 +1,8 @@
+import type { OfferContext } from "@/lib/transactions/offer-context";
 export type SupplierTransactionOrderStatus = "registered" | "pending_payment" | "paid" | "picked_up" | "completed" | "no_show" | "cancelled" | "refund_pending" | "refunded";
 
 export interface SupplierTransactionOrder {
+  canConfirmPickup?: boolean;
   registrationId: string;
   umkmId: string;
   umkmName: string;
@@ -38,6 +40,7 @@ export interface SupplierCapabilities {
 }
 
 export interface SupplierBatchTransactionSnapshot {
+  offerContext?:OfferContext|null;
   batch: Record<string, unknown>;
   timeline: Record<string, unknown>;
   capacityQuantity: number | null;
@@ -63,6 +66,7 @@ export function parseSupplierBatchTransaction(value: unknown): SupplierBatchTran
   const orders = Array.isArray(input.orders) ? input.orders.map((item) => {
     const row = item && typeof item === "object" ? item as Record<string, unknown> : {};
     return {
+      canConfirmPickup: typeof row.canConfirmPickup === "boolean" ? row.canConfirmPickup : undefined,
       registrationId: String(row.registrationId ?? ""), umkmId: String(row.umkmId ?? ""), umkmName: String(row.umkmName ?? "UMKM"),
       quantity: number(row.quantity), status: String(row.status ?? "registered") as SupplierTransactionOrderStatus,
       finalAmount: nullableNumber(row.finalAmount), lockedTierNumber: nullableNumber(row.lockedTierNumber), lockedPricePerUnit: nullableNumber(row.lockedPricePerUnit),
@@ -71,6 +75,7 @@ export function parseSupplierBatchTransaction(value: unknown): SupplierBatchTran
     };
   }) : [];
   return {
+    offerContext:input.offerContext as OfferContext|null,
     batch: input.batch && typeof input.batch === "object" ? input.batch as Record<string, unknown> : {},
     timeline: input.timeline && typeof input.timeline === "object" ? input.timeline as Record<string, unknown> : {},
     capacityQuantity: nullableNumber(input.capacityQuantity), paymentWindowHours: number(input.paymentWindowHours, 24),

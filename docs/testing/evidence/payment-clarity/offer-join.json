@@ -1,0 +1,39 @@
+[
+  {
+    "step": "partial_draft",
+    "draftId": "a6c392e1-c4d0-418e-8c95-800651b16c9c",
+    "revision": 2,
+    "status": 200
+  },
+  {
+    "step": "published",
+    "batchId": "195597e9-ffd3-48c7-b3c3-9a8da5cfe751",
+    "status": 200
+  },
+  {
+    "step": "umkm_join",
+    "batchId": "195597e9-ffd3-48c7-b3c3-9a8da5cfe751",
+    "orderId": "64625262-fa24-4cb5-92eb-a2c072a3a215",
+    "status": 201,
+    "phase": "waiting_payment_window",
+    "deadlineAt": "2026-10-01T21:35:10.755327+00:00",
+    "batchClosed": false,
+    "capabilities": {
+      "canPay": false,
+      "canWithdraw": true
+    }
+  },
+  {
+    "step": "umkm2_join",
+    "batchId": "195597e9-ffd3-48c7-b3c3-9a8da5cfe751",
+    "orderId": "5e9a2512-a470-4ce1-a214-5468ac5375e9",
+    "status": 201,
+    "phase": "payment_open",
+    "deadlineAt": "2026-10-01T21:35:20.7081+00:00",
+    "batchClosed": true,
+    "capabilities": {
+      "canPay": true,
+      "canWithdraw": false
+    }
+  }
+]

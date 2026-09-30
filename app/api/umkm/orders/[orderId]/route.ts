@@ -3,7 +3,7 @@ import { isUuid } from "@/lib/admin/validation";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { resolveActiveUmkm } from "@/lib/umkm/workspace-auth";
 import { toUmkmOrderDetail, type OrderReadRow } from "@/lib/orders/read-model";
-import { DETAIL_SELECT } from "@/lib/orders/selects";
+import { DETAIL_SELECT, readCompatibleOrder } from "@/lib/orders/selects";
 
 export const dynamic = "force-dynamic";
 
@@ -32,13 +32,14 @@ export async function GET(
   _request: Request,
   { params }: { params: Promise<{ orderId: string }> },
 ) {
-  const viewer = await resolveActiveUmkm();
+  const viewer = await resolveActiveUmkm({allowSuspended:true});
   if (!viewer.client) return viewer.response;
   const { orderId } = await params;
   if (!isUuid(orderId)) return errorResponse("Pesanan tidak ditemukan", "ORDER_NOT_FOUND", 404);
 
   const query = viewer.client.from("registrations") as DetailQuery;
-  let result = await query.select(DETAIL_SELECT).eq("id", orderId).eq("umkm_id", viewer.context.userId).maybeSingle();
+  const initial = await readCompatibleOrder((projection) => query.select(projection).eq("id", orderId).eq("umkm_id", viewer.context.userId).maybeSingle(), DETAIL_SELECT);
+  let result: { data: OrderReadRow | null; error: unknown | null } = initial;
   if (result.error) {
     const raw = result.error as { code?: unknown };
     const code = String(raw.code ?? "");
@@ -53,14 +54,14 @@ export async function GET(
   if (typeof rpcClient.rpc === "function") {
     const lifecycleRpc = process.env.NODE_ENV === "test" ? "materialize_umkm_order" : "materialize_supplier_order";
     await Promise.resolve(rpcClient.rpc(lifecycleRpc, { p_registration_id: orderId })).catch(() => undefined);
-    const refreshed = await (viewer.client.from("registrations") as DetailQuery).select(DETAIL_SELECT).eq("id", orderId).eq("umkm_id", viewer.context.userId).maybeSingle();
+    const refreshed = await (viewer.client.from("registrations") as DetailQuery).select(initial.projection).eq("id", orderId).eq("umkm_id", viewer.context.userId).maybeSingle();
     if (!refreshed.error && refreshed.data) result = refreshed;
   }
 
   const serverTime = new Date().toISOString();
   const row = result.data;
   if (!row) return errorResponse("Pesanan tidak ditemukan", "ORDER_NOT_FOUND", 404);
-  const detail = toUmkmOrderDetail(row, serverTime);
+  const detail = toUmkmOrderDetail(row, serverTime, viewer.context.status === "active");
   if (detail.dispute?.photoUrls.length) {
     try {
       const storage = getAdminClient().storage.from("wesup-assets");
