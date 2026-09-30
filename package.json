@@ -11,6 +11,10 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
+    "clean:deadcode": "npm run clean:unused && npm run clean:unreachable && npm run clean:deps",
+    "clean:unused": "knip",
+    "clean:unreachable": "ts-prune",
+    "clean:deps": "depcheck --ignores=\"@types/*,eslint-config-*,eslint,prettier\"",
     "db:check:supplier-transactions": "node scripts/check-supplier-transaction-schema.mjs",
     "payments:check": "node scripts/check-payment-readiness.mjs",
     "db:recover:supplier-transactions": "node scripts/recover-supplier-transaction-incident.mjs"
@@ -28,6 +32,7 @@
     "react-leaflet": "^5.0.0",
     "server-only": "^0.0.1",
     "swagger-ui-react": "^5.33.0",
+    "three": "^0.186.1",
     "zustand": "^5.0.14"
   },
   "devDependencies": {
@@ -43,14 +48,18 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/swagger-ui-react": "^5.18.0",
+    "@types/three": "^0.186.0",
     "@vitest/coverage-v8": "^4.1.10",
+    "depcheck": "^1.4.7",
     "eslint": "^9",
     "eslint-config-next": "16.2.10",
     "jsdom": "^29.1.1",
+    "knip": "^6.38.0",
     "openapi-types": "^12.1.3",
     "pg": "^8.22.0",
     "pgsql-ast-parser": "^12.0.2",
     "tailwindcss": "^4",
+    "ts-prune": "^0.10.3",
     "typescript": "^5",
     "vitest": "^4.1.10"
   }
