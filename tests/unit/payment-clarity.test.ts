@@ -20,6 +20,7 @@ describe("one authoritative payment presentation", () => {
     expect(order.phase).toBe("payment_open");
     expect(order.presentation?.label).toBe("Menunggu pembayaran");
     expect(order.presentation?.primaryAction.label).toBe("Lanjutkan pembayaran");
+    expect(order).toMatchObject({lastCheckedAt:"2026-09-30T09:10:00Z",canOpenCheckout:true,canCheckStatus:true,blockedReason:null});
     expect(order.paymentProgress).toMatchObject({ state: "awaiting_payment", canOpenCheckout: true, lastCheckedAt: "2026-09-30T09:10:00Z" });
   });
   it("confirmed paid attempts take precedence over another pending attempt", () => {

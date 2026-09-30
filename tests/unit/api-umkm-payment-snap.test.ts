@@ -102,6 +102,7 @@ describe("UMKM Snap payment charge", () => {
     expect(response.status).toBe(201);
     expect(createSnapTransaction).toHaveBeenCalledWith(expect.objectContaining({ grossAmount: 120000, itemQuantity: 1, itemUnitPrice: 120000, expiresAt: "2099-09-15T00:00:00.000Z" }), expect.anything());
     const body = await response.json();
+    expect(body).toMatchObject({paymentProgress:{state:"checkout_created",canOpenCheckout:true,canCheckStatus:true},lastCheckedAt:null,canOpenCheckout:true,canCheckStatus:true,blockedReason:null,lockedUnitPrice:120000});
     expect(Number.isNaN(Date.parse((body as { serverTime: string }).serverTime))).toBe(false);
     expect((body as { attempt: { expiresAt: string; qrCodeUrl: string | null } }).attempt.expiresAt).toBe("2099-09-15T00:00:00.000Z");
     expect(response.headers.get("content-type")).toContain("application/json");
