@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { resolveActiveUmkm } from "@/lib/umkm/workspace-auth";
 import { buildOrderSummary, toUmkmOrderListItem, type OrderReadRow } from "@/lib/orders/read-model";
-import { ORDER_SELECT } from "@/lib/orders/selects";
+import { ORDER_SELECT, readCompatibleOrder } from "@/lib/orders/selects";
 
 export const dynamic = "force-dynamic";
 
@@ -49,7 +49,7 @@ export async function GET(request?: Request) {
 
   const rpcClient = viewer.client as RpcCapableClient;
   const baseQuery = viewer.client.from("registrations") as OrdersQuery;
-  const first = await baseQuery.select(ORDER_SELECT).eq("umkm_id", viewer.context.userId);
+  const first = await readCompatibleOrder((projection) => baseQuery.select(projection).eq("umkm_id", viewer.context.userId), ORDER_SELECT);
   if (first.error) {
     const requestId = crypto.randomUUID();
     console.error("[umkm-orders] read failed", { operation: "list", code: errorCode(first.error), requestId });
@@ -66,7 +66,7 @@ export async function GET(request?: Request) {
       rpcClient.rpc("materialize_umkm_orders", { p_registration_ids: rows.map((row) => row.id) }),
     ]);
     const refreshed = await (viewer.client.from("registrations") as OrdersQuery)
-      .select(ORDER_SELECT)
+      .select(first.projection)
       .eq("umkm_id", viewer.context.userId);
     if (!refreshed.error && refreshed.data) rows = refreshed.data;
   }

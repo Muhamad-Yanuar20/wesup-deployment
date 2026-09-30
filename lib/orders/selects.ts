@@ -32,3 +32,30 @@ export const ORDER_SELECT = [
   "rating:ratings(id)",
   "refund:refund_requests(id,umkm_bank_account_id)",
 ].join(",");
+
+/** Only absent v2 objects justify a retry. Permission/network errors stay errors. */
+export function isMissingTransactionUxSchema(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const value = error as { code?: string; message?: string; details?: string };
+  return ["42703", "PGRST200", "PGRST205", "42P01"].includes(value.code ?? "") &&
+    /transaction_policy_version|cancellation_reason|accepted_pickup_revision|pickup_ends_at|pickup_replacements/.test(`${value.message ?? ""} ${value.details ?? ""}`);
+}
+
+export function legacyOrderProjection(projection: string): string {
+  return projection.replace(",transaction_policy_version", "").replace(",cancellation_reason", "")
+    .replace(",accepted_pickup_revision", "").replace(",pickup_ends_at", "")
+    .replace(",pickup_replacements(id,revision,starts_at,ends_at,ready_at,reason)", "");
+}
+
+export async function readCompatibleOrder<T>(
+  read: (projection: string) => PromiseLike<{ data: T | null; error: unknown | null }>,
+  projection: string,
+) {
+  let result = await read(projection);
+  let usedProjection = projection;
+  if (isMissingTransactionUxSchema(result.error)) {
+    usedProjection = legacyOrderProjection(projection);
+    result = await read(usedProjection);
+  }
+  return { ...result, projection: usedProjection };
+}

@@ -74,7 +74,7 @@ begin
              updated_at = now()
        where id = v_payment.id and status <> 'refunded';
       update public.registrations set status = 'refund_pending', updated_at = now()
-       where id = v_registration.id and status = 'cancelled';
+       where id = v_registration.id and status in ('registered', 'pending_payment', 'cancelled', 'paid');
       insert into public.escrow_holds (registration_id, amount, status, pickup_confirmed_at, auto_release_at, release_destination)
         values (v_registration.id, v_registration.final_amount, 'held', null, null, 'umkm')
         on conflict (registration_id) do nothing;
