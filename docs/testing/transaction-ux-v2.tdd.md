@@ -2,6 +2,8 @@
 
 Date: 2026-09-30. Scope: approved supplier/UMKM transaction UX and lifecycle plan.
 
+This is the original pre-deployment report. The subsequent database deployment, real authenticated browser journeys, Midtrans sandbox settlement and outstanding live replacement-consent check are documented in [transaction recovery evidence](transaction-recovery.tdd.md).
+
 ## RED → GREEN
 
 | Guarantee | RED evidence | GREEN target |

@@ -1,0 +1,22 @@
+[
+  {
+    "step": "pickup_credentials",
+    "orderId": "88c8b2ba-8ff8-42c7-9a4d-46d5540c9391",
+    "phase": "picked_up",
+    "hasQr": true,
+    "hasPin": true
+  },
+  {
+    "step": "handover",
+    "orderId": "88c8b2ba-8ff8-42c7-9a4d-46d5540c9391",
+    "status": "picked_up",
+    "duplicateStatus": 409,
+    "escrowStatus": "held"
+  },
+  {
+    "step": "early_readiness",
+    "orderId": "bdb017a8-468e-4428-9e55-63aab1fbd3c8",
+    "phase": "paid_waiting_ready",
+    "pickupBlocked": true
+  }
+]

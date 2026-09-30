@@ -3,6 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "prebuild": "npm run db:check:transaction-ux",
+    "db:check:transaction-ux": "node scripts/check-transaction-ux-schema.mjs",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",

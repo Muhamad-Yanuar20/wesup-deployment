@@ -40,6 +40,8 @@ function stripUnsupported(sql: string): string {
     // The SQL runtime harness executes both against PostgreSQL/WASM.
     .replace(/ALTER\s+FUNCTION[^;]+;/gi, "")
     .replace(/DO\s+\$\$[\s\S]*?\$\$\s*;/gi, "")
+    // NOTIFY is executed by the SQL runtime harness; the AST parser lacks it.
+    .replace(/NOTIFY\s+[^;]+;/gi, "")
     .replace(/GRANT\s+[^;]+;/gi, "")
     .replace(/REVOKE\s+[^;]+;/gi, "")
     .replace(/ALTER\s+TABLE[^;]*ENABLE\s+ROW\s+LEVEL\s+SECURITY[^;]*;/gi, "")

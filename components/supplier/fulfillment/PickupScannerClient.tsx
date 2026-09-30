@@ -235,7 +235,7 @@ export default function PickupScannerClient({ batchId }: { batchId: string }) {
             <strong>Sudah Diambil</strong> dan memulai hitung mundur escrow 1×24 jam.
           </li>
           <li>
-            Sediakan jendela 12 jam toleransi sejak estimasi ready untuk melayani pengambilan.
+              Layani pengambilan sesuai rentang waktu yang tercantum pada detail batch.
           </li>
         </ul>
       </section>

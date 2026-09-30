@@ -38,6 +38,7 @@ export async function GET(
   const offset = Number.isSafeInteger(offsetRaw) && offsetRaw >= 0 ? offsetRaw : 0;
   const orders = Array.isArray(data) ? data as Array<Record<string, unknown>> : [];
   const context=await getOfferContext(client as unknown as TransactionRpcClient,id);
+  if(context) for(const order of orders) order.unit=context.unit;
   if(context?.policyVersion===2) for(const order of orders) order.can_confirm_pickup=context.pickupActions?.find(action=>action.registrationId===order.registration_id)?.canConfirm??false;
   const filtered = requestedStatus && requestedStatus !== "all" ? orders.filter((order) => requestedStatus === "picked_up" ? ["picked_up", "completed"].includes(String(order.status)) : requestedStatus === "refund" ? ["refund_pending", "refunded"].includes(String(order.status)) : String(order.status) === requestedStatus) : orders;
   return NextResponse.json({ orders: filtered.slice(offset, offset + limit), counts: { all: orders.length, pending_payment: orders.filter((o) => o.status === "pending_payment").length, paid: orders.filter((o) => o.status === "paid").length, picked_up: orders.filter((o) => ["picked_up", "completed"].includes(String(o.status))).length, refund: orders.filter((o) => ["refund_pending", "refunded"].includes(String(o.status))).length }, nextCursor: offset + limit < filtered.length ? String(offset + limit) : null, serverTime: new Date().toISOString() });

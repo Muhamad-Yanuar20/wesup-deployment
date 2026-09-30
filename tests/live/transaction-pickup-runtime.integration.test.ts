@@ -5,7 +5,7 @@ it.skipIf(!process.env.DATABASE_URL)("generates pickup credentials for the isola
   const db = new pg.Client({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
   await db.connect();
   try {
-    const fixture = (await db.query("select r.id,r.umkm_id from public.registrations r join public.batches b on b.id=r.batch_id join public.profiles p on p.id=r.umkm_id where b.title='QA Wesup pickup' and p.full_name='QA Wesup umkm' and r.status='paid' limit 1")).rows[0];
+    const fixture = (await db.query("select r.id,r.umkm_id from public.registrations r join public.batches b on b.id=r.batch_id join public.profiles p on p.id=r.umkm_id where b.title in ('QA Wesup pickup','QA Wesup legacy') and p.full_name='QA Wesup umkm' and r.status='paid' order by b.transaction_policy_version desc limit 1")).rows[0];
     expect(fixture, "Requires the isolated QA pickup fixture").toBeDefined();
     await db.query("BEGIN");
     await db.query("select set_config('request.jwt.claim.sub',$1,true)", [fixture.umkm_id]);

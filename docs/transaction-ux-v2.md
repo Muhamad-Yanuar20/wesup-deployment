@@ -6,7 +6,9 @@ The canonical transaction pages are `/umkm/pesanan/[orderId]` and `/supplier/bat
 
 ## Database contract
 
-Apply `20260930000000_transaction_ux_v2.sql` and `20260930010000_payment_event_log_execution.sql` before deploying these UI/API changes. No remote migration was applied during implementation.
+Apply the ordered transaction migrations before deploying these UI/API changes. The initial implementation had not applied them remotely; the recovery on 30 September 2026 applied the missing migrations to the active Wesup project after backup and rollback validation. See [live recovery evidence and remaining browser acceptance](testing/transaction-recovery.tdd.md).
+
+`npm run build` now runs a read-only schema preflight covering columns, functions, owner RLS, Data API grants and REST relationships. `npm run db:check:transaction-ux` runs that check independently. The active database contract is generated with `node scripts/generate-database-types.mjs`. Existing order reads retain a narrowly scoped old-schema fallback and surface other database failures as errors.
 
 | Record | Added authority |
 | --- | --- |
