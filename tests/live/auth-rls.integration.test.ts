@@ -114,6 +114,50 @@ describe.skipIf(noDbUrl || noRestUrl)("live auth & RLS hardening", () => {
       });
     }
 
+    function patchUmkmProfile(body: Record<string, unknown>): Promise<Response> {
+      return rest(`/rest/v1/umkm_profiles?user_id=eq.${uid}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Prefer: "return=minimal",
+        },
+        body: JSON.stringify(body),
+      });
+    }
+
+    function readUmkmProfile(columns: string): Promise<Response> {
+      return rest(`/rest/v1/umkm_profiles?user_id=eq.${uid}&select=${columns}`);
+    }
+
+    async function storedPenalty(): Promise<{ strike_count: number; suspended_until: string | null }> {
+      const res = await readUmkmProfile("strike_count,suspended_until");
+      expect(res.status).toBe(200);
+      const rows = (await res.json()) as Array<{
+        strike_count: number;
+        suspended_until: string | null;
+      }>;
+      expect(rows).toHaveLength(1);
+      return rows[0];
+    }
+
+    /**
+     * Seeds the profile as the platform would, i.e. through a table-owner
+     * write. A strike_count of 2 models a UMKM sitting one missed payment
+     * away from permanent suspension, which is exactly the state in which the
+     * reset bypass is worth attempting.
+     */
+    async function seedUmkmProfile(strikes: number, suspendedUntil: string | null = null) {
+      await pool!.query(
+        `insert into public.umkm_profiles
+           (user_id, business_name, address, latitude, longitude, strike_count, suspended_until)
+         values ($1, 'RLS Test UMKM', 'Test Address', -6.914744, 107.60981, $2, $3)
+         on conflict (user_id) do update
+           set strike_count = excluded.strike_count,
+               suspended_until = excluded.suspended_until`,
+        [uid, strikes, suspendedUntil],
+      );
+    }
+
     function supplierPayload(): Record<string, unknown> {
       return {
         user_id: uid,
@@ -278,6 +322,81 @@ describe.skipIf(noDbUrl || noRestUrl)("live auth & RLS hardening", () => {
         expect(res.rows[0].role).toBe("umkm");
       },
     );
+
+    describe.skipIf(!pool)("UMKM penalty columns are server-owned", () => {
+      it("allows the UMKM to edit its own business-profile columns", async () => {
+        await seedUmkmProfile(0);
+        const res = await patchUmkmProfile({
+          business_name: "Toko RLS",
+          address: "Jalan RLS 1",
+          latitude: -6.9,
+          longitude: 107.6,
+          updated_at: new Date().toISOString(),
+        });
+        expect(res.status).toBeLessThan(300);
+        const read = await readUmkmProfile("business_name,address");
+        const rows = (await read.json()) as Array<{ business_name: string; address: string }>;
+        expect(rows[0].business_name).toBe("Toko RLS");
+        expect(rows[0].address).toBe("Jalan RLS 1");
+      });
+
+      it("blocks a UMKM from resetting its own strike_count", async () => {
+        await seedUmkmProfile(2);
+        const res = await patchUmkmProfile({ strike_count: 0 });
+        expect(res.status).toBeGreaterThanOrEqual(400);
+        // The stored counter is the authoritative assertion: it proves the
+        // Hit-and-Run escalation ladder (PRD 2.2.3 / 3.4) survives a
+        // motivated client resetting it after every missed payment.
+        expect((await storedPenalty()).strike_count).toBe(2);
+      });
+
+      it("blocks a UMKM from setting strike_count to a forged value", async () => {
+        await seedUmkmProfile(0);
+        const res = await patchUmkmProfile({ strike_count: 99 });
+        expect(res.status).toBeGreaterThanOrEqual(400);
+        expect((await storedPenalty()).strike_count).toBe(0);
+      });
+
+      it("blocks a UMKM from clearing its own suspended_until", async () => {
+        const future = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+        await seedUmkmProfile(2, future);
+        const res = await patchUmkmProfile({ suspended_until: null });
+        expect(res.status).toBeGreaterThanOrEqual(400);
+        // Postgres serialises timestamptz with a +00:00 offset rather than the
+        // Z form toISOString() emits, so compare the instants, not the strings.
+        const stored = (await storedPenalty()).suspended_until;
+        expect(stored).not.toBeNull();
+        expect(Date.parse(stored as string)).toBe(Date.parse(future));
+      });
+
+      it("blocks a combined write that smuggles a penalty column", async () => {
+        await seedUmkmProfile(1);
+        const res = await patchUmkmProfile({
+          business_name: "Legitimate Edit",
+          strike_count: 0,
+        });
+        expect(res.status).toBeGreaterThanOrEqual(400);
+        const read = await readUmkmProfile("business_name,strike_count");
+        const rows = (await read.json()) as Array<{ business_name: string; strike_count: number }>;
+        // Postgres rejects the whole statement, so the legitimate column in the
+        // same payload must not land either.
+        expect(rows[0].business_name).not.toBe("Legitimate Edit");
+        expect(rows[0].strike_count).toBe(1);
+      });
+
+      it("keeps the penalty columns writable by the escalation path", async () => {
+        // apply_hit_and_run_escalation and the strike increments in
+        // materialize_hit_and_run / apply_midtrans_payment_event are all
+        // SECURITY DEFINER, so they run as the table owner. This asserts the
+        // grant narrowing did not remove the platform's own write path.
+        await seedUmkmProfile(0);
+        await pool!.query(
+          "update public.umkm_profiles set strike_count = strike_count + 1 where user_id = $1",
+          [uid],
+        );
+        expect((await storedPenalty()).strike_count).toBe(1);
+      });
+    });
 
     it("shows only own row once banned (is_admin requires active)", async () => {
       await pool!.query(

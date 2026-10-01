@@ -1,0 +1,57 @@
+-- UMKM profile column-grant hardening.
+-- Requirement: an authenticated UMKM may edit their own business profile but
+-- must never be able to write the penalty fields that the platform owns.
+--
+-- Why this migration exists
+-- ------------------------
+-- public.umkm_profiles received a blanket table-level grant
+--   grant select, insert, update on table public.umkm_profiles to authenticated
+-- in 20260909090000_umkm_profile_rls.sql and again in
+-- 20260910012225_umkm_registration_profile_recovery.sql.
+--
+-- RLS filters ROWS, not COLUMNS. The owner-scoped policies
+-- (umkm_profiles_recovery_select_own / _insert_own / _update_own) therefore
+-- protected *which row* a UMKM could touch but not *which columns*. Combined
+-- with the blanket grant, any active UMKM holding one or two Hit-and-Run
+-- strikes could issue from the browser:
+--
+--   update public.umkm_profiles set strike_count = 0 where user_id = <self>
+--
+-- and reset the escalation ladder at will, since the whole ladder in
+-- apply_hit_and_run_escalation (PRD 2.2.3 / 3.4) keys off that counter. The
+-- warning -> 7-day suspend -> permanent suspend ladder was therefore a no-op
+-- against a motivated client, and unpaid orders carried no financial
+-- consequence.
+--
+-- The hardening pattern already exists in this schema:
+--   20260805000000_auth_rls_hardening.sql:13-14  profiles
+--   20260918000000_bank_account_rls.sql:13-17   umkm_bank_accounts
+-- This migration applies the same column-scoped pattern to umkm_profiles, the
+-- last profile table still holding a blanket UPDATE.
+--
+-- Escalation is unaffected: apply_hit_and_run_escalation and the strike
+-- increments in materialize_hit_and_run / apply_midtrans_payment_event are all
+-- SECURITY DEFINER, so they execute as the table owner and are not subject to
+-- grants held by `authenticated`.
+--
+-- The legitimate profile editor is unaffected: app/api/umkm/profile/route.ts
+-- upserts exactly business_name, address, latitude, longitude and updated_at.
+-- PostgREST compiles that upsert to INSERT ... ON CONFLICT (user_id) DO UPDATE
+-- SET <those five columns>; PostgreSQL requires UPDATE privilege only on the
+-- DO UPDATE SET list, and user_id is the conflict target rather than a SET
+-- column.
+--
+-- INSERT is intentionally left in place. The upsert needs it for the
+-- not-yet-created-row case, and it is not an escalation vector: the insert
+-- policy requires user_id = auth.uid(), so the statement can only ever create
+-- the caller's own single row, where a forged strike_count would only ever
+-- sanction the caller themselves.
+
+-- ============================================================
+-- Column-scoped UPDATE: business profile fields only.
+-- strike_count, suspended_until, user_id and created_at stay server-owned.
+-- ============================================================
+revoke update on public.umkm_profiles from authenticated;
+
+grant update (business_name, address, latitude, longitude, updated_at)
+  on public.umkm_profiles to authenticated;
