@@ -24,6 +24,7 @@ export interface LoginProfile {
 }
 
 export interface LoginSuccessResponse {
+  accessState?: import("./access-state").UserAccessState;
   user: { email: string };
   profile: LoginProfile;
   redirectTo: string;

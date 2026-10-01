@@ -3,7 +3,9 @@ import type {
   UserRole,
   VerificationStatus,
 } from "@/types/database";
-import { AuthError } from "@/lib/supabase/auth";
+import { cache } from "react";
+import { withinReadBudget } from "@/lib/performance/read-budget";
+import { getCurrentUser, AuthUnavailableError, type AuthClient, type AuthContext, AuthError } from "@/lib/supabase/auth";
 import { isCompleteUmkmProfile } from "@/lib/umkm/profile-completion";
 
 export { AuthError };
@@ -58,54 +60,25 @@ async function resolveClient(client?: AccessStateClient): Promise<AccessStateCli
   return (await getServerClient()) as unknown as AccessStateClient;
 }
 
-export async function getViewerAccessState(
-  client?: AccessStateClient,
-): Promise<UserAccessState | null> {
-  const resolvedClient = await resolveClient(client);
-  const {
-    data: { user },
-    error: userError,
-  } = await resolvedClient.auth.getUser();
-
-  if (userError || !user) return null;
-
-  const { data: profile, error: profileError } = await resolvedClient
-    .from("profiles")
-    .select("role,status")
-    .eq("id", user.id)
-    .single();
-
-  if (profileError || !profile) return null;
-
-  if (profile.role === "supplier") {
-    const { data: supplierProfile } = await resolvedClient
-      .from("supplier_profiles")
-      .select("verification_status")
-      .eq("user_id", user.id)
-      .maybeSingle();
-
-    return {
-      role: "supplier",
-      status: profile.status,
-      verificationStatus: (supplierProfile as { verification_status?: VerificationStatus } | null)?.verification_status ?? "pending",
-    };
+const readViewerAccessState = cache(async (client: AccessStateClient): Promise<UserAccessState | null> => {
+  const context = await getCurrentUser(client as unknown as AuthClient);
+  return context ? getAccessStateForUser(client, context) : null;
+});
+export async function getViewerAccessState(client?: AccessStateClient): Promise<UserAccessState | null> {
+  return readViewerAccessState(await resolveClient(client));
+}
+/** Receives an already verified identity/profile, never browser-supplied data. */
+export async function getAccessStateForUser(client: AccessStateClient, context: AuthContext, knownSupplierStatus?: VerificationStatus): Promise<UserAccessState> {
+  if (context.role === "admin") return { role: "admin", status: context.status };
+  if (context.role === "supplier") {
+    if (knownSupplierStatus) return { role: "supplier", status: context.status, verificationStatus: knownSupplierStatus };
+    const { data, error } = await withinReadBudget(client.from("supplier_profiles").select("verification_status").eq("user_id", context.userId).maybeSingle());
+    if (error) throw new AuthUnavailableError();
+    return { role: "supplier", status: context.status, verificationStatus: (data as { verification_status?: VerificationStatus } | null)?.verification_status ?? "pending" };
   }
-
-  if (profile.role === "admin") {
-    return { role: "admin", status: profile.status };
-  }
-
-  const { data: umkmProfile } = await resolvedClient
-    .from("umkm_profiles")
-    .select("user_id,business_name,address,latitude,longitude")
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  return {
-    role: "umkm",
-    status: profile.status,
-    profileComplete: isCompleteUmkmProfile(umkmProfile as { business_name?: unknown; address?: unknown; latitude?: unknown; longitude?: unknown } | null),
-  };
+  const { data, error } = await withinReadBudget(client.from("umkm_profiles").select("user_id,business_name,address,latitude,longitude").eq("user_id", context.userId).maybeSingle());
+  if (error) throw new AuthUnavailableError();
+  return { role: "umkm", status: context.status, profileComplete: isCompleteUmkmProfile(data as { business_name?: unknown; address?: unknown; latitude?: unknown; longitude?: unknown } | null) };
 }
 
 export function resolveHomePath(accessState: UserAccessState): string {

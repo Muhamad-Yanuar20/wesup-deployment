@@ -1,3 +1,4 @@
+import { fetchRead } from "@/lib/feedback/read-request";
 import type { SupplierBatchDetail, SupplierBatchRepository } from "@/lib/supplier-batch/types";
 import type { CatalogDraft } from "@/lib/supplier-catalog/types";
 import { draftToPayload, mapSupplierBatchRow, type SupplierCatalogListResponse, type SupplierBatchRpcRow } from "@/lib/supplier-catalog/api";
@@ -50,13 +51,13 @@ export const supplierCatalogApiRepository: SupplierCatalogRepository = {
     const params = new URLSearchParams();
     if (query.trim()) params.set("q", query.trim());
     if (status && status !== "ALL") params.set("status", status.toLowerCase());
-    const response = await fetch(`/api/suppliers/batches${params.size ? `?${params}` : ""}`, { signal, cache: "no-store" });
+    const response = await fetchRead(`/api/suppliers/batches${params.size ? `?${params}` : ""}`, { signal, cache: "no-store" });
     if (!response.ok) throw new Error(await readSupplierCatalogError(response));
     return await response.json() as SupplierCatalogListResponse;
   },
 
   async getById(id, { signal } = {}) {
-    const response = await fetch(`/api/suppliers/batches/${encodeURIComponent(id)}`, { signal, cache: "no-store" });
+    const response = await fetchRead(`/api/suppliers/batches/${encodeURIComponent(id)}`, { signal, cache: "no-store" });
     if (response.status === 404) return null;
     return readItem(response);
   },
@@ -84,7 +85,7 @@ export const supplierCatalogApiRepository: SupplierCatalogRepository = {
     if (!response.ok) throw new Error(await readSupplierCatalogError(response));
   },
   async getTransaction(id, { signal } = {}) {
-    const response = await fetch(`/api/suppliers/batches/${encodeURIComponent(id)}/transactions`, { signal, cache: "no-store" });
+    const response = await fetchRead(`/api/suppliers/batches/${encodeURIComponent(id)}/transactions`, { signal, cache: "no-store" });
     if (!response.ok) throw await parseSupplierApiError(response, "Transaksi batch belum dapat dimuat.");
     const body = await response.json() as { item?: unknown };
     return parseSupplierBatchTransaction(body.item);

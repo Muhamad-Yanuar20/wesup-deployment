@@ -1,0 +1,33 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v4.1.11 C:/Users/hpyan/Project/wesup
+
+ ❯ tests/components/UmkmPaymentPanel.test.tsx (7 tests | 1 failed) 202ms
+     × shows the real payment closing date while counting down to opening 39ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/components/UmkmPaymentPanel.test.tsx > UmkmPaymentPanel > shows the real payment closing date while counting down to opening
+Error: expect(element).toHaveTextContent()
+
+Expected element to have text content:
+  17 Sep 2026
+Received:
+  Batas akhir: 16 Sep 2026, 07.00 WIB
+ ❯ tests/components/UmkmPaymentPanel.test.tsx:53:46
+     51|   it("shows the real payment closing date while counting down to openi…
+     52|     render(<UmkmPaymentPanel order={{...baseOrder, invoice:null, payme…
+     53|     expect(screen.getByText(/Batas akhir:/)).toHaveTextContent("17 Sep…
+       |                                              ^
+     54|     expect(screen.getByText(/^Buka:/)).toHaveTextContent("16 Sep 2026"…
+     55|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 6 passed (7)
+   Start at  11:37:51
+   Duration  2.83s (transform 165ms, setup 358ms, import 314ms, tests 202ms, environment 1.73s)

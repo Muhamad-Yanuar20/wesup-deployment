@@ -1,4 +1,5 @@
 import { createServerClient } from "@supabase/ssr";
+import { cache } from "react";
 import { cookies } from "next/headers";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database";
@@ -12,7 +13,7 @@ if (!url || !key) {
   );
 }
 
-export async function getServerClient(): Promise<SupabaseClient<Database>> {
+export const getServerClient = cache(async (): Promise<SupabaseClient<Database>> => {
   const cookieStore = await cookies();
 
   return createServerClient<Database>(url, key, {
@@ -31,4 +32,4 @@ export async function getServerClient(): Promise<SupabaseClient<Database>> {
       },
     },
   });
-}
+});

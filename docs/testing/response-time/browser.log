@@ -1,0 +1,17 @@
+
+Running 10 tests using 1 worker
+
+(node:2448) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok  1 [Supplier Flow] › tests\e2e\early-payment-opening.spec.ts:38:9 › early payment UI with isolated transaction responses › target, supplier confirmation and participant decision at 1440px (12.1s)
+  ok  2 [Supplier Flow] › tests\e2e\early-payment-opening.spec.ts:38:9 › early payment UI with isolated transaction responses › target, supplier confirmation and participant decision at 390px (10.4s)
+  ok  3 [Supplier Flow] › tests\e2e\navigation-drafts.spec.ts:52:9 › navigation and fresh drafts at 1440px › aligns capacity and unit controls while keeping the capacity hint accessible (1.1s)
+  ok  4 [Supplier Flow] › tests\e2e\navigation-drafts.spec.ts:71:9 › navigation and fresh drafts at 1440px › retains the complete menu while checking a slow session and after navigation (2.6s)
+  ok  5 [Supplier Flow] › tests\e2e\navigation-drafts.spec.ts:101:9 › navigation and fresh drafts at 1440px › navigates after login without waiting for another session request (3.0s)
+  ok  6 [Supplier Flow] › tests\e2e\navigation-drafts.spec.ts:115:9 › navigation and fresh drafts at 1440px › starts a new offer empty and resumes the previous draft only on request (3.0s)
+  ok  7 [Supplier Flow] › tests\e2e\navigation-drafts.spec.ts:52:9 › navigation and fresh drafts at 390px › aligns capacity and unit controls while keeping the capacity hint accessible (1.2s)
+  ok  8 [Supplier Flow] › tests\e2e\navigation-drafts.spec.ts:71:9 › navigation and fresh drafts at 390px › retains the complete menu while checking a slow session and after navigation (2.0s)
+  ok  9 [Supplier Flow] › tests\e2e\navigation-drafts.spec.ts:101:9 › navigation and fresh drafts at 390px › navigates after login without waiting for another session request (2.2s)
+  ok 10 [Supplier Flow] › tests\e2e\navigation-drafts.spec.ts:115:9 › navigation and fresh drafts at 390px › starts a new offer empty and resumes the previous draft only on request (2.4s)
+
+  10 passed (50.8s)

@@ -18,7 +18,7 @@ interface DetailQuery {
   };
 }
 
-interface RpcCapableClient { rpc?: (fn: string, args: Record<string, unknown>) => PromiseLike<{ error?: unknown | null }> }
+interface RpcCapableClient { rpc?: (fn: string, args: Record<string, unknown>) => PromiseLike<{ data?: unknown; error?: unknown | null }> }
 
 function errorCode(error: unknown): string {
   if (error && typeof error === "object" && "code" in error) return String((error as Record<string, unknown>).code ?? "UNKNOWN");
@@ -62,6 +62,13 @@ export async function GET(
   const row = result.data;
   if (!row) return errorResponse("Pesanan tidak ditemukan", "ORDER_NOT_FOUND", 404);
   const detail = toUmkmOrderDetail(row, serverTime, viewer.context.status === "active");
+  if (typeof rpcClient.rpc === "function" && detail.status === "registered") {
+    try {
+      const early = await rpcClient.rpc("get_early_payment_context", { p_batch_id: row.batch_id });
+      if (early.error) detail.earlyPaymentError = "Usulan pembayaran belum dapat dimuat. Muat ulang detail.";
+      else if (early.data && typeof early.data === "object") detail.earlyPayment = early.data as import("@/lib/transactions/early-payment").EarlyPaymentContext;
+    } catch { detail.earlyPaymentError = "Usulan pembayaran belum dapat dimuat. Muat ulang detail."; }
+  }
   if (detail.dispute?.photoUrls.length) {
     try {
       const storage = getAdminClient().storage.from("wesup-assets");

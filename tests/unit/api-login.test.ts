@@ -115,7 +115,9 @@ describe("POST /api/auth/login role-aware contract", () => {
       user: { email: "buyer@example.com" },
       profile: { role: "umkm", status: "active", fullName: "Budi UMKM" },
       redirectTo: "/umkm",
+      accessState: { role: "umkm", status: "active", profileComplete: false },
     });
+    expect(auth.getUser).not.toHaveBeenCalled();
     expect(auth.signInWithPassword).toHaveBeenCalledWith({
       email: "buyer@example.com",
       password: "password123",
@@ -259,6 +261,7 @@ describe("POST /api/auth/login role-aware contract", () => {
       user: { email: "buyer@example.com" },
       profile: { role: "supplier", status: "active", fullName: "Sari Supplier" },
       redirectTo: "/supplier",
+      accessState: { role: "supplier", status: "active", verificationStatus: "approved" },
     });
     expect(supplierMaybeSingle).toHaveBeenCalledTimes(1);
     expect(auth.signOut).not.toHaveBeenCalled();

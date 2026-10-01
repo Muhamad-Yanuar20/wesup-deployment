@@ -48,6 +48,12 @@ const baseOrder = {
 } satisfies Omit<UmkmOrderDetail, "paymentAttempt">;
 
 describe("UmkmPaymentPanel", () => {
+  it("shows the real payment closing date while counting down to opening", () => {
+    render(<UmkmPaymentPanel order={{...baseOrder, invoice:null, paymentAttempt:null,phase:"waiting_payment_window",serverTime:"2026-09-15T00:00:00Z"}} onReload={vi.fn()} />);
+    expect(screen.getByText(/Batas akhir:/)).toHaveTextContent("17 Sep 2026");
+    expect(screen.getByText(/^Buka:/)).toHaveTextContent("16 Sep 2026");
+  });
+
   it("keeps the four-check budget across refreshed props, then permits a manual check", async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date(baseOrder.serverTime));

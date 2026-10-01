@@ -1,9 +1,11 @@
-import { enrichOffer } from "@/lib/transactions/offer-context";
-import type { TransactionRpcClient } from "@/lib/transactions/api";
+import { enrichMarketplaceList, type MarketplaceListContextClient } from "@/lib/marketplace/list-context";
+import { RequestTiming } from "@/lib/performance/server-timing";
+import { withinReadBudget } from "@/lib/performance/read-budget";
 import { NextResponse } from "next/server";
 import { getServerClient } from "@/lib/supabase/server";
 import {
   getCurrentUser,
+  toAuthResponse,
   type AuthClient,
 } from "@/lib/supabase/auth";
 import {
@@ -39,8 +41,13 @@ function isMarketplaceSchemaOutdated(error: unknown): boolean {
 }
 
 export async function GET(req: Request) {
+  const timing = new RequestTiming("marketplace/search");
+  try { return timing.finish(await search(req, timing)); }
+  catch (error) { return timing.finish(toAuthResponse(error)); }
+}
+async function search(req: Request, timing: RequestTiming) {
   const client = await getServerClient();
-  const ctx = await getCurrentUser(client as unknown as AuthClient);
+  const ctx = await getCurrentUser(client as unknown as AuthClient, timing);
 
   const limited = await enforceRateLimit(req, "search", ctx?.userId);
   if (limited) return limited;
@@ -172,13 +179,13 @@ export async function GET(req: Request) {
   }
   const offset = (page - 1) * limit;
 
-  const origin = await resolveMarketplaceOrigin(
+  const origin = await timing.measure("origin", () => withinReadBudget(resolveMarketplaceOrigin(
     client as unknown as MarketplaceOriginClient,
     ctx,
     lat !== null && lng !== null ? { latitude: lat, longitude: lng } : null,
-  );
+  )));
 
-  const { data, error } = await client.rpc("search_batches", {
+  const { data, error } = await timing.measure("search", () => withinReadBudget(client.rpc("search_batches", {
     p_query: query === "" ? null : query,
     p_categories: categories,
     p_lat: origin.latitude,
@@ -188,7 +195,7 @@ export async function GET(req: Request) {
     p_max_price: maxPrice,
     p_limit: limit,
     p_offset: offset,
-  });
+  })));
   if (error) {
     const rpcError: MarketplaceRpcError = isMarketplaceRpcError(error) ? error : {};
     console.error("[marketplace/search] search_batches failed", {
@@ -213,7 +220,7 @@ export async function GET(req: Request) {
   }
 
   const rows = (data ?? []) as MarketplaceRpcRow[];
-  const items = await Promise.all(mapMarketplaceRpcRows(rows).map(item=>enrichOffer(client as unknown as TransactionRpcClient,item)));
+  const items = await timing.measure("enrichment", () => enrichMarketplaceList(client as unknown as MarketplaceListContextClient, mapMarketplaceRpcRows(rows)));
   const total = rows.length > 0 ? Math.max(0, Number(rows[0].total_count ?? 0)) : 0;
   const totalPages = total === 0 ? 0 : Math.ceil(total / limit);
 

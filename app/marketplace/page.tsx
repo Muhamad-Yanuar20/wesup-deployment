@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import "leaflet/dist/leaflet.css";
 import { Store } from "lucide-react";
-import { Layout } from "@/components/layout/Layout";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { PageContainer } from "@/components/layout/PageContainer";
 import MarketplaceClient from "@/components/marketplace/MarketplaceClient";
@@ -15,7 +14,7 @@ export const metadata: Metadata = {
 
 export default function MarketplacePage() {
   return (
-    <Layout>
+    <>
       <PageContainer>
         <PageHeader
           title="Marketplace"
@@ -24,6 +23,6 @@ export default function MarketplacePage() {
         />
         <MarketplaceClient />
       </PageContainer>
-    </Layout>
+    </>
   );
 }

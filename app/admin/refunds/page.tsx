@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useFeedbackResource } from "@/lib/feedback/use-resource";
+import { AsyncButton } from "@/components/feedback";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { AdminHeader } from "@/components/admin/AdminHeader";
 
@@ -15,58 +16,8 @@ type RefundItem = {
 };
 
 export default function AdminRefundsPage() {
-  const [refunds, setRefunds] = useState<RefundItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  useEffect(() => {
-    let active = true;
-
-    async function loadRefunds() {
-      try {
-        setLoading(true);
-        setErrorMessage(null);
-
-        const res = await fetch("/api/admin/refunds?format=queue", {
-          cache: "no-store",
-        });
-
-        if (!res.ok) {
-          const errorData = await res.json().catch(() => ({}));
-
-          throw new Error(
-            errorData.error || `HTTP Error: ${res.status}`
-          );
-        }
-
-        const data = await res.json();
-
-        if (active) {
-          setRefunds(Array.isArray(data) ? data : []);
-        }
-      } catch (err: unknown) {
-        console.error("Gagal load refund:", err);
-
-        if (active) {
-          setErrorMessage(
-            err instanceof Error
-              ? err.message
-              : "Gagal memuat data refund."
-          );
-        }
-      } finally {
-        if (active) {
-          setLoading(false);
-        }
-      }
-    }
-
-    loadRefunds();
-
-    return () => {
-      active = false;
-    };
-  }, []);
+  const { data, loading, error: errorMessage, reload } = useFeedbackResource<RefundItem[]>("/api/admin/refunds?format=queue", "Antrean pengembalian dana belum dapat dimuat.");
+  const refunds = data ?? [];
 
   function formatAmount(amount: number) {
     return `Rp ${Number(amount || 0).toLocaleString("id-ID")}`;
@@ -92,7 +43,7 @@ export default function AdminRefundsPage() {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#faf9f6]">
+    <div className="wesup-app flex h-dvh flex-col md:flex-row overflow-hidden bg-slate-50">
       {/* Sidebar - LOCKED */}
       <AdminSidebar />
 
@@ -131,7 +82,7 @@ export default function AdminRefundsPage() {
                 </h2>
 
                 <p className="mt-1 text-sm text-rose-600">
-                  {errorMessage}
+                  {errorMessage}<AsyncButton onClick={() => void reload()}>Coba lagi</AsyncButton>
                 </p>
               </div>
             ) : refunds.length === 0 ? (
@@ -145,7 +96,7 @@ export default function AdminRefundsPage() {
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[900px] border-collapse">
                     <thead>
-                      <tr className="border-b border-[#e4e1da] bg-[#faf9f6]">
+                      <tr className="border-b border-[#e4e1da] bg-slate-50">
                         <th className="px-4 py-3 text-left text-[12px] font-semibold text-[#4a453c]">
                           UMKM
                         </th>
@@ -172,7 +123,7 @@ export default function AdminRefundsPage() {
                       {refunds.map((item) => (
                         <tr
                           key={item.id}
-                          className="border-b border-[#eeeae2] last:border-b-0 hover:bg-[#faf9f6]/70"
+                          className="border-b border-[#eeeae2] last:border-b-0 hover:bg-slate-50/70"
                         >
                           <td className="px-4 py-4">
                             <div className="text-[13px] font-medium text-[#1c2321]">

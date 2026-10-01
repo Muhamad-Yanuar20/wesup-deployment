@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 
 export default function LeafletDemoPage() {
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,_#d1fae5,_transparent_36%),linear-gradient(180deg,_#f8fafc,_#ecfdf5)] px-4 py-10 sm:px-6 lg:px-8">
+    <main className="wesup-app min-h-screen bg-[radial-gradient(circle_at_top_left,_#d1fae5,_transparent_36%),linear-gradient(180deg,_#f8fafc,_#ecfdf5)] px-4 py-10 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-6xl">
         <Link
           href="/"

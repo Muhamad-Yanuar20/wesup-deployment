@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { describe, expect, it, vi } from "vitest";
-import { AuthError, getCurrentUser, requireRole, requireActive, toAuthResponse } from "@/lib/supabase/auth";
+import { AuthUnavailableError, AuthError, getCurrentUser, requireRole, requireActive, toAuthResponse } from "@/lib/supabase/auth";
 import type { AuthClient } from "@/lib/supabase/auth";
 import type { AccountStatus, Database, UserRole } from "@/types/database";
 
@@ -77,17 +77,17 @@ describe("getCurrentUser", () => {
     await expect(getCurrentUser(client)).resolves.toBeNull();
   });
 
-  it("returns null when getUser fails", async () => {
+  it("reports an unavailable service when getUser fails", async () => {
     const { client } = fakeClient({ getUserError: new Error("boom") });
-    await expect(getCurrentUser(client)).resolves.toBeNull();
+    await expect(getCurrentUser(client)).rejects.toBeInstanceOf(AuthUnavailableError);
   });
 
-  it("returns null when the profile lookup fails", async () => {
+  it("reports an unavailable service when the profile lookup fails", async () => {
     const { client } = fakeClient({
       user: { id: "user-1" },
       profileError: new Error("boom"),
     });
-    await expect(getCurrentUser(client)).resolves.toBeNull();
+    await expect(getCurrentUser(client)).rejects.toBeInstanceOf(AuthUnavailableError);
   });
 
   it("returns the auth context for an active session", async () => {
@@ -227,4 +227,9 @@ describe("toAuthResponse", () => {
     expect(response.status).toBe(500);
     return response.json().then((body) => expect(body).toEqual({ error: "Internal server error" }));
   });
+});
+
+it("still treats an authoritative expired token as unauthenticated",async()=>{
+ const {client}=fakeClient({getUserError:Object.assign(new Error("expired"),{status:401})});
+ await expect(getCurrentUser(client)).resolves.toBeNull();
 });

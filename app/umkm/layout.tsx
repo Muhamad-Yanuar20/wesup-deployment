@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import { getViewerAccessState, resolveHomePath, type AccessStateClient } from "@/lib/auth/access-state";
 import { getServerClient } from "@/lib/supabase/server";
 
+import UmkmWorkspaceShell from "@/components/layout/UmkmWorkspaceShell";
+
 export const dynamic = "force-dynamic";
 
 export default async function UmkmLayout({ children }: { children: ReactNode }) {
@@ -14,5 +16,5 @@ export default async function UmkmLayout({ children }: { children: ReactNode }) 
     redirect(resolveHomePath(accessState));
   }
 
-  return <>{accessState.status !== "active" && <p role="status" className="bg-amber-50 px-4 py-3 text-sm text-amber-900">Akun Anda ditangguhkan. Pesanan dan pemeriksaan pembayaran tetap dapat diakses; transaksi baru belum tersedia.</p>}{children}</>;
+  return <UmkmWorkspaceShell suspended={accessState.status !== "active"}>{children}</UmkmWorkspaceShell>;
 }

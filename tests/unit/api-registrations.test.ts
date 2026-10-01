@@ -15,7 +15,7 @@ const { incrbyMock, evalMock } = vi.hoisted(() => ({
 }));
 
 vi.mock("@/lib/redis", () => ({
-  redis: { incrby: incrbyMock, eval: evalMock },
+  redis: { incrby: incrbyMock, eval: evalMock, set: vi.fn(async () => "OK") },
 }));
 
 vi.mock("@/lib/rate-limit", async () => {
@@ -297,7 +297,7 @@ describe("POST /api/registrations (atomic register)", () => {
     incrbyMock.mockRejectedValue(new Error("redis down"));
     const res = await register(postJson(validBody) as unknown as Request);
     expect(res.status).toBe(503);
-    expect(evalMock).not.toHaveBeenCalled();
+    expect(evalMock).toHaveBeenCalledWith(expect.stringContaining("redis.call('get'"), [`cutoff-lock:${BATCH_ID}`], [expect.any(String)]);
   });
 
   it("decrements the Redis counter when the insert fails with a duplicate code 23505 (rolls back the INCR)", async () => {

@@ -1,5 +1,6 @@
 "use client";
 
+import { useNavigationSession } from "@/components/auth/NavigationSessionProvider";
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -22,6 +23,8 @@ import {
   type LoginRole,
   type LoginSuccessResponse,
 } from "@/lib/auth/login-contract";
+
+import { feedbackError } from "@/lib/feedback/errors";
 
 interface RoleOption {
   value: (typeof PUBLIC_LOGIN_ROLES)[number];
@@ -57,6 +60,7 @@ export default function LoginForm({
   returnTo = null,
 }: LoginFormProps) {
   const router = useRouter();
+  const { refreshSession, applySession } = useNavigationSession();
   const { toast } = useToast();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -105,7 +109,7 @@ export default function LoginForm({
 
       if (!response.ok) {
         setFieldErrors(body.fieldErrors ?? {});
-        setGlobalError(body.error ?? "Login belum dapat diproses. Coba lagi.");
+        setGlobalError(feedbackError(body.error, "Login belum dapat diproses. Coba lagi."));
         return;
       }
 
@@ -114,8 +118,10 @@ export default function LoginForm({
         `Berhasil masuk sebagai ${getLoginRoleLabel(success.profile.role)}.`,
         "success",
       );
+      if (success.accessState) applySession(success.accessState);
+      else void refreshSession();
       router.replace(success.redirectTo);
-      router.refresh();
+
     } catch {
       setGlobalError("Koneksi bermasalah. Periksa internet Anda lalu coba lagi.");
     } finally {

@@ -16,6 +16,9 @@ export type SupplierQueueItem = {
   status: SupplierQueueStatus;
 };
 
+import { ConfirmDialog } from "@/components/feedback/ConfirmDialog";
+import { feedbackError } from "@/lib/feedback/errors";
+
 type SupplierQueueTableProps = {
   items: SupplierQueueItem[];
   onApprove?: (id: string) => Promise<void> | void;
@@ -99,67 +102,14 @@ function LocationImage({ photoUrl, alt }: { photoUrl: string; alt: string }) {
   );
 }
 
-function RejectModal({
-  supplierName,
-  onCancel,
-  onConfirm,
-}: {
-  supplierName: string;
-  onCancel: () => void;
-  onConfirm: (reason: string) => void;
-}) {
-  const [reason, setReason] = useState("");
-  const trimmed = reason.trim();
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#1c2321]/50 px-4">
-      <div className="w-full max-w-md rounded-lg border border-[#e4e1da] bg-white p-5 shadow-xl">
-        <h2 className="text-[15px] font-semibold text-[#1c2321]">
-          Tolak Verifikasi Supplier
-        </h2>
-        <p className="mt-1 text-[13px] text-[#6b6558]">
-          Menolak <span className="font-medium text-[#1c2321]">{supplierName}</span>.
-          Alasan ini akan tercatat di log dan ditampilkan kembali ke Supplier agar bisa mengajukan ulang.
-        </p>
-
-        <label className="mt-4 block text-[12px] font-medium text-[#4a453c]">
-          Alasan penolakan
-        </label>
-        <textarea
-          value={reason}
-          onChange={(e) => setReason(e.target.value)}
-          rows={3}
-          placeholder="Contoh: Foto lokasi usaha tidak sesuai dengan alamat yang didaftarkan."
-          className="mt-1.5 w-full resize-none rounded-md border border-[#e4e1da] bg-[#faf9f6] px-3 py-2 text-[13px] text-[#1c2321] outline-none focus:border-[#1c2321] focus:ring-1 focus:ring-[#1c2321]"
-        />
-
-        <div className="mt-5 flex justify-end gap-2">
-          <button
-            type="button"
-            onClick={onCancel}
-            className="rounded-md px-3.5 py-2 text-[13px] font-medium text-[#4a453c] transition-colors hover:bg-[#f2f0ea]"
-          >
-            Batal
-          </button>
-          <button
-            type="button"
-            disabled={!trimmed}
-            onClick={() => onConfirm(trimmed)}
-            className="rounded-md bg-rose-700 px-3.5 py-2 text-[13px] font-medium text-white transition-colors hover:bg-rose-800 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            Tolak Supplier
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export function SupplierQueueTable({
   items,
   onApprove,
   onReject,
 }: SupplierQueueTableProps) {
+  const [approveTarget, setApproveTarget] = useState<SupplierQueueItem | null>(null);
+  const [reason, setReason] = useState("");
+  const [error, setError] = useState("");
   const [rejectTarget, setRejectTarget] = useState<SupplierQueueItem | null>(null);
   const [loadingId, setLoadingId] = useState<string | null>(null);
 
@@ -171,8 +121,8 @@ export function SupplierQueueTable({
   async function handleApprove(item: SupplierQueueItem) {
     setLoadingId(item.id);
     try {
-      await onApprove?.(item.id);
-    } finally {
+      await onApprove?.(item.id); setApproveTarget(null);
+    } catch (e) { setError(feedbackError(e, "Hasil verifikasi belum terkonfirmasi. Periksa antrean sebelum mencoba lagi.")); } finally {
       setLoadingId(null);
     }
   }
@@ -181,10 +131,9 @@ export function SupplierQueueTable({
     if (!rejectTarget) return;
     setLoadingId(rejectTarget.id);
     try {
-      await onReject?.(rejectTarget.id, reason);
-    } finally {
+      await onReject?.(rejectTarget.id, reason); setRejectTarget(null);
+    } catch (e) { setError(feedbackError(e, "Hasil verifikasi belum terkonfirmasi. Alasan Anda tetap tersedia.")); } finally {
       setLoadingId(null);
-      setRejectTarget(null);
     }
   }
 
@@ -291,7 +240,7 @@ export function SupplierQueueTable({
                             <button
                               type="button"
                               disabled={isLoading}
-                              onClick={() => handleApprove(item)}
+                              onClick={() => { setError(""); setApproveTarget(item); }}
                               className="flex items-center gap-1.5 rounded-md bg-emerald-700 px-3 py-1.5 text-[12px] font-medium text-white transition-colors hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-50"
                             >
                               {isLoading ? (
@@ -304,7 +253,7 @@ export function SupplierQueueTable({
                             <button
                               type="button"
                               disabled={isLoading}
-                              onClick={() => setRejectTarget(item)}
+                              onClick={() => { setError(""); setReason(""); setRejectTarget(item); }}
                               className="flex items-center gap-1.5 rounded-md border border-rose-200 bg-rose-50 px-3 py-1.5 text-[12px] font-medium text-rose-700 transition-colors hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-50"
                             >
                               <X className="h-3.5 w-3.5" />
@@ -326,13 +275,8 @@ export function SupplierQueueTable({
         </div>
       )}
 
-      {rejectTarget ? (
-        <RejectModal
-          supplierName={rejectTarget.name}
-          onCancel={() => setRejectTarget(null)}
-          onConfirm={handleConfirmReject}
-        />
-      ) : null}
+      <ConfirmDialog open={Boolean(approveTarget)} title="Setujui usaha ini?" description={`${approveTarget?.name ?? ""}. Supplier akan mendapat akses membuat penawaran setelah verifikasi disetujui.`} error={error} pending={Boolean(loadingId)} confirmLabel="Setujui Supplier" onConfirm={() => approveTarget && void handleApprove(approveTarget)} onCancel={() => setApproveTarget(null)} />
+      <ConfirmDialog open={Boolean(rejectTarget)} title="Tolak pendaftaran Supplier?" description={`${rejectTarget?.name ?? ""}. Catatan berikut ditampilkan kepada Supplier.`} error={error} pending={Boolean(loadingId)} confirmLabel="Tolak Supplier" onConfirm={() => { if (reason.trim()) void handleConfirmReject(reason.trim()); else setError("Isi alasan penolakan terlebih dahulu."); }} onCancel={() => setRejectTarget(null)}><label className="block text-sm font-medium">Alasan penolakan<textarea autoFocus required value={reason} disabled={Boolean(loadingId)} onChange={e => setReason(e.target.value)} className="mt-2 w-full rounded-xl border border-slate-300 p-3" /></label></ConfirmDialog>
     </div>
   );
 }

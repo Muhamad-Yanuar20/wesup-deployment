@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { AlertCircle, ArrowLeft, LoaderCircle } from "lucide-react";
+import { useParams } from "next/navigation";
+import { AlertCircle, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { supplierBatchApiRepository } from "@/lib/supplier-catalog/api-repository";
 import type { SupplierBatchDetail, SupplierBatchStatus } from "@/lib/supplier-batch/types";
 import type { CatalogDraft } from "@/lib/supplier-catalog/types";
 import { isTierSchemeLocked } from "@/lib/supplier-catalog/lock";
+import { ContentSkeleton } from "@/components/feedback";
 import PublishedOfferEditor from "./PublishedOfferEditor";
 import CreateCatalogForm from "@/components/supplier/catalog/CreateCatalogForm";
 
@@ -57,9 +58,9 @@ const readOnlyStatusLabel: Partial<Record<SupplierBatchStatus, string>> = {
 
 export default function EditCatalogForm() {
   const params = useParams<{ id: string }>();
-  const router = useRouter();
   const batchId = params.id;
 
+  const [retry, setRetry] = useState(0);
   const [phase, setPhase] = useState<LoadPhase>("loading");
   const [initialDraft, setInitialDraft] = useState<CatalogDraft | null>(null);
   const [batchStatus, setBatchStatus] = useState<SupplierBatchStatus | null>(null);
@@ -100,16 +101,9 @@ export default function EditCatalogForm() {
       });
 
     return () => controller.abort();
-  }, [batchId]);
+  }, [batchId, retry]);
 
-  if (phase === "loading") {
-    return (
-      <div className="rounded-xl border border-slate-200 bg-white p-10 text-center shadow-sm">
-        <LoaderCircle className="mx-auto h-6 w-6 animate-spin text-blue-500" />
-        <p className="mt-3 text-sm text-slate-600">Memuat data katalog...</p>
-      </div>
-    );
-  }
+  if (phase === "loading") return <ContentSkeleton label="Memuat penawaran…" variant="form" />;
 
   if (phase === "not-found") {
     return (
@@ -152,7 +146,7 @@ export default function EditCatalogForm() {
         <p className="mt-1 text-sm text-red-600">{error ?? "Terjadi kesalahan."}</p>
         <button
           type="button"
-          onClick={() => router.refresh()}
+          onClick={() => setRetry(value => value + 1)}
           className="mt-4 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
         >
           Coba Lagi

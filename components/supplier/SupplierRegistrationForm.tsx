@@ -20,7 +20,8 @@ import {
   buildSupplierRegistrationReview,
   type SupplierRegistrationReviewForm,
 } from "@/lib/supplier-registration/review";
-import RegistrationSuccessDialog from "@/components/supplier/RegistrationSuccessDialog";
+import Link from "next/link";
+import { SuccessState } from "@/components/feedback";
 import SupplierRegistrationStepper from "@/components/supplier/SupplierRegistrationStepper";
 import AccountStep from "@/components/supplier/steps/AccountStep";
 import BusinessStep from "@/components/supplier/steps/BusinessStep";
@@ -77,7 +78,6 @@ export default function SupplierRegistrationForm() {
     }, 0);
   }, [currentStep]);
 
-  const closeSuccess = useCallback(() => setSuccess(null), []);
 
   const updateField = useCallback(
     (field: keyof SupplierRegistrationReviewForm, value: string) => {
@@ -205,6 +205,8 @@ export default function SupplierRegistrationForm() {
     void submitRegistration();
   }
 
+  if (success) return <SuccessState title="Pendaftaran diterima." description={success.requiresEmailConfirmation ? "Konfirmasi email Anda, lalu masuk untuk memantau verifikasi usaha." : "Masuk untuk memantau verifikasi usaha Anda."} action={<Link href="/login?role=supplier" className="inline-flex min-h-11 items-center rounded-xl bg-blue-700 px-5 py-3 font-semibold text-white">Masuk</Link>} />;
+
   return (
     <>
       <SupplierRegistrationStepper currentStep={currentStep} />
@@ -300,11 +302,6 @@ export default function SupplierRegistrationForm() {
         )}
       </form>
 
-      <RegistrationSuccessDialog
-        open={success !== null}
-        requiresEmailConfirmation={success?.requiresEmailConfirmation ?? false}
-        onClose={closeSuccess}
-      />
     </>
   );
 }

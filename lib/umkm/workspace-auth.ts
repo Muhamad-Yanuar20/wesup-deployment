@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import {
   getCurrentUser,
+  toAuthResponse,
   maybeLiftExpiredTemporarySuspension,
   type AuthClient,
   type AuthContext,
@@ -18,7 +19,9 @@ export type UmkmWorkspaceViewer =
 
 export async function resolveActiveUmkm(options: {allowSuspended?: boolean} = {}): Promise<UmkmWorkspaceViewer> {
   const client = await getServerClient();
-  const context = await getCurrentUser(client as unknown as AuthClient);
+  let context: AuthContext | null;
+  try { context = await getCurrentUser(client as unknown as AuthClient); }
+  catch (error) { return { client: null, context: null, response: toAuthResponse(error) }; }
   if (!context) {
     return {
       client: null,

@@ -10,6 +10,8 @@ vi.mock("@/lib/supabase/server", () => ({ getServerClient: vi.fn() }));
 vi.mock("@/lib/rate-limit", () => ({ enforceRateLimit: vi.fn() }));
 vi.mock("@/lib/orders/registration-counter", () => ({
   adjustVolumeCounter: vi.fn(async () => 12),
+  acquireCutoffLock: vi.fn(async () => ({ acquired: true, token: "test-lock" })),
+  releaseCutoffLock: vi.fn(async () => undefined),
 }));
 
 const mockGetServerClient = vi.mocked(getServerClient);

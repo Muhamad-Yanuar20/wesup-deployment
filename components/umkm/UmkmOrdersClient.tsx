@@ -8,6 +8,8 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Skeleton } from "@/components/ui/SkeletonLoading";
 import type { OrderCapabilities, OrderSummary, UmkmOrderListItem } from "@/lib/orders/api-types";
 
+import { feedbackError } from "@/lib/feedback/errors";
+
 type FilterKey = "needs_action" | "ongoing" | "completed" | "all" | "pending_payment" | "paid" | "picked_up" | "registered" | "no_show" | "cancelled" | "refund";
 type ClientOrder = UmkmOrderListItem & { batchStatus?: string | null };
 
@@ -94,14 +96,15 @@ export default function UmkmOrdersClient() {
         setErrorRequestId(typeof body.requestId === "string" ? body.requestId : "");
         throw new Error(body.error ?? "Pesanan belum dapat dimuat.");
       }
+      if (signal.aborted) return;
       const rawOrders = Array.isArray(body.items) ? body.items : Array.isArray(body.orders) ? body.orders : [];
       setOrders(previous=>cursor?[...previous,...rawOrders.filter((row:ClientOrder)=>!previous.some(item=>item.id===row.id))]:rawOrders as ClientOrder[]);
       setNextCursor(typeof body.nextCursor==='string'?body.nextCursor:null);
       setSummary(body.summary ?? EMPTY_SUMMARY);
       setCounts(body.counts ?? {});
     } catch (reason: unknown) {
-      if (reason instanceof DOMException && reason.name === "AbortError") return;
-      setError(reason instanceof Error ? reason.message : "Pesanan belum dapat dimuat.");
+      if (signal.aborted || (reason instanceof Error && reason.name === "AbortError")) return;
+      setError(feedbackError(reason, "Pesanan belum dapat dimuat."));
     } finally {
       if (!signal.aborted) setLoading(false);
     }

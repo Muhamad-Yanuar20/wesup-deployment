@@ -1,0 +1,62 @@
+[
+  {
+    "antipattern": "gray-on-color",
+    "name": "Gray text on colored background",
+    "description": "Gray text looks washed out on colored backgrounds. Use a darker shade of the background color instead, or white/near-white for contrast.",
+    "severity": "warning",
+    "category": "quality",
+    "file": "C:\\Users\\hpyan\\Project\\wesup\\components\\supplier\\SupplierRegistrationForm.tsx",
+    "line": 273,
+    "snippet": "text-slate-700 on bg-blue-50"
+  },
+  {
+    "antipattern": "side-tab",
+    "name": "Side-tab accent border",
+    "description": "Thick colored border on one side of a card — the most recognizable tell of AI-generated UIs. Use a subtler accent or remove it entirely.",
+    "severity": "warning",
+    "category": "slop",
+    "file": "C:\\Users\\hpyan\\Project\\wesup\\components\\supplier\\fulfillment\\PickupScannerClient.tsx",
+    "line": 362,
+    "snippet": "border-l-2"
+  },
+  {
+    "antipattern": "side-tab",
+    "name": "Side-tab accent border",
+    "description": "Thick colored border on one side of a card — the most recognizable tell of AI-generated UIs. Use a subtler accent or remove it entirely.",
+    "severity": "warning",
+    "category": "slop",
+    "file": "C:\\Users\\hpyan\\Project\\wesup\\components\\supplier\\fulfillment\\PickupScannerClient.tsx",
+    "line": 363,
+    "snippet": "border-r-2"
+  },
+  {
+    "antipattern": "border-accent-on-rounded",
+    "name": "Border accent on rounded element",
+    "description": "Thick accent border on a rounded card — the border clashes with the rounded corners. Remove the border or the border-radius.",
+    "severity": "warning",
+    "category": "slop",
+    "file": "C:\\Users\\hpyan\\Project\\wesup\\components\\supplier\\fulfillment\\PickupScannerClient.tsx",
+    "line": 362,
+    "snippet": "border-t-2"
+  },
+  {
+    "antipattern": "border-accent-on-rounded",
+    "name": "Border accent on rounded element",
+    "description": "Thick accent border on a rounded card — the border clashes with the rounded corners. Remove the border or the border-radius.",
+    "severity": "warning",
+    "category": "slop",
+    "file": "C:\\Users\\hpyan\\Project\\wesup\\components\\supplier\\fulfillment\\PickupScannerClient.tsx",
+    "line": 364,
+    "snippet": "border-b-2"
+  },
+  {
+    "antipattern": "side-tab",
+    "name": "Side-tab accent border",
+    "description": "Thick colored border on one side of a card — the most recognizable tell of AI-generated UIs. Use a subtler accent or remove it entirely.",
+    "severity": "warning",
+    "category": "slop",
+    "file": "C:\\Users\\hpyan\\Project\\wesup\\components\\umkm\\UmkmOrderDetailClient.tsx",
+    "line": 107,
+    "snippet": "border-l-2"
+  }
+]

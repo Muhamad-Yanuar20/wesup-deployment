@@ -59,7 +59,8 @@ describe("marketplaceApiRepository", () => {
     expect(params.get("limit")).toBe("12");
     expect(params.get("minPrice")).toBe("18000");
     expect(params.get("maxPrice")).toBe("30000");
-    expect(options).toEqual({ signal: controller.signal, cache: "no-store" });
+    expect(options.cache).toBe("no-store");
+    expect(options.signal).toBeInstanceOf(AbortSignal);
   });
 
   it("surfaces the server error message for failed responses", async () => {
@@ -75,12 +76,17 @@ describe("marketplaceApiRepository", () => {
     );
   });
 
-  it("preserves abort signals for cancelled searches", async () => {
+
+  it("cancels the shared network request after its search subscriber leaves", async () => {
     const controller = new AbortController();
-    fetchMock.mockRejectedValue(new DOMException("aborted", "AbortError"));
-    await expect(
-      marketplaceApiRepository.search(CRITERIA, { signal: controller.signal }),
-    ).rejects.toMatchObject({ name: "AbortError" });
-    expect(fetchMock.mock.calls[0][1]).toEqual({ signal: controller.signal, cache: "no-store" });
+    let networkSignal!: AbortSignal;
+    fetchMock.mockImplementation((_url, options) => {
+      networkSignal = options.signal;
+      return new Promise((_resolve, reject) => networkSignal.addEventListener("abort", () => reject(networkSignal.reason)));
+    });
+    const result = marketplaceApiRepository.search(CRITERIA, { signal: controller.signal });
+    const rejection = expect(result).rejects.toMatchObject({ name: "AbortError" });
+    controller.abort(); await rejection; await Promise.resolve();
+    expect(networkSignal.aborted).toBe(true); expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });

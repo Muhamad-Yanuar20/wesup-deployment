@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { AdminHeader } from "@/components/admin/AdminHeader";
 import { TakedownModal } from "@/components/admin/TakedownModal";
@@ -9,6 +9,13 @@ import {
   AlertOctagon,
   CheckCircle2,
 } from "lucide-react";
+
+import { ContentSkeleton, ErrorState, AsyncButton, Alert } from "@/components/feedback";
+import { feedbackError } from "@/lib/feedback/errors";
+
+import { useFeedbackResource } from "@/lib/feedback/use-resource";
+
+import { useToast } from "@/components/ui/GlobalToast";
 
 type CatalogItem = {
   id: string;
@@ -23,25 +30,10 @@ type CatalogItem = {
 };
 
 export default function AdminCatalogPage() {
-  const [items, setItems] = useState<CatalogItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedBatch, setSelectedBatch] =
-    useState<CatalogItem | null>(null);
-
-  function loadCatalog() {
-    return fetch("/api/admin/catalog", { cache: "no-store" })
-      .then(async (res) => {
-        if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
-        const data: CatalogItem[] = await res.json();
-        setItems(data);
-      })
-      .catch((err: unknown) => console.error("Gagal memuat katalog:", err))
-      .finally(() => setLoading(false));
-  }
-
-  useEffect(() => {
-    loadCatalog();
-  }, []);
+  const { toast } = useToast();
+  const { data, loading, error, reload: loadCatalog } = useFeedbackResource<CatalogItem[]>("/api/admin/catalog", "Katalog belum dapat dimuat.");
+  const items = useMemo(() => data ?? [], [data]);
+  const [selectedBatch, setSelectedBatch] = useState<CatalogItem | null>(null);
 
   const totalActive = useMemo(
     () => items.filter((item) => item.status !== "takedown").length,
@@ -63,16 +55,15 @@ export default function AdminCatalogPage() {
     );
 
     if (res.ok) {
-      setSelectedBatch(null);
-      setLoading(true);
+      setSelectedBatch(null); toast("Penawaran dinonaktifkan.", "success");
       await loadCatalog();
     } else {
-      alert("Gagal melakukan takedown katalog.");
+      throw new Error(await res.json().then(body => feedbackError(body.error, "Penawaran belum dapat dinonaktifkan.")).catch(() => "Penawaran belum dapat dinonaktifkan."));
     }
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-gray-50">
+    <div className="wesup-app flex h-dvh flex-col md:flex-row overflow-hidden bg-gray-50">
       {/* Sidebar - LOCKED */}
       <AdminSidebar />
 
@@ -85,33 +76,28 @@ export default function AdminCatalogPage() {
         />
 
         {/* ONLY THIS AREA SCROLLS */}
-        <main className="min-h-0 flex-1 overflow-y-auto p-6">
+        <main className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6">{error && data && <Alert tone="warning" action={<button onClick={() => void loadCatalog()} className="min-h-11 underline">Coba perbarui</button>}>Data terakhir ditampilkan; pembaruan belum berhasil.</Alert>}
           {/* Header Card */}
           <div className="mb-6 flex items-center justify-between rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
             <div>
-              <h1 className="text-xl font-semibold text-gray-900">
-                Katalog Produk Aktif
-              </h1>
+              <h2 className="text-base font-semibold text-slate-900">
+                Penawaran aktif
+              </h2>
 
-              <p className="mt-1 text-sm text-gray-500">
-                Moderasi penawaran bahan baku sebelum atau selama
-                masa pendaftaran (mode MVP)
-              </p>
+
             </div>
 
-            <div className="flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-sm font-medium text-emerald-700">
+            {data && <div className="flex shrink-0 items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-sm font-medium text-emerald-700">
               <CheckCircle2 className="h-4 w-4" />
               {totalActive} aktif
-            </div>
+            </div>}
           </div>
 
           {/* Table Area */}
           <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-            {loading ? (
-              <div className="p-6 text-center text-sm text-gray-500">
-                Memuat data katalog...
-              </div>
-            ) : items.length === 0 ? (
+            {loading && !data ? (
+              <ContentSkeleton variant="table" label="Memuat katalog…" />
+            ) : error && !data ? (<ErrorState embedded title="Katalog belum dapat dimuat." description={error === "Katalog belum dapat dimuat." ? "Daftar penawaran belum tersedia. Coba muat kembali." : error} action={<AsyncButton onClick={() => void loadCatalog()}>Coba lagi</AsyncButton>} />) : items.length === 0 ? (
               <div className="p-10 text-center">
                 <AlertOctagon className="mx-auto mb-3 h-8 w-8 text-gray-400" />
 

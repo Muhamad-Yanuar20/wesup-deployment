@@ -45,6 +45,7 @@ function mockClient(options: {
   const from = vi.fn(() => ({
     select: vi.fn(() => ({
       eq: vi.fn(() => ({
+        maybeSingle: vi.fn(async () => ({ data: null, error: null })),
         single: vi.fn(async () => ({
           data: { role: "umkm", status: nextStatus(), full_name: "Budi" },
           error: null,

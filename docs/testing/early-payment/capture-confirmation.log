@@ -1,0 +1,9 @@
+
+Running 2 tests using 1 worker
+
+(node:22932) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 1 [Supplier Flow] › tests\e2e\early-payment-opening.spec.ts:38:9 › early payment UI with isolated transaction responses › target, supplier confirmation and participant decision at 1440px (7.6s)
+  ok 2 [Supplier Flow] › tests\e2e\early-payment-opening.spec.ts:38:9 › early payment UI with isolated transaction responses › target, supplier confirmation and participant decision at 390px (7.2s)
+
+  2 passed (19.6s)
