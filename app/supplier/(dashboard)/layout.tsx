@@ -38,5 +38,5 @@ export default async function SupplierDashboardLayout({
     redirect(accessState ? resolveHomePath(accessState) : "/login?role=supplier");
   }
 
-  return <div className="min-h-screen bg-slate-50"><NavigationBar /><main id="main-content" className="pb-24 md:pb-0">{children}</main><Footer /></div>;
+  return <div className="wesup-app min-h-screen bg-slate-50"><NavigationBar /><main id="main-content" className="pb-24 md:pb-0">{children}</main><Footer /></div>;
 }

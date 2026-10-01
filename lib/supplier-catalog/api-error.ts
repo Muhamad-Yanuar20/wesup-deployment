@@ -1,3 +1,4 @@
+import { feedbackError } from "@/lib/feedback/errors";
 export interface SupplierApiErrorBody {
   error?: unknown;
   code?: unknown;
@@ -25,7 +26,7 @@ export async function parseSupplierApiError(response: Response, fallback: string
   } catch {
     // Keep the safe fallback when an upstream response is not JSON.
   }
-  const message = typeof body.error === "string" && body.error.trim() ? body.error : fallback;
+  const message = feedbackError(body.error, fallback);
   const code = typeof body.code === "string" && body.code.trim() ? body.code : null;
   const requestId = typeof body.requestId === "string" && body.requestId.trim() ? body.requestId : null;
   return new SupplierApiError(message, { status: response.status, code, requestId });

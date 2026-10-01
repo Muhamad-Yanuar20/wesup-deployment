@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -13,6 +13,13 @@ import {
 } from "lucide-react";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { AdminHeader } from "@/components/admin/AdminHeader";
+
+import { ErrorState, ContentSkeleton, AsyncButton, Alert } from "@/components/feedback";
+import { ConfirmDialog } from "@/components/feedback/ConfirmDialog";
+import { feedbackError, feedbackJson } from "@/lib/feedback/errors";
+import { useToast } from "@/components/ui/GlobalToast";
+
+import { useFeedbackResource } from "@/lib/feedback/use-resource";
 
 interface DisputeItem {
   id: string;
@@ -30,37 +37,18 @@ interface DisputeItem {
 }
 
 export default function AdminDisputesPage() {
-  const [disputes, setDisputes] = useState<DisputeItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+  const { data, loading, error, reload: fetchDisputes } = useFeedbackResource<DisputeItem[]>("/api/admin/disputes", "Sengketa belum dapat dimuat.");
+  const disputes = data ?? [];
+  const [mutationError, setMutationError] = useState("");
+  const [decision, setDecision] = useState<{ id: string; decision: "resolved_refund" | "resolved_payout" | "rejected" } | null>(null);
   const [processingId, setProcessingId] = useState<string | null>(null);
-
-  const fetchDisputes = () => fetch("/api/admin/disputes", { cache: "no-store" })
-    .then(async (res) => {
-      if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
-      const data = await res.json();
-      setDisputes(Array.isArray(data) ? data : []);
-    })
-    .catch((err: unknown) => console.error("Gagal memuat data disputes:", err))
-    .finally(() => setLoading(false));
-
-  useEffect(() => {
-    fetchDisputes();
-  }, []);
 
   const handleResolve = async (
     id: string,
     decision: "resolved_refund" | "resolved_payout" | "rejected"
   ) => {
-    const confirmText =
-      decision === "resolved_refund"
-        ? "Setujui pengembalian dana (Refund) ke UMKM?"
-        : decision === "resolved_payout"
-          ? "Selesaikan sengketa dan cairkan dana ke Supplier?"
-          : "Tolak klaim sengketa dari UMKM?";
-
-    if (!confirm(confirmText)) return;
-
-    setProcessingId(id);
+    setProcessingId(id); setMutationError("");
 
     try {
       const res = await fetch(`/api/admin/disputes/${id}/resolve`, {
@@ -74,29 +62,16 @@ export default function AdminDisputesPage() {
         }),
       });
 
-      if (res.ok) {
-        alert("Keputusan sengketa berhasil diproses!");
-        setLoading(true);
-        await fetchDisputes();
-      } else {
-        const errorData = await res.json().catch(() => ({}));
-
-        alert(
-          `Gagal memproses resolusi: ${
-            errorData.error || "Terjadi kesalahan."
-          }`
-        );
-      }
-    } catch (err) {
-      console.error("Gagal resolve dispute:", err);
-      alert("Terjadi kesalahan koneksi server.");
+      await feedbackJson(res, "Keputusan belum terkonfirmasi. Periksa status sengketa sebelum mengirim ulang.");
+      setDecision(null); toast("Keputusan sengketa tersimpan.", "success"); await fetchDisputes();
+    } catch (err) { setMutationError(feedbackError(err, "Keputusan belum terkonfirmasi. Periksa status sengketa sebelum mengirim ulang."));
     } finally {
       setProcessingId(null);
     }
   };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#f4f2ec]">
+    <div className="wesup-app flex h-dvh flex-col md:flex-row overflow-hidden bg-slate-50">
       {/* Sidebar kiri sama seperti page lainnya */}
       <AdminSidebar />
 
@@ -108,12 +83,10 @@ export default function AdminDisputesPage() {
 
         {/* Hanya bagian ini yang bisa scroll */}
         <main className="min-h-0 flex-1 overflow-y-auto">
-          <div className="p-8">
-            {loading ? (
-              <div className="flex min-h-[400px] items-center justify-center">
-                <RefreshCw className="h-8 w-8 animate-spin text-gray-500" />
-              </div>
-            ) : disputes.length === 0 ? (
+          <div className="p-4 sm:p-6">{error && data && <Alert tone="warning" action={<button onClick={() => void fetchDisputes()} className="underline">Coba perbarui</button>}>Data terakhir ditampilkan; pembaruan belum berhasil.</Alert>}
+            {loading && !data ? (
+              <ContentSkeleton label="Memuat sengketa…" variant="table" />
+            ) : error && !data ? (<ErrorState title="Sengketa belum dapat dimuat." description={error} action={<AsyncButton onClick={() => void fetchDisputes()}>Coba lagi</AsyncButton>} />) : disputes.length === 0 ? (
               <div className="rounded-2xl border border-gray-200 bg-white p-12 text-center shadow-sm">
                 <CheckCircle2 className="mx-auto mb-4 h-12 w-12 text-green-500" />
                 <h2 className="text-lg font-semibold text-gray-900">
@@ -280,7 +253,7 @@ export default function AdminDisputesPage() {
                           <div className="mt-8 flex flex-wrap gap-3 border-t border-gray-100 pt-6">
                             <button
                               onClick={() =>
-                                handleResolve(item.id, "resolved_refund")
+                                setDecision({ id: item.id, decision: "resolved_refund" })
                               }
                               disabled={isProcessing}
                               className="flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
@@ -291,7 +264,7 @@ export default function AdminDisputesPage() {
 
                             <button
                               onClick={() =>
-                                handleResolve(item.id, "resolved_payout")
+                                setDecision({ id: item.id, decision: "resolved_payout" })
                               }
                               disabled={isProcessing}
                               className="flex items-center gap-2 rounded-xl bg-green-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
@@ -302,7 +275,7 @@ export default function AdminDisputesPage() {
 
                             <button
                               onClick={() =>
-                                handleResolve(item.id, "rejected")
+                                setDecision({ id: item.id, decision: "rejected" })
                               }
                               disabled={isProcessing}
                               className="flex items-center gap-2 rounded-xl border border-red-200 bg-white px-5 py-3 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
@@ -325,6 +298,7 @@ export default function AdminDisputesPage() {
           </div>
         </main>
       </div>
+      <ConfirmDialog open={Boolean(decision)} title="Simpan keputusan sengketa ini?" description={decision?.decision === "resolved_refund" ? "Hak dana diberikan kepada UMKM. Pengembalian mengikuti antrean Admin; transfer bank belum selesai." : decision?.decision === "resolved_payout" ? "Hak dana diberikan kepada Supplier. Pencairan mengikuti proses keuangan." : "Klaim UMKM ditolak sesuai hasil pemeriksaan bukti."} pending={Boolean(processingId)} error={mutationError} onCancel={() => { setDecision(null); setMutationError(""); }} onConfirm={() => decision && void handleResolve(decision.id, decision.decision)} />
     </div>
   );
 }

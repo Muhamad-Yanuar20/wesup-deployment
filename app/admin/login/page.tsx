@@ -20,7 +20,7 @@ export default async function AdminLoginPage({
   const returnTo = sanitizeReturnTo(rawReturnTo, "admin");
 
   return (
-    <main className="min-h-screen bg-slate-950 px-4 py-12 sm:px-6 lg:px-8">
+    <main className="wesup-app min-h-screen bg-slate-950 px-4 py-12 sm:px-6 lg:px-8">
       <div className="mx-auto w-full max-w-xl">
         <header className="mb-8 text-center">
           <Link href="/" className="inline-flex items-center gap-2 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950">

@@ -10,7 +10,7 @@ import {
 } from "@/lib/orders/time-gatekeeper";
 import * as registrationCounter from "@/lib/orders/registration-counter";
 import { isCompleteUmkmProfile } from "@/lib/umkm/profile-completion";
-import { joinVersionedBatch } from "@/lib/transactions/registration";
+import { withRegistrationLock, joinVersionedBatch } from "@/lib/transactions/registration";
 import { transactionError, type TransactionRpcClient } from "@/lib/transactions/api";
 
 export const dynamic = "force-dynamic";
@@ -133,6 +133,8 @@ export async function POST(req: Request) {
     }
   }
 
+  try {
+    return await withRegistrationLock(batchId, async () => {
   const gate = evaluateRegistrationWindow(
     timeline,
     new Date().toISOString(),
@@ -210,6 +212,7 @@ export async function POST(req: Request) {
     batch_id: batchId,
     umkm_id: authCtx.userId,
     quantity,
+    consent_terms: body.consentSnapshot && typeof body.consentSnapshot === "object" && !Array.isArray(body.consentSnapshot) ? body.consentSnapshot : {},
     consented_at: new Date().toISOString(),
     consent_latitude: consentLat,
     consent_longitude: consentLng,
@@ -225,7 +228,8 @@ export async function POST(req: Request) {
   }
   if (insertErr) {
     await registrationCounter.adjustVolumeCounter(batchId, -quantity).catch(() => undefined);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    if (insertErr && typeof insertErr === "object" && "code" in insertErr && ["23514", "55000", "22023"].includes(String(insertErr.code))) return transactionError(insertErr);
+    return NextResponse.json({ error: "Pendaftaran belum dapat disimpan. Periksa pesanan sebelum mencoba lagi." }, { status: 500 });
   }
 
   if (!inserted) {
@@ -243,6 +247,8 @@ export async function POST(req: Request) {
     { ok: true, count: newCount, registrationId: inserted?.id ?? null, batchClosed },
     { status: 201 },
   );
+    });
+  } catch (error) { return transactionError(error); }
 }
 
 function isDuplicateKeyError(

@@ -168,7 +168,7 @@ describe("MarketplaceDetailClient", () => {
       await user.click(checkbox);
 
       expect(btn).toBeEnabled();
-      expect(checkbox).toHaveAttribute("aria-checked", "true");
+      expect(checkbox).toBeChecked();
     });
 
     it("shows a consent timestamp after checking the checkbox", async () => {

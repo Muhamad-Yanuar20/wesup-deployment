@@ -1,0 +1,48 @@
+
+Running 1 test using 1 worker
+
+(node:24212) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  1 [Supplier Flow] › tests\e2e\feedback-ui.spec.ts:33:7 › feedback UI with disposable accounts › recovery, forms and keyboard at 1440px (2.7s)
+
+
+  1) [Supplier Flow] › tests\e2e\feedback-ui.spec.ts:33:7 › feedback UI with disposable accounts › recovery, forms and keyboard at 1440px
+
+    Error: expect(locator).toContainText(expected) failed
+
+    Locator: getByRole('alert')
+    Expected substring: "Keuangan belum dapat dimuat"
+    Error: strict mode violation: getByRole('alert') resolved to 2 elements:
+        1) <section role="alert" class="wesup-feedback rounded-2xl border border-slate-200 bg-white px-5 py-8 text-center sm:px-8 sm:py-10">…</section> aka getByText('Keuangan belum dapat dimuat.Keuangan belum dapat dimuat.Coba lagi')
+        2) <div role="alert" aria-live="assertive" id="__next-route-announcer__"></div> aka locator('[id="__next-route-announcer__"]')
+
+    Call log:
+      - Expect "toContainText" getByRole('alert') with timeout 20000ms
+      - waiting for getByRole('alert')
+        5 × locator resolved to <div role="alert" aria-live="assertive" id="__next-route-announcer__"></div>
+          - unexpected value ""
+
+
+      39 |    await page.route("**/api/suppliers/finance/payouts", route => route.fulfill({ status: 500, json: { error: "Pengajuan belum dapat diproses. Coba lagi." } }));
+      40 |    await page.goto("/supplier/keuangan");
+    > 41 |    await expect(page.getByRole("alert")).toContainText("Keuangan belum dapat dimuat", { timeout: 20000 });
+         |                                          ^
+      42 |    await expect(page.getByText(/SQL relation/)).toHaveCount(0);
+      43 |    await expect(page.getByText(/Rp\s*0/)).toHaveCount(0);
+      44 |    await page.screenshot({ path: `docs/testing/feedback-ui/finance-error-${width}.png`, fullPage: true });
+        at C:\Users\hpyan\Project\wesup\tests\e2e\feedback-ui.spec.ts:41:42
+
+    Error Context: test-results\feedback-ui-feedback-UI-wi-0a8cc-orms-and-keyboard-at-1440px-Supplier-Flow\error-context.md
+
+    Error Context: test-results\feedback-ui-feedback-UI-wi-0a8cc-orms-and-keyboard-at-1440px-Supplier-Flow\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\feedback-ui-feedback-UI-wi-0a8cc-orms-and-keyboard-at-1440px-Supplier-Flow\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\feedback-ui-feedback-UI-wi-0a8cc-orms-and-keyboard-at-1440px-Supplier-Flow\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [Supplier Flow] › tests\e2e\feedback-ui.spec.ts:33:7 › feedback UI with disposable accounts › recovery, forms and keyboard at 1440px

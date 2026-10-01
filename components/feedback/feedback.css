@@ -1,0 +1,16 @@
+.wesup-app { color: var(--wesup-ink, #0f172a); font-family: var(--font-geist-sans), Arial, sans-serif; }
+.wesup-app h1, .wesup-state-title { font-family: var(--font-newsreader), Georgia, serif; font-weight: 500; letter-spacing: -.025em; text-wrap: balance; }
+.wesup-app h1 { font-size: 2rem; line-height: 1.15; }
+.wesup-app :where(input:not([type=checkbox]):not([type=radio]), select, textarea) { font-size: 1rem; }
+.wesup-app :where(button, a) { text-underline-offset: .2em; }
+.wesup-app :where(td, dd, [role=timer]) { font-variant-numeric: tabular-nums; }
+.wesup-app :where(input, textarea) { caret-color: var(--wesup-brand, #2563eb); }
+.wesup-app .text-slate-400 { color: #64748b; }
+.wesup-feedback { font-family: var(--font-geist-sans), Arial, sans-serif; overflow-wrap: anywhere; }
+.wesup-toast-region { position: fixed; inset-inline: 1rem; bottom: calc(5.5rem + env(safe-area-inset-bottom)); z-index: 80; display: flex; flex-direction: column; gap: .625rem; pointer-events: none; }
+.wesup-toast-region article { pointer-events: auto; }
+.wesup-dialog::backdrop { background: rgb(15 23 42 / .5); }
+.wesup-spinner { animation: wesup-spin .8s linear infinite; }
+@keyframes wesup-spin { to { transform: rotate(360deg); } }
+@media (min-width: 1024px) { .wesup-app h1 { font-size: 2.5rem; } .wesup-toast-region { inset-inline-start: auto; width: min(24rem, calc(100vw - 2rem)); bottom: 1rem; } }
+@media (prefers-reduced-motion: reduce) { .wesup-feedback *, .wesup-app .animate-pulse, .wesup-app .animate-spin { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }

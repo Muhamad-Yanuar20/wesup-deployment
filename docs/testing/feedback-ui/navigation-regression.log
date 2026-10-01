@@ -1,0 +1,13 @@
+
+Running 6 tests using 1 worker
+
+(node:16972) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 1 [Supplier Flow] › tests\e2e\navigation-drafts.spec.ts:52:9 › navigation and fresh drafts at 1440px › aligns capacity and unit controls while keeping the capacity hint accessible (951ms)
+  ok 2 [Supplier Flow] › tests\e2e\navigation-drafts.spec.ts:71:9 › navigation and fresh drafts at 1440px › retains the complete menu while checking a slow session and after navigation (1.8s)
+  ok 3 [Supplier Flow] › tests\e2e\navigation-drafts.spec.ts:97:9 › navigation and fresh drafts at 1440px › starts a new offer empty and resumes the previous draft only on request (2.1s)
+  ok 4 [Supplier Flow] › tests\e2e\navigation-drafts.spec.ts:52:9 › navigation and fresh drafts at 390px › aligns capacity and unit controls while keeping the capacity hint accessible (835ms)
+  ok 5 [Supplier Flow] › tests\e2e\navigation-drafts.spec.ts:71:9 › navigation and fresh drafts at 390px › retains the complete menu while checking a slow session and after navigation (1.8s)
+  ok 6 [Supplier Flow] › tests\e2e\navigation-drafts.spec.ts:97:9 › navigation and fresh drafts at 390px › starts a new offer empty and resumes the previous draft only on request (2.0s)
+
+  6 passed (15.1s)

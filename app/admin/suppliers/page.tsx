@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { AdminHeader } from "@/components/admin/AdminHeader";
 import {
@@ -9,36 +9,15 @@ import {
 } from "@/components/admin/SupplierQueueTable";
 import { useToast } from "@/components/ui/GlobalToast";
 
+import { useFeedbackResource } from "@/lib/feedback/use-resource";
+import { ErrorState, ContentSkeleton, AsyncButton } from "@/components/feedback";
+import { readFeedbackError } from "@/lib/feedback/errors";
+
 export default function AdminSuppliersPage() {
-  const [suppliers, setSuppliers] = useState<SupplierQueueItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const { data, loading, error: errorMessage, reload } = useFeedbackResource<SupplierQueueItem[]>("/api/admin/suppliers", "Antrean supplier belum dapat dimuat.");
+  const [decisions, setDecisions] = useState<Record<string, "approved" | "rejected">>({});
+  const suppliers = (data ?? []).map(item => decisions[item.id] ? { ...item, status: decisions[item.id] } : item);
   const { toast } = useToast();
-
-  useEffect(() => {
-    async function loadSuppliers() {
-      try {
-        const res = await fetch("/api/admin/suppliers", { cache: "no-store" });
-        if (!res.ok) {
-          throw new Error(`HTTP Error: ${res.status}`);
-        }
-        const data = await res.json();
-
-
-        if (Array.isArray(data)) {
-          setSuppliers(data);
-        } else {
-          setSuppliers([]);
-        }
-      } catch (err: unknown) {
-        console.error("Gagal load antrean supplier:", err);
-        setErrorMessage(err instanceof Error ? err.message : "Gagal memuat data dari server");
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadSuppliers();
-  }, []);
 
   const pendingCount = useMemo(
     () => suppliers.filter((s) => s.status === "pending").length,
@@ -51,13 +30,10 @@ export default function AdminSuppliersPage() {
     });
 
     if (!res.ok) {
-      toast("Gagal menyetujui Supplier.", "error");
-      return;
+      throw await readFeedbackError(res, "Supplier belum dapat disetujui.");
     }
 
-    setSuppliers((prev) =>
-      prev.map((s) => (s.id === id ? { ...s, status: "approved" } : s))
-    );
+    setDecisions(current => ({ ...current, [id]: "approved" }));
     toast("Supplier disetujui.", "success");
   }
 
@@ -69,34 +45,28 @@ export default function AdminSuppliersPage() {
     });
 
     if (!res.ok) {
-      toast("Gagal menolak Supplier.", "error");
-      return;
+      throw await readFeedbackError(res, "Supplier belum dapat ditolak.");
     }
 
-    setSuppliers((prev) =>
-      prev.map((s) => (s.id === id ? { ...s, status: "rejected" } : s))
-    );
+    setDecisions(current => ({ ...current, [id]: "rejected" }));
     toast("Supplier ditolak.", "success");
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#f4f2ec]">
+    <div className="wesup-app flex h-dvh flex-col md:flex-row overflow-hidden bg-slate-50">
       <AdminSidebar pendingSuppliersCount={pendingCount} />
 
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         <AdminHeader
           title="Antrean Supplier"
           description="Tinjau dan verifikasi pendaftaran Supplier baru"
         />
 
-        <main className="flex-1 overflow-y-auto px-8 py-6">
+        <main className="flex-1 overflow-y-auto px-4 py-6 sm:px-6">
           {loading ? (
-            <p className="font-mono text-sm text-[#8a8478]">Memuat data antrean...</p>
+            <ContentSkeleton variant="table" label="Memuat antrean supplier…" />
           ) : errorMessage ? (
-            <div className="rounded-md border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
-              <p className="font-semibold">Error Fetch Data:</p>
-              <p>{errorMessage}</p>
-            </div>
+            <ErrorState title="Antrean supplier belum dapat dimuat." description={errorMessage} action={<AsyncButton onClick={() => void reload()}>Coba lagi</AsyncButton>} />
           ) : (
             <SupplierQueueTable
               items={suppliers}

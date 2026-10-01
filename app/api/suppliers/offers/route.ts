@@ -1,3 +1,4 @@
+import { validateEarlyPaymentTarget } from "@/lib/transactions/early-payment";
 import { NextResponse } from "next/server";
 import { getServerClient } from "@/lib/supabase/server";
 import { requireRole, toAuthResponse, type AuthClient } from "@/lib/supabase/auth";
@@ -52,6 +53,10 @@ export async function POST(request: Request) {
       payload.schedule = { ...rawSchedule, scheduledOpensAt: rawSchedule.scheduledOpensAt ? fromWibInput(rawSchedule.scheduledOpensAt) : undefined, pickupStartsAt: fromWibInput(rawSchedule.pickupStartsAt), pickupEndsAt: fromWibInput(rawSchedule.pickupEndsAt) };
       tiers = normalizePriceTiers(payload.tiers);
     } catch (error) { return NextResponse.json({ item: draft,error: error instanceof Error ? error.message : "Jadwal belum lengkap." }, { status: 400 }); }
+    if (form.get("action") === "publish") {
+      const minimumError = validateEarlyPaymentTarget(payload.earlyPaymentMinimumQuantity, payload.capacityQuantity);
+      if (minimumError) return NextResponse.json({ item: draft, error: minimumError }, { status: 400 });
+    }
     const validation = form.get("action") === "publish" ? validateCatalogMutation({ ...payload, ...schedule, targetQuantity: tiers!.at(-1)!.minimumQuantity, tiers, paymentWindowHours: 24, productPhotoUrl: null, transactionPolicyVersion: 2 }, { allowPastTimeline: true }) : null;
     if (validation && !validation.ok) return NextResponse.json({ item: draft,error: Object.values(validation.fieldErrors)[0], fieldErrors: validation.fieldErrors }, { status: 400 });
     const photo = form.get("productPhoto");

@@ -26,6 +26,10 @@ describe("payment UI state", () => {
     })).toBe("awaiting_payment");
   });
 
+  it("separates unknown verification from unavailable checkout", () => {
+    expect(derivePaymentUiState({ phase: "payment_verifying", orderStatus: "pending_payment", canPay: false, attempt: null, snapState: "ready", reconcileState: "idle", hasCheckoutRedirect: false })).toBe("unknown");
+  });
+
   it("maps provider payment types to friendly labels", () => {
     expect(formatPaymentMethod("bca_va")).toBe("Virtual Account / Transfer Bank");
     expect(formatPaymentMethod("credit_card")).toBe("Kartu Kredit/Debit");

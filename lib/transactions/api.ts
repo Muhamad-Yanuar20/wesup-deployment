@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 export interface TransactionRpcClient { rpc(name: string, args?: Record<string, unknown>): PromiseLike<{ data: unknown; error: { code?: string; message?: string; details?: string } | null }> }
-export function transactionError(error: unknown) {
+export function transactionError(error: unknown, conflictMessage?: string) {
   const value = error as { code?: string; message?: string; details?: string };
   const code = value?.code ?? "TRANSACTION_UNAVAILABLE";
   if (["42703", "42P01", "PGRST200", "PGRST202", "PGRST205", "42883"].includes(code)) {
@@ -13,5 +13,5 @@ export function transactionError(error: unknown) {
     "23514":"Penawaran berubah. Muat ulang, periksa ringkasan terbaru, lalu berikan persetujuan kembali.",
     "40001": "Draft berubah di tab lain. Muat ulang sebelum menyimpan.", "P0001": "Kapasitas penawaran tidak mencukupi.", "22023": "Periksa kembali isian dan jadwal Anda.",
   };
-  return NextResponse.json({ error: messages[code] ?? "Tindakan belum dapat dipastikan. Muat ulang sebelum mencoba lagi.", code, requestId: crypto.randomUUID(), ...(code === "P0001" ? { details: { remainingQuantity: Number(value.details) || 0 } } : {}) }, { status });
+  return NextResponse.json({ error: (code === "40001" && conflictMessage ? conflictMessage : messages[code]) ?? "Tindakan belum dapat dipastikan. Muat ulang sebelum mencoba lagi.", code, requestId: crypto.randomUUID(), ...(code === "P0001" ? { details: { remainingQuantity: Number(value.details) || 0 } } : {}) }, { status });
 }

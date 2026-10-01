@@ -1,0 +1,67 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v4.1.11 C:/Users/hpyan/Project/wesup
+
+ ❯ tests/components/LocationConsentCheckbox.test.tsx (2 tests | 1 failed) 243ms
+   × associates the complete consent text with the checkbox and toggles once 32ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/components/LocationConsentCheckbox.test.tsx > associates the complete consent text with the checkbox and toggles once
+TestingLibraryElementError: Found a label with the text of: /Persetujuan Lokasi Pengambilan/, however no form control was found associated to that label. Make sure you're using the "for" attribute or "aria-labelledby" attribute correctly.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="flex flex-col gap-3 p-4 bg-amber-50 rounded-xl border border-amber-200"
+    >
+      <div
+        class="flex items-start gap-3"
+      >
+        <button
+          aria-checked="false"
+          aria-label="Saya menyetujui lokasi pengambilan"
+          class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 transition-colors border-slate-300 bg-white hover:border-blue-400"
+          role="checkbox"
+          type="button"
+        />
+        <label
+          class="text-sm text-slate-700 leading-relaxed cursor-pointer select-none"
+        >
+          <span
+            class="font-semibold text-slate-800"
+          >
+            Persetujuan Lokasi Pengambilan
+          </span>
+          <span
+            class="mt-1 block"
+          >
+            Saya menyetujui dan memahami bahwa pengambilan barang dilakukan secara mandiri (self-pickup) di lokasi titik kumpul supplier.
+          </span>
+        </label>
+      </div>
+    </div>
+  </div>
+</body>
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ getAllByLabelText node_modules/@testing-library/dom/dist/queries/label-text.js:108:40
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ tests/components/LocationConsentCheckbox.test.tsx:11:27
+      9|   const user = userEvent.setup();
+     10|   render(<LocationConsentCheckbox onChange={onChange} />);
+     11|   const checkbox = screen.getByLabelText(/Persetujuan Lokasi Pengambil…
+       |                           ^
+     12|   await user.click(screen.getByText("Persetujuan Lokasi Pengambilan"));
+     13|   expect(checkbox).toBeChecked();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+   Start at  15:08:22
+   Duration  3.03s (transform 69ms, setup 394ms, import 229ms, tests 243ms, environment 1.95s)

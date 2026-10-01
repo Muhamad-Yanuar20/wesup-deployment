@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, MapPin } from "lucide-react";
+import { MapPin } from "lucide-react";
 
 const consentTimestampFormatter = new Intl.DateTimeFormat("id-ID", {
   dateStyle: "long",
@@ -29,32 +29,22 @@ export default function LocationConsentCheckbox({
 
   return (
     <div className="flex flex-col gap-3 p-4 bg-amber-50 rounded-xl border border-amber-200">
-      <div className="flex items-start gap-3">
-        <button
-          type="button"
-          role="checkbox"
-          aria-checked={checked}
+      <label className="flex cursor-pointer items-start gap-3">
+        <input
+          type="checkbox"
+          checked={checked}
           aria-label="Saya menyetujui lokasi pengambilan"
-          onClick={handleChange}
-          className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 transition-colors ${
-            checked
-              ? "border-blue-600 bg-blue-600"
-              : "border-slate-300 bg-white hover:border-blue-400"
-          }`}
-        >
-          {checked && <Check className="h-3.5 w-3.5 text-white" strokeWidth={3} />}
-        </button>
-        <label
-          className="text-sm text-slate-700 leading-relaxed cursor-pointer select-none"
-          onClick={handleChange}
-        >
+          onChange={handleChange}
+          className="mt-0.5 h-5 w-5 shrink-0 self-start cursor-pointer accent-blue-600"
+        />
+        <span className="select-none text-sm leading-relaxed text-slate-700">
           <span className="font-semibold text-slate-800">Persetujuan Lokasi Pengambilan</span>
           <span className="mt-1 block">
             Saya menyetujui dan memahami bahwa pengambilan barang dilakukan secara mandiri
             (self-pickup) di lokasi titik kumpul supplier.
           </span>
-        </label>
-      </div>
+        </span>
+      </label>
 
       {checked && timestamp && (
         <div

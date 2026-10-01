@@ -7,6 +7,7 @@ export type PaymentUiState =
   | "method_confirming"
   | "awaiting_payment"
   | "reconciling"
+  | "unknown"
   | "paid"
   | "retryable_failure"
   | "expired"
@@ -52,7 +53,7 @@ export function derivePaymentUiState(input: PaymentUiStateInput): PaymentUiState
   if (input.phase === "waiting_payment_window" || input.phase === "registered") return "before_window";
   if (input.reconcileState === "running") return "reconciling";
   if (input.reconcileState === "confirming") return "method_confirming";
-  if (input.phase === "payment_verifying") return "unavailable";
+  if (input.phase === "payment_verifying") return "unknown";
   if (input.hasError || input.snapState === "error" || input.snapState === "blocked") return "retryable_failure";
   if (input.phase !== "payment_open" || !input.canPay) return "unavailable";
   if (input.attempt?.paymentMethod) return "awaiting_payment";

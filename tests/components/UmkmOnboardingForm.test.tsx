@@ -73,5 +73,14 @@ describe("UmkmOnboardingForm", () => {
     expect(screen.getAllByRole("alert").length).toBeGreaterThan(0);
     expect(fetchMock.mock.calls.some(([, init]) => init?.method === "PUT")).toBe(false);
   });
+  it("allows retrying a failed profile read without exposing technical errors", async () => {
+    const user = userEvent.setup();
+    vi.mocked(fetch).mockResolvedValueOnce(new Response(JSON.stringify({error:"SQL relation missing"}), {status:500})).mockResolvedValueOnce(new Response(JSON.stringify({profile:{businessName:"Warung Pulih",address:"Bandung",latitude:-6.914744,longitude:107.60981}}),{status:200}));
+    render(<UmkmOnboardingForm />);
+    expect(await screen.findByRole("alert")).not.toHaveTextContent("SQL");
+    await user.click(screen.getByRole("button",{name:"Coba lagi"}));
+    expect(await screen.findByDisplayValue("Warung Pulih")).toBeInTheDocument();
+  });
+
 });
 

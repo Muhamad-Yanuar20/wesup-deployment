@@ -1,3 +1,6 @@
+import { RequestTiming } from "@/lib/performance/server-timing";
+import { withinReadBudget } from "@/lib/performance/read-budget";
+import { toAuthResponse } from "@/lib/supabase/auth";
 import { NextResponse } from "next/server";
 import { resolveActiveUmkm, type UmkmWorkspaceClient } from "@/lib/umkm/workspace-auth";
 import { isCompleteUmkmProfile } from "@/lib/umkm/profile-completion";
@@ -79,36 +82,24 @@ function resolveNextAction(rows: RegistrationRow[]) {
 }
 
 export async function GET() {
-  const viewer = await resolveActiveUmkm();
+  const timing = new RequestTiming("umkm/dashboard");
+  try { return timing.finish(await dashboard(timing)); } catch (error) { return timing.finish(toAuthResponse(error)); }
+}
+async function dashboard(timing: RequestTiming) {
+  const viewer = await timing.measure("auth", () => resolveActiveUmkm());
   if (!viewer.client) return viewer.response;
   const client = viewer.client as UmkmWorkspaceClient;
 
   const profileQuery = client.from("umkm_profiles") as ProfileQuery;
-  const { data: profile, error: profileError } = await profileQuery
-    .select("business_name,address,latitude,longitude")
-    .eq("user_id", viewer.context.userId)
-    .maybeSingle();
-  if (profileError) return NextResponse.json({ error: "Unable to load UMKM profile" }, { status: 500 });
-
-  // Only active orders can be counted or become the next action, so the query
-  // is narrowed to them instead of streaming the whole order history into JS.
-  // registrations_umkm_status_created_idx (umkm_id, status, created_at) covers
-  // both predicates.
   const registrationsQuery = client.from("registrations") as RegistrationQuery;
-  const { data: registrations, error: registrationsError } = await registrationsQuery
-    .select("id,batch_id,status,quantity,final_amount,created_at,batch:batches(id,title,batch_timeline(registration_closes_at,payment_opens_at,estimated_ready_at))")
-    .eq("umkm_id", viewer.context.userId)
-    .in("status", [...ACTIVE_ORDER_STATUSES]);
-  if (registrationsError) return NextResponse.json({ error: "Unable to load UMKM orders" }, { status: 500 });
-
-  // A COUNT with head: true returns no rows at all, where the previous shape
-  // transferred every unread notification just to take its length.
   const notificationQuery = client.from("notifications") as NotificationQuery;
-  const { count: unreadNotificationCount, error: notificationError } = await notificationQuery
-    .select("id", { head: true, count: "exact" })
-    .eq("user_id", viewer.context.userId)
-    .is("read_at", null);
-  if (notificationError) return NextResponse.json({ error: "Unable to load UMKM notifications" }, { status: 500 });
+  const [profileResult, registrationResult, notificationResult] = await Promise.all([
+    timing.measure("profile", () => withinReadBudget(profileQuery.select("business_name,address,latitude,longitude").eq("user_id", viewer.context.userId).maybeSingle())),
+    timing.measure("orders", () => withinReadBudget(registrationsQuery.select("id,batch_id,status,quantity,final_amount,created_at,batch:batches(id,title,batch_timeline(registration_closes_at,payment_opens_at,estimated_ready_at))").eq("umkm_id", viewer.context.userId).in("status", [...ACTIVE_ORDER_STATUSES]))),
+    timing.measure("notifications", () => withinReadBudget(notificationQuery.select("id", { head: true, count: "exact" }).eq("user_id", viewer.context.userId).is("read_at", null))),
+  ]);
+  if (profileResult.error || registrationResult.error || notificationResult.error) return NextResponse.json({ error: "Dashboard belum dapat dimuat. Coba lagi." }, { status: 503 });
+  const profile = profileResult.data, registrations = registrationResult.data, unreadNotificationCount = notificationResult.count;
 
   const rows = registrations ?? [];
   const profileComplete = isCompleteUmkmProfile(profile);

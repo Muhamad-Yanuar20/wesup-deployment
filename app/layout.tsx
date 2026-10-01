@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Newsreader } from "next/font/google";
 import "./globals.css";
 import { ToastProvider } from "@/components/ui/GlobalToast";
+import { NavigationSessionProvider } from "@/components/auth/NavigationSessionProvider";
+import { getViewerAccessState } from "@/lib/auth/access-state";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -35,20 +37,22 @@ export const metadata: Metadata = {
     "Platform pembelian kolektif bahan baku untuk UMKM Bandung. Dapatkan harga terbaik lewat sistem tier diskon & escrow aman.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const initialAccessState = await getViewerAccessState();
   return (
     <html
       lang="id"
       className={`${geistSans.variable} ${geistMono.variable} ${newsreader.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">
-        <ToastProvider>{children}</ToastProvider>
+        <NavigationSessionProvider initialAccessState={initialAccessState}>
+          <ToastProvider>{children}</ToastProvider>
+        </NavigationSessionProvider>
       </body>
     </html>
   );
 }
-

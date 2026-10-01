@@ -3,7 +3,6 @@ import "leaflet/dist/leaflet.css";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { Layout } from "@/components/layout/Layout";
 import MarketplaceDetailClient from "@/components/marketplace/MarketplaceDetailClient";
 import { buildPublicMarketplaceUrl } from "@/lib/marketplace/share-link";
 import { fetchMarketplaceDetail } from "@/lib/marketplace/server-repository";
@@ -47,7 +46,7 @@ export default async function MarketplaceDetailPage({
   );
 
   return (
-    <Layout>
+    <>
       <div className="mx-auto w-full max-w-6xl px-4 py-8 md:px-6 lg:px-8">
         <Link
           href="/marketplace"
@@ -66,6 +65,6 @@ export default async function MarketplaceDetailPage({
           />
         </div>
       </div>
-    </Layout>
+    </>
   );
 }

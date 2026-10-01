@@ -1,3 +1,5 @@
+import { RequestTiming } from "@/lib/performance/server-timing";
+import { withinReadBudget, ReadTimeoutError } from "@/lib/performance/read-budget";
 import type { TransactionRpcClient } from "@/lib/transactions/api";
 import { getOfferContext } from "@/lib/transactions/offer-context";
 import { NextResponse } from "next/server";
@@ -49,24 +51,28 @@ function errorResponse(error: unknown, id: string, fallback = "Transaksi batch b
 
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const requestIdValue = requestId();
+  const timing = new RequestTiming("supplier/transactions", requestIdValue);
   const client = await getServerClient();
-  try { await requireRole(client as unknown as AuthClient, ["supplier", "admin"]); } catch (error) { return toAuthResponse(error); }
+  try { await timing.measure("auth", () => requireRole(client as unknown as AuthClient, ["supplier", "admin"])); } catch (error) { return timing.finish(toAuthResponse(error)); }
   const { id: batchId } = await params;
   if (!isUuid(batchId)) return NextResponse.json({ error: "Batch tidak ditemukan.", code: "BATCH_NOT_FOUND", requestId: requestIdValue }, { status: 404 });
   const rpcClient = client as unknown as { rpc: (name: string, args: Record<string, unknown>) => PromiseLike<{ data: unknown; error: unknown }> };
   try {
-    const materialized = await rpcClient.rpc("materialize_supplier_batch", { p_batch_id: batchId });
+    const materialized = await timing.measure("materialize", () => rpcClient.rpc("materialize_supplier_batch", { p_batch_id: batchId }));
     if (materialized.error) {
       console.error("[supplier-transactions] materialize failed", { requestId: requestIdValue, ...errorDetails(materialized.error) });
-      return errorResponse(materialized.error, requestIdValue);
+      return timing.finish(errorResponse(materialized.error, requestIdValue));
     }
-    const snapshot = await rpcClient.rpc("get_supplier_batch_transaction", { p_batch_id: batchId });
+    const [snapshot, context] = await Promise.all([
+      timing.measure("snapshot", () => withinReadBudget(rpcClient.rpc("get_supplier_batch_transaction", { p_batch_id: batchId }))),
+      timing.measure("context", () => getOfferContext(rpcClient as unknown as TransactionRpcClient, batchId)),
+    ]);
     if (snapshot.error) {
       console.error("[supplier-transactions] snapshot failed", { requestId: requestIdValue, ...errorDetails(snapshot.error) });
-      return errorResponse(snapshot.error, requestIdValue);
+      return timing.finish(errorResponse(snapshot.error, requestIdValue));
     }
     const item=snapshot.data as {batch:Record<string,unknown>;capabilities:Record<string,boolean>;orders:Array<{status:string;registrationId:string;canConfirmPickup?:boolean}>;readyAt?:string|null;timeline:Record<string,unknown>};
-    const context=await getOfferContext(rpcClient as unknown as TransactionRpcClient,batchId);
+
     if(context?.policyVersion===2&&item?.batch&&item.capabilities) {
       item.batch.transaction_policy_version=2;
       item.timeline={...item.timeline,pickup_ends_at:context.pickupEndsAt};
@@ -74,16 +80,16 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
       const ready=effective?effective.ready_at:context.readyAt;
       const paid=item.orders.some(o=>o.status==='paid');
       for(const order of item.orders) order.canConfirmPickup=context.pickupActions?.find(action=>action.registrationId===order.registrationId)?.canConfirm??false;
-      item.capabilities.canCloseBatch=false;
+      item.capabilities.canCloseBatch=context.earlyPayment?.canOpen ?? false;
       item.capabilities.canEditCommercialFields=!context.commercialLocked&&item.batch.status==='published';
       item.capabilities.canMarkReady=paid&&item.batch.status==='closed'&&!ready;
       item.capabilities.canCancelBatch=['published','closed'].includes(String(item.batch.status));
       item.capabilities.canConfirmPickup=item.orders.some(order=>order.canConfirmPickup);
       item.readyAt=ready;
     }
-    return NextResponse.json({ item: {...item,offerContext:context} });
+    return timing.finish(NextResponse.json({ item: {...item,offerContext:context} }));
   } catch (error) {
     console.error("[supplier-transactions] request failed", { requestId: requestIdValue, ...errorDetails(error) });
-    return errorResponse(error, requestIdValue);
+    return timing.finish(error instanceof ReadTimeoutError ? NextResponse.json({ error: error.message, code: "READ_TIMEOUT", requestId: requestIdValue }, { status: 503 }) : errorResponse(error, requestIdValue));
   }
 }

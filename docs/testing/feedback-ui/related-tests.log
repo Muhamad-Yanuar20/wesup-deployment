@@ -1,0 +1,54 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v4.1.11 C:/Users/hpyan/Project/wesup
+
+ ❯ tests/components/FeedbackResource.test.tsx (3 tests | 1 failed) 1167ms
+     × ignores a late response after the resource changes 1010ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/components/FeedbackResource.test.tsx > GET feedback lifecycle > ignores a late response after the resource changes
+TestingLibraryElementError: Unable to find an element with the text: Baru. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <button>
+      Perbarui
+    </button>
+    <p>
+      Memuat
+    </p>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <button>
+      Perbarui
+    </button>
+    <p>
+      Memuat
+    </p>
+  </div>
+</body>
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ tests/components/FeedbackResource.test.tsx:21:16
+     19|   vi.stubGlobal("fetch", vi.fn().mockReturnValueOnce(new Promise(resol…
+     20|   const view = render(<Resource url="/old" />); view.rerender(<Resourc…
+     21|   await screen.findByText("Baru"); await act(async () => release(new R…
+       |                ^
+     22|   expect(screen.queryByText("Lama")).not.toBeInTheDocument();
+     23|  });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 4 passed (5)
+      Tests  1 failed | 30 passed (31)
+   Start at  10:59:48
+   Duration  5.80s (transform 716ms, setup 1.68s, import 1.66s, tests 5.77s, environment 8.51s)

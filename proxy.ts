@@ -1,3 +1,5 @@
+import { RequestTiming } from "@/lib/performance/server-timing";
+import { withinReadBudget } from "@/lib/performance/read-budget";
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse } from "next/server";
 import { NextRequest } from "next/server";
@@ -41,7 +43,7 @@ export async function updateSession(
     },
   });
 
-  await supabase.auth.getUser();
+  await withinReadBudget(supabase.auth.getClaims());
 
   return refreshed ? supabaseResponse : undefined;
 }
@@ -65,11 +67,14 @@ export default async function proxy(request: NextRequest) {
     headers: requestHeaders,
   });
 
-  const refreshed = await updateSession(requestWithCsp);
+  const timing = new RequestTiming("proxy");
+  let refreshed: NextResponse | undefined;
+  try { refreshed = await timing.measure("proxy_auth", () => updateSession(requestWithCsp)); }
+  catch { /* Page/API guards remain authoritative; preserve cookies on transport failure. */ }
   const response = refreshed ?? NextResponse.next({ request: requestWithCsp });
   response.headers.set("Content-Security-Policy", policy);
 
-  return response;
+  return timing.finish(response);
 }
 
 export const config = {

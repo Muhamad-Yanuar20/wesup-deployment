@@ -19,8 +19,7 @@ import {
 import { supplierFulfillmentApiRepository } from "@/lib/supplier-fulfillment/api-repository";
 import { supplierBatchApiRepository } from "@/lib/supplier-catalog/api-repository";
 import { pickupViewReducer, initialPickupViewState } from "@/lib/supplier-fulfillment/pickup-state";
-import type { FulfillmentError } from "@/lib/supplier-fulfillment/types";
-import { useToast } from "@/components/ui/GlobalToast";
+import { feedbackError } from "@/lib/feedback/errors";
 import ForceMajeureDialog from "@/components/supplier/fulfillment/ForceMajeureDialog";
 import { Skeleton } from "@/components/ui/SkeletonLoading";
 
@@ -40,7 +39,6 @@ export default function PickupScannerClient({ batchId }: { batchId: string }) {
   const [state, dispatch] = useReducer(pickupViewReducer, initialPickupViewState);
   const [retry, setRetry] = useState(0);
   const [batchTitle, setBatchTitle] = useState<string>("batch ini");
-  const { toast } = useToast();
   const forceMajeureRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -102,7 +100,7 @@ export default function PickupScannerClient({ batchId }: { batchId: string }) {
   const confirmPickup = () => {
     if (!selectedOrder || selectedOrder.canConfirmPickup === false || state.confirmPhase === "loading") return;
     if (!state.code.trim()) {
-      toast("Mohon masukkan kode terlebih dahulu.", "warning");
+      dispatch({ type: "confirmFailed", error: { code: "invalid_code", message: "Mohon masukkan kode terlebih dahulu." } });
       return;
     }
     dispatch({ type: "confirmStarted" });
@@ -111,44 +109,18 @@ export default function PickupScannerClient({ batchId }: { batchId: string }) {
         method: state.method,
         code: state.code,
       })
-      .then((result) => {
-        dispatch({ type: "confirmSucceeded", order: result.order });
-        toast(
-          "Serah terima berhasil. Pesanan ditandai Sudah Diambil.",
-          "success",
-        );
-      })
+      .then(result => dispatch({ type: "confirmSucceeded", order: result.order }))
       .catch((error: unknown) => {
         if (abort(error)) return;
-        const errorMessage =
-          error instanceof Error && error.message ? error.message : "Kode tidak valid.";
-        dispatch({
-          type: "confirmFailed",
-          error: errorMessage as unknown as FulfillmentError,
-        });
-        toast(errorMessage, "error");
+        dispatch({ type: "confirmFailed", error: { code: "not_eligible", message: feedbackError(error, "Hasil serah terima belum terkonfirmasi. Muat ulang pesanan sebelum memeriksa kode kembali.") } });
       });
   };
-
   const confirmForceMajeure = () => {
     if (state.forceMajeurePhase === "loading") return;
     dispatch({ type: "forceMajeureStarted" });
-    void supplierFulfillmentApiRepository
-      .forceMajeureCancel(batchId)
-      .then((result) => {
-        dispatch({ type: "forceMajeureSucceeded", result });
-        toast(
-          "Pembatalan darurat diproses. Pesanan lunas masuk antrean refund.",
-          "info",
-        );
-      })
-      .catch((error: unknown) => {
-        if (abort(error)) return;
-        dispatch({
-          type: "forceMajeureFailed",
-          message: message(error, "Pembatalan darurat gagal."),
-        });
-      });
+    void supplierFulfillmentApiRepository.forceMajeureCancel(batchId)
+      .then(result => dispatch({ type: "forceMajeureSucceeded", result }))
+      .catch((error: unknown) => { if (!abort(error)) dispatch({ type: "forceMajeureFailed", message: feedbackError(error, "Pembatalan belum terkonfirmasi. Periksa status pesanan sebelum mencoba lagi.") }); });
   };
 
   if (state.loadPhase === "idle" || state.loadPhase === "loading") {

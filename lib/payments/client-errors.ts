@@ -1,3 +1,4 @@
+import { feedbackError } from "@/lib/feedback/errors";
 export interface PaymentApiError {
   message: string;
   code?: string;
@@ -21,6 +22,6 @@ export function parsePaymentApiError(body: unknown, fallback: string): PaymentAp
   const value = body as PaymentApiErrorBody;
   const code = typeof value.code === "string" && value.code.length > 0 ? value.code : undefined;
   const requestId = typeof value.requestId === "string" && value.requestId.length > 0 ? value.requestId : undefined;
-  const providerMessage = typeof value.error === "string" && value.error.length > 0 ? value.error : fallback;
+  const providerMessage = feedbackError(value.error, fallback);
   return { message: code && friendlyMessages[code] ? friendlyMessages[code] : providerMessage, ...(code ? { code } : {}), ...(requestId ? { requestId } : {}) };
 }

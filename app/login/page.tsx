@@ -22,7 +22,7 @@ export default async function LoginPage({
   const returnTo = sanitizeReturnTo(rawReturnTo, initialRole);
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,_#dbeafe,_transparent_38%),linear-gradient(180deg,_#f8fafc,_#eff6ff)] px-4 py-12 sm:px-6 lg:px-8">
+    <main className="wesup-app min-h-screen bg-[radial-gradient(circle_at_top_left,_#dbeafe,_transparent_38%),linear-gradient(180deg,_#f8fafc,_#eff6ff)] px-4 py-12 sm:px-6 lg:px-8">
       <div className="mx-auto w-full max-w-2xl">
         <header className="mb-8 text-center">
           <div className="flex flex-col items-center gap-6">
@@ -30,7 +30,6 @@ export default async function LoginPage({
               <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-sm font-extrabold text-white shadow-sm shadow-blue-600/20" aria-hidden="true">W</span>
               <span className="text-lg font-extrabold tracking-tight">Wesup</span>
             </Link>
-            <p className="inline-flex rounded-full border border-blue-200 bg-white/80 px-3 py-1 text-xs font-bold uppercase tracking-[0.2em] text-blue-700 shadow-sm">Selamat datang kembali</p>
           </div>
           <h1 className="mt-4 text-3xl font-extrabold tracking-tight text-slate-950 sm:text-4xl">Masuk ke akun Anda</h1>
           <p className="mx-auto mt-3 max-w-md text-base leading-7 text-slate-600">Pilih role akun UMKM atau Supplier untuk melanjutkan aktivitas di Wesup.</p>
