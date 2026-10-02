@@ -1,0 +1,61 @@
+import {readFile} from 'node:fs/promises';
+import {pathToFileURL} from 'node:url';
+import assert from 'node:assert/strict';
+const {PGlite}=await import(pathToFileURL(process.argv[2]).href);
+const db=new PGlite();
+try {
+ await db.exec(`create role anon; create role authenticated; create role service_role;
+ create schema auth; create function auth.uid() returns uuid language sql as $$select null::uuid$$;
+ create type registration_status as enum('registered','pending_payment','paid','picked_up','completed','no_show','cancelled','refund_pending','refunded');
+ create type batch_status as enum('published','closed','cancelled','takedown','completed');
+ create table batches(id uuid primary key,status batch_status);
+ create table batch_timeline(batch_id uuid,registration_closes_at timestamptz,payment_closes_at timestamptz,effective_payment_closes_at timestamptz);
+ create table registrations(id uuid primary key,batch_id uuid,status registration_status,cancellation_reason text,payment_penalty_exempt boolean default false,updated_at timestamptz,quantity numeric,final_amount numeric,locked_price_per_unit numeric);
+ create table payments(id uuid primary key,registration_id uuid,status text,gross_amount numeric,paid_at timestamptz);
+ create table escrow_holds(id uuid primary key,registration_id uuid,status text,amount numeric,pickup_confirmed_at timestamptz,auto_release_at timestamptz,release_destination text);
+ create table payment_attempts(payment_id uuid,status text);
+ create table registration_status_events(id uuid default gen_random_uuid() primary key,registration_id uuid,from_status registration_status,to_status registration_status,source text,actor_id uuid,metadata jsonb,created_at timestamptz default now());
+ insert into batches values('00000000-0000-4000-8000-000000000001','closed');
+ insert into batch_timeline values('00000000-0000-4000-8000-000000000001',now()-interval '2 days',now()-interval '1 day',null);
+ insert into registrations(id,batch_id,status) select gen_random_uuid(),'00000000-0000-4000-8000-000000000001',s from unnest(enum_range(null::registration_status)) s;`);
+ const paymentGuard=(await readFile('supabase/migrations/20261002000100_payment_continuation_guard.sql','utf8')).split('create or replace function public.record_registration_status_event()')[0];
+ await db.exec(paymentGuard);
+ try {await db.exec(await readFile('supabase/migrations/20261002000200_order_status_integrity.sql','utf8'));} catch(error) {if(error.code!=='ENOENT')throw error;}
+ await db.exec('create trigger audit_status after update of status on registrations for each row execute function record_registration_status_event();');
+ const before=(await db.query('select id,status from registrations order by id')).rows;
+ await assert.rejects(db.exec("update registrations set status='cancelled'"),/invalid registration status transition/);
+ assert.deepEqual((await db.query('select id,status from registrations order by id')).rows,before);
+ console.log('PASS UPDATE without WHERE is rejected atomically across all nine states');
+ for(const state of ['paid','picked_up','completed','no_show','refund_pending','refunded']) {
+  await assert.rejects(db.query("update registrations set status='cancelled' where status=$1",[state]),/invalid registration status transition/);
+ }
+ console.log('PASS financially committed statuses cannot be cancelled directly');
+ await assert.rejects(db.exec("update registrations set status='paid' where status='refunded'"),/invalid registration/);
+ await db.exec("update registrations set status='pending_payment' where status='registered'; update registrations set status='paid' where status='pending_payment'; update registrations set status='picked_up' where status='paid'; update registrations set status='refund_pending' where status='picked_up'; update registrations set status='refunded' where status='refund_pending';");
+ console.log('PASS payment, pickup and refund graph');
+ await db.exec("insert into registrations(id,batch_id,status,cancellation_reason) values(gen_random_uuid(),'00000000-0000-4000-8000-000000000001','cancelled','buyer_withdrawal'); update batches set status='published'; update batch_timeline set registration_closes_at=now()+interval '1 day'; update registrations set status='registered',cancellation_reason=null where cancellation_reason='buyer_withdrawal';");
+ await assert.rejects(db.exec("update registrations set status='registered' where status='cancelled'"),/invalid registration/);
+ await db.exec("update registrations set status='refund_pending' where status='cancelled';");
+ console.log('PASS withdrawal/rejoin exception and late-settlement refund path');
+ await db.exec("update batch_timeline set effective_payment_closes_at=now()+interval '1 day'; insert into registrations(id,batch_id,status) values(gen_random_uuid(),'00000000-0000-4000-8000-000000000001','pending_payment');");
+ await assert.rejects(db.exec("update registrations set status='cancelled' where status='pending_payment'"),/payment window still open/);
+ await db.exec("update batches set status='takedown'; update registrations set status='cancelled' where status='pending_payment';");
+ console.log('PASS effective deadline and legitimate takedown cancellation');
+ const recovered='00000000-0000-4000-8000-000000000099';
+ const event='00000000-0000-4000-8000-000000000098';
+ await db.exec(`insert into registrations(id,batch_id,status,updated_at) values('${recovered}','00000000-0000-4000-8000-000000000001','cancelled','2026-10-02 07:45:42.475+00');
+ insert into registration_status_events(id,registration_id,from_status,to_status,source,created_at) values('${event}','${recovered}','paid','cancelled','status_update','2026-10-02 07:45:42.475+00');
+ insert into order_status_recoveries(incident_id,registration_id,event_id,target_status,expected_updated_at,request_id) values('fixture','${recovered}','${event}','paid','2026-10-02 07:45:42.475+00',gen_random_uuid());`);
+ await assert.rejects(db.exec(`update registrations set status='paid' where id='${recovered}'`),/invalid registration/);
+ await db.exec(`begin; select set_config('app.recovery_incident','fixture',true); update registrations set status='paid' where id='${recovered}'; rollback;`);
+ assert.equal((await db.query("select state from order_status_recoveries where incident_id='fixture'")).rows[0].state,'prepared');
+ await db.exec(`begin; select set_config('app.recovery_incident','fixture',true); update registrations set status='paid' where id='${recovered}'; commit;`);
+ assert.equal((await db.query("select state from order_status_recoveries where incident_id='fixture'")).rows[0].state,'restored');
+ await db.exec(`update registrations set status='paid' where id='${recovered}'`);
+ assert.equal((await db.query(`select count(*)::int as n from registration_status_events where registration_id='${recovered}' and to_status='paid'`)).rows[0].n,1);
+ console.log('PASS recovery requires exact evidence, rolls back atomically, and is idempotent');
+ assert.equal((await db.query("select has_table_privilege('authenticated','registrations','UPDATE') as allowed")).rows[0].allowed,false);
+ const audit=(await db.query('select metadata from registration_status_events limit 1')).rows[0];
+ assert.ok(audit.metadata.database_session_role);
+ console.log('PASS restricted table writes and database actor audit');
+} finally {await db.close();}

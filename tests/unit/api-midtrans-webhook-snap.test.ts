@@ -51,7 +51,7 @@ describe("Midtrans Snap webhook", () => {
     const { rpc } = setup();
     const response = await POST(new Request("http://localhost/api/webhook/midtrans", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ order_id: ORDER_ID, transaction_id: "tx-1", transaction_status: "capture", status_code: "200", gross_amount: "120000", signature_key: "signature", fraud_status: "challenge" }) }));
     expect(response.status).toBe(200);
-    expect(rpc).toHaveBeenCalledWith("apply_midtrans_payment_event", expect.objectContaining({ p_provider_status: "capture", p_fraud_status: "challenge" }));
+    expect(rpc).toHaveBeenCalledWith("apply_midtrans_payment_event", expect.objectContaining({ p_provider_status: "capture", p_fraud_status: "challenge",p_payload:expect.objectContaining({_wesup_audit:{source:"payment_webhook",requestId:expect.any(String)}}) }));
   });
 
   it("retries a webhook whose prior log was not processed", async () => {

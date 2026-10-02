@@ -1,0 +1,72 @@
+{
+  "schemaReady": true,
+  "guards": [
+    "payment_cancellation_guard",
+    "registration_status_integrity_guard"
+  ],
+  "privileges": [
+    {
+      "rolname": "authenticated",
+      "unsafe": false
+    },
+    {
+      "rolname": "anon",
+      "unsafe": false
+    },
+    {
+      "rolname": "service_role",
+      "unsafe": false
+    }
+  ],
+  "anomalies": [
+    {
+      "id": "0538d2e6-3727-4930-87cf-0bbd9550f518",
+      "status": "cancelled",
+      "invoice_status": "paid",
+      "escrow_status": "held",
+      "issues": [
+        "cancelled_with_paid_invoice",
+        "cancelled_with_escrow"
+      ]
+    },
+    {
+      "id": "88c8b2ba-8ff8-42c7-9a4d-46d5540c9391",
+      "status": "cancelled",
+      "invoice_status": "paid",
+      "escrow_status": "held",
+      "issues": [
+        "cancelled_with_paid_invoice",
+        "cancelled_with_escrow"
+      ]
+    },
+    {
+      "id": "9e5b0c62-f7e2-4e75-9e80-cd6cc16efe1f",
+      "status": "cancelled",
+      "invoice_status": null,
+      "escrow_status": null,
+      "issues": [
+        "unexplained_cancellation_before_deadline"
+      ]
+    },
+    {
+      "id": "bdb017a8-468e-4428-9e55-63aab1fbd3c8",
+      "status": "cancelled",
+      "invoice_status": "paid",
+      "escrow_status": "held",
+      "issues": [
+        "cancelled_with_paid_invoice",
+        "cancelled_with_escrow"
+      ]
+    },
+    {
+      "id": "f342c785-a7ee-494c-a2cb-a444fcd16f09",
+      "status": "cancelled",
+      "invoice_status": "paid",
+      "escrow_status": "frozen",
+      "issues": [
+        "cancelled_with_paid_invoice",
+        "cancelled_with_escrow"
+      ]
+    }
+  ]
+}

@@ -33,6 +33,8 @@ const USER_ID = "22222222-2222-4222-8222-222222222222";
 
 function chain<T>(result: T) {
   const builder: Record<string, unknown> = {};
+  builder.order = vi.fn(() => builder);
+  builder.limit = vi.fn(() => builder);
   builder.select = vi.fn(() => builder);
   builder.eq = vi.fn(() => builder);
   builder.maybeSingle = vi.fn(async () => result);
@@ -69,7 +71,7 @@ function setup(options: { activeAttempt?: Record<string, unknown> | null; active
   const client = { from: vi.fn(() => registration), rpc: vi.fn(async () => ({ data: null, error: null })) };
   vi.mocked(resolveActiveUmkm).mockResolvedValue({ client, context: { userId: USER_ID, role: "umkm", status: "active" } as never, response: null });
   vi.mocked(getAdminClient).mockReturnValue(admin as never);
-  return { admin, attempt, registration, payments };
+  return { admin, attempt, registration, payments, client };
 }
 
 describe("UMKM Snap payment charge", () => {
@@ -152,5 +154,27 @@ describe("UMKM Snap payment charge", () => {
     expect(body).toEqual(expect.objectContaining({ code: "PAYMENT_ADMIN_INIT_FAILED", requestId: expect.any(String) }));
     expect(createSnapTransaction).not.toHaveBeenCalled();
     expect(admin.from).not.toHaveBeenCalled();
+  });
+});
+
+describe("checkout continuation safeguards", () => {
+  it("reuses a valid denied Snap session without issuing another payment", async () => {
+    setup({activeAttempt:{id:"denied",status:"failed",provider_status:"deny",integration_type:"snap",expires_at:"2099-09-15T00:00:00Z",payment_checkout_sessions:{snap_token:"reusable",redirect_url:"https://checkout",expires_at:"2099-09-15T00:00:00Z"}}});
+    const response=await POST(new NextRequest("http://localhost",{method:"POST"}),{params:Promise.resolve({orderId:ORDER_ID})});
+    expect(response.status).toBe(200);expect(await response.json()).toMatchObject({attempt:{snapToken:"reusable"}});expect(createSnapTransaction).not.toHaveBeenCalled();
+  });
+  it("does not create checkout when the invoice is already paid", async () => {
+    const {registration}=setup();
+    const result=await (registration.maybeSingle as () => Promise<{data:{payment:{status:string}}}>)();result.data.payment.status="paid";
+    const response=await POST(new NextRequest("http://localhost",{method:"POST"}),{params:Promise.resolve({orderId:ORDER_ID})});
+    expect(response.status).toBe(409);expect(await response.json()).toMatchObject({code:"PAYMENT_ALREADY_RECORDED"});expect(createSnapTransaction).not.toHaveBeenCalled();
+  });
+});
+
+describe("runtime payment materialization", () => {
+  it("uses the same supplier-aware RPC under test and production", async () => {
+    const {client}=setup();
+    await POST(new NextRequest("http://localhost",{method:"POST"}),{params:Promise.resolve({orderId:ORDER_ID})});
+    expect(client.rpc).toHaveBeenCalledWith("materialize_supplier_order",{p_registration_id:ORDER_ID});
   });
 });

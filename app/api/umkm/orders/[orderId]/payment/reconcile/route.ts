@@ -57,7 +57,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ ord
       if (error instanceof MidtransProviderError && error.status === 404) {
         const beforeMethod = attempt?.integration_type === "snap" && !attempt.payment_type && attempt.provider_status === "pending";
         if (attempt?.id && beforeMethod) {
-          const saved = await admin.from("payment_attempts").update({provider_checked_at: new Date().toISOString()}).eq("id", attempt.id);
+          const expiredCheckout = Date.parse(String(attempt.expires_at ?? "")) <= Date.now();
+          const saved = await admin.from("payment_attempts").update({provider_checked_at: new Date().toISOString(), ...(expiredCheckout ? {status:"expired",provider_status:"snap_expired"} : {})}).eq("id", attempt.id);
           if (saved.error) return fail("Hasil pemeriksaan belum dapat disimpan", "PAYMENT_CHECK_SAVE_FAILED", 503);
         }
         const refreshed = await read();
@@ -68,7 +69,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ ord
     }
     if (!validateProviderPayment(provider.raw, providerOrderId, Number(payment.gross_amount), process.env.MIDTRANS_MERCHANT_ID?.trim())) return fail("Hasil pemeriksaan tidak sesuai tagihan. Hubungi bantuan transaksi.", "PAYMENT_PROVIDER_MISMATCH", 502);
     const status = provider.transactionStatus.toLowerCase();
-    const payload = { ...provider.raw };
+    const payload:Record<string,unknown> = { ...provider.raw, _wesup_audit:{source:"payment_reconciliation",requestId:randomUUID()} };
     for (const key of ["token","snap_token","signature_key","card"]) delete payload[key];
     if (attempt?.id) {
       const event = await admin.rpc("apply_midtrans_payment_event", { p_payment_attempt_id: String(attempt.id), p_provider_status: status, p_provider_transaction_id: provider.transactionId, p_payment_type: typeof provider.raw.payment_type === "string" ? provider.raw.payment_type : null, p_fraud_status: typeof provider.raw.fraud_status === "string" ? provider.raw.fraud_status : null, p_payload: payload });
@@ -79,8 +80,11 @@ export async function POST(request: Request, { params }: { params: Promise<{ ord
       const event = await admin.rpc("finalize_payment", { p_registration_id: orderId, p_midtrans_transaction_id: provider.transactionId, p_payload: payload });
       if (event.error) return fail("Pembayaran terdeteksi tetapi belum dapat disimpan", "PAYMENT_FINALIZE_FAILED", 503);
       await admin.rpc("record_transaction_log", {p_registration_id:orderId,p_payment_id:payment.id,p_payment_attempt_id:null,p_event_type:"payment_status_change",p_from_status:payment.status,p_to_status:"paid",p_provider_status:status,p_gateway_transaction_id:provider.transactionId,p_source:"reconcile",p_payload:payload});
-    } else if (isExpiredTransaction(status)) {
-      const saved = await admin.from("payments").update({status: status === "expire" ? "expired" : "failed",reconciled_at: new Date().toISOString()}).eq("id",payment.id).eq("status","pending");
+    } else if (isExpiredTransaction(status) && !["paid", "refunded"].includes(String(payment.status))) {
+      const registration = object(payment.registration);
+      const timeline = object(object(registration.batch).batch_timeline);
+      const windowOpen = Date.now() >= Date.parse(String(timeline.effective_payment_opens_at ?? timeline.payment_opens_at)) && Date.now() < Date.parse(String(timeline.effective_payment_closes_at ?? timeline.payment_closes_at));
+      const saved = await admin.from("payments").update({status: windowOpen && registration.status === "pending_payment" ? "pending" : status === "expire" ? "expired" : "failed",reconciled_at: new Date().toISOString()}).eq("id",payment.id).eq("status",String(payment.status));
       if (saved.error) return fail("Hasil pemeriksaan belum dapat disimpan", "PAYMENT_CHECK_SAVE_FAILED", 503);
     }
     if (isExpiredTransaction(status)) {

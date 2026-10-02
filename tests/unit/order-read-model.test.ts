@@ -25,6 +25,12 @@ const base: OrderReadRow = {
 };
 
 describe("UMKM order read model", () => {
+  it("shows an inspection action instead of a final cancellation when a paid invoice conflicts",()=>{
+    const item=toUmkmOrderListItem({...base,status:"cancelled",payment:{status:"paid"}},"2026-09-02T20:00:00Z");
+    expect(item.presentation?.label).toBe("Status pesanan perlu diperiksa");
+    expect(item.capabilities.canPay).toBe(false);
+    expect(item.presentation?.primaryAction.label).toBe("Periksa detail pesanan");
+  });
   it("derives a server-owned complaint deadline and capability", () => {
     const item = toUmkmOrderListItem(base, "2026-09-02T20:00:00.000Z");
     expect(item.timeline.complaintDeadlineAt).toBe("2026-09-03T08:00:00.000Z");

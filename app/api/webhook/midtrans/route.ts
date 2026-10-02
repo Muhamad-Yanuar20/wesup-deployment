@@ -143,7 +143,7 @@ export async function POST(request: Request) {
       p_provider_transaction_id: typeof payload.transaction_id === "string" ? payload.transaction_id : null,
       p_payment_type: typeof payload.payment_type === "string" ? payload.payment_type : null,
       p_fraud_status: fraudStatus,
-      p_payload: redactedPayload,
+      p_payload: {...redactedPayload,_wesup_audit:{source:"payment_webhook",requestId:randomUUID()}},
     });
     if (result.error) {
       await markLog("failed", codeOf(result.error) || "PAYMENT_FINALIZE_FAILED");
@@ -155,7 +155,7 @@ export async function POST(request: Request) {
   }
 
   if (["settlement", "capture"].includes(providerStatus) && (providerStatus !== "capture" || !fraudStatus || fraudStatus === "accept")) {
-    const result = await admin.rpc("finalize_payment", { p_registration_id: String(payment.registration_id), p_midtrans_transaction_id: typeof payload.transaction_id === "string" ? payload.transaction_id : null, p_payload: redactedPayload });
+    const result = await admin.rpc("finalize_payment", { p_registration_id: String(payment.registration_id), p_midtrans_transaction_id: typeof payload.transaction_id === "string" ? payload.transaction_id : null, p_payload: {...redactedPayload,_wesup_audit:{source:"payment_webhook",requestId:randomUUID()}} });
     if (result.error) {
       await markLog("failed", codeOf(result.error) || "PAYMENT_FINALIZE_FAILED");
       return failure("Pembayaran belum dapat difinalisasi", "PAYMENT_FINALIZE_FAILED", 503);
@@ -173,7 +173,7 @@ export async function POST(request: Request) {
       p_payload: redactedPayload,
     });
   } else if (["expire", "deny", "cancel"].includes(providerStatus)) {
-    await admin.from("payments").update({ status: providerStatus === "expire" ? "expired" : "failed", reconciled_at: new Date().toISOString(), webhook_payload: redactedPayload, updated_at: new Date().toISOString() }).eq("id", String(payment.id));
+    await admin.from("payments").update({ status: providerStatus === "expire" ? "expired" : "failed", reconciled_at: new Date().toISOString(), webhook_payload: redactedPayload, updated_at: new Date().toISOString() }).eq("id", String(payment.id)).eq("status", "pending");
     await admin.rpc("record_transaction_log", {
       p_registration_id: String(payment.registration_id),
       p_payment_id: String(payment.id),

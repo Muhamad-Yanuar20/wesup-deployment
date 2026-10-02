@@ -102,7 +102,7 @@ describe("UMKM Snap payment reconciliation", () => {
     const response = await POST(new NextRequest(`http://localhost/api/umkm/orders/${ORDER_ID}/payment/reconcile`, { method: "POST" }), { params: Promise.resolve({ orderId: ORDER_ID }) });
     expect(response.status).toBe(200);
     expect(getTransactionStatus).toHaveBeenCalledWith("WESUP-snap-1");
-    expect(rpc).toHaveBeenCalledWith("apply_midtrans_payment_event", expect.objectContaining({ p_payment_attempt_id: "attempt-1", p_provider_status: "settlement", p_provider_transaction_id: "tx-1" }));
+    expect(rpc).toHaveBeenCalledWith("apply_midtrans_payment_event", expect.objectContaining({ p_payment_attempt_id: "attempt-1", p_provider_status: "settlement", p_provider_transaction_id: "tx-1", p_payload:expect.objectContaining({_wesup_audit:{source:"payment_reconciliation",requestId:expect.any(String)}}) }));
     expect(admin.from).toHaveBeenCalledWith("payment_attempts");
   });
 
