@@ -335,4 +335,53 @@ describe("POST /api/registrations (atomic register)", () => {
     const res = await register(postJson(validBody) as unknown as Request);
     expect(res.status).toBe(429);
   });
+
+
+  describe("tolerant consent validation", () => {
+    it("accepts request without consent fields (backward compatible)", async () => {
+      const { insert } = buildClient({});
+      incrbyMock.mockResolvedValue(17);
+      const res = await register(
+        postJson({ batchId: BATCH_ID, quantity: 5 }) as unknown as Request,
+      );
+      expect(res.status).toBe(201);
+      expect(insert).toHaveBeenCalled();
+    });
+
+    it("accepts explicit consentAccepted true", async () => {
+      const { insert } = buildClient({});
+      incrbyMock.mockResolvedValue(17);
+      const res = await register(
+        postJson({ ...validBody, consentAccepted: true }) as unknown as Request,
+      );
+      expect(res.status).toBe(201);
+      expect(insert).toHaveBeenCalled();
+    });
+
+    it("accepts explicit policyVersion v2", async () => {
+      const { insert } = buildClient({});
+      incrbyMock.mockResolvedValue(17);
+      const res = await register(
+        postJson({ ...validBody, policyVersion: "v2" }) as unknown as Request,
+      );
+      expect(res.status).toBe(201);
+      expect(insert).toHaveBeenCalled();
+    });
+
+    it("rejects explicit consentAccepted false", async () => {
+      buildClient({});
+      const res = await register(
+        postJson({ ...validBody, consentAccepted: false }) as unknown as Request,
+      );
+      expect(res.status).toBe(400);
+    });
+
+    it("rejects wrong policyVersion", async () => {
+      buildClient({});
+      const res = await register(
+        postJson({ ...validBody, policyVersion: "v1" }) as unknown as Request,
+      );
+      expect(res.status).toBe(400);
+    });
+  });
 });
