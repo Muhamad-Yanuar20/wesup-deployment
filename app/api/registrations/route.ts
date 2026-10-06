@@ -11,12 +11,15 @@ import {
 } from "@/lib/orders/time-gatekeeper";
 import * as registrationCounter from "@/lib/orders/registration-counter";
 import { isCompleteUmkmProfile } from "@/lib/umkm/profile-completion";
+import { withRegistrationLock, joinVersionedBatch } from "@/lib/transactions/registration";
+import { transactionError, type TransactionRpcClient } from "@/lib/transactions/api";
 
 export const dynamic = "force-dynamic";
 
 interface UmkmProfileCheck { user_id: string; business_name: string | null; address: string | null; latitude: number | string | null; longitude: number | string | null }
 
 interface RegistrationBatchRow {
+  transaction_policy_version?: number;
   status: string;
   capacity_quantity?: number | null;
   min_quantity?: number | null;
@@ -33,6 +36,8 @@ function firstObject<T>(value: T | T[] | null | undefined): T | null {
 }
 
 interface RegistrationBody {
+  consentAccepted?: unknown;
+  consentSnapshot?:unknown;
   batchId?: unknown;
   quantity?: unknown;
   consentLat?: unknown;
@@ -101,7 +106,7 @@ export async function POST(req: Request) {
   };
   const { data: batch, error: batchErr } = await batchQuery
     .select(
-      "status,capacity_quantity,min_quantity,unit," +
+      "status,capacity_quantity,min_quantity,unit,transaction_policy_version," +
         "batch_timeline(registration_opens_at,registration_closes_at,payment_opens_at,payment_closes_at,estimated_ready_at,effective_payment_opens_at,effective_payment_closes_at)," +
         "batch_tiers(tier_number,min_volume,max_volume,price_per_unit)",
     )
@@ -116,6 +121,19 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Batch timeline not found" }, { status: 500 });
   }
 
+  if (batch.transaction_policy_version === 2) {
+    if (body.consentAccepted !== true) return NextResponse.json({ error: "Setujui lokasi, harga maksimum, dan jadwal sebelum ikut pesanan." }, { status: 400 });
+    try {
+      const joined = await joinVersionedBatch(client as unknown as TransactionRpcClient, { batchId, quantity, capacity: batch.capacity_quantity ?? 0, consentLat, consentLng,consentSnapshot: body.consentSnapshot && typeof body.consentSnapshot==='object'&&!Array.isArray(body.consentSnapshot)?body.consentSnapshot as Record<string,unknown>:{} });
+      return NextResponse.json({ ok: true, ...joined,serverTime:new Date().toISOString(),phase:joined.phase??"waiting_payment_window",deadlineAt:joined.deadlineAt??timeline.registration_closes_at,capabilities:joined.capabilities??{canWithdraw:!joined.batchClosed,canPay:!!joined.batchClosed},blockedReason:joined.blockedReason??(joined.batchClosed?null:"Pembayaran belum dibuka.") }, { status: 201 });
+    } catch (error) {
+      if (isBatchCapacityError(error)) return NextResponse.json({ error: "Kapasitas penawaran tidak mencukupi.", code: "BATCH_CAPACITY_EXCEEDED" }, { status: 409 });
+      return transactionError(error);
+    }
+  }
+
+  try {
+    return await withRegistrationLock(batchId, async () => {
   const gate = evaluateRegistrationWindow(
     timeline,
     new Date().toISOString(),
@@ -193,6 +211,7 @@ export async function POST(req: Request) {
     batch_id: batchId,
     umkm_id: authCtx.userId,
     quantity,
+    consent_terms: body.consentSnapshot && typeof body.consentSnapshot === "object" && !Array.isArray(body.consentSnapshot) ? body.consentSnapshot : {},
     consented_at: new Date().toISOString(),
     consent_latitude: consentLat,
     consent_longitude: consentLng,
@@ -208,7 +227,8 @@ export async function POST(req: Request) {
   }
   if (insertErr) {
     await registrationCounter.adjustVolumeCounter(batchId, -quantity).catch(() => undefined);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    if (insertErr && typeof insertErr === "object" && "code" in insertErr && ["23514", "55000", "22023"].includes(String(insertErr.code))) return transactionError(insertErr);
+    return NextResponse.json({ error: "Pendaftaran belum dapat disimpan. Periksa pesanan sebelum mencoba lagi." }, { status: 500 });
   }
 
   if (!inserted) {
@@ -226,6 +246,8 @@ export async function POST(req: Request) {
     { ok: true, count: newCount, registrationId: inserted?.id ?? null, batchClosed },
     { status: 201 },
   );
+    });
+  } catch (error) { return transactionError(error); }
 }
 
 function isDuplicateKeyError(

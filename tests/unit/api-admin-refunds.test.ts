@@ -42,6 +42,14 @@ function mockRefundsClient(rows: unknown[] = []) {
 }
 
 describe("GET /api/admin/refunds", () => {
+
+  it("adapts joined registration details for the queue format", async () => {
+    mockRefundsClient([{ id: "r1", amount: 50000, status: "pending", requested_at: "2026-10-01", registration: { cancellation_reason: "supplier_cancelled", batch: { title: "Beras" }, umkm: { full_name: "Buyer", email: "buyer@example.com" } } }]);
+    vi.mocked(enforceRateLimit).mockResolvedValue(null);
+    const res = await listRefunds(new NextRequest("http://localhost/api/admin/refunds?format=queue"));
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toEqual([{ id: "r1", amount: 50000, status: "pending", createdAt: "2026-10-01", reason: "supplier_cancelled", batchTitle: "Beras", umkmName: "Buyer", email: "buyer@example.com" }]);
+  });
   beforeEach(() => {
     mockGetServerClient.mockReset();
     vi.mocked(enforceRateLimit).mockReset();

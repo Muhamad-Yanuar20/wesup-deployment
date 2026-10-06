@@ -1,0 +1,20 @@
+[
+  {
+    "step": "sandbox_checkout",
+    "orderId": "a3c93890-867f-4fc4-ae44-6f73facb1207",
+    "status": 201,
+    "attemptId": "3c0733e5-220f-4ae5-97fc-e671682e3594",
+    "mode": "snap",
+    "hasToken": true,
+    "hasRedirect": true
+  },
+  {
+    "step": "qris_simulator_settlement",
+    "orderId": "a3c93890-867f-4fc4-ae44-6f73facb1207",
+    "attemptId": "3c0733e5-220f-4ae5-97fc-e671682e3594",
+    "status": 200,
+    "providerStatus": "settlement",
+    "localStatus": "paid",
+    "paymentType": "qris"
+  }
+]

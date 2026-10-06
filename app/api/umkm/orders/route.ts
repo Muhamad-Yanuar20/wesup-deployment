@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { resolveActiveUmkm } from "@/lib/umkm/workspace-auth";
 import { buildOrderSummary, toUmkmOrderListItem, type OrderReadRow } from "@/lib/orders/read-model";
-import { ORDER_SELECT } from "@/lib/orders/selects";
+import { ORDER_SELECT, readCompatibleOrder } from "@/lib/orders/selects";
 
 export const dynamic = "force-dynamic";
 
@@ -44,12 +44,12 @@ function decodeCursor(request?: Request): number {
 }
 
 export async function GET(request?: Request) {
-  const viewer = await resolveActiveUmkm();
+  const viewer = await resolveActiveUmkm({allowSuspended:true});
   if (!viewer.client) return viewer.response;
 
   const rpcClient = viewer.client as RpcCapableClient;
   const baseQuery = viewer.client.from("registrations") as OrdersQuery;
-  const first = await baseQuery.select(ORDER_SELECT).eq("umkm_id", viewer.context.userId);
+  const first = await readCompatibleOrder((projection) => baseQuery.select(projection).eq("umkm_id", viewer.context.userId), ORDER_SELECT);
   if (first.error) {
     const requestId = crypto.randomUUID();
     console.error("[umkm-orders] read failed", { operation: "list", code: errorCode(first.error), requestId });
@@ -66,15 +66,16 @@ export async function GET(request?: Request) {
       rpcClient.rpc("materialize_umkm_orders", { p_registration_ids: rows.map((row) => row.id) }),
     ]);
     const refreshed = await (viewer.client.from("registrations") as OrdersQuery)
-      .select(ORDER_SELECT)
+      .select(first.projection)
       .eq("umkm_id", viewer.context.userId);
     if (!refreshed.error && refreshed.data) rows = refreshed.data;
   }
 
   const serverTime = new Date().toISOString();
-  const allItems = rows.map((row) => toUmkmOrderListItem(row, serverTime));
+  const allItems = rows.map((row) => toUmkmOrderListItem(row, serverTime, viewer.context.status === "active"));
   const status = request ? new URL(request.url).searchParams.get("status") : null;
-  const filtered = status && status !== "all"
+  const group=request?new URL(request.url).searchParams.get("group"):null;
+  const filtered = group ? allItems.filter(item=>item.presentation?.group===group) : status && status !== "all"
     ? allItems.filter((item) => item.status === status || (status === "picked_up" && ["picked_up", "completed"].includes(item.status)) || (status === "refund" && ["refund_pending", "refunded"].includes(item.status)))
     : allItems;
   const offset = decodeCursor(request);
@@ -92,11 +93,15 @@ export async function GET(request?: Request) {
     summary: buildOrderSummary(allItems),
     counts: {
       all: allItems.length,
+      needs_action:allItems.filter(i=>i.presentation?.group==='needs_action').length,
+      ongoing:allItems.filter(i=>i.presentation?.group==='ongoing').length,
+      completed:allItems.filter(i=>i.presentation?.group==='completed').length,
       registered: allItems.filter((item) => item.status === "registered").length,
       pending_payment: allItems.filter((item) => item.status === "pending_payment").length,
       paid: allItems.filter((item) => item.status === "paid").length,
       picked_up: allItems.filter((item) => item.status === "picked_up" || item.status === "completed").length,
       cancelled: allItems.filter((item) => item.status === "cancelled").length,
+      cancelled_group:allItems.filter(item=>item.presentation?.group==='cancelled').length,
       no_show: allItems.filter((item) => item.status === "no_show").length,
       refund: allItems.filter((item) => item.status === "refund_pending" || item.status === "refunded").length,
     },

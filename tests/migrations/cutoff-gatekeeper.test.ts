@@ -32,7 +32,8 @@ describe("cut_off_batch (volume-limiting Gatekeeper)", () => {
 
   beforeAll(() => {
     allSql = readAllSql();
-    body = lastFunction(allSql, "cut_off_batch");
+    // v2 renames this unchanged authority and wraps the original entry point.
+    body = lastFunction(allSql.split(/alter function public\.cut_off_batch/i)[0], "cut_off_batch");
   });
 
   it("is defined and security definer", () => {
@@ -84,6 +85,15 @@ describe("cut_off_batch (volume-limiting Gatekeeper)", () => {
     expect(allSql).toMatch(/cut_off_batch/i);
     expect(body).not.toMatch(/cron/i);
     expect(body).not.toMatch(/pg_cron/i);
+  });
+
+  it('routes v2 through the fixed-window authority and preserves the legacy implementation',()=>{
+    const wrapper=lastFunction(allSql,'cut_off_batch');
+    expect(allSql).toMatch(/rename to cut_off_batch_legacy_v1/i);
+    expect(wrapper).toContain("transaction_policy_version");
+    expect(wrapper).toContain("close_batch_and_issue_invoices(p_batch_id,'registration_expired')");
+    expect(wrapper).toContain('cut_off_batch_legacy_v1(p_batch_id,p_ip_address,p_user_agent)');
+    expect(allSql).toMatch(/revoke all on function public\.cut_off_batch_legacy_v1[^;]*authenticated/i);
   });
 
   it("removes default PUBLIC/anon EXECUTE and grants execution only to authenticated", () => {

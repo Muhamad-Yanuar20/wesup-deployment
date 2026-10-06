@@ -3,7 +3,7 @@ import { isUuid } from "@/lib/admin/validation";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { resolveActiveUmkm } from "@/lib/umkm/workspace-auth";
 import { toUmkmOrderDetail, type OrderReadRow } from "@/lib/orders/read-model";
-import { DETAIL_SELECT } from "@/lib/orders/selects";
+import { DETAIL_SELECT, readCompatibleOrder } from "@/lib/orders/selects";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +18,7 @@ interface DetailQuery {
   };
 }
 
-interface RpcCapableClient { rpc?: (fn: string, args: Record<string, unknown>) => PromiseLike<{ error?: unknown | null }> }
+interface RpcCapableClient { rpc?: (fn: string, args: Record<string, unknown>) => PromiseLike<{ data?: unknown; error?: unknown | null }> }
 
 function errorCode(error: unknown): string {
   if (error && typeof error === "object" && "code" in error) return String((error as Record<string, unknown>).code ?? "UNKNOWN");
@@ -32,13 +32,14 @@ export async function GET(
   _request: Request,
   { params }: { params: Promise<{ orderId: string }> },
 ) {
-  const viewer = await resolveActiveUmkm();
+  const viewer = await resolveActiveUmkm({allowSuspended:true});
   if (!viewer.client) return viewer.response;
   const { orderId } = await params;
   if (!isUuid(orderId)) return errorResponse("Pesanan tidak ditemukan", "ORDER_NOT_FOUND", 404);
 
   const query = viewer.client.from("registrations") as DetailQuery;
-  let result = await query.select(DETAIL_SELECT).eq("id", orderId).eq("umkm_id", viewer.context.userId).maybeSingle();
+  const initial = await readCompatibleOrder((projection) => query.select(projection).eq("id", orderId).eq("umkm_id", viewer.context.userId).maybeSingle(), DETAIL_SELECT);
+  let result: { data: OrderReadRow | null; error: unknown | null } = initial;
   if (result.error) {
     const raw = result.error as { code?: unknown };
     const code = String(raw.code ?? "");
@@ -51,16 +52,23 @@ export async function GET(
 
   const rpcClient = viewer.client as RpcCapableClient;
   if (typeof rpcClient.rpc === "function") {
-    const lifecycleRpc = process.env.NODE_ENV === "test" ? "materialize_umkm_order" : "materialize_supplier_order";
+    const lifecycleRpc = "materialize_supplier_order";
     await Promise.resolve(rpcClient.rpc(lifecycleRpc, { p_registration_id: orderId })).catch(() => undefined);
-    const refreshed = await (viewer.client.from("registrations") as DetailQuery).select(DETAIL_SELECT).eq("id", orderId).eq("umkm_id", viewer.context.userId).maybeSingle();
+    const refreshed = await (viewer.client.from("registrations") as DetailQuery).select(initial.projection).eq("id", orderId).eq("umkm_id", viewer.context.userId).maybeSingle();
     if (!refreshed.error && refreshed.data) result = refreshed;
   }
 
   const serverTime = new Date().toISOString();
   const row = result.data;
   if (!row) return errorResponse("Pesanan tidak ditemukan", "ORDER_NOT_FOUND", 404);
-  const detail = toUmkmOrderDetail(row, serverTime);
+  const detail = toUmkmOrderDetail(row, serverTime, viewer.context.status === "active");
+  if (typeof rpcClient.rpc === "function" && detail.status === "registered") {
+    try {
+      const early = await rpcClient.rpc("get_early_payment_context", { p_batch_id: row.batch_id });
+      if (early.error) detail.earlyPaymentError = "Usulan pembayaran belum dapat dimuat. Muat ulang detail.";
+      else if (early.data && typeof early.data === "object") detail.earlyPayment = early.data as import("@/lib/transactions/early-payment").EarlyPaymentContext;
+    } catch { detail.earlyPaymentError = "Usulan pembayaran belum dapat dimuat. Muat ulang detail."; }
+  }
   if (detail.dispute?.photoUrls.length) {
     try {
       const storage = getAdminClient().storage.from("wesup-assets");

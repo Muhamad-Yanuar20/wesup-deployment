@@ -16,6 +16,7 @@ export interface CatalogDraft {
   description: string;
   targetQuantity: number;
   capacityQuantity?: number;
+  earlyPaymentMinimumQuantity?: number;
   unit?: "kg" | "gram" | "liter" | "ml" | "pcs" | "pack" | "karung" | "ikat" | "sisir";
   paymentWindowHours?: 3 | 6 | 12 | 24;
   productPhoto: File | null;
@@ -39,6 +40,7 @@ export const INITIAL_CATALOG_DRAFT: CatalogDraft = {
   description: "",
   targetQuantity: 50,
   capacityQuantity: 100,
+  earlyPaymentMinimumQuantity: 100,
   unit: "pcs",
   paymentWindowHours: 24,
   productPhoto: null,

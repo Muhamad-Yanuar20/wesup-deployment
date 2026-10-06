@@ -5,6 +5,8 @@ import type { MarketplaceRouteResponse } from "@/lib/marketplace/types";
 import MarketplaceRouteMapClient from "./MarketplaceRouteMapClient";
 import PickupLocationMapClient from "./PickupLocationMapClient";
 
+import { feedbackError } from "@/lib/feedback/errors";
+
 export interface MarketplaceRouteSummary {
   source: MarketplaceRouteResponse["route"]["source"];
   distanceKm: number;
@@ -41,6 +43,7 @@ export default function MarketplaceRouteSection({
   pickupAddress,
   onRouteLoaded,
 }: MarketplaceRouteSectionProps) {
+  const [retry, setRetry] = useState(0);
   const [requestState, setRequestState] = useState<{
     batchId: string | null;
     route: MarketplaceRouteResponse | null;
@@ -84,12 +87,12 @@ export default function MarketplaceRouteSection({
         setRequestState({
           batchId,
           route: null,
-          error: requestError instanceof Error ? requestError.message : "Rute belum dapat dimuat.",
+          error: feedbackError(requestError, "Rute belum dapat dimuat. Lokasi pengambilan tetap ditampilkan."),
         });
       });
 
     return () => controller.abort();
-  }, [batchId, onRouteLoaded, viewerCanRoute]);
+  }, [batchId, onRouteLoaded, viewerCanRoute, retry]);
 
   if (!viewerCanRoute) {
     return (
@@ -139,7 +142,7 @@ export default function MarketplaceRouteSection({
         address={pickupAddress}
       />
       <p className="mt-2 text-xs font-medium text-amber-700" role="status" aria-live="polite">
-        {error ?? "Rute belum dapat dimuat. Lokasi pickup tetap ditampilkan."}
+        {error ?? "Rute belum dapat dimuat. Lokasi pickup tetap ditampilkan."}<button type="button" onClick={() => setRetry(value => value + 1)} className="ml-2 min-h-11 font-semibold underline">Coba lagi</button>
       </p>
     </div>
   );

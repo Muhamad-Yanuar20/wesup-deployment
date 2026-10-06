@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 
 export async function POST(
   req: Request,
-  { params }: { params: Promise<{ id: string }> },
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
   if (!isUuid(id)) {
@@ -21,11 +21,12 @@ export async function POST(
   }
 
   const body = await parseJsonBody(req);
-  if (!body || typeof body.reason !== "string" || body.reason.trim() === "") {
-    return NextResponse.json(
-      { error: "Rejection reason is required" },
-      { status: 400 },
-    );
+  if (
+    !body ||
+    typeof body.reason !== "string" ||
+    body.reason.trim().length === 0
+  ) {
+    return NextResponse.json({ error: "Rejection reason is required" }, { status: 400 });
   }
 
   const client = await getServerClient();

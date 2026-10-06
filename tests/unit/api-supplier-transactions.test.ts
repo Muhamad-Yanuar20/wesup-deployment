@@ -101,7 +101,8 @@ describe("Supplier transaction APIs", () => {
     const { rpc } = clientWithBoundRpc();
     const response = await getTransactions(new NextRequest(`http://localhost/api/suppliers/batches/${BATCH_ID}/transactions`), { params: Promise.resolve({ id: BATCH_ID }) });
     expect(response.status).toBe(200);
-    expect(rpc).toHaveBeenCalledTimes(2);
+    expect(rpc).toHaveBeenCalledTimes(3);
+    expect(rpc).toHaveBeenLastCalledWith("get_offer_context",{p_batch_id:BATCH_ID});
   });
 
   it.each(["PGRST202", "42883", "42P01", "PGRST205"])("maps schema error %s to a retryable response", async (code) => {
@@ -123,4 +124,22 @@ describe("Supplier transaction APIs", () => {
       log.mockRestore();
     }
   });
+});
+
+it("waits for materialization, then reads snapshot and offer context in parallel",async()=>{
+ const {rpc}=client();
+ let materialize!:(value:unknown)=>void,snapshot!:(value:unknown)=>void,context!:(value:unknown)=>void;
+ rpc.mockImplementation(((name:string)=>new Promise(resolve=>{
+  if(name==="materialize_supplier_batch")materialize=resolve;
+  if(name==="get_supplier_batch_transaction")snapshot=resolve;
+  if(name==="get_offer_context")context=resolve;
+ })) as never);
+ const pending=getTransactions(new NextRequest("http://localhost/api/transactions"),{params:Promise.resolve({id:BATCH_ID})});
+ await vi.waitFor(()=>expect(materialize).toBeTypeOf("function"));
+ expect(rpc).toHaveBeenCalledTimes(1);
+ materialize({data:{closed:false},error:null});
+ await vi.waitFor(()=>{expect(snapshot).toBeTypeOf("function");expect(context).toBeTypeOf("function");});
+ snapshot({data:{batch:{id:BATCH_ID},orders:[]},error:null});context({data:null,error:null});
+ const result=await pending;expect(result.status).toBe(200);
+ expect(result.headers.get("server-timing")).toMatch(/materialize.*snapshot|materialize.*context/);
 });

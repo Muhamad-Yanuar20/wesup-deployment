@@ -1,0 +1,66 @@
+
+Running 2 tests using 1 worker
+
+(node:16056) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  1 [Supplier Flow] › tests\e2e\location-consent.spec.ts:9:7 › consent remains square and usable at 1440px (6.5s)
+(node:7084) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  2 [Supplier Flow] › tests\e2e\location-consent.spec.ts:9:7 › consent remains square and usable at 390px (1.6s)
+
+
+  1) [Supplier Flow] › tests\e2e\location-consent.spec.ts:9:7 › consent remains square and usable at 1440px
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: 20
+    Received: 44
+
+      34 |     const dimensions = await checkbox.boundingBox();
+      35 |     expect(dimensions?.width).toBe(20);
+    > 36 |     expect(dimensions?.height).toBe(20);
+         |                                ^
+      37 |     await page.getByText("Persetujuan Lokasi Pengambilan", { exact: true }).click();
+      38 |     await expect(checkbox).toBeChecked();
+      39 |     await expect(page.getByText(/Disetujui:/)).toBeVisible();
+        at C:\Users\hpyan\Project\wesup\tests\e2e\location-consent.spec.ts:36:32
+
+    Error Context: test-results\location-consent-consent-remains-square-and-usable-at-1440px-Supplier-Flow\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\location-consent-consent-remains-square-and-usable-at-1440px-Supplier-Flow\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\location-consent-consent-remains-square-and-usable-at-1440px-Supplier-Flow\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [Supplier Flow] › tests\e2e\location-consent.spec.ts:9:7 › consent remains square and usable at 390px
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: 20
+    Received: 44
+
+      34 |     const dimensions = await checkbox.boundingBox();
+      35 |     expect(dimensions?.width).toBe(20);
+    > 36 |     expect(dimensions?.height).toBe(20);
+         |                                ^
+      37 |     await page.getByText("Persetujuan Lokasi Pengambilan", { exact: true }).click();
+      38 |     await expect(checkbox).toBeChecked();
+      39 |     await expect(page.getByText(/Disetujui:/)).toBeVisible();
+        at C:\Users\hpyan\Project\wesup\tests\e2e\location-consent.spec.ts:36:32
+
+    Error Context: test-results\location-consent-consent-remains-square-and-usable-at-390px-Supplier-Flow\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\location-consent-consent-remains-square-and-usable-at-390px-Supplier-Flow\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\location-consent-consent-remains-square-and-usable-at-390px-Supplier-Flow\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2 failed
+    [Supplier Flow] › tests\e2e\location-consent.spec.ts:9:7 › consent remains square and usable at 1440px
+    [Supplier Flow] › tests\e2e\location-consent.spec.ts:9:7 › consent remains square and usable at 390px

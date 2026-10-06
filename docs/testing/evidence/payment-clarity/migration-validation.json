@@ -1,0 +1,23 @@
+{
+  "project": "woxgghuoeljagnkldqtf",
+  "rolledBack": true,
+  "evidence": [
+    {
+      "scenario": "new_full_atomic",
+      "phase": "payment_open",
+      "windowHours": 24,
+      "finalAmount": 18000,
+      "singleInvoice": true,
+      "retrySameOrder": true,
+      "withdrawBlocked": true
+    },
+    {
+      "scenario": "existing_v2_full_keeps_cutoff",
+      "phase": "waiting_payment_window"
+    },
+    {
+      "scenario": "discount_target_is_not_capacity_and_rejoin",
+      "sameOrder": true
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+"use client";
+import { useState, type FormEvent } from "react";
+import { useFeedbackResource } from "@/lib/feedback/use-resource";
+import { feedbackError, feedbackJson } from "@/lib/feedback/errors";
+import { Alert, AsyncButton, ContentSkeleton, EmptyState, ErrorState } from "@/components/feedback";
+import { ConfirmDialog } from "@/components/feedback/ConfirmDialog";
+import { useToast } from "@/components/ui/GlobalToast";
+interface SupportRequest { id: string; user_id: string; registration_id: string | null; batch_id: string | null; message: string }
+type Decision = { id: string; note: string; exemptPayment: boolean; restoreAccess: boolean };
+export default function AdminTransactionSupport() {
+ const { data, loading, error: readError, reload } = useFeedbackResource<{ items: SupportRequest[] }>("/api/admin/transaction-support", "Permintaan bantuan belum dapat dimuat.");
+ const [decision, setDecision] = useState<Decision | null>(null), [pending, setPending] = useState(false), [error, setError] = useState("");
+ const { toast } = useToast();
+ function review(event: FormEvent<HTMLFormElement>, id: string) {
+  event.preventDefault(); const form = new FormData(event.currentTarget); setError("");
+  setDecision({ id, note: String(form.get("note")), exemptPayment: form.has("exempt"), restoreAccess: form.has("restore") });
+ }
+ async function resolve() {
+  if (!decision || pending) return; setPending(true); setError("");
+  try { const response = await fetch("/api/admin/transaction-support", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(decision) }); await feedbackJson(response, "Hasil pemeriksaan belum terkonfirmasi. Periksa permintaan terbaru sebelum mengirim ulang."); setDecision(null); toast("Hasil pemeriksaan tersimpan.", "success"); await reload(); }
+  catch (e) { setError(feedbackError(e, "Hasil pemeriksaan belum terkonfirmasi. Catatan Anda tetap tersedia.")); }
+  finally { setPending(false); }
+ }
+ if (!data && loading) return <ContentSkeleton label="Memuat permintaan bantuan…" />;
+ if (!data) return <ErrorState title="Permintaan bantuan belum dapat dimuat." description={readError} action={<AsyncButton onClick={() => void reload()}>Coba lagi</AsyncButton>} />;
+ return <section className="mt-8 space-y-4"><h2 className="wesup-state-title text-2xl text-slate-950">Bantuan dan keberatan transaksi</h2>{readError && <Alert tone="warning" action={<button onClick={() => void reload()} className="underline">Coba perbarui</button>}>Keputusan tersimpan, tetapi daftar belum diperbarui. Data terakhir ditampilkan.</Alert>}{!data.items.length && <EmptyState title="Belum ada permintaan yang perlu diperiksa." />}{data.items.map(item => <form key={item.id} onSubmit={event => review(event, item.id)} className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-700"><p className="break-words leading-6">{item.message}</p><p className="break-all font-mono text-xs text-slate-500">Pengguna {item.user_id} · Transaksi {item.registration_id ?? item.batch_id}</p><label className="block font-medium">Hasil pemeriksaan<textarea name="note" required minLength={10} maxLength={2000} className="mt-2 w-full rounded-xl border border-slate-300 p-3" /></label>{item.registration_id && <><label className="flex items-start gap-3"><input type="checkbox" name="exempt" />Gangguan terverifikasi: bebaskan penalti pembayaran pesanan ini</label><label className="flex items-start gap-3"><input type="checkbox" name="restore" />Pulihkan akses sesuai jumlah pelanggaran yang masih berlaku</label></>}<AsyncButton disabled={pending && decision?.id === item.id}>Periksa keputusan</AsyncButton></form>)}<ConfirmDialog open={Boolean(decision)} title="Simpan hasil pemeriksaan dan perubahan akses ini?" description={<div className="space-y-2"><p>{decision?.note}</p><p>{decision?.exemptPayment ? "Penalti pembayaran dibebaskan." : "Tidak mengubah penalti pembayaran."}</p><p>{decision?.restoreAccess ? "Akses diperiksa dan dipulihkan sesuai pelanggaran yang masih berlaku." : "Tidak meminta pemulihan akses."}</p></div>} pending={pending} error={error} onConfirm={() => void resolve()} onCancel={() => setDecision(null)} /></section>;
+}

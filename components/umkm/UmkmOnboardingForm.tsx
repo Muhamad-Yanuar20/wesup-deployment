@@ -8,6 +8,9 @@ import type { MapCoordinate } from "@/lib/maps/leaflet-demo";
 import { BANDUNG_SERVICE_RADIUS_KM } from "@/lib/geo/service-center";
 import { parseUmkmProfilePayload } from "@/lib/umkm/profile-contract";
 
+import { Alert, AsyncButton } from "@/components/feedback";
+import { feedbackError, feedbackJson } from "@/lib/feedback/errors";
+
 interface UmkmOnboardingFormProps { returnTo?: string | null; }
 interface FormValues { businessName: string; address: string; coordinate: MapCoordinate | null; }
 const DEFAULT_VALUES: FormValues = { businessName: "", address: "", coordinate: null };
@@ -31,22 +34,24 @@ export default function UmkmOnboardingForm({ returnTo }: UmkmOnboardingFormProps
   const [loadError, setLoadError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(true);
+  const [retry, setRetry] = useState(0);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
-    void fetch("/api/umkm/profile", { cache: "no-store" })
+    const controller = new AbortController();
+    queueMicrotask(() => { if (!cancelled) { setLoading(true); setLoadError(""); } });
+    void fetch("/api/umkm/profile", { cache: "no-store", signal: controller.signal })
       .then(async (response) => {
-        const body = await response.json().catch(() => ({}));
-        if (!response.ok) throw new Error(body.error ?? "Profil usaha tidak dapat dimuat.");
+        const body = await feedbackJson<{profile?: Record<string,unknown>}>(response, "Profil usaha tidak dapat dimuat.");
         if (!cancelled) setValues(profileToForm(body.profile));
       })
       .catch((error: unknown) => {
-        if (!cancelled) setLoadError(error instanceof Error ? error.message : "Profil usaha tidak dapat dimuat.");
+        if (!cancelled) setLoadError(feedbackError(error, "Profil usaha tidak dapat dimuat."));
       })
       .finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };
-  }, []);
+    return () => { cancelled = true; controller.abort(); };
+  }, [retry]);
 
   const focusError = () => {
     window.setTimeout(() => formErrorRef.current?.focus(), 0);
@@ -89,7 +94,7 @@ export default function UmkmOnboardingForm({ returnTo }: UmkmOnboardingFormProps
       });
       const body = await response.json().catch(() => ({}));
       if (!response.ok) {
-        setFieldErrors(body.fieldErrors ?? { form: body.error ?? "Profil usaha belum dapat disimpan." });
+        setFieldErrors(body.fieldErrors ?? { form: feedbackError(body.error, "Profil usaha belum dapat disimpan.") });
         focusError();
         return;
       }
@@ -115,7 +120,7 @@ export default function UmkmOnboardingForm({ returnTo }: UmkmOnboardingFormProps
           </div>
         </div>
 
-        {loadError ? <p role="alert" className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">{loadError}</p> : null}
+        {loadError ? <Alert tone="error" className="mt-4" action={<button type="button" onClick={() => setRetry(value => value + 1)} className="min-h-11 font-semibold underline">Coba lagi</button>}>{loadError}</Alert> : null}
         {loading ? <p role="status" className="mt-4 text-sm text-slate-500">Memuat profil usaha...</p> : null}
 
         <div className="mt-6 grid gap-6">
@@ -140,7 +145,7 @@ export default function UmkmOnboardingForm({ returnTo }: UmkmOnboardingFormProps
 
         {fieldErrors.form ? <p ref={formErrorRef} tabIndex={-1} role="alert" className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700 outline-none focus-visible:ring-2 focus-visible:ring-red-500">{fieldErrors.form}</p> : null}
         {success ? <p role="status" aria-live="polite" className="mt-4 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-700">{success}</p> : null}
-        <button type="submit" disabled={loading || saving} className="sticky bottom-4 z-10 mt-6 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-blue-700 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-blue-700/20 transition hover:bg-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 sm:static sm:w-auto sm:shadow-sm"><Save className="h-4 w-4" aria-hidden="true" />{saving ? "Menyimpan..." : "Simpan profil usaha"}</button>
+        <AsyncButton type="submit" pending={saving} pendingLabel="Menyimpan…" disabled={loading || Boolean(loadError)} className="sticky bottom-4 z-10 mt-6 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-blue-700 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-blue-700/20 transition hover:bg-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 sm:static sm:w-auto sm:shadow-sm"><Save className="h-4 w-4" aria-hidden="true" />Simpan profil usaha</AsyncButton>
       </section>
     </form>
   );

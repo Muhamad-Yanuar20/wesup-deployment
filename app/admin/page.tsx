@@ -1,8 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import AdminTransactionSupport from "@/components/orders/AdminTransactionSupport";
 import { redirect } from "next/navigation";
 import { getViewerAccessState, resolveHomePath, type AccessStateClient } from "@/lib/auth/access-state";
 import { getServerClient } from "@/lib/supabase/server";
+
+import { AdminSidebar } from "@/components/admin/AdminSidebar";
+import { AdminHeader } from "@/components/admin/AdminHeader";
 
 export const dynamic = "force-dynamic";
 
@@ -20,25 +24,5 @@ export default async function AdminPage() {
     redirect(resolveHomePath(accessState));
   }
 
-  return (
-    <main className="min-h-screen bg-slate-950 px-4 py-10 text-white sm:px-6 lg:px-8">
-      <div className="mx-auto w-full max-w-6xl">
-        <header className="flex flex-col gap-4 border-b border-slate-800 pb-8 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-blue-300">Wesup Admin</p>
-            <h1 className="mt-2 text-3xl font-extrabold tracking-tight sm:text-4xl">Pusat administrasi</h1>
-            <p className="mt-3 max-w-2xl text-slate-300">Gunakan API Admin yang sudah tersedia untuk moderasi supplier, batch, audit, dan sengketa.</p>
-          </div>
-          <Link href="/" className="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-700 px-5 py-3 text-sm font-semibold text-slate-200 hover:border-blue-400 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400">
-            Kembali ke Wesup
-          </Link>
-        </header>
-
-        <section className="mt-8 rounded-3xl border border-slate-800 bg-slate-900 p-6 sm:p-8">
-          <h2 className="text-xl font-bold">Akses Admin aktif</h2>
-          <p className="mt-2 text-sm leading-6 text-slate-300">Dashboard operasional Admin dapat dihubungkan ke modul moderasi berikutnya tanpa mencampurkan navigasi UMKM atau Supplier.</p>
-        </section>
-      </div>
-    </main>
-  );
+  return <div className="wesup-app flex h-dvh flex-col bg-slate-50 md:flex-row"><AdminSidebar /><div className="flex min-h-0 min-w-0 flex-1 flex-col"><AdminHeader title="Pusat administrasi" description="Tinjau pendaftaran usaha, penawaran, dan kendala transaksi." /><main className="flex-1 overflow-y-auto px-4 py-6 sm:px-6"><div className="mx-auto max-w-5xl"><section className="grid gap-4 sm:grid-cols-2">{[{ href: "/admin/suppliers", label: "Verifikasi Supplier", description: "Periksa pendaftaran usaha dan catatan survei." }, { href: "/admin/catalog", label: "Moderasi katalog", description: "Tinjau penawaran yang sedang tersedia." }, { href: "/admin/disputes", label: "Sengketa transaksi", description: "Periksa bukti dan tentukan hak dana." }, { href: "/admin/refunds", label: "Pengembalian dana", description: "Pantau antrean pengembalian dana." }].map(item => <Link key={item.href} href={item.href} className="rounded-2xl border border-slate-200 bg-white p-5 hover:border-blue-300"><h2 className="text-lg font-semibold text-slate-900">{item.label}</h2><p className="mt-2 text-sm leading-6 text-slate-600">{item.description}</p></Link>)}</section><AdminTransactionSupport /></div></main></div></div>;
 }

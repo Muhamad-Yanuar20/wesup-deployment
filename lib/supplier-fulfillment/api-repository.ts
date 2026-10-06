@@ -1,3 +1,4 @@
+import { readFeedbackError } from "@/lib/feedback/errors";
 import type {
   ConfirmPickupInput,
   ConfirmPickupResult,
@@ -8,6 +9,7 @@ import type {
 } from "./types";
 
 interface ApiOrderRow {
+  can_confirm_pickup?:boolean;
   registration_id: string;
   umkm_name: string;
   quantity: number;
@@ -18,25 +20,14 @@ interface ApiOrderRow {
   created_at: string;
 }
 
-interface ErrorBody {
-  error?: unknown;
-}
-
 const orderCache = new Map<string, FulfillmentOrder>();
 const DEFAULT_FULFILLMENT_UNIT = "pcs";
 
-async function readError(response: Response, fallback: string): Promise<string> {
-  try {
-    const body = await response.json() as ErrorBody;
-    if (typeof body.error === "string" && body.error.trim()) return body.error;
-  } catch {
-    // Fall back to a stable user-facing message below.
-  }
-  return response.statusText || fallback;
-}
+async function readError(response: Response, fallback: string): Promise<string> { return (await readFeedbackError(response, fallback)).message; }
 
 function mapOrder(batchId: string, row: ApiOrderRow): FulfillmentOrder {
   return {
+    canConfirmPickup:row.can_confirm_pickup,
     registrationId: row.registration_id,
     batchId,
     displayCode: `REG-${row.registration_id.slice(0, 8).toUpperCase()}`,
@@ -87,7 +78,7 @@ export const supplierFulfillmentApiRepository: FulfillmentRepository = {
     });
     if (!response.ok) {
       const message = await readError(response, "Serah terima belum dapat diproses.");
-      throw { code: "invalid_code", message };
+      throw { code: response.status === 400 || response.status === 422 ? "invalid_code" : "service_unavailable", message };
     }
     const cached = orderCache.get(registrationId);
     const order = withUpdatedStatus(cached ?? {

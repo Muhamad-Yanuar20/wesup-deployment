@@ -11,6 +11,7 @@ export type FulfillmentOrderStatus =
 export type PickupMethod = "qr" | "pin";
 
 export interface FulfillmentOrder {
+  canConfirmPickup?: boolean;
   registrationId: string;
   batchId: string;
   displayCode: string;

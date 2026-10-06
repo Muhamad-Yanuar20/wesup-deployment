@@ -42,7 +42,7 @@ describe("UmkmSignupForm", () => {
     expect(fetch).not.toHaveBeenCalled();
   });
 
-  it("submits location without a browser role and opens success dialog", async () => {
+  it("submits location without a browser role and shows inline success state", async () => {
     const user = userEvent.setup();
     vi.mocked(fetch).mockResolvedValue(new Response(JSON.stringify({ ok: true, requiresEmailConfirmation: false }), { status: 201 }));
     render(<UmkmSignupForm returnTo="/marketplace/batch-1" />);
@@ -50,14 +50,14 @@ describe("UmkmSignupForm", () => {
     await fillRequired(user);
     await user.click(screen.getByRole("button", { name: /buat akun umkm/i }));
 
-    await waitFor(() => expect(screen.getByRole("dialog")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole("heading", { name: "Akun UMKM berhasil dibuat." })).toBeInTheDocument());
     const requestBody = JSON.parse(vi.mocked(fetch).mock.calls[0]?.[1]?.body as string) as Record<string, unknown>;
     expect(requestBody).toMatchObject({ full_name: "Budi Buyer", phone: "081234567890", email: "budi@example.com", password: "password123", latitude: -6.914744, longitude: 107.60981 });
     expect(requestBody).not.toHaveProperty("role");
-    expect(screen.getByRole("link", { name: "Login" })).toHaveAttribute("href", "/login?role=umkm&returnTo=%2Fmarketplace%2Fbatch-1");
+    expect(screen.getByRole("link", { name: "Masuk" })).toHaveAttribute("href", "/login?role=umkm&returnTo=%2Fmarketplace%2Fbatch-1");
   });
 
-  it("explains the email confirmation state in the success dialog", async () => {
+  it("explains the email confirmation state in the success state", async () => {
     const user = userEvent.setup();
     vi.mocked(fetch).mockResolvedValue(new Response(JSON.stringify({ ok: true, requiresEmailConfirmation: true }), { status: 201 }));
     render(<UmkmSignupForm />);
@@ -65,8 +65,8 @@ describe("UmkmSignupForm", () => {
     await fillRequired(user);
     await user.click(screen.getByRole("button", { name: /buat akun umkm/i }));
 
-    expect(await screen.findByText(/cek email anda/i)).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Login" })).toHaveAttribute("href", "/login?role=umkm");
+    expect(await screen.findByText(/periksa email/i)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Masuk" })).toHaveAttribute("href", "/login?role=umkm");
     expect(screen.queryByRole("heading", { name: /cek email untuk mengaktifkan akun/i })).not.toBeInTheDocument();
   });
 });

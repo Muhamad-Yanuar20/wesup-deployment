@@ -3,9 +3,11 @@
 import dynamic from "next/dynamic";
 import type { BusinessLocationPickerProps } from "./BusinessLocationPicker";
 
+import { Skeleton } from "@/components/feedback";
+
 const BusinessLocationPicker = dynamic(() => import("./BusinessLocationPicker"), {
   ssr: false,
-  loading: () => <div className="flex h-72 items-center justify-center rounded-2xl border border-blue-100 bg-blue-50/60 sm:h-80" role="status"><span className="text-sm font-medium text-blue-800">Menyiapkan peta interaktif…</span></div>,
+  loading: () => <div aria-busy="true" className="h-72 sm:h-80"><span role="status" className="sr-only">Menyiapkan peta…</span><Skeleton className="h-full w-full" /></div>,
 });
 
 export default function BusinessLocationPickerClient(props: BusinessLocationPickerProps) {

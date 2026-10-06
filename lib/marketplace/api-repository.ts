@@ -1,3 +1,5 @@
+import { fetchRead } from "@/lib/feedback/read-request";
+import { readFeedbackError } from "@/lib/feedback/errors";
 import type {
   MarketplaceRepository,
   MarketplaceSearchCriteria,
@@ -5,15 +7,7 @@ import type {
 } from "./types";
 
 export async function readApiError(response: Response): Promise<string> {
-  try {
-    const body = (await response.json()) as { error?: unknown };
-    if (typeof body.error === "string" && body.error.trim() !== "") {
-      return body.error;
-    }
-  } catch {
-    // Fall through to the status text when the response is not JSON.
-  }
-  return response.statusText || `Request failed (${response.status})`;
+ return (await readFeedbackError(response, "Penawaran belum dapat dimuat. Coba lagi.")).message;
 }
 
 export const marketplaceApiRepository: MarketplaceRepository = {
@@ -33,7 +27,7 @@ export const marketplaceApiRepository: MarketplaceRepository = {
     if (criteria.minPrice !== null) params.set("minPrice", String(criteria.minPrice));
     if (criteria.maxPrice !== null) params.set("maxPrice", String(criteria.maxPrice));
 
-    const response = await fetch(`/api/marketplace/search?${params.toString()}`, {
+    const response = await fetchRead(`/api/marketplace/search?${params.toString()}`, {
       signal,
       cache: "no-store",
     });

@@ -16,6 +16,7 @@ import MarketplaceRouteSection, { type MarketplaceRouteSummary } from "./Marketp
 import LocationConsentCheckbox from "./LocationConsentCheckbox";
 import SupplierRatingBadge from "./SupplierRatingBadge";
 import TierProgressBar from "./TierProgressBar";
+import JoinIntentQuantity from "./JoinIntentQuantity";
 import JoinBatchForm from "./JoinBatchForm";
 import { useTierProgress } from "@/hooks/use-tier-progress";
 
@@ -226,6 +227,7 @@ export default function MarketplaceDetailClient({
         ) : null}
 
         <div className="sticky bottom-[4.75rem] z-10 -mx-4 flex flex-col items-stretch gap-3 border-t border-slate-200 bg-white/95 px-4 py-3 backdrop-blur-sm sm:static sm:mx-0 sm:flex-row sm:items-center sm:border-0 sm:bg-transparent sm:px-0 sm:py-2">
+          {!canJoinBatch&&item.policyVersion===2&&<JoinIntentQuantity item={item}/>}
           {canJoinBatch ? (
             <div className="flex-1">
               <JoinBatchForm

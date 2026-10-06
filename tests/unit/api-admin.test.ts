@@ -279,6 +279,13 @@ describe("POST /api/admin/disputes/[id]/resolve", () => {
     mockGetServerClient.mockReset();
   });
 
+  it.each([["resolved_refund", "umkm"], ["resolved_payout", "supplier"], ["rejected", "supplier"]])("adapts queue decision %s to RPC winner %s", async (decision, winner) => {
+    const { rpc } = mockAdminClient({});
+    const res = await resolveDispute(postJson("/api/admin/disputes/x/resolve", { decision, notes: "queue" }), routeParams(TARGET_ID));
+    expect(res.status).toBe(200);
+    expect(rpc).toHaveBeenCalledWith("resolve_dispute", expect.objectContaining({ p_winner: winner, p_notes: "queue" }));
+  });
+
   it("returns 200 and calls resolve_dispute with winner supplier", async () => {
     const { rpc } = mockAdminClient({});
     const res = await resolveDispute(

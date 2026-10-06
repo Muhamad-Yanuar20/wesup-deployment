@@ -16,7 +16,7 @@ export default async function SupplierRegistrationPage() {
   const viewer = await getViewerAccessState((await getServerClient()) as unknown as AccessStateClient);
   if (viewer) redirect(resolveHomePath(viewer));
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,_#dbeafe,_transparent_38%),linear-gradient(180deg,_#f8fafc,_#eff6ff)] px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
+    <main className="wesup-app min-h-screen bg-[radial-gradient(circle_at_top_left,_#dbeafe,_transparent_38%),linear-gradient(180deg,_#f8fafc,_#eff6ff)] px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
       <div className="mx-auto w-full max-w-6xl">
         <header className="mb-8 text-center sm:mb-10">
           <span className="inline-flex rounded-full border border-blue-200 bg-white/80 px-3 py-1 text-xs font-bold uppercase tracking-[0.2em] text-blue-700 shadow-sm">

@@ -1,12 +1,12 @@
 "use client";
 
-import { useCallback, useState, type FormEvent } from "react";
-import { useRouter } from "next/navigation";
+import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { ArrowRight, Eye, EyeOff, LoaderCircle, MapPinned, Mail, Phone, Store, UserRound } from "lucide-react";
 import BusinessLocationPickerClient from "@/components/maps/BusinessLocationPickerClient";
 import type { MapCoordinate } from "@/lib/maps/leaflet-demo";
-import UmkmRegistrationSuccessDialog from "./UmkmRegistrationSuccessDialog";
+import { SuccessState } from "@/components/feedback";
+import { feedbackError } from "@/lib/feedback/errors";
 
 interface SignupFieldErrors {
   full_name?: string;
@@ -26,7 +26,6 @@ const PHONE_RE = /^\+?[0-9][0-9\s-]{7,19}$/;
 type SignupResponse = { error?: string; fieldErrors?: SignupFieldErrors; requiresEmailConfirmation?: boolean };
 
 export default function UmkmSignupForm({ returnTo = null }: UmkmSignupFormProps) {
-  const router = useRouter();
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
@@ -58,7 +57,7 @@ export default function UmkmSignupForm({ returnTo = null }: UmkmSignupFormProps)
     const errors = validate();
     setFieldErrors(errors);
     setGlobalError(undefined);
-    if (Object.keys(errors).length > 0) return;
+    if (Object.keys(errors).length > 0) { document.getElementById(`umkm-${Object.keys(errors)[0].replaceAll("_", "-")}`)?.focus(); return; }
 
     setSubmitting(true);
     try {
@@ -77,7 +76,7 @@ export default function UmkmSignupForm({ returnTo = null }: UmkmSignupFormProps)
       const body = (await response.json()) as SignupResponse;
       if (!response.ok) {
         setFieldErrors(body.fieldErrors ?? {});
-        setGlobalError(body.error ?? "Pendaftaran belum dapat diproses.");
+        setGlobalError(feedbackError(body.error, "Pendaftaran belum dapat diproses."));
         return;
       }
       setRegistrationSuccess(Boolean(body.requiresEmailConfirmation));
@@ -96,11 +95,7 @@ export default function UmkmSignupForm({ returnTo = null }: UmkmSignupFormProps)
     return fieldErrors[field] ? <p id={`${field}-error`} className="mt-1.5 text-xs font-medium text-red-600" role="alert">{fieldErrors[field]}</p> : null;
   }
 
-  const closeSuccessDialog = useCallback(() => {
-    setRegistrationSuccess(null);
-    router.push("/");
-    router.refresh();
-  }, [router]);
+  if (registrationSuccess !== null) return <SuccessState title="Akun UMKM berhasil dibuat." description={registrationSuccess ? "Periksa email untuk mengonfirmasi akun Anda, lalu masuk untuk melanjutkan." : "Masuk untuk melengkapi profil dan mulai mencari penawaran."} action={<Link href={loginHref} className="inline-flex min-h-11 items-center rounded-xl bg-blue-700 px-5 py-3 font-semibold text-white">Masuk</Link>} />;
 
   return (
     <form onSubmit={handleSubmit} noValidate className="space-y-5 pb-2">
@@ -155,7 +150,6 @@ export default function UmkmSignupForm({ returnTo = null }: UmkmSignupFormProps)
         {submitting ? "Membuat akun…" : "Buat akun UMKM"}
       </button>
       <p className="text-center text-sm text-slate-500">Sudah punya akun? <Link href={loginHref} className="font-bold text-blue-700 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">Masuk di sini</Link></p>
-      <UmkmRegistrationSuccessDialog open={registrationSuccess !== null} requiresEmailConfirmation={registrationSuccess === true} loginHref={loginHref} onClose={closeSuccessDialog} />
     </form>
   );
 }

@@ -51,7 +51,7 @@ export async function POST(
       return NextResponse.json({ error: msg, code: "PICKUP_CODE_INVALID" }, { status: 409 });
     }
     if (/not eligible|already picked up/i.test(msg)) {
-      return NextResponse.json({ error: msg, code: "PICKUP_STATE_CONFLICT" }, { status: 409 });
+      return NextResponse.json({ error: "Pesanan belum dapat diserahkan atau sudah diambil. Periksa kesiapan, jadwal yang disetujui, dan status pesanan.", code: "PICKUP_STATE_CONFLICT" }, { status: 409 });
     }
     if (/only the owning supplier|sign in required/i.test(msg)) {
       return NextResponse.json({ error: msg, code: "PICKUP_FORBIDDEN" }, { status: 403 });

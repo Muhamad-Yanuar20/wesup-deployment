@@ -71,7 +71,17 @@ export type AuditAction =
   | "confirm_pickup"
   | "create_recurring_config";
 
-export interface Database {
+// Additive overlay until the migration is deployed and generated types are refreshed.
+export type Database = import("./database.generated").Database & {
+  public: { Tables: { batches: {
+    Row: { early_payment_minimum_quantity: number | null };
+    Insert: { early_payment_minimum_quantity?: number | null };
+    Update: { early_payment_minimum_quantity?: number | null };
+  } } };
+};
+
+/** Historical hand-written contract retained for DTO compatibility reference. */
+export interface LegacyDatabase {
   public: {
     Tables: {
       profiles: {
@@ -257,6 +267,7 @@ export interface Database {
           unit: string;
           min_quantity: number;
           capacity_quantity: number | null;
+          early_payment_minimum_quantity: number | null;
           payment_window_hours: number;
           registration_closed_at: string | null;
           close_reason: BatchCloseReason | null;
@@ -289,6 +300,7 @@ export interface Database {
           unit?: string;
           min_quantity: number;
           capacity_quantity?: number | null;
+          early_payment_minimum_quantity?: number | null;
           payment_window_hours?: number;
           registration_closed_at?: string | null;
           close_reason?: BatchCloseReason | null;

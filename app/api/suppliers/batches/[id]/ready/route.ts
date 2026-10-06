@@ -10,8 +10,8 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
   try { await requireRole(client as unknown as AuthClient, ["supplier", "admin"]); } catch (error) { return toAuthResponse(error); }
   const { id } = await params;
   if (!isUuid(id)) return NextResponse.json({ error: "Batch tidak ditemukan.", code: "BATCH_NOT_FOUND" }, { status: 404 });
-  const rpc = (client as unknown as { rpc: (name: string, args: Record<string, unknown>) => PromiseLike<{ error: unknown }> }).rpc;
-  const result = await rpc("mark_supplier_batch_ready", { p_batch_id: id });
+  const rpcClient = client as unknown as { rpc: (name: string, args: Record<string, unknown>) => PromiseLike<{ error: unknown }> };
+  const result = await rpcClient.rpc("mark_supplier_batch_ready", { p_batch_id: id });
   if (result.error) {
     const code = typeof result.error === "object" && result.error !== null && "code" in result.error ? String((result.error as { code?: unknown }).code ?? "") : "";
     if (code === "P0002" || code === "42501") return NextResponse.json({ error: "Batch tidak ditemukan.", code: "BATCH_NOT_FOUND" }, { status: 404 });

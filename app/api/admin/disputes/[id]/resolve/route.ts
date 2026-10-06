@@ -15,7 +15,7 @@ const WINNERS = ["supplier", "umkm"] as const;
 
 export async function POST(
   req: Request,
-  { params }: { params: Promise<{ id: string }> },
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
   if (!isUuid(id)) {
@@ -23,10 +23,11 @@ export async function POST(
   }
 
   const body = await parseJsonBody(req);
+  const winner = body?.winner ?? (body?.decision === "resolved_refund" ? "umkm" : ["resolved_payout", "rejected"].includes(String(body?.decision)) ? "supplier" : null);
   if (
     !body ||
-    typeof body.winner !== "string" ||
-    !WINNERS.includes(body.winner as (typeof WINNERS)[number])
+    typeof winner !== "string" ||
+    !WINNERS.includes(winner as (typeof WINNERS)[number])
   ) {
     return NextResponse.json(
       { error: "winner must be supplier or umkm" },
@@ -54,7 +55,7 @@ export async function POST(
 
   const { error } = await client.rpc("resolve_dispute", {
     p_dispute_id: id,
-    p_winner: body.winner,
+    p_winner: winner,
     p_notes: notes,
     p_ip_address: req.headers.get("x-forwarded-for") ?? null,
     p_user_agent: req.headers.get("user-agent") ?? null,

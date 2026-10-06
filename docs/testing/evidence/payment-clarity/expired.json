@@ -1,0 +1,19 @@
+{
+  "orderId": "f6934718-f16f-4e4c-b995-9da4a42d137c",
+  "batchId": "0b2ea2be-a77a-416e-8200-5f1d47d30f13",
+  "attemptId": "81d1f572-b1e1-43b9-a83f-695b99c83364",
+  "http": 200,
+  "providerStatus": "expire",
+  "localStatus": "cancelled",
+  "progress": {
+    "state": "expired",
+    "lastCheckedAt": "2026-09-30T21:48:26.437+00:00",
+    "canOpenCheckout": false,
+    "canCheckStatus": true,
+    "blockedReason": "Batas bayar sudah berakhir."
+  },
+  "repeatStatus": 200,
+  "repeatLocalStatus": "cancelled",
+  "refreshPassed": true,
+  "checkoutUnavailable": true
+}

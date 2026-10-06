@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useFeedbackResource } from "@/lib/feedback/use-resource";
+import { ErrorState, ContentSkeleton, AsyncButton } from "@/components/feedback";
 import { ArrowRight, Bell, CircleAlert, ClipboardList, MapPin, Store } from "lucide-react";
-import { Skeleton } from "@/components/ui/SkeletonLoading";
 
 interface DashboardData {
   profileComplete: boolean;
@@ -22,29 +22,9 @@ function formatDueAt(value: string | null): string {
 }
 
 export default function UmkmDashboardClient() {
-  const [data, setData] = useState<DashboardData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    let cancelled = false;
-    void fetch("/api/umkm/dashboard", { cache: "no-store" })
-      .then(async (response) => {
-        const body = await response.json().catch(() => ({}));
-        if (!response.ok) throw new Error(body.error ?? "Dashboard belum dapat dimuat.");
-        if (!cancelled) setData(body as DashboardData);
-      })
-      .catch((reason: unknown) => {
-        if (!cancelled) setError(reason instanceof Error ? reason.message : "Dashboard belum dapat dimuat.");
-      })
-      .finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };
-  }, []);
-
-  if (loading) {
-    return <div className="space-y-4" role="status" aria-live="polite"><Skeleton className="h-28 w-full rounded-2xl" /><div className="grid gap-3 sm:grid-cols-3"><Skeleton className="h-24 rounded-xl" /><Skeleton className="h-24 rounded-xl" /><Skeleton className="h-24 rounded-xl" /></div></div>;
-  }
-  if (error || !data) return <p role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error || "Dashboard belum dapat dimuat."}</p>;
+  const { data, loading, error, reload } = useFeedbackResource<DashboardData>("/api/umkm/dashboard", "Dashboard belum dapat dimuat.");
+  if (!data && loading) return <ContentSkeleton label="Memuat dashboard…" />;
+  if (!data) return <ErrorState title="Dashboard belum dapat dimuat." description={error} action={<AsyncButton onClick={() => void reload()}>Coba lagi</AsyncButton>} />;
 
   return (
     <div className="space-y-5 sm:space-y-6">

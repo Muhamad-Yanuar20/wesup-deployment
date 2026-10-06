@@ -5,6 +5,18 @@ export interface RoleNavigationItem {
   label: string;
 }
 
+export function getActiveNavigationIndex(items: RoleNavigationItem[], pathname: string): number {
+  let activeIndex = -1;
+  items.forEach((item, index) => {
+    const exactOnly = item.href === "/" || item.href === "/supplier" || item.href === "/umkm";
+    const matches = pathname === item.href || (!exactOnly && pathname.startsWith(`${item.href}/`));
+    if (matches && (activeIndex === -1 || item.href.length > items[activeIndex].href.length)) {
+      activeIndex = index;
+    }
+  });
+  return activeIndex;
+}
+
 export function getRoleNavigationItems(
   accessState: UserAccessState | null,
 ): RoleNavigationItem[] {

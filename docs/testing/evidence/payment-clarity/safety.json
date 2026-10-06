@@ -1,0 +1,40 @@
+{
+  "orderId": "5e9a2512-a470-4ce1-a214-5468ac5375e9",
+  "batchId": "195597e9-ffd3-48c7-b3c3-9a8da5cfe751",
+  "evidence": [
+    {
+      "scenario": "duplicate_webhook",
+      "first": 200,
+      "second": 200,
+      "deduplicated": true
+    },
+    {
+      "scenario": "other_owner_hidden",
+      "status": 404
+    },
+    {
+      "scenario": "database_matches_browser",
+      "id": "5e9a2512-a470-4ce1-a214-5468ac5375e9",
+      "status": "paid",
+      "final_amount": "9000.00",
+      "locked_price_per_unit": "9000.00",
+      "payment_status": "paid",
+      "gross_amount": "9000.00",
+      "attempt_status": "paid",
+      "provider_status": "settlement",
+      "provider_checked_at": "2026-09-30T21:40:00.829Z",
+      "escrow_count": 1,
+      "payment_opening_policy": "capacity_or_cutoff",
+      "close_reason": "capacity_reached",
+      "registration_closes_at": "2026-10-01T21:35:10.755Z",
+      "effective_payment_opens_at": "2026-09-30T21:35:20.708Z",
+      "effective_payment_closes_at": "2026-10-01T21:35:20.708Z",
+      "estimated_ready_at": "2026-10-04T01:00:00.000Z",
+      "pickup_ends_at": "2026-10-04T13:00:00.000Z"
+    },
+    {
+      "scenario": "early_readiness_does_not_advance_pickup",
+      "passed": true
+    }
+  ]
+}

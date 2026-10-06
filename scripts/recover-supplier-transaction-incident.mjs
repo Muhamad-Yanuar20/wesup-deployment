@@ -23,6 +23,7 @@ export function isRecoveryCandidate(input) {
   const now = Date.parse(input.now ?? "");
   if (!Number.isFinite(cutoff) || !Number.isFinite(now) || cutoff > now) return { eligible: false, reason: "CUTOFF_NOT_REACHED" };
   if (Number(input.registeredOrderCount) < 1) return { eligible: false, reason: "NO_REGISTERED_ORDERS" };
+  if (Number(input.registeredOrderCount) > 100) return { eligible: false, reason: "RECOVERY_ROW_LIMIT" };
   if (Number(input.nonRegisteredOrderCount) > 0) return { eligible: false, reason: "ORDER_STATE_CONFLICT" };
   if (Number(input.existingPaymentCount) > 0) return { eligible: false, reason: "PAYMENT_ALREADY_EXISTS" };
   return { eligible: true };
@@ -97,6 +98,7 @@ export async function recoverSupplierPaymentWindows(client, batchIds, { apply = 
   if (!Array.isArray(batchIds) || batchIds.length === 0) throw new Error("at least one batch id is required");
   if (batchIds.some((id) => !BATCH_ID_PATTERN.test(id))) throw new Error("invalid batch id");
   const uniqueBatchIds = [...new Set(batchIds)];
+  if (uniqueBatchIds.length > 10 || uniqueBatchIds.length !== batchIds.length) throw new Error("provide at most 10 unique explicit batch ids");
   await client.query("begin");
   try {
     await client.query("select pg_advisory_xact_lock(hashtext($1))", ["wesup:supplier-payment-window-recovery"]);

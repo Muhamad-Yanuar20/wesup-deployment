@@ -60,6 +60,7 @@ function mockSearchClient(options: {
     error: options.rpcError ?? null,
   }));
   const from = vi.fn((table: string) => {
+    if (table === "batches") return { select: vi.fn(() => ({ in: vi.fn(async () => ({ data: [], error: null })) })) };
     if (table === "profiles") {
       return {
         select: vi.fn(() => ({
@@ -83,6 +84,15 @@ function getReq(query: string): NextRequest {
 }
 
 describe("GET /api/marketplace/search", () => {
+  it.each([0,1,12])("uses one search RPC and at most one bulk context read for %s results",async count=>{
+    const rows=Array.from({length:count},(_,i)=>({id:`b${i}`,title:"Beras",total_count:count}));
+    const {rpc,client}=mockSearchClient({rows,user:null});
+    const bulk=vi.fn(async()=>({data:rows.map(r=>({id:r.id,transaction_policy_version:2,unit:"kg",capacity_quantity:100,payment_opening_policy:"capacity_or_cutoff",registration_closed_at:"2026-10-01T01:00:00Z",batch_timeline:{effective_payment_opens_at:"2026-10-01T01:00:00Z",effective_payment_closes_at:"2026-10-02T01:00:00Z",payment_opens_at:"2026-10-02",payment_closes_at:"2026-10-03",estimated_ready_at:"2026-10-04",pickup_ends_at:"2026-10-05"}})),error:null}));
+    const original=client.from;client.from=vi.fn((table:string)=>table==="batches"?{select:()=>({in:bulk})}:original(table)) as typeof client.from;
+    const response=await searchBatches(getReq(""));expect(response.status).toBe(200);expect(rpc).toHaveBeenCalledTimes(1);expect(bulk).toHaveBeenCalledTimes(count?1:0);
+    if(count)expect((await response.json()).items[0]).toMatchObject({policyVersion:2,unit:"kg",capacityQuantity:100,paymentOpeningPolicy:"capacity_or_cutoff",registrationClosesAt:"2026-10-01T01:00:00Z",paymentOpensAt:"2026-10-01T01:00:00Z",paymentClosesAt:"2026-10-02T01:00:00Z",pickupStartsAt:"2026-10-04",pickupEndsAt:"2026-10-05"});
+  });
+
   beforeEach(() => {
     mockGetServerClient.mockReset();
     vi.mocked(enforceRateLimit).mockReset();

@@ -1,0 +1,20 @@
+{
+  "batchId": "a27482d5-cb49-4137-93f4-56a9a3ea845f",
+  "results": [
+    {
+      "http": 409,
+      "code": "55000"
+    },
+    {
+      "http": 201,
+      "orderId": "63db3fc8-87b5-4b57-a05a-b5aed8475363",
+      "phase": "payment_open",
+      "batchClosed": true
+    }
+  ],
+  "retry": {
+    "http": 201,
+    "orderId": "63db3fc8-87b5-4b57-a05a-b5aed8475363",
+    "batchClosed": true
+  }
+}

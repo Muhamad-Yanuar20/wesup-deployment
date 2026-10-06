@@ -339,6 +339,8 @@ Objects are never hard-deleted with their rows. The app moves a file to `archive
 
 ## 6. Key Design Patterns
 
+Transaction UX v2 adds private partial supplier drafts, explicit pickup ranges and replacement consent, cancellation reasons, verified payment exemptions, and Admin support resolution. Existing batches remain on policy version 1. See [transaction UX v2](transaction-ux-v2.md) for the schema contract, ownership rules and migration rollout.
+
 1. **URL-in-column, object-in-bucket** — tables never store blobs; they store paths, so storage and DB scale independently.
 2. **RLS everywhere** — every table + `storage.objects` is row-level secured; `security definer` helper functions (`is_admin`, `storage_is_batch_supplier`, …) keep checks DRY and bypass RLS only inside the check.
 3. **Status as enum state machines** — lifecycle is enforced by enum values + API Gatekeeper timestamps, not cron jobs (lazy evaluation, PRD 3.1).

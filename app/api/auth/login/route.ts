@@ -6,8 +6,8 @@ import {
   LOGIN_REDIRECT_BY_ROLE,
   parseLoginPayload,
 } from "@/lib/auth/login-contract";
-import { sanitizeReturnTo } from "@/lib/auth/access-state";
-import { getCurrentUser, maybeLiftExpiredTemporarySuspension } from "@/lib/supabase/auth";
+import { getAccessStateForUser, type AccessStateClient, sanitizeReturnTo } from "@/lib/auth/access-state";
+import { getUserProfile, maybeLiftExpiredTemporarySuspension, toAuthResponse } from "@/lib/supabase/auth";
 import type { AuthClient, RpcLiftClient } from "@/lib/supabase/auth";
 import { getServerClient } from "@/lib/supabase/server";
 import type { VerificationStatus } from "@/types/database";
@@ -16,6 +16,9 @@ import { enforceRateLimit } from "@/lib/rate-limit";
 export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
+  try { return await login(request); } catch (error) { return toAuthResponse(error); }
+}
+async function login(request: NextRequest) {
   const limited = await enforceRateLimit(request, "login");
   if (limited) return limited;
 
@@ -51,7 +54,7 @@ export async function POST(request: NextRequest) {
 
   let context;
   try {
-    context = await getCurrentUser(client as unknown as AuthClient);
+    context = await getUserProfile(client as unknown as AuthClient, data.user);
   } catch {
     await client.auth.signOut();
     return NextResponse.json(
@@ -80,6 +83,12 @@ export async function POST(request: NextRequest) {
   );
 
   if (context.status !== "active") {
+    // A suspension blocks transactions, but must not block an appeal.
+    const readReturnTo=sanitizeReturnTo(returnTo,'umkm');
+    const isReadOnlyReturn=readReturnTo==='/bantuan'||Boolean(readReturnTo&&/^\/umkm\/pesanan(?:\/[a-fA-F0-9-]{36})?(?:[?#].*)?$/.test(readReturnTo));
+    if(isReadOnlyReturn&&context.role==='umkm'&&selectedRole==='umkm'&&['suspended_temporary','suspended_permanent'].includes(context.status)) {
+      return NextResponse.json({user:{email:context.email},profile:{role:context.role,status:context.status,fullName:context.fullName},redirectTo:readReturnTo,accessState:await getAccessStateForUser(client as unknown as AccessStateClient,context)});
+    }
     const errorMessage = getAccountStatusMessage(context.status);
     await client.auth.signOut();
     return NextResponse.json(
@@ -135,7 +144,9 @@ export async function POST(request: NextRequest) {
     ? null
     : sanitizeReturnTo(returnTo, context.role);
 
+  const accessState = await getAccessStateForUser(client as unknown as AccessStateClient, context, verificationStatus ?? undefined);
   return NextResponse.json({
+    accessState,
     user: { email: context.email },
     profile: {
       role: context.role,

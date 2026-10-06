@@ -1,0 +1,3796 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v4.1.11 C:/Users/hpyan/Project/wesup
+
+ ❯ tests/unit/api-auth.test.ts (26 tests | 2 failed) 70ms
+     × returns 401 when getUser fails 6ms
+     × returns 401 when the profile lookup fails 2ms
+ ❯ tests/components/NavigationSession.test.tsx (10 tests | 3 failed) 4237ms
+     × clears workspace links after an authoritative 401 1045ms
+     × clears workspace links after an authoritative 403 1023ms
+     × prevents a stale session response from restoring links after logout 1070ms
+ ❯ tests/components/NavigationBar.test.tsx (8 tests | 8 failed) 8329ms
+     × only highlights Katalog on /supplier/catalog in both navigation bars 1075ms
+     × only highlights Katalog on /supplier/catalog/new in both navigation bars 1034ms
+     × only highlights Katalog on /supplier/catalog/offer-id/edit in both navigation bars 1017ms
+     × does not highlight the dashboard for an unrelated supplier route 1023ms
+     × only highlights Pesanan for a nested UMKM order 1017ms
+     × chooses Status alone when pending supplier links have the same URL 1023ms
+     × shows public links without exposing role workspaces to guests 1094ms
+     × switches to approved Supplier navigation from the session access state 1044ms
+ ❯ tests/unit/api-login.test.ts (12 tests | 2 failed) 52ms
+     × returns the signed-in user and active profile 19ms
+     × allows an approved supplier whose profile role is supplier 3ms
+ ❯ tests/unit/auth.test.ts (21 tests | 2 failed) 48ms
+     × returns null when getUser fails 10ms
+     × returns null when the profile lookup fails 2ms
+ ❯ tests/unit/api-login-suspension-lift.test.ts (7 tests | 2 failed) 39ms
+     × does not call the RPC for an already-active account 16ms
+     × lets an expired temporary suspension log in once the RPC reports lifted 3ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 19 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/components/NavigationBar.test.tsx > NavigationBar > only highlights Katalog on /supplier/catalog in both navigation bars
+ FAIL  tests/components/NavigationBar.test.tsx > NavigationBar > only highlights Katalog on /supplier/catalog/new in both navigation bars
+ FAIL  tests/components/NavigationBar.test.tsx > NavigationBar > only highlights Katalog on /supplier/catalog/offer-id/edit in both navigation bars
+TestingLibraryElementError: Unable to find role="link" and name "Katalog"
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <header
+      class="sticky top-0 z-40 w-full border-b border-slate-200/90 bg-white/90 shadow-[0_1px_10px_rgb(15_23_42/0.04)]"
+    >
+      <div
+        class="mx-auto flex min-h-16 w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8"
+      >
+        <a
+          aria-label="Wesup - Kembali ke Beranda"
+          class="flex items-center gap-2 text-slate-900 transition-opacity hover:opacity-80"
+          href="/"
+        >
+          <span
+            aria-hidden="true"
+            class="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-sm font-bold text-white shadow-sm shadow-blue-600/20"
+          >
+            W
+          </span>
+          <span
+            class="text-lg font-extrabold tracking-tight"
+          >
+            Wesup
+          </span>
+        </a>
+        <nav
+          aria-label="Navigasi utama"
+          class="hidden items-center gap-1 lg:flex"
+        >
+          <a
+            class="flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+            href="/"
+          >
+            <span
+              class="flex items-center gap-1"
+            >
+              <svg
+                aria-hidden="true"
+                class="h-4 w-4 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M3 12l9-9 9 9M4 10v10a1 1 0 001 1h5V14h4v7h5a1 1 0 001-1V10"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </span>
+            <span>
+              Beranda
+            </span>
+          </a>
+          <a
+            class="flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+            href="/marketplace"
+          >
+            <span
+              class="flex items-center gap-1"
+            >
+              <svg
+                aria-hidden="true"
+                class="h-4 w-4 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M3 3h18l-2 9H5L3 3zM5 12v7a1 1 0 001 1h12a1 1 0 001-1v-7"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </span>
+            <span>
+              Marketplace
+            </span>
+          </a>
+          <a
+            class="flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+            href="/login"
+          >
+            <span
+              class="flex items-center gap-1"
+            >
+              <svg
+                aria-hidden="true"
+                class="h-4 w-4 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </span>
+            <span>
+              Masuk
+            </span>
+          </a>
+          <a
+            class="flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+            href="/register"
+          >
+            <span
+              class="flex items-center gap-1"
+            >
+              <svg
+                aria-hidden="true"
+                class="h-4 w-4 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </span>
+            <span>
+              Daftar
+            </span>
+          </a>
+        </nav>
+        <div
+          aria-label="Navigasi cepat"
+          class="flex items-center gap-2 text-xs font-semibold text-slate-500 lg:hidden"
+        >
+          <span
+            class="rounded-full bg-slate-100 px-2.5 py-1"
+          >
+            Menu
+          </span>
+        </div>
+      </div>
+      <nav
+        aria-label="Navigasi bawah (mobile)"
+        class="fixed inset-x-0 bottom-0 z-40 flex items-stretch justify-around gap-1 border-t border-slate-200/90 bg-white/95 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 shadow-[0_-4px_16px_rgb(15_23_42/0.06)] backdrop-blur-md lg:hidden"
+      >
+        <a
+          class="flex min-h-11 flex-1 flex-col items-center justify-center min-w-0 gap-0.5 rounded-xl py-1.5 text-[10px] font-semibold transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+          href="/"
+        >
+          <span
+            class="flex items-center gap-1"
+          >
+            <svg
+              aria-hidden="true"
+              class="h-4 w-4 shrink-0"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M3 12l9-9 9 9M4 10v10a1 1 0 001 1h5V14h4v7h5a1 1 0 001-1V10"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </span>
+          <span>
+            Beranda
+          </span>
+        </a>
+        <a
+          class="flex min-h-11 flex-1 flex-col items-center justify-center min-w-0 gap-0.5 rounded-xl py-1.5 text-[10px] font-semibold transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+          href="/marketplace"
+        >
+          <span
+            class="flex items-center gap-1"
+          >
+            <svg
+              aria-hidden="true"
+              class="h-4 w-4 shrink-0"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M3 3h18l-2 9H5L3 3zM5 12v7a1 1 0 001 1h12a1 1 0 001-1v-7"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </span>
+          <span>
+            Marketplace
+          </span>
+        </a>
+        <a
+          class="flex min-h-11 flex-1 flex-col items-center justify-center min-w-0 gap-0.5 rounded-xl py-1.5 text-[10px] font-semibold transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+          href="/login"
+        >
+          <span
+            class="flex items-center gap-1"
+          >
+            <svg
+              aria-hidden="true"
+              class="h-4 w-4 shrink-0"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </span>
+          <span>
+            Masuk
+          </span>
+        </a>
+        <a
+          class="flex min-h-11 flex-1 flex-col items-center justify-center min-w-0 gap-0.5 rounded-xl py-1.5 text-[10px] font-semibold transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+          href="/register"
+        >
+          <span
+            class="flex items-center gap-1"
+          >
+            <svg
+              aria-hidden="true"
+              class="h-4 w-4 shrink-0"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </span>
+          <span>
+            Daftar
+          </span>
+        </a>
+      </nav>
+    </header>
+    <div
+      aria-label="Umpan balik aktivitas"
+      class="wesup-toast-region"
+    />
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <header
+        class="sticky top-0 z-40 w-full border-b border-slate-200/90 bg-white/90 shadow-[0_1px_10px_rgb(15_23_42/0.04)]"
+      >
+        <div
+          class="mx-auto flex min-h-16 w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8"
+        >
+          <a
+            aria-label="Wesup - Kembali ke Beranda"
+            class="flex items-center gap-2 text-slate-900 transition-opacity hover:opacity-80"
+            href="/"
+          >
+            <span
+              aria-hidden="true"
+              class="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-sm font-bold text-white shadow-sm shadow-blue-600/20"
+            >
+              W
+            </span>
+            <span
+              class="text-lg font-extrabold tracking-tight"
+            >
+              Wesup
+            </span>
+          </a>
+          <nav
+            aria-label="Navigasi utama"
+            class="hidden items-center gap-1 lg:flex"
+          >
+            <a
+              class="flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+              href="/"
+            >
+              <span
+                class="flex items-center gap-1"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="h-4 w-4 shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M3 12l9-9 9 9M4 10v10a1 1 0 001 1h5V14h4v7h5a1 1 0 001-1V10"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </span>
+              <span>
+                Beranda
+              </span>
+            </a>
+            <a
+              class="flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+              href="/marketplace"
+            >
+              <span
+                class="flex items-center gap-1"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="h-4 w-4 shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M3 3h18l-2 9H5L3 3zM5 12v7a1 1 0 001 1h12a1 1 0 001-1v-7"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </span>
+              <span>
+                Marketplace
+              </span>
+            </a>
+            <a
+              class="flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+              href="/login"
+            >
+              <span
+                class="flex items-center gap-1"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="h-4 w-4 shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </span>
+              <span>
+                Masuk
+              </span>
+            </a>
+            <a
+              class="flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+              href="/register"
+            >
+              <span
+                class="flex items-center gap-1"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="h-4 w-4 shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </span>
+              <span>
+                Daftar
+              </span>
+            </a>
+          </nav>
+          <div
+            aria-label="Navigasi cepat"
+            class="flex items-center gap-2 text-xs font-semibold text-slate-500 lg:hidden"
+          >
+            <span
+              class="rounded-full bg-slate-100 px-2.5 py-1"
+            >
+              Menu
+            </span>
+          </div>
+        </div>
+        <nav
+          aria-label="Navigasi bawah (mobile)"
+          class="fixed inset-x-0 bottom-0 z-40 flex items-stretch justify-around gap-1 border-t border-slate-200/90 bg-white/95 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 shadow-[0_-4px_16px_rgb(15_23_42/0.06)] backdrop-blur-md lg:hidden"
+        >
+          <a
+            class="flex min-h-11 flex-1 flex-col items-center justify-center min-w-0 gap-0.5 rounded-xl py-1.5 text-[10px] font-semibold transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+            href="/"
+          >
+            <span
+              class="flex items-center gap-1"
+            >
+              <svg
+                aria-hidden="true"
+                class="h-4 w-4 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M3 12l9-9 9 9M4 10v10a1 1 0 001 1h5V14h4v7h5a1 1 0 001-1V10"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </span>
+            <span>
+              Beranda
+            </span>
+          </a>
+          <a
+            class="flex min-h-11 flex-1 flex-col items-center justify-center min-w-0 gap-0.5 rounded-xl py-1.5 text-[10px] font-semibold transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+            href="/marketplace"
+          >
+            <span
+              class="flex items-center gap-1"
+            >
+              <svg
+                aria-hidden="true"
+                class="h-4 w-4 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M3 3h18l-2 9H5L3 3zM5 12v7a1 1 0 001 1h12a1 1 0 001-1v-7"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </span>
+            <span>
+              Marketplace
+            </span>
+          </a>
+          <a
+            class="flex min-h-11 flex-1 flex-col items-center justify-center min-w-0 gap-0.5 rounded-xl py-1.5 text-[10px] font-semibold transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+            href="/login"
+          >
+            <span
+              class="flex items-center gap-1"
+            >
+              <svg
+                aria-hidden="true"
+                class="h-4 w-4 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </span>
+            <span>
+              Masuk
+            </span>
+          </a>
+          <a
+            class="flex min-h-11 flex-1 flex-col items-center justify-center min-w-0 gap-0.5 rounded-xl py-1.5 text-[10px] font-semibold transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+            href="/register"
+          >
+            <span
+              class="flex items-center gap-1"
+            >
+              <svg
+                aria-hidden="true"
+                class="h-4 w-4 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </span>
+            <span>
+              Daftar
+            </span>
+          </a>
+        </nav>
+      </header>
+      <div
+        aria-label="Umpan balik aktivitas"
+        class="wesup-toast-region"
+      />
+    </div>
+  </body>
+</html>
+ ❯ Proxy.waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ tests/components/NavigationBar.test.tsx:31:13
+     29|       }), { status: 200 }));
+     30|       render(<NavigationBar />);
+     31|       await waitFor(() => expect(screen.getAllByRole("link", { name: "…
+       |             ^
+     32|       for (const nav of screen.getAllByRole("navigation")) {
+     33|         expect(nav.querySelectorAll('[aria-current="page"]')).toHaveLe…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/19]⎯
+
+ FAIL  tests/components/NavigationBar.test.tsx > NavigationBar > does not highlight the dashboard for an unrelated supplier route
+TestingLibraryElementError: Unable to find role="link" and name "Katalog"
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <header
+      class="sticky top-0 z-40 w-full border-b border-slate-200/90 bg-white/90 shadow-[0_1px_10px_rgb(15_23_42/0.04)]"
+    >
+      <div
+        class="mx-auto flex min-h-16 w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8"
+      >
+        <a
+          aria-label="Wesup - Kembali ke Beranda"
+          class="flex items-center gap-2 text-slate-900 transition-opacity hover:opacity-80"
+          href="/"
+        >
+          <span
+            aria-hidden="true"
+            class="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-sm font-bold text-white shadow-sm shadow-blue-600/20"
+          >
+            W
+          </span>
+          <span
+            class="text-lg font-extrabold tracking-tight"
+          >
+            Wesup
+          </span>
+        </a>
+        <nav
+          aria-label="Navigasi utama"
+          class="hidden items-center gap-1 lg:flex"
+        >
+          <a
+            class="flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+            href="/"
+          >
+            <span
+              class="flex items-center gap-1"
+            >
+              <svg
+                aria-hidden="true"
+                class="h-4 w-4 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M3 12l9-9 9 9M4 10v10a1 1 0 001 1h5V14h4v7h5a1 1 0 001-1V10"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </span>
+            <span>
+              Beranda
+            </span>
+          </a>
+          <a
+            class="flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+            href="/marketplace"
+          >
+            <span
+              class="flex items-center gap-1"
+            >
+              <svg
+                aria-hidden="true"
+                class="h-4 w-4 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M3 3h18l-2 9H5L3 3zM5 12v7a1 1 0 001 1h12a1 1 0 001-1v-7"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </span>
+            <span>
+              Marketplace
+            </span>
+          </a>
+          <a
+            class="flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+            href="/login"
+          >
+            <span
+              class="flex items-center gap-1"
+            >
+              <svg
+                aria-hidden="true"
+                class="h-4 w-4 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </span>
+            <span>
+              Masuk
+            </span>
+          </a>
+          <a
+            class="flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+            href="/register"
+          >
+            <span
+              class="flex items-center gap-1"
+            >
+              <svg
+                aria-hidden="true"
+                class="h-4 w-4 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </span>
+            <span>
+              Daftar
+            </span>
+          </a>
+        </nav>
+        <div
+          aria-label="Navigasi cepat"
+          class="flex items-center gap-2 text-xs font-semibold text-slate-500 lg:hidden"
+        >
+          <span
+            class="rounded-full bg-slate-100 px-2.5 py-1"
+          >
+            Menu
+          </span>
+        </div>
+      </div>
+      <nav
+        aria-label="Navigasi bawah (mobile)"
+        class="fixed inset-x-0 bottom-0 z-40 flex items-stretch justify-around gap-1 border-t border-slate-200/90 bg-white/95 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 shadow-[0_-4px_16px_rgb(15_23_42/0.06)] backdrop-blur-md lg:hidden"
+      >
+        <a
+          class="flex min-h-11 flex-1 flex-col items-center justify-center min-w-0 gap-0.5 rounded-xl py-1.5 text-[10px] font-semibold transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+          href="/"
+        >
+          <span
+            class="flex items-center gap-1"
+          >
+            <svg
+              aria-hidden="true"
+              class="h-4 w-4 shrink-0"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M3 12l9-9 9 9M4 10v10a1 1 0 001 1h5V14h4v7h5a1 1 0 001-1V10"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </span>
+          <span>
+            Beranda
+          </span>
+        </a>
+        <a
+          class="flex min-h-11 flex-1 flex-col items-center justify-center min-w-0 gap-0.5 rounded-xl py-1.5 text-[10px] font-semibold transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+          href="/marketplace"
+        >
+          <span
+            class="flex items-center gap-1"
+          >
+            <svg
+              aria-hidden="true"
+              class="h-4 w-4 shrink-0"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M3 3h18l-2 9H5L3 3zM5 12v7a1 1 0 001 1h12a1 1 0 001-1v-7"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </span>
+          <span>
+            Marketplace
+          </span>
+        </a>
+        <a
+          class="flex min-h-11 flex-1 flex-col items-center justify-center min-w-0 gap-0.5 rounded-xl py-1.5 text-[10px] font-semibold transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+          href="/login"
+        >
+          <span
+            class="flex items-center gap-1"
+          >
+            <svg
+              aria-hidden="true"
+              class="h-4 w-4 shrink-0"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </span>
+          <span>
+            Masuk
+          </span>
+        </a>
+        <a
+          class="flex min-h-11 flex-1 flex-col items-center justify-center min-w-0 gap-0.5 rounded-xl py-1.5 text-[10px] font-semibold transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+          href="/register"
+        >
+          <span
+            class="flex items-center gap-1"
+          >
+            <svg
+              aria-hidden="true"
+              class="h-4 w-4 shrink-0"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </span>
+          <span>
+            Daftar
+          </span>
+        </a>
+      </nav>
+    </header>
+    <div
+      aria-label="Umpan balik aktivitas"
+      class="wesup-toast-region"
+    />
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <header
+        class="sticky top-0 z-40 w-full border-b border-slate-200/90 bg-white/90 shadow-[0_1px_10px_rgb(15_23_42/0.04)]"
+      >
+        <div
+          class="mx-auto flex min-h-16 w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8"
+        >
+          <a
+            aria-label="Wesup - Kembali ke Beranda"
+            class="flex items-center gap-2 text-slate-900 transition-opacity hover:opacity-80"
+            href="/"
+          >
+            <span
+              aria-hidden="true"
+              class="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-sm font-bold text-white shadow-sm shadow-blue-600/20"
+            >
+              W
+            </span>
+            <span
+              class="text-lg font-extrabold tracking-tight"
+            >
+              Wesup
+            </span>
+          </a>
+          <nav
+            aria-label="Navigasi utama"
+            class="hidden items-center gap-1 lg:flex"
+          >
+            <a
+              class="flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+              href="/"
+            >
+              <span
+                class="flex items-center gap-1"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="h-4 w-4 shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M3 12l9-9 9 9M4 10v10a1 1 0 001 1h5V14h4v7h5a1 1 0 001-1V10"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </span>
+              <span>
+                Beranda
+              </span>
+            </a>
+            <a
+              class="flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+              href="/marketplace"
+            >
+              <span
+                class="flex items-center gap-1"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="h-4 w-4 shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M3 3h18l-2 9H5L3 3zM5 12v7a1 1 0 001 1h12a1 1 0 001-1v-7"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </span>
+              <span>
+                Marketplace
+              </span>
+            </a>
+            <a
+              class="flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+              href="/login"
+            >
+              <span
+                class="flex items-center gap-1"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="h-4 w-4 shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </span>
+              <span>
+                Masuk
+              </span>
+            </a>
+            <a
+              class="flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+              href="/register"
+            >
+              <span
+                class="flex items-center gap-1"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="h-4 w-4 shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </span>
+              <span>
+                Daftar
+              </span>
+            </a>
+          </nav>
+          <div
+            aria-label="Navigasi cepat"
+            class="flex items-center gap-2 text-xs font-semibold text-slate-500 lg:hidden"
+          >
+            <span
+              class="rounded-full bg-slate-100 px-2.5 py-1"
+            >
+              Menu
+            </span>
+          </div>
+        </div>
+        <nav
+          aria-label="Navigasi bawah (mobile)"
+          class="fixed inset-x-0 bottom-0 z-40 flex items-stretch justify-around gap-1 border-t border-slate-200/90 bg-white/95 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 shadow-[0_-4px_16px_rgb(15_23_42/0.06)] backdrop-blur-md lg:hidden"
+        >
+          <a
+            class="flex min-h-11 flex-1 flex-col items-center justify-center min-w-0 gap-0.5 rounded-xl py-1.5 text-[10px] font-semibold transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+            href="/"
+          >
+            <span
+              class="flex items-center gap-1"
+            >
+              <svg
+                aria-hidden="true"
+                class="h-4 w-4 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M3 12l9-9 9 9M4 10v10a1 1 0 001 1h5V14h4v7h5a1 1 0 001-1V10"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </span>
+            <span>
+              Beranda
+            </span>
+          </a>
+          <a
+            class="flex min-h-11 flex-1 flex-col items-center justify-center min-w-0 gap-0.5 rounded-xl py-1.5 text-[10px] font-semibold transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+            href="/marketplace"
+          >
+            <span
+              class="flex items-center gap-1"
+            >
+              <svg
+                aria-hidden="true"
+                class="h-4 w-4 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M3 3h18l-2 9H5L3 3zM5 12v7a1 1 0 001 1h12a1 1 0 001-1v-7"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </span>
+            <span>
+              Marketplace
+            </span>
+          </a>
+          <a
+            class="flex min-h-11 flex-1 flex-col items-center justify-center min-w-0 gap-0.5 rounded-xl py-1.5 text-[10px] font-semibold transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+            href="/login"
+          >
+            <span
+              class="flex items-center gap-1"
+            >
+              <svg
+                aria-hidden="true"
+                class="h-4 w-4 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </span>
+            <span>
+              Masuk
+            </span>
+          </a>
+          <a
+            class="flex min-h-11 flex-1 flex-col items-center justify-center min-w-0 gap-0.5 rounded-xl py-1.5 text-[10px] font-semibold transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+            href="/register"
+          >
+            <span
+              class="flex items-center gap-1"
+            >
+              <svg
+                aria-hidden="true"
+                class="h-4 w-4 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </span>
+            <span>
+              Daftar
+            </span>
+          </a>
+        </nav>
+      </header>
+      <div
+        aria-label="Umpan balik aktivitas"
+        class="wesup-toast-region"
+      />
+    </div>
+  </body>
+</html>
+ ❯ Proxy.waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ tests/components/NavigationBar.test.tsx:45:11
+     43|     }), { status: 200 }));
+     44|     render(<NavigationBar />);
+     45|     await waitFor(() => expect(screen.getAllByRole("link", { name: "Ka…
+       |           ^
+     46|     for (const nav of screen.getAllByRole("navigation")) {
+     47|       expect(nav.querySelector('[aria-current="page"]')).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/19]⎯
+
+ FAIL  tests/components/NavigationBar.test.tsx > NavigationBar > only highlights Pesanan for a nested UMKM order
+TestingLibraryElementError: Unable to find role="link" and name "Pesanan"
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <header
+      class="sticky top-0 z-40 w-full border-b border-slate-200/90 bg-white/90 shadow-[0_1px_10px_rgb(15_23_42/0.04)]"
+    >
+      <div
+        class="mx-auto flex min-h-16 w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8"
+      >
+        <a
+          aria-label="Wesup - Kembali ke Beranda"
+          class="flex items-center gap-2 text-slate-900 transition-opacity hover:opacity-80"
+          href="/"
+        >
+          <span
+            aria-hidden="true"
+            class="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-sm font-bold text-white shadow-sm shadow-blue-600/20"
+          >
+            W
+          </span>
+          <span
+            class="text-lg font-extrabold tracking-tight"
+          >
+            Wesup
+          </span>
+        </a>
+        <nav
+          aria-label="Navigasi utama"
+          class="hidden items-center gap-1 lg:flex"
+        >
+          <a
+            class="flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+            href="/"
+          >
+            <span
+              class="flex items-center gap-1"
+            >
+              <svg
+                aria-hidden="true"
+                class="h-4 w-4 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M3 12l9-9 9 9M4 10v10a1 1 0 001 1h5V14h4v7h5a1 1 0 001-1V10"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </span>
+            <span>
+              Beranda
+            </span>
+          </a>
+          <a
+            class="flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+            href="/marketplace"
+          >
+            <span
+              class="flex items-center gap-1"
+            >
+              <svg
+                aria-hidden="true"
+                class="h-4 w-4 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M3 3h18l-2 9H5L3 3zM5 12v7a1 1 0 001 1h12a1 1 0 001-1v-7"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </span>
+            <span>
+              Marketplace
+            </span>
+          </a>
+          <a
+            class="flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+            href="/login"
+          >
+            <span
+              class="flex items-center gap-1"
+            >
+              <svg
+                aria-hidden="true"
+                class="h-4 w-4 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </span>
+            <span>
+              Masuk
+            </span>
+          </a>
+          <a
+            class="flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+            href="/register"
+          >
+            <span
+              class="flex items-center gap-1"
+            >
+              <svg
+                aria-hidden="true"
+                class="h-4 w-4 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </span>
+            <span>
+              Daftar
+            </span>
+          </a>
+        </nav>
+        <div
+          aria-label="Navigasi cepat"
+          class="flex items-center gap-2 text-xs font-semibold text-slate-500 lg:hidden"
+        >
+          <span
+            class="rounded-full bg-slate-100 px-2.5 py-1"
+          >
+            Menu
+          </span>
+        </div>
+      </div>
+      <nav
+        aria-label="Navigasi bawah (mobile)"
+        class="fixed inset-x-0 bottom-0 z-40 flex items-stretch justify-around gap-1 border-t border-slate-200/90 bg-white/95 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 shadow-[0_-4px_16px_rgb(15_23_42/0.06)] backdrop-blur-md lg:hidden"
+      >
+        <a
+          class="flex min-h-11 flex-1 flex-col items-center justify-center min-w-0 gap-0.5 rounded-xl py-1.5 text-[10px] font-semibold transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+          href="/"
+        >
+          <span
+            class="flex items-center gap-1"
+          >
+            <svg
+              aria-hidden="true"
+              class="h-4 w-4 shrink-0"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M3 12l9-9 9 9M4 10v10a1 1 0 001 1h5V14h4v7h5a1 1 0 001-1V10"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </span>
+          <span>
+            Beranda
+          </span>
+        </a>
+        <a
+          class="flex min-h-11 flex-1 flex-col items-center justify-center min-w-0 gap-0.5 rounded-xl py-1.5 text-[10px] font-semibold transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+          href="/marketplace"
+        >
+          <span
+            class="flex items-center gap-1"
+          >
+            <svg
+              aria-hidden="true"
+              class="h-4 w-4 shrink-0"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M3 3h18l-2 9H5L3 3zM5 12v7a1 1 0 001 1h12a1 1 0 001-1v-7"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </span>
+          <span>
+            Marketplace
+          </span>
+        </a>
+        <a
+          class="flex min-h-11 flex-1 flex-col items-center justify-center min-w-0 gap-0.5 rounded-xl py-1.5 text-[10px] font-semibold transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+          href="/login"
+        >
+          <span
+            class="flex items-center gap-1"
+          >
+            <svg
+              aria-hidden="true"
+              class="h-4 w-4 shrink-0"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </span>
+          <span>
+            Masuk
+          </span>
+        </a>
+        <a
+          class="flex min-h-11 flex-1 flex-col items-center justify-center min-w-0 gap-0.5 rounded-xl py-1.5 text-[10px] font-semibold transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+          href="/register"
+        >
+          <span
+            class="flex items-center gap-1"
+          >
+            <svg
+              aria-hidden="true"
+              class="h-4 w-4 shrink-0"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </span>
+          <span>
+            Daftar
+          </span>
+        </a>
+      </nav>
+    </header>
+    <div
+      aria-label="Umpan balik aktivitas"
+      class="wesup-toast-region"
+    />
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <header
+        class="sticky top-0 z-40 w-full border-b border-slate-200/90 bg-white/90 shadow-[0_1px_10px_rgb(15_23_42/0.04)]"
+      >
+        <div
+          class="mx-auto flex min-h-16 w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8"
+        >
+          <a
+            aria-label="Wesup - Kembali ke Beranda"
+            class="flex items-center gap-2 text-slate-900 transition-opacity hover:opacity-80"
+            href="/"
+          >
+            <span
+              aria-hidden="true"
+              class="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-sm font-bold text-white shadow-sm shadow-blue-600/20"
+            >
+              W
+            </span>
+            <span
+              class="text-lg font-extrabold tracking-tight"
+            >
+              Wesup
+            </span>
+          </a>
+          <nav
+            aria-label="Navigasi utama"
+            class="hidden items-center gap-1 lg:flex"
+          >
+            <a
+              class="flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+              href="/"
+            >
+              <span
+                class="flex items-center gap-1"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="h-4 w-4 shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M3 12l9-9 9 9M4 10v10a1 1 0 001 1h5V14h4v7h5a1 1 0 001-1V10"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </span>
+              <span>
+                Beranda
+              </span>
+            </a>
+            <a
+              class="flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+              href="/marketplace"
+            >
+              <span
+                class="flex items-center gap-1"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="h-4 w-4 shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M3 3h18l-2 9H5L3 3zM5 12v7a1 1 0 001 1h12a1 1 0 001-1v-7"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </span>
+              <span>
+                Marketplace
+              </span>
+            </a>
+            <a
+              class="flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+              href="/login"
+            >
+              <span
+                class="flex items-center gap-1"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="h-4 w-4 shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </span>
+              <span>
+                Masuk
+              </span>
+            </a>
+            <a
+              class="flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+              href="/register"
+            >
+              <span
+                class="flex items-center gap-1"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="h-4 w-4 shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </span>
+              <span>
+                Daftar
+              </span>
+            </a>
+          </nav>
+          <div
+            aria-label="Navigasi cepat"
+            class="flex items-center gap-2 text-xs font-semibold text-slate-500 lg:hidden"
+          >
+            <span
+              class="rounded-full bg-slate-100 px-2.5 py-1"
+            >
+              Menu
+            </span>
+          </div>
+        </div>
+        <nav
+          aria-label="Navigasi bawah (mobile)"
+          class="fixed inset-x-0 bottom-0 z-40 flex items-stretch justify-around gap-1 border-t border-slate-200/90 bg-white/95 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 shadow-[0_-4px_16px_rgb(15_23_42/0.06)] backdrop-blur-md lg:hidden"
+        >
+          <a
+            class="flex min-h-11 flex-1 flex-col items-center justify-center min-w-0 gap-0.5 rounded-xl py-1.5 text-[10px] font-semibold transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+            href="/"
+          >
+            <span
+              class="flex items-center gap-1"
+            >
+              <svg
+                aria-hidden="true"
+                class="h-4 w-4 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M3 12l9-9 9 9M4 10v10a1 1 0 001 1h5V14h4v7h5a1 1 0 001-1V10"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </span>
+            <span>
+              Beranda
+            </span>
+          </a>
+          <a
+            class="flex min-h-11 flex-1 flex-col items-center justify-center min-w-0 gap-0.5 rounded-xl py-1.5 text-[10px] font-semibold transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+            href="/marketplace"
+          >
+            <span
+              class="flex items-center gap-1"
+            >
+              <svg
+                aria-hidden="true"
+                class="h-4 w-4 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M3 3h18l-2 9H5L3 3zM5 12v7a1 1 0 001 1h12a1 1 0 001-1v-7"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </span>
+            <span>
+              Marketplace
+            </span>
+          </a>
+          <a
+            class="flex min-h-11 flex-1 flex-col items-center justify-center min-w-0 gap-0.5 rounded-xl py-1.5 text-[10px] font-semibold transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+            href="/login"
+          >
+            <span
+              class="flex items-center gap-1"
+            >
+              <svg
+                aria-hidden="true"
+                class="h-4 w-4 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </span>
+            <span>
+              Masuk
+            </span>
+          </a>
+          <a
+            class="flex min-h-11 flex-1 flex-col items-center justify-center min-w-0 gap-0.5 rounded-xl py-1.5 text-[10px] font-semibold transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+            href="/register"
+          >
+            <span
+              class="flex items-center gap-1"
+            >
+              <svg
+                aria-hidden="true"
+                class="h-4 w-4 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </span>
+            <span>
+              Daftar
+            </span>
+          </a>
+        </nav>
+      </header>
+      <div
+        aria-label="Umpan balik aktivitas"
+        class="wesup-toast-region"
+      />
+    </div>
+  </body>
+</html>
+ ❯ Proxy.waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ tests/components/NavigationBar.test.tsx:57:11
+     55|     }), { status: 200 }));
+     56|     render(<NavigationBar />);
+     57|     await waitFor(() => expect(screen.getAllByRole("link", { name: "Pe…
+       |           ^
+     58|     for (const nav of screen.getAllByRole("navigation")) {
+     59|       expect(nav.querySelectorAll('[aria-current="page"]')).toHaveLeng…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/19]⎯
+
+ FAIL  tests/components/NavigationBar.test.tsx > NavigationBar > chooses Status alone when pending supplier links have the same URL
+TestingLibraryElementError: Unable to find role="link" and name "Status"
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <header
+      class="sticky top-0 z-40 w-full border-b border-slate-200/90 bg-white/90 shadow-[0_1px_10px_rgb(15_23_42/0.04)]"
+    >
+      <div
+        class="mx-auto flex min-h-16 w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8"
+      >
+        <a
+          aria-label="Wesup - Kembali ke Beranda"
+          class="flex items-center gap-2 text-slate-900 transition-opacity hover:opacity-80"
+          href="/"
+        >
+          <span
+            aria-hidden="true"
+            class="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-sm font-bold text-white shadow-sm shadow-blue-600/20"
+          >
+            W
+          </span>
+          <span
+            class="text-lg font-extrabold tracking-tight"
+          >
+            Wesup
+          </span>
+        </a>
+        <nav
+          aria-label="Navigasi utama"
+          class="hidden items-center gap-1 lg:flex"
+        >
+          <a
+            class="flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+            href="/"
+          >
+            <span
+              class="flex items-center gap-1"
+            >
+              <svg
+                aria-hidden="true"
+                class="h-4 w-4 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M3 12l9-9 9 9M4 10v10a1 1 0 001 1h5V14h4v7h5a1 1 0 001-1V10"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </span>
+            <span>
+              Beranda
+            </span>
+          </a>
+          <a
+            class="flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+            href="/marketplace"
+          >
+            <span
+              class="flex items-center gap-1"
+            >
+              <svg
+                aria-hidden="true"
+                class="h-4 w-4 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M3 3h18l-2 9H5L3 3zM5 12v7a1 1 0 001 1h12a1 1 0 001-1v-7"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </span>
+            <span>
+              Marketplace
+            </span>
+          </a>
+          <a
+            class="flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+            href="/login"
+          >
+            <span
+              class="flex items-center gap-1"
+            >
+              <svg
+                aria-hidden="true"
+                class="h-4 w-4 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </span>
+            <span>
+              Masuk
+            </span>
+          </a>
+          <a
+            class="flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+            href="/register"
+          >
+            <span
+              class="flex items-center gap-1"
+            >
+              <svg
+                aria-hidden="true"
+                class="h-4 w-4 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </span>
+            <span>
+              Daftar
+            </span>
+          </a>
+        </nav>
+        <div
+          aria-label="Navigasi cepat"
+          class="flex items-center gap-2 text-xs font-semibold text-slate-500 lg:hidden"
+        >
+          <span
+            class="rounded-full bg-slate-100 px-2.5 py-1"
+          >
+            Menu
+          </span>
+        </div>
+      </div>
+      <nav
+        aria-label="Navigasi bawah (mobile)"
+        class="fixed inset-x-0 bottom-0 z-40 flex items-stretch justify-around gap-1 border-t border-slate-200/90 bg-white/95 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 shadow-[0_-4px_16px_rgb(15_23_42/0.06)] backdrop-blur-md lg:hidden"
+      >
+        <a
+          class="flex min-h-11 flex-1 flex-col items-center justify-center min-w-0 gap-0.5 rounded-xl py-1.5 text-[10px] font-semibold transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+          href="/"
+        >
+          <span
+            class="flex items-center gap-1"
+          >
+            <svg
+              aria-hidden="true"
+              class="h-4 w-4 shrink-0"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M3 12l9-9 9 9M4 10v10a1 1 0 001 1h5V14h4v7h5a1 1 0 001-1V10"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </span>
+          <span>
+            Beranda
+          </span>
+        </a>
+        <a
+          class="flex min-h-11 flex-1 flex-col items-center justify-center min-w-0 gap-0.5 rounded-xl py-1.5 text-[10px] font-semibold transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+          href="/marketplace"
+        >
+          <span
+            class="flex items-center gap-1"
+          >
+            <svg
+              aria-hidden="true"
+              class="h-4 w-4 shrink-0"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M3 3h18l-2 9H5L3 3zM5 12v7a1 1 0 001 1h12a1 1 0 001-1v-7"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </span>
+          <span>
+            Marketplace
+          </span>
+        </a>
+        <a
+          class="flex min-h-11 flex-1 flex-col items-center justify-center min-w-0 gap-0.5 rounded-xl py-1.5 text-[10px] font-semibold transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+          href="/login"
+        >
+          <span
+            class="flex items-center gap-1"
+          >
+            <svg
+              aria-hidden="true"
+              class="h-4 w-4 shrink-0"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </span>
+          <span>
+            Masuk
+          </span>
+        </a>
+        <a
+          class="flex min-h-11 flex-1 flex-col items-center justify-center min-w-0 gap-0.5 rounded-xl py-1.5 text-[10px] font-semibold transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+          href="/register"
+        >
+          <span
+            class="flex items-center gap-1"
+          >
+            <svg
+              aria-hidden="true"
+              class="h-4 w-4 shrink-0"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </span>
+          <span>
+            Daftar
+          </span>
+        </a>
+      </nav>
+    </header>
+    <div
+      aria-label="Umpan balik aktivitas"
+      class="wesup-toast-region"
+    />
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <header
+        class="sticky top-0 z-40 w-full border-b border-slate-200/90 bg-white/90 shadow-[0_1px_10px_rgb(15_23_42/0.04)]"
+      >
+        <div
+          class="mx-auto flex min-h-16 w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8"
+        >
+          <a
+            aria-label="Wesup - Kembali ke Beranda"
+            class="flex items-center gap-2 text-slate-900 transition-opacity hover:opacity-80"
+            href="/"
+          >
+            <span
+              aria-hidden="true"
+              class="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-sm font-bold text-white shadow-sm shadow-blue-600/20"
+            >
+              W
+            </span>
+            <span
+              class="text-lg font-extrabold tracking-tight"
+            >
+              Wesup
+            </span>
+          </a>
+          <nav
+            aria-label="Navigasi utama"
+            class="hidden items-center gap-1 lg:flex"
+          >
+            <a
+              class="flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+              href="/"
+            >
+              <span
+                class="flex items-center gap-1"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="h-4 w-4 shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M3 12l9-9 9 9M4 10v10a1 1 0 001 1h5V14h4v7h5a1 1 0 001-1V10"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </span>
+              <span>
+                Beranda
+              </span>
+            </a>
+            <a
+              class="flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+              href="/marketplace"
+            >
+              <span
+                class="flex items-center gap-1"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="h-4 w-4 shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M3 3h18l-2 9H5L3 3zM5 12v7a1 1 0 001 1h12a1 1 0 001-1v-7"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </span>
+              <span>
+                Marketplace
+              </span>
+            </a>
+            <a
+              class="flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+              href="/login"
+            >
+              <span
+                class="flex items-center gap-1"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="h-4 w-4 shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </span>
+              <span>
+                Masuk
+              </span>
+            </a>
+            <a
+              class="flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+              href="/register"
+            >
+              <span
+                class="flex items-center gap-1"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="h-4 w-4 shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </span>
+              <span>
+                Daftar
+              </span>
+            </a>
+          </nav>
+          <div
+            aria-label="Navigasi cepat"
+            class="flex items-center gap-2 text-xs font-semibold text-slate-500 lg:hidden"
+          >
+            <span
+              class="rounded-full bg-slate-100 px-2.5 py-1"
+            >
+              Menu
+            </span>
+          </div>
+        </div>
+        <nav
+          aria-label="Navigasi bawah (mobile)"
+          class="fixed inset-x-0 bottom-0 z-40 flex items-stretch justify-around gap-1 border-t border-slate-200/90 bg-white/95 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 shadow-[0_-4px_16px_rgb(15_23_42/0.06)] backdrop-blur-md lg:hidden"
+        >
+          <a
+            class="flex min-h-11 flex-1 flex-col items-center justify-center min-w-0 gap-0.5 rounded-xl py-1.5 text-[10px] font-semibold transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+            href="/"
+          >
+            <span
+              class="flex items-center gap-1"
+            >
+              <svg
+                aria-hidden="true"
+                class="h-4 w-4 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M3 12l9-9 9 9M4 10v10a1 1 0 001 1h5V14h4v7h5a1 1 0 001-1V10"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </span>
+            <span>
+              Beranda
+            </span>
+          </a>
+          <a
+            class="flex min-h-11 flex-1 flex-col items-center justify-center min-w-0 gap-0.5 rounded-xl py-1.5 text-[10px] font-semibold transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+            href="/marketplace"
+          >
+            <span
+              class="flex items-center gap-1"
+            >
+              <svg
+                aria-hidden="true"
+                class="h-4 w-4 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M3 3h18l-2 9H5L3 3zM5 12v7a1 1 0 001 1h12a1 1 0 001-1v-7"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </span>
+            <span>
+              Marketplace
+            </span>
+          </a>
+          <a
+            class="flex min-h-11 flex-1 flex-col items-center justify-center min-w-0 gap-0.5 rounded-xl py-1.5 text-[10px] font-semibold transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+            href="/login"
+          >
+            <span
+              class="flex items-center gap-1"
+            >
+              <svg
+                aria-hidden="true"
+                class="h-4 w-4 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </span>
+            <span>
+              Masuk
+            </span>
+          </a>
+          <a
+            class="flex min-h-11 flex-1 flex-col items-center justify-center min-w-0 gap-0.5 rounded-xl py-1.5 text-[10px] font-semibold transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+            href="/register"
+          >
+            <span
+              class="flex items-center gap-1"
+            >
+              <svg
+                aria-hidden="true"
+                class="h-4 w-4 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </span>
+            <span>
+              Daftar
+            </span>
+          </a>
+        </nav>
+      </header>
+      <div
+        aria-label="Umpan balik aktivitas"
+        class="wesup-toast-region"
+      />
+    </div>
+  </body>
+</html>
+ ❯ Proxy.waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ tests/components/NavigationBar.test.tsx:70:11
+     68|     }), { status: 200 }));
+     69|     render(<NavigationBar />);
+     70|     await waitFor(() => expect(screen.getAllByRole("link", { name: "St…
+       |           ^
+     71|     for (const nav of screen.getAllByRole("navigation")) {
+     72|       expect(nav.querySelectorAll('[aria-current="page"]')).toHaveLeng…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/19]⎯
+
+ FAIL  tests/components/NavigationBar.test.tsx > NavigationBar > shows public links without exposing role workspaces to guests
+AssertionError: expected "vi.fn()" to be called with arguments: [ '/api/auth/session', Anything ]
+
+Number of calls: 0
+
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <header
+        class="sticky top-0 z-40 w-full border-b border-slate-200/90 bg-white/90 shadow-[0_1px_10px_rgb(15_23_42/0.04)]"
+      >
+        <div
+          class="mx-auto flex min-h-16 w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8"
+        >
+          <a
+            aria-label="Wesup - Kembali ke Beranda"
+            class="flex items-center gap-2 text-slate-900 transition-opacity hover:opacity-80"
+            href="/"
+          >
+            <span
+              aria-hidden="true"
+              class="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-sm font-bold text-white shadow-sm shadow-blue-600/20"
+            >
+              W
+            </span>
+            <span
+              class="text-lg font-extrabold tracking-tight"
+            >
+              Wesup
+            </span>
+          </a>
+          <nav
+            aria-label="Navigasi utama"
+            class="hidden items-center gap-1 lg:flex"
+          >
+            <a
+              aria-current="page"
+              class="flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors bg-blue-50 text-blue-700 shadow-sm"
+              href="/"
+            >
+              <span
+                class="flex items-center gap-1 text-blue-700"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="h-4 w-4 shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M3 12l9-9 9 9M4 10v10a1 1 0 001 1h5V14h4v7h5a1 1 0 001-1V10"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </span>
+              <span>
+                Beranda
+              </span>
+            </a>
+            <a
+              class="flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+              href="/marketplace"
+            >
+              <span
+                class="flex items-center gap-1"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="h-4 w-4 shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M3 3h18l-2 9H5L3 3zM5 12v7a1 1 0 001 1h12a1 1 0 001-1v-7"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </span>
+              <span>
+                Marketplace
+              </span>
+            </a>
+            <a
+              class="flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+              href="/login"
+            >
+              <span
+                class="flex items-center gap-1"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="h-4 w-4 shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </span>
+              <span>
+                Masuk
+              </span>
+            </a>
+            <a
+              class="flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+              href="/register"
+            >
+              <span
+                class="flex items-center gap-1"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="h-4 w-4 shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </span>
+              <span>
+                Daftar
+              </span>
+            </a>
+          </nav>
+          <div
+            aria-label="Navigasi cepat"
+            class="flex items-center gap-2 text-xs font-semibold text-slate-500 lg:hidden"
+          >
+            <span
+              class="rounded-full bg-slate-100 px-2.5 py-1"
+            >
+              Menu
+            </span>
+          </div>
+        </div>
+        <nav
+          aria-label="Navigasi bawah (mobile)"
+          class="fixed inset-x-0 bottom-0 z-40 flex items-stretch justify-around gap-1 border-t border-slate-200/90 bg-white/95 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 shadow-[0_-4px_16px_rgb(15_23_42/0.06)] backdrop-blur-md lg:hidden"
+        >
+          <a
+            aria-current="page"
+            class="flex min-h-11 flex-1 flex-col items-center justify-center min-w-0 gap-0.5 rounded-xl py-1.5 text-[10px] font-semibold transition-colors bg-blue-50 text-blue-700 shadow-sm"
+            href="/"
+          >
+            <span
+              class="flex items-center gap-1 text-blue-700"
+            >
+              <svg
+                aria-hidden="true"
+                class="h-4 w-4 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M3 12l9-9 9 9M4 10v10a1 1 0 001 1h5V14h4v7h5a1 1 0 001-1V10"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </span>
+            <span>
+              Beranda
+            </span>
+          </a>
+          <a
+            class="flex min-h-11 flex-1 flex-col items-center justify-center min-w-0 gap-0.5 rounded-xl py-1.5 text-[10px] font-semibold transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+            href="/marketplace"
+          >
+            <span
+              class="flex items-center gap-1"
+            >
+              <svg
+                aria-hidden="true"
+                class="h-4 w-4 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M3 3h18l-2 9H5L3 3zM5 12v7a1 1 0 001 1h12a1 1 0 001-1v-7"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </span>
+            <span>
+              Marketplace
+            </span>
+          </a>
+          <a
+            class="flex min-h-11 flex-1 flex-col items-center justify-center min-w-0 gap-0.5 rounded-xl py-1.5 text-[10px] font-semibold transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+            href="/login"
+          >
+            <span
+              class="flex items-center gap-1"
+            >
+              <svg
+                aria-hidden="true"
+                class="h-4 w-4 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </span>
+            <span>
+              Masuk
+            </span>
+          </a>
+          <a
+            class="flex min-h-11 flex-1 flex-col items-center justify-center min-w-0 gap-0.5 rounded-xl py-1.5 text-[10px] font-semibold transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+            href="/register"
+          >
+            <span
+              class="flex items-center gap-1"
+            >
+              <svg
+                aria-hidden="true"
+                class="h-4 w-4 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </span>
+            <span>
+              Daftar
+            </span>
+          </a>
+        </nav>
+      </header>
+      <div
+        aria-label="Umpan balik aktivitas"
+        class="wesup-toast-region"
+      />
+    </div>
+  </body>
+</html>
+ ❯ tests/components/NavigationBar.test.tsx:83:39
+     81|     expect(screen.getAllByRole("link", { name: /masuk/i }).length).toB…
+     82|     expect(screen.queryByRole("link", { name: /dashboard/i })).not.toB…
+     83|     await waitFor(() => expect(fetch).toHaveBeenCalledWith("/api/auth/…
+       |                                       ^
+     84|   });
+     85|
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/19]⎯
+
+ FAIL  tests/components/NavigationBar.test.tsx > NavigationBar > switches to approved Supplier navigation from the session access state
+TestingLibraryElementError: Unable to find role="link" and name `/katalog/i`
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <header
+      class="sticky top-0 z-40 w-full border-b border-slate-200/90 bg-white/90 shadow-[0_1px_10px_rgb(15_23_42/0.04)]"
+    >
+      <div
+        class="mx-auto flex min-h-16 w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8"
+      >
+        <a
+          aria-label="Wesup - Kembali ke Beranda"
+          class="flex items-center gap-2 text-slate-900 transition-opacity hover:opacity-80"
+          href="/"
+        >
+          <span
+            aria-hidden="true"
+            class="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-sm font-bold text-white shadow-sm shadow-blue-600/20"
+          >
+            W
+          </span>
+          <span
+            class="text-lg font-extrabold tracking-tight"
+          >
+            Wesup
+          </span>
+        </a>
+        <nav
+          aria-label="Navigasi utama"
+          class="hidden items-center gap-1 lg:flex"
+        >
+          <a
+            aria-current="page"
+            class="flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors bg-blue-50 text-blue-700 shadow-sm"
+            href="/"
+          >
+            <span
+              class="flex items-center gap-1 text-blue-700"
+            >
+              <svg
+                aria-hidden="true"
+                class="h-4 w-4 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M3 12l9-9 9 9M4 10v10a1 1 0 001 1h5V14h4v7h5a1 1 0 001-1V10"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </span>
+            <span>
+              Beranda
+            </span>
+          </a>
+          <a
+            class="flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+            href="/marketplace"
+          >
+            <span
+              class="flex items-center gap-1"
+            >
+              <svg
+                aria-hidden="true"
+                class="h-4 w-4 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M3 3h18l-2 9H5L3 3zM5 12v7a1 1 0 001 1h12a1 1 0 001-1v-7"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </span>
+            <span>
+              Marketplace
+            </span>
+          </a>
+          <a
+            class="flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+            href="/login"
+          >
+            <span
+              class="flex items-center gap-1"
+            >
+              <svg
+                aria-hidden="true"
+                class="h-4 w-4 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </span>
+            <span>
+              Masuk
+            </span>
+          </a>
+          <a
+            class="flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+            href="/register"
+          >
+            <span
+              class="flex items-center gap-1"
+            >
+              <svg
+                aria-hidden="true"
+                class="h-4 w-4 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </span>
+            <span>
+              Daftar
+            </span>
+          </a>
+        </nav>
+        <div
+          aria-label="Navigasi cepat"
+          class="flex items-center gap-2 text-xs font-semibold text-slate-500 lg:hidden"
+        >
+          <span
+            class="rounded-full bg-slate-100 px-2.5 py-1"
+          >
+            Menu
+          </span>
+        </div>
+      </div>
+      <nav
+        aria-label="Navigasi bawah (mobile)"
+        class="fixed inset-x-0 bottom-0 z-40 flex items-stretch justify-around gap-1 border-t border-slate-200/90 bg-white/95 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 shadow-[0_-4px_16px_rgb(15_23_42/0.06)] backdrop-blur-md lg:hidden"
+      >
+        <a
+          aria-current="page"
+          class="flex min-h-11 flex-1 flex-col items-center justify-center min-w-0 gap-0.5 rounded-xl py-1.5 text-[10px] font-semibold transition-colors bg-blue-50 text-blue-700 shadow-sm"
+          href="/"
+        >
+          <span
+            class="flex items-center gap-1 text-blue-700"
+          >
+            <svg
+              aria-hidden="true"
+              class="h-4 w-4 shrink-0"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M3 12l9-9 9 9M4 10v10a1 1 0 001 1h5V14h4v7h5a1 1 0 001-1V10"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </span>
+          <span>
+            Beranda
+          </span>
+        </a>
+        <a
+          class="flex min-h-11 flex-1 flex-col items-center justify-center min-w-0 gap-0.5 rounded-xl py-1.5 text-[10px] font-semibold transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+          href="/marketplace"
+        >
+          <span
+            class="flex items-center gap-1"
+          >
+            <svg
+              aria-hidden="true"
+              class="h-4 w-4 shrink-0"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M3 3h18l-2 9H5L3 3zM5 12v7a1 1 0 001 1h12a1 1 0 001-1v-7"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </span>
+          <span>
+            Marketplace
+          </span>
+        </a>
+        <a
+          class="flex min-h-11 flex-1 flex-col items-center justify-center min-w-0 gap-0.5 rounded-xl py-1.5 text-[10px] font-semibold transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+          href="/login"
+        >
+          <span
+            class="flex items-center gap-1"
+          >
+            <svg
+              aria-hidden="true"
+              class="h-4 w-4 shrink-0"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </span>
+          <span>
+            Masuk
+          </span>
+        </a>
+        <a
+          class="flex min-h-11 flex-1 flex-col items-center justify-center min-w-0 gap-0.5 rounded-xl py-1.5 text-[10px] font-semibold transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+          href="/register"
+        >
+          <span
+            class="flex items-center gap-1"
+          >
+            <svg
+              aria-hidden="true"
+              class="h-4 w-4 shrink-0"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </span>
+          <span>
+            Daftar
+          </span>
+        </a>
+      </nav>
+    </header>
+    <div
+      aria-label="Umpan balik aktivitas"
+      class="wesup-toast-region"
+    />
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <header
+        class="sticky top-0 z-40 w-full border-b border-slate-200/90 bg-white/90 shadow-[0_1px_10px_rgb(15_23_42/0.04)]"
+      >
+        <div
+          class="mx-auto flex min-h-16 w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8"
+        >
+          <a
+            aria-label="Wesup - Kembali ke Beranda"
+            class="flex items-center gap-2 text-slate-900 transition-opacity hover:opacity-80"
+            href="/"
+          >
+            <span
+              aria-hidden="true"
+              class="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-sm font-bold text-white shadow-sm shadow-blue-600/20"
+            >
+              W
+            </span>
+            <span
+              class="text-lg font-extrabold tracking-tight"
+            >
+              Wesup
+            </span>
+          </a>
+          <nav
+            aria-label="Navigasi utama"
+            class="hidden items-center gap-1 lg:flex"
+          >
+            <a
+              aria-current="page"
+              class="flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors bg-blue-50 text-blue-700 shadow-sm"
+              href="/"
+            >
+              <span
+                class="flex items-center gap-1 text-blue-700"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="h-4 w-4 shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M3 12l9-9 9 9M4 10v10a1 1 0 001 1h5V14h4v7h5a1 1 0 001-1V10"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </span>
+              <span>
+                Beranda
+              </span>
+            </a>
+            <a
+              class="flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+              href="/marketplace"
+            >
+              <span
+                class="flex items-center gap-1"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="h-4 w-4 shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M3 3h18l-2 9H5L3 3zM5 12v7a1 1 0 001 1h12a1 1 0 001-1v-7"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </span>
+              <span>
+                Marketplace
+              </span>
+            </a>
+            <a
+              class="flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+              href="/login"
+            >
+              <span
+                class="flex items-center gap-1"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="h-4 w-4 shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </span>
+              <span>
+                Masuk
+              </span>
+            </a>
+            <a
+              class="flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+              href="/register"
+            >
+              <span
+                class="flex items-center gap-1"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="h-4 w-4 shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </span>
+              <span>
+                Daftar
+              </span>
+            </a>
+          </nav>
+          <div
+            aria-label="Navigasi cepat"
+            class="flex items-center gap-2 text-xs font-semibold text-slate-500 lg:hidden"
+          >
+            <span
+              class="rounded-full bg-slate-100 px-2.5 py-1"
+            >
+              Menu
+            </span>
+          </div>
+        </div>
+        <nav
+          aria-label="Navigasi bawah (mobile)"
+          class="fixed inset-x-0 bottom-0 z-40 flex items-stretch justify-around gap-1 border-t border-slate-200/90 bg-white/95 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 shadow-[0_-4px_16px_rgb(15_23_42/0.06)] backdrop-blur-md lg:hidden"
+        >
+          <a
+            aria-current="page"
+            class="flex min-h-11 flex-1 flex-col items-center justify-center min-w-0 gap-0.5 rounded-xl py-1.5 text-[10px] font-semibold transition-colors bg-blue-50 text-blue-700 shadow-sm"
+            href="/"
+          >
+            <span
+              class="flex items-center gap-1 text-blue-700"
+            >
+              <svg
+                aria-hidden="true"
+                class="h-4 w-4 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M3 12l9-9 9 9M4 10v10a1 1 0 001 1h5V14h4v7h5a1 1 0 001-1V10"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </span>
+            <span>
+              Beranda
+            </span>
+          </a>
+          <a
+            class="flex min-h-11 flex-1 flex-col items-center justify-center min-w-0 gap-0.5 rounded-xl py-1.5 text-[10px] font-semibold transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+            href="/marketplace"
+          >
+            <span
+              class="flex items-center gap-1"
+            >
+              <svg
+                aria-hidden="true"
+                class="h-4 w-4 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M3 3h18l-2 9H5L3 3zM5 12v7a1 1 0 001 1h12a1 1 0 001-1v-7"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </span>
+            <span>
+              Marketplace
+            </span>
+          </a>
+          <a
+            class="flex min-h-11 flex-1 flex-col items-center justify-center min-w-0 gap-0.5 rounded-xl py-1.5 text-[10px] font-semibold transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+            href="/login"
+          >
+            <span
+              class="flex items-center gap-1"
+            >
+              <svg
+                aria-hidden="true"
+                class="h-4 w-4 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </span>
+            <span>
+              Masuk
+            </span>
+          </a>
+          <a
+            class="flex min-h-11 flex-1 flex-col items-center justify-center min-w-0 gap-0.5 rounded-xl py-1.5 text-[10px] font-semibold transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+            href="/register"
+          >
+            <span
+              class="flex items-center gap-1"
+            >
+              <svg
+                aria-hidden="true"
+                class="h-4 w-4 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </span>
+            <span>
+              Daftar
+            </span>
+          </a>
+        </nav>
+      </header>
+      <div
+        aria-label="Umpan balik aktivitas"
+        class="wesup-toast-region"
+      />
+    </div>
+  </body>
+</html>
+ ❯ Proxy.waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ tests/components/NavigationBar.test.tsx:92:11
+     90|     render(<NavigationBar />);
+     91|
+     92|     await waitFor(() => expect(screen.getAllByRole("link", { name: /ka…
+       |           ^
+     93|     expect(screen.getAllByRole("link", { name: /pesanan & pengambilan/…
+     94|     expect(screen.queryByRole("link", { name: /^masuk$/i })).not.toBeI…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/19]⎯
+
+ FAIL  tests/components/NavigationSession.test.tsx > persistent navigation session > clears workspace links after an authoritative 401
+ FAIL  tests/components/NavigationSession.test.tsx > persistent navigation session > clears workspace links after an authoritative 403
+TestingLibraryElementError: Unable to find role="link" and name "Masuk"
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <header
+      class="sticky top-0 z-40 w-full border-b border-slate-200/90 bg-white/90 shadow-[0_1px_10px_rgb(15_23_42/0.04)]"
+    >
+      <div
+        class="mx-auto flex min-h-16 w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8"
+      >
+        <a
+          aria-label="Wesup - Kembali ke Beranda"
+          class="flex items-center gap-2 text-slate-900 transition-opacity hover:opacity-80"
+          href="/"
+        >
+          <span
+            aria-hidden="true"
+            class="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-sm font-bold text-white shadow-sm shadow-blue-600/20"
+          >
+            W
+          </span>
+          <span
+            class="text-lg font-extrabold tracking-tight"
+          >
+            Wesup
+          </span>
+        </a>
+        <nav
+          aria-label="Navigasi utama"
+          class="hidden items-center gap-1 lg:flex"
+        >
+          <a
+            class="flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+            href="/supplier"
+          >
+            <span
+              class="flex items-center gap-1"
+            >
+              <svg
+                aria-hidden="true"
+                class="h-4 w-4 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M3 12l9-9 9 9M4 10v10a1 1 0 001 1h5V14h4v7h5a1 1 0 001-1V10"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </span>
+            <span>
+              Dashboard
+            </span>
+          </a>
+          <a
+            aria-current="page"
+            class="flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors bg-blue-50 text-blue-700 shadow-sm"
+            href="/supplier/catalog"
+          >
+            <span
+              class="flex items-center gap-1 text-blue-700"
+            >
+              <svg
+                aria-hidden="true"
+                class="h-4 w-4 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M3 3h18l-2 9H5L3 3zM5 12v7a1 1 0 001 1h12a1 1 0 001-1v-7"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </span>
+            <span>
+              Katalog
+            </span>
+          </a>
+          <a
+            class="flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+            href="/supplier/pesanan"
+          >
+            <span
+              class="flex items-center gap-1"
+            >
+              <svg
+                aria-hidden="true"
+                class="h-4 w-4 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </span>
+            <span>
+              Pesanan & Pengambilan
+            </span>
+          </a>
+          <a
+            class="flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+            href="/supplier/notifikasi"
+          >
+            <span
+              class="flex items-center gap-1"
+            >
+              <svg
+                aria-hidden="true"
+                class="h-4 w-4 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </span>
+            <span>
+              Notifikasi
+            </span>
+          </a>
+          <a
+            class="flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+            href="/supplier/akun"
+          >
+            <span
+              class="flex items-center gap-1"
+            >
+              <svg
+               ...
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <header
+        class="sticky top-0 z-40 w-full border-b border-slate-200/90 bg-white/90 shadow-[0_1px_10px_rgb(15_23_42/0.04)]"
+      >
+        <div
+          class="mx-auto flex min-h-16 w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8"
+        >
+          <a
+            aria-label="Wesup - Kembali ke Beranda"
+            class="flex items-center gap-2 text-slate-900 transition-opacity hover:opacity-80"
+            href="/"
+          >
+            <span
+              aria-hidden="true"
+              class="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-sm font-bold text-white shadow-sm shadow-blue-600/20"
+            >
+              W
+            </span>
+            <span
+              class="text-lg font-extrabold tracking-tight"
+            >
+              Wesup
+            </span>
+          </a>
+          <nav
+            aria-label="Navigasi utama"
+            class="hidden items-center gap-1 lg:flex"
+          >
+            <a
+              class="flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+              href="/supplier"
+            >
+              <span
+                class="flex items-center gap-1"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="h-4 w-4 shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M3 12l9-9 9 9M4 10v10a1 1 0 001 1h5V14h4v7h5a1 1 0 001-1V10"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </span>
+              <span>
+                Dashboard
+              </span>
+            </a>
+            <a
+              aria-current="page"
+              class="flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors bg-blue-50 text-blue-700 shadow-sm"
+              href="/supplier/catalog"
+            >
+              <span
+                class="flex items-center gap-1 text-blue-700"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="h-4 w-4 shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M3 3h18l-2 9H5L3 3zM5 12v7a1 1 0 001 1h12a1 1 0 001-1v-7"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </span>
+              <span>
+                Katalog
+              </span>
+            </a>
+            <a
+              class="flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+              href="/supplier/pesanan"
+            >
+              <span
+                class="flex items-center gap-1"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="h-4 w-4 shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </span>
+              <span>
+                Pesanan & Pengambilan
+              </span>
+            </a>
+            <a
+              class="flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+              href="/supplier/notifikasi"
+            >
+              <span
+                class="flex items-center gap-1"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="h-4 w-4 shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </span>
+              <span>
+                Notifikasi
+              </span>
+            </a>
+            <a
+              class="flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transit...
+ ❯ Proxy.waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ tests/components/NavigationSession.test.tsx:60:11
+     58|     vi.mocked(fetch).mockResolvedValue(new Response("{}", { status }));
+     59|     render(<NavigationSessionProvider initialAccessState={supplier}><N…
+     60|     await waitFor(() => expect(screen.getAllByRole("link", { name: "Ma…
+       |           ^
+     61|     expect(screen.queryByRole("link", { name: "Katalog" })).not.toBeIn…
+     62|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/19]⎯
+
+ FAIL  tests/components/NavigationSession.test.tsx > persistent navigation session > prevents a stale session response from restoring links after logout
+TestingLibraryElementError: Unable to find role="link" and name "Masuk"
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <header
+      class="sticky top-0 z-40 w-full border-b border-slate-200/90 bg-white/90 shadow-[0_1px_10px_rgb(15_23_42/0.04)]"
+    >
+      <div
+        class="mx-auto flex min-h-16 w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8"
+      >
+        <a
+          aria-label="Wesup - Kembali ke Beranda"
+          class="flex items-center gap-2 text-slate-900 transition-opacity hover:opacity-80"
+          href="/"
+        >
+          <span
+            aria-hidden="true"
+            class="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-sm font-bold text-white shadow-sm shadow-blue-600/20"
+          >
+            W
+          </span>
+          <span
+            class="text-lg font-extrabold tracking-tight"
+          >
+            Wesup
+          </span>
+        </a>
+        <nav
+          aria-label="Navigasi utama"
+          class="hidden items-center gap-1 lg:flex"
+        >
+          <a
+            class="flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+            href="/supplier"
+          >
+            <span
+              class="flex items-center gap-1"
+            >
+              <svg
+                aria-hidden="true"
+                class="h-4 w-4 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M3 12l9-9 9 9M4 10v10a1 1 0 001 1h5V14h4v7h5a1 1 0 001-1V10"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </span>
+            <span>
+              Dashboard
+            </span>
+          </a>
+          <a
+            aria-current="page"
+            class="flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors bg-blue-50 text-blue-700 shadow-sm"
+            href="/supplier/catalog"
+          >
+            <span
+              class="flex items-center gap-1 text-blue-700"
+            >
+              <svg
+                aria-hidden="true"
+                class="h-4 w-4 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M3 3h18l-2 9H5L3 3zM5 12v7a1 1 0 001 1h12a1 1 0 001-1v-7"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </span>
+            <span>
+              Katalog
+            </span>
+          </a>
+          <a
+            class="flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+            href="/supplier/pesanan"
+          >
+            <span
+              class="flex items-center gap-1"
+            >
+              <svg
+                aria-hidden="true"
+                class="h-4 w-4 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </span>
+            <span>
+              Pesanan & Pengambilan
+            </span>
+          </a>
+          <a
+            class="flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+            href="/supplier/notifikasi"
+          >
+            <span
+              class="flex items-center gap-1"
+            >
+              <svg
+                aria-hidden="true"
+                class="h-4 w-4 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </span>
+            <span>
+              Notifikasi
+            </span>
+          </a>
+          <a
+            class="flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+            href="/supplier/akun"
+          >
+            <span
+              class="flex items-center gap-1"
+            >
+              <svg
+               ...
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <header
+        class="sticky top-0 z-40 w-full border-b border-slate-200/90 bg-white/90 shadow-[0_1px_10px_rgb(15_23_42/0.04)]"
+      >
+        <div
+          class="mx-auto flex min-h-16 w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8"
+        >
+          <a
+            aria-label="Wesup - Kembali ke Beranda"
+            class="flex items-center gap-2 text-slate-900 transition-opacity hover:opacity-80"
+            href="/"
+          >
+            <span
+              aria-hidden="true"
+              class="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-sm font-bold text-white shadow-sm shadow-blue-600/20"
+            >
+              W
+            </span>
+            <span
+              class="text-lg font-extrabold tracking-tight"
+            >
+              Wesup
+            </span>
+          </a>
+          <nav
+            aria-label="Navigasi utama"
+            class="hidden items-center gap-1 lg:flex"
+          >
+            <a
+              class="flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+              href="/supplier"
+            >
+              <span
+                class="flex items-center gap-1"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="h-4 w-4 shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M3 12l9-9 9 9M4 10v10a1 1 0 001 1h5V14h4v7h5a1 1 0 001-1V10"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </span>
+              <span>
+                Dashboard
+              </span>
+            </a>
+            <a
+              aria-current="page"
+              class="flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors bg-blue-50 text-blue-700 shadow-sm"
+              href="/supplier/catalog"
+            >
+              <span
+                class="flex items-center gap-1 text-blue-700"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="h-4 w-4 shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M3 3h18l-2 9H5L3 3zM5 12v7a1 1 0 001 1h12a1 1 0 001-1v-7"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </span>
+              <span>
+                Katalog
+              </span>
+            </a>
+            <a
+              class="flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+              href="/supplier/pesanan"
+            >
+              <span
+                class="flex items-center gap-1"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="h-4 w-4 shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </span>
+              <span>
+                Pesanan & Pengambilan
+              </span>
+            </a>
+            <a
+              class="flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+              href="/supplier/notifikasi"
+            >
+              <span
+                class="flex items-center gap-1"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="h-4 w-4 shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </span>
+              <span>
+                Notifikasi
+              </span>
+            </a>
+            <a
+              class="flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transit...
+ ❯ Proxy.waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ tests/components/NavigationSession.test.tsx:111:11
+    109|     fireEvent.click(screen.getByRole("button", { name: "Keluar" }));
+    110|     fireEvent.click(screen.getAllByRole("button", { name: "Keluar" }).…
+    111|     await waitFor(() => expect(screen.getAllByRole("link", { name: "Ma…
+       |           ^
+    112|     await act(async () => { resolveSession(new Response(JSON.stringify…
+    113|     expect(screen.queryByRole("link", { name: "Katalog" })).not.toBeIn…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/19]⎯
+
+ FAIL  tests/unit/api-auth.test.ts > GET /api/auth/session > returns 401 when getUser fails
+AssertionError: expected 503 to be 401 // Object.is equality
+
+- Expected
++ Received
+
+- 401
++ 503
+
+ ❯ tests/unit/api-auth.test.ts:394:24
+    392|     mockSessionClient({ getUserError: new Error("boom") });
+    393|     const res = await getSession();
+    394|     expect(res.status).toBe(401);
+       |                        ^
+    395|     await expect(res.json()).resolves.toEqual({ error: "Sign in requir…
+    396|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/19]⎯
+
+ FAIL  tests/unit/api-auth.test.ts > GET /api/auth/session > returns 401 when the profile lookup fails
+AssertionError: expected 503 to be 401 // Object.is equality
+
+- Expected
++ Received
+
+- 401
++ 503
+
+ ❯ tests/unit/api-auth.test.ts:401:24
+    399|     mockSessionClient({ user: { id: "u-1" }, profileError: new Error("…
+    400|     const res = await getSession();
+    401|     expect(res.status).toBe(401);
+       |                        ^
+    402|     await expect(res.json()).resolves.toEqual({ error: "Sign in requir…
+    403|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/19]⎯
+
+ FAIL  tests/unit/api-login-suspension-lift.test.ts > login lazy-lifts expired temporary suspensions > does not call the RPC for an already-active account
+TypeError: client.from(...).select(...).eq(...).maybeSingle is not a function
+ ❯ getAccessStateForUser lib/auth/access-state.ts:79:168
+     77|     return { role: "supplier", status: context.status, verificationSta…
+     78|   }
+     79|   const { data, error } = await withinReadBudget(client.from("umkm_pro…
+       |                                                                                                                                                                        ^
+     80|   if (error) throw new AuthUnavailableError();
+     81|   return { role: "umkm", status: context.status, profileComplete: isCo…
+ ❯ Module.POST app/api/auth/login/route.ts:144:29
+ ❯ run tests/unit/api-login-suspension-lift.test.ts:81:20
+ ❯ tests/unit/api-login-suspension-lift.test.ts:87:31
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/19]⎯
+
+ FAIL  tests/unit/api-login-suspension-lift.test.ts > login lazy-lifts expired temporary suspensions > lets an expired temporary suspension log in once the RPC reports lifted
+TypeError: client.from(...).select(...).eq(...).maybeSingle is not a function
+ ❯ getAccessStateForUser lib/auth/access-state.ts:79:168
+     77|     return { role: "supplier", status: context.status, verificationSta…
+     78|   }
+     79|   const { data, error } = await withinReadBudget(client.from("umkm_pro…
+       |                                                                                                                                                                        ^
+     80|   if (error) throw new AuthUnavailableError();
+     81|   return { role: "umkm", status: context.status, profileComplete: isCo…
+ ❯ Module.POST app/api/auth/login/route.ts:144:29
+ ❯ run tests/unit/api-login-suspension-lift.test.ts:81:20
+ ❯ tests/unit/api-login-suspension-lift.test.ts:101:35
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/19]⎯
+
+ FAIL  tests/unit/api-login.test.ts > POST /api/auth/login role-aware contract > returns the signed-in user and active profile
+AssertionError: expected { accessState: { …(3) }, …(3) } to deeply equal { …(3) }
+
+- Expected
++ Received
+
+@@ -1,6 +1,11 @@
+  {
++   "accessState": {
++     "profileComplete": false,
++     "role": "umkm",
++     "status": "active",
++   },
+    "profile": {
+      "fullName": "Budi UMKM",
+      "role": "umkm",
+      "status": "active",
+    },
+
+ ❯ tests/unit/api-login.test.ts:114:29
+    112|     }));
+    113|     expect(res.status).toBe(200);
+    114|     await expect(res.json()).resolves.toEqual({
+       |                             ^
+    115|       user: { email: "buyer@example.com" },
+    116|       profile: { role: "umkm", status: "active", fullName: "Budi UMKM"…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/19]⎯
+
+ FAIL  tests/unit/api-login.test.ts > POST /api/auth/login role-aware contract > allows an approved supplier whose profile role is supplier
+AssertionError: expected { accessState: { …(3) }, …(3) } to deeply equal { …(3) }
+
+- Expected
++ Received
+
+@@ -1,6 +1,11 @@
+  {
++   "accessState": {
++     "role": "supplier",
++     "status": "active",
++     "verificationStatus": "approved",
++   },
+    "profile": {
+      "fullName": "Sari Supplier",
+      "role": "supplier",
+      "status": "active",
+    },
+
+ ❯ tests/unit/api-login.test.ts:258:29
+    256|     }));
+    257|     expect(res.status).toBe(200);
+    258|     await expect(res.json()).resolves.toEqual({
+       |                             ^
+    259|       user: { email: "buyer@example.com" },
+    260|       profile: { role: "supplier", status: "active", fullName: "Sari S…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/19]⎯
+
+ FAIL  tests/unit/auth.test.ts > getCurrentUser > returns null when getUser fails
+AssertionError: promise rejected "AuthUnavailableError: Layanan akun belum …" instead of resolving
+ ❯ tests/unit/auth.test.ts:82:41
+     80|   it("returns null when getUser fails", async () => {
+     81|     const { client } = fakeClient({ getUserError: new Error("boom") });
+     82|     await expect(getCurrentUser(client)).resolves.toBeNull();
+       |                                         ^
+     83|   });
+     84|
+
+Caused by: AuthUnavailableError: Layanan akun belum dapat dihubungi. Coba lagi.
+ ❯ getCurrentUser lib/supabase/auth.ts:114:121
+ ❯ tests/unit/auth.test.ts:82:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/19]⎯
+
+ FAIL  tests/unit/auth.test.ts > getCurrentUser > returns null when the profile lookup fails
+AssertionError: promise rejected "AuthUnavailableError: Layanan akun belum …" instead of resolving
+ ❯ tests/unit/auth.test.ts:90:41
+     88|       profileError: new Error("boom"),
+     89|     });
+     90|     await expect(getCurrentUser(client)).resolves.toBeNull();
+       |                                         ^
+     91|   });
+     92|
+
+Caused by: AuthUnavailableError: Layanan akun belum dapat dihubungi. Coba lagi.
+ ❯ getCurrentUser lib/supabase/auth.ts:114:121
+ ❯ tests/unit/auth.test.ts:90:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/19]⎯
+
+
+ Test Files  6 failed | 185 passed (191)
+      Tests  19 failed | 1446 passed (1465)
+   Start at  14:29:22
+   Duration  39.53s (transform 11.67s, setup 108.54s, import 45.40s, tests 53.69s, environment 139.42s)

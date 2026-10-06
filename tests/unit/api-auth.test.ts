@@ -388,18 +388,18 @@ describe("GET /api/auth/session", () => {
     await expect(res.json()).resolves.toEqual({ error: "Sign in required" });
   });
 
-  it("returns 401 when getUser fails", async () => {
+  it("returns 503 without invalidating the session when getUser fails", async () => {
     mockSessionClient({ getUserError: new Error("boom") });
     const res = await getSession();
-    expect(res.status).toBe(401);
-    await expect(res.json()).resolves.toEqual({ error: "Sign in required" });
+    expect(res.status).toBe(503);
+    await expect(res.json()).resolves.toMatchObject({ code: "AUTH_UNAVAILABLE" });
   });
 
-  it("returns 401 when the profile lookup fails", async () => {
+  it("returns 503 without invalidating the session when the profile lookup fails", async () => {
     mockSessionClient({ user: { id: "u-1" }, profileError: new Error("boom") });
     const res = await getSession();
-    expect(res.status).toBe(401);
-    await expect(res.json()).resolves.toEqual({ error: "Sign in required" });
+    expect(res.status).toBe(503);
+    await expect(res.json()).resolves.toMatchObject({ code: "AUTH_UNAVAILABLE" });
   });
 
   it("returns 403 with the status as reason when suspended", async () => {

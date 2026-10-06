@@ -1,0 +1,70 @@
+[
+  {
+    "step": "supplier_late_expired",
+    "orderId": "f342c785-a7ee-494c-a2cb-a444fcd16f09",
+    "status": "refund_pending",
+    "reason": "supplier_late",
+    "refundCount": 1,
+    "refundAmount": 10000,
+    "repeatedDecisionStatus": 200,
+    "buyerStrikes": 0
+  },
+  {
+    "step": "legacy_and_wrong_code",
+    "orderId": "0538d2e6-3727-4930-87cf-0bbd9550f518",
+    "policyVersion": 1,
+    "amount": 10000,
+    "pickupStart": "2026-09-30T11:00:00+00:00",
+    "pickupEnd": "2026-09-30T23:00:00.000Z",
+    "wrongCodeStatus": 409,
+    "unchangedStatus": "paid"
+  },
+  {
+    "step": "provider_settlement_callback_replay",
+    "orderId": "a3c93890-867f-4fc4-ae44-6f73facb1207",
+    "providerStatus": "settlement",
+    "paymentType": "qris",
+    "callbackStatus": 200,
+    "replayStatus": 200,
+    "deduplicated": true,
+    "escrowCount": 1,
+    "attemptCount": 1,
+    "delivery": "signed local replay of actual sandbox status; no mock provider"
+  },
+  {
+    "step": "ownership_rls",
+    "supplierReadingBuyerOrderStatus": 403,
+    "buyerVisibleSupplierDrafts": 0,
+    "anonymousVisibleDrafts": 0,
+    "policies": [
+      {
+        "relname": "pickup_replacement_decisions",
+        "rls": true,
+        "authenticated_select": true,
+        "anonymous_select": true
+      },
+      {
+        "relname": "pickup_replacements",
+        "rls": true,
+        "authenticated_select": true,
+        "anonymous_select": true
+      },
+      {
+        "relname": "supplier_offer_drafts",
+        "rls": true,
+        "authenticated_select": true,
+        "anonymous_select": true
+      },
+      {
+        "relname": "transaction_support_requests",
+        "rls": true,
+        "authenticated_select": true,
+        "anonymous_select": true
+      }
+    ]
+  },
+  {
+    "step": "existing_orders_preserved",
+    "originalOrders": 22
+  }
+]

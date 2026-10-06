@@ -1,0 +1,45 @@
+PASS entire additive migration compiles on PostgreSQL
+PASS join requires explicit target consent
+PASS failed consent rolls back registration
+PASS below-target volume cannot close
+PASS direct RPC cannot bypass minimum
+PASS target locked after first participant
+PASS exact independent target authorizes original-consent offer
+PASS stale price preview rejected
+PASS payment opens for exactly 24 hours
+PASS actual tier locked and invoices issued atomically
+PASS pickup promise is unchanged
+PASS repeated close returns same effective deadline
+PASS payment notices issued once
+PASS stranger cannot obtain idempotent close result
+PASS legacy RPC also checks owner before idempotent result
+PASS anonymous caller cannot read closed private context
+PASS stale confirmation cannot close another volume
+PASS invoice failure rolls back close transaction
+PASS rollback preserves phase and issues no payment notice
+PASS active offers wait for unanimous consent
+PASS partial approval is insufficient
+PASS decision cannot target another buyer
+PASS suspended buyer can consent to an existing transaction
+PASS last approval does not automatically open payment
+PASS new entrant must consent to current proposal
+PASS join records proposal approval in same transaction
+PASS withdrawal recomputes real volume
+PASS rejoin refreshes consent timestamp
+PASS changed proposal requires fresh approval
+PASS old proposal cannot authorize current revision
+PASS refusal blocks proposal without changing original policy
+PASS active batch original policy stays unchanged
+PASS target cannot exceed capacity
+PASS cutoff blocks new proposal
+PASS cutoff still closes without unanimous early approval
+PASS below discount threshold uses base price
+PASS original full-capacity policy closes despite pending optional proposal
+PASS legacy participant can explicitly opt into 24-hour manual opening
+PASS empty published offer configures independent target directly
+PASS configured target requires bounded capacity
+PASS publication requires minimum while partial draft is allowed
+PASS publication persists independent minimum separately from discount threshold
+PASS proposal RLS hides other supplier data
+PASS direct decision writes are denied
+44 PostgreSQL checks passed

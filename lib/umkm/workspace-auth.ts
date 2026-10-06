@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import {
   getCurrentUser,
+  toAuthResponse,
   maybeLiftExpiredTemporarySuspension,
   type AuthClient,
   type AuthContext,
@@ -16,9 +17,11 @@ export type UmkmWorkspaceViewer =
   | { client: UmkmWorkspaceClient; context: AuthContext; response: null }
   | { client: null; context: null; response: NextResponse };
 
-export async function resolveActiveUmkm(): Promise<UmkmWorkspaceViewer> {
+export async function resolveActiveUmkm(options: {allowSuspended?: boolean} = {}): Promise<UmkmWorkspaceViewer> {
   const client = await getServerClient();
-  const context = await getCurrentUser(client as unknown as AuthClient);
+  let context: AuthContext | null;
+  try { context = await getCurrentUser(client as unknown as AuthClient); }
+  catch (error) { return { client: null, context: null, response: toAuthResponse(error) }; }
   if (!context) {
     return {
       client: null,
@@ -32,7 +35,7 @@ export async function resolveActiveUmkm(): Promise<UmkmWorkspaceViewer> {
     context,
   );
 
-  if (lifted.role !== "umkm" || lifted.status !== "active") {
+  if (lifted.role !== "umkm" || (lifted.status !== "active" && !(options.allowSuspended && ["suspended_temporary","suspended_permanent"].includes(lifted.status)))) {
     return {
       client: null,
       context: null,

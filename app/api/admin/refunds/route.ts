@@ -71,7 +71,7 @@ export async function GET(req: Request) {
   let query = client
     .from("refund_requests")
     .select(
-      "*, batch:batches(id,title,category), registration:registrations(id,status,quantity,umkm:profiles(full_name))",
+      "*, registration:registrations(id,status,quantity,cancellation_reason,batch:batches(id,title,category),umkm:profiles(full_name,email))",
     ) as unknown as RefundsQuery;
   if (status) {
     query = query.eq("status", status);
@@ -84,5 +84,23 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 
-  return NextResponse.json({ refunds: data ?? [] });
+  if (url.searchParams.get("format") !== "queue") return NextResponse.json({ refunds: data ?? [] });
+  const record = (value: unknown): Record<string, unknown> => value !== null && typeof value === "object" ? value as Record<string, unknown> : {};
+  const refunds = (data ?? []).map((value) => {
+    const item = record(value);
+    const registration = record(item.registration);
+    const umkm = record(registration.umkm);
+    const batch = record(registration.batch);
+    return ({
+    id: item.id,
+    umkmName: umkm.full_name || "UMKM",
+    email: umkm.email || "—",
+    batchTitle: batch.title || "Penawaran",
+    amount: item.amount,
+    reason: registration.cancellation_reason || item.trigger_type || "Pengembalian dana",
+    status: item.status,
+    createdAt: item.requested_at,
+  }); });
+
+  return NextResponse.json(refunds);
 }

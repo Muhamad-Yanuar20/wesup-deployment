@@ -19,8 +19,7 @@ import {
 import { supplierFulfillmentApiRepository } from "@/lib/supplier-fulfillment/api-repository";
 import { supplierBatchApiRepository } from "@/lib/supplier-catalog/api-repository";
 import { pickupViewReducer, initialPickupViewState } from "@/lib/supplier-fulfillment/pickup-state";
-import type { FulfillmentError } from "@/lib/supplier-fulfillment/types";
-import { useToast } from "@/components/ui/GlobalToast";
+import { feedbackError } from "@/lib/feedback/errors";
 import ForceMajeureDialog from "@/components/supplier/fulfillment/ForceMajeureDialog";
 import { Skeleton } from "@/components/ui/SkeletonLoading";
 
@@ -40,7 +39,6 @@ export default function PickupScannerClient({ batchId }: { batchId: string }) {
   const [state, dispatch] = useReducer(pickupViewReducer, initialPickupViewState);
   const [retry, setRetry] = useState(0);
   const [batchTitle, setBatchTitle] = useState<string>("batch ini");
-  const { toast } = useToast();
   const forceMajeureRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -95,14 +93,14 @@ export default function PickupScannerClient({ batchId }: { batchId: string }) {
   );
 
   const paidOrders = useMemo(
-    () => state.orders.filter((o) => o.status === "paid"),
+    () => state.orders.filter((o) => o.status === "paid" && o.canConfirmPickup !== false),
     [state.orders],
   );
 
   const confirmPickup = () => {
-    if (!selectedOrder || state.confirmPhase === "loading") return;
+    if (!selectedOrder || selectedOrder.canConfirmPickup === false || state.confirmPhase === "loading") return;
     if (!state.code.trim()) {
-      toast("Mohon masukkan kode terlebih dahulu.", "warning");
+      dispatch({ type: "confirmFailed", error: { code: "invalid_code", message: "Mohon masukkan kode terlebih dahulu." } });
       return;
     }
     dispatch({ type: "confirmStarted" });
@@ -111,44 +109,18 @@ export default function PickupScannerClient({ batchId }: { batchId: string }) {
         method: state.method,
         code: state.code,
       })
-      .then((result) => {
-        dispatch({ type: "confirmSucceeded", order: result.order });
-        toast(
-          "Serah terima berhasil. Pesanan ditandai Sudah Diambil.",
-          "success",
-        );
-      })
+      .then(result => dispatch({ type: "confirmSucceeded", order: result.order }))
       .catch((error: unknown) => {
         if (abort(error)) return;
-        const errorMessage =
-          error instanceof Error && error.message ? error.message : "Kode tidak valid.";
-        dispatch({
-          type: "confirmFailed",
-          error: errorMessage as unknown as FulfillmentError,
-        });
-        toast(errorMessage, "error");
+        dispatch({ type: "confirmFailed", error: { code: "not_eligible", message: feedbackError(error, "Hasil serah terima belum terkonfirmasi. Muat ulang pesanan sebelum memeriksa kode kembali.") } });
       });
   };
-
   const confirmForceMajeure = () => {
     if (state.forceMajeurePhase === "loading") return;
     dispatch({ type: "forceMajeureStarted" });
-    void supplierFulfillmentApiRepository
-      .forceMajeureCancel(batchId)
-      .then((result) => {
-        dispatch({ type: "forceMajeureSucceeded", result });
-        toast(
-          "Pembatalan darurat diproses. Pesanan lunas masuk antrean refund.",
-          "info",
-        );
-      })
-      .catch((error: unknown) => {
-        if (abort(error)) return;
-        dispatch({
-          type: "forceMajeureFailed",
-          message: message(error, "Pembatalan darurat gagal."),
-        });
-      });
+    void supplierFulfillmentApiRepository.forceMajeureCancel(batchId)
+      .then(result => dispatch({ type: "forceMajeureSucceeded", result }))
+      .catch((error: unknown) => { if (!abort(error)) dispatch({ type: "forceMajeureFailed", message: feedbackError(error, "Pembatalan belum terkonfirmasi. Periksa status pesanan sebelum mencoba lagi.") }); });
   };
 
   if (state.loadPhase === "idle" || state.loadPhase === "loading") {
@@ -235,7 +207,7 @@ export default function PickupScannerClient({ batchId }: { batchId: string }) {
             <strong>Sudah Diambil</strong> dan memulai hitung mundur escrow 1×24 jam.
           </li>
           <li>
-            Sediakan jendela 12 jam toleransi sejak estimasi ready untuk melayani pengambilan.
+              Layani pengambilan sesuai rentang waktu yang tercantum pada detail batch.
           </li>
         </ul>
       </section>
@@ -444,7 +416,7 @@ export default function PickupScannerClient({ batchId }: { batchId: string }) {
 
           <button
             type="button"
-            disabled={!selectedOrder || state.confirmPhase === "loading" || selectedOrder.status !== "paid"}
+            disabled={!selectedOrder || selectedOrder.canConfirmPickup === false || state.confirmPhase === "loading" || selectedOrder.status !== "paid"}
             onClick={confirmPickup}
             className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
