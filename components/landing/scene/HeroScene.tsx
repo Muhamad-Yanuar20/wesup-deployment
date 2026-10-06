@@ -158,7 +158,7 @@ export function HeroScene() {
                     className="hero-beat__eyebrow flex items-center gap-3 font-mono text-[0.6875rem] font-medium uppercase tabular-nums tracking-[0.18em] text-slate-500"
                     style={{ "--i": 0 } as CSSProperties}
                   >
-                    <span className="hero-beat__rule inline-block h-px w-6 bg-blue-600" aria-hidden="true" />
+                    <span className="hero-beat__rule inline-block h-px w-6 bg-slate-900/70" aria-hidden="true" />
                     {beat.eyebrow}
                   </p>
                   <BeatHeadline title={beat.title} />
@@ -171,10 +171,10 @@ export function HeroScene() {
 
                   {beat.chip ? (
                     <p
-                      className="hero-beat__chip mt-4 inline-flex items-center gap-1.5 rounded-full border border-emerald-200/80 bg-emerald-50/80 px-3 py-1.5 text-[0.8125rem] font-semibold tracking-[0.01em] text-emerald-800"
+                      className="hero-beat__chip mt-4 inline-flex items-center gap-1.5 rounded-full border border-emerald-200/70 bg-emerald-50/70 px-3 py-1.5 text-[0.8125rem] font-semibold tracking-[0.01em] text-emerald-800"
                       style={{ "--i": 3 } as CSSProperties}
                     >
-                      <ShieldCheck className="h-4 w-4" aria-hidden="true" />
+                      <ShieldCheck className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
                       {beat.chip}
                     </p>
                   ) : null}
@@ -182,7 +182,7 @@ export function HeroScene() {
                   {beat.id === "pintu-ditutup" ? (
                     <div
                       data-testid="scene-volume-meter"
-                      className="hero-beat__meter mt-5 max-w-sm rounded-2xl border border-white/70 bg-white/60 p-4 shadow-[0_12px_40px_-16px_rgba(30,64,175,0.35)] ring-1 ring-slate-200/60 backdrop-blur-xl"
+                      className="hero-beat__meter mt-5 max-w-sm rounded-2xl border border-white/80 bg-white/70 p-4 shadow-[0_12px_40px_-20px_rgba(15,23,42,0.28)] ring-1 ring-slate-900/5 backdrop-blur-xl"
                       style={{ "--i": 4 } as CSSProperties}
                     >
                       <div className="flex items-baseline justify-between gap-4 text-sm">
@@ -246,14 +246,14 @@ export function HeroScene() {
               <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
                 <Link
                   href="/register?role=umkm"
-                  className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-blue-600 px-8 py-3.5 text-[0.9375rem] font-semibold tracking-[-0.01em] text-white shadow-lg shadow-blue-600/30 ring-1 ring-inset ring-white/20 transition-all hover:bg-blue-700 hover:shadow-blue-600/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 active:scale-[0.98] sm:w-auto"
+                  className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-slate-900 px-8 py-3.5 text-[0.9375rem] font-semibold tracking-[-0.01em] text-white shadow-lg shadow-slate-900/25 ring-1 ring-inset ring-white/10 transition-all duration-500 wesup-ease hover:bg-slate-800 hover:shadow-slate-900/35 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 active:scale-[0.98] sm:w-auto"
                 >
-                  <ShoppingBag className="h-5 w-5" aria-hidden="true" />
+                  <ShoppingBag className="h-5 w-5" strokeWidth={1.5} aria-hidden="true" />
                   Mulai Hemat Bersama
                 </Link>
                 <Link
                   href="/marketplace"
-                  className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full border border-slate-300 bg-white/85 px-8 py-3.5 text-[0.9375rem] font-semibold tracking-[-0.01em] text-slate-700 backdrop-blur-sm shadow-sm transition-colors hover:border-slate-400 hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 active:scale-[0.98] sm:w-auto"
+                  className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full border border-slate-900/10 bg-white/80 px-8 py-3.5 text-[0.9375rem] font-semibold tracking-[-0.01em] text-slate-800 backdrop-blur-sm shadow-sm transition-colors duration-500 hover:border-slate-900/20 hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 active:scale-[0.98] sm:w-auto"
                 >
                   Lihat Penawaran
                 </Link>
@@ -261,8 +261,8 @@ export function HeroScene() {
 
               <ul className="mt-5 flex flex-wrap gap-2">
                 {TRUST_MARKERS.map((marker) => (
-                  <li key={marker.label} className="flex items-center gap-2 rounded-full border border-slate-200/70 bg-white/60 px-3 py-1.5 text-xs text-slate-700 backdrop-blur-sm sm:text-sm">
-                    <marker.icon className="h-4 w-4 shrink-0 text-blue-600" aria-hidden="true" />
+                  <li key={marker.label} className="flex items-center gap-2 rounded-full border border-slate-900/10 bg-white/70 px-3 py-1.5 text-xs text-slate-700 backdrop-blur-sm sm:text-sm">
+                    <marker.icon className="h-4 w-4 shrink-0 text-slate-900" strokeWidth={1.5} aria-hidden="true" />
                     {marker.label}
                   </li>
                 ))}

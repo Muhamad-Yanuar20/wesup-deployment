@@ -25,6 +25,12 @@
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
   --font-landing-display: var(--font-newsreader);
+  /* Editorial-landing palette. The two accents are borrowed from the WebGL
+   * scene itself so the page and the truck never read as different products:
+   * kraft is the seated-crate cardboard (0xd9c7a4), ivory is the warm paper
+   * base the scene's cove already leans toward. */
+  --color-wesup-ivory: #f7f5ef;
+  --color-wesup-kraft: #d9c7a4;
 }
 
 body {
@@ -379,3 +385,67 @@ input[type="radio"] {
 .hero-scene[data-webgl="off"] .hero-scene__rail::after {
   display: none;
 }
+
+/* ------------------------------------------------------------------ */
+/* Editorial landing system                                            */
+/* ------------------------------------------------------------------ */
+
+/*
+ * Film grain. A fixed, pointer-transparent overlay so the texture costs
+ * nothing during scroll and never intercepts a click. Rendered only on the
+ * landing page (the element itself lives in app/page.tsx), above the content
+ * but below the fixed header so the chrome stays clean.
+ */
+.wesup-grain {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  pointer-events: none;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
+}
+
+/*
+ * Scroll-entry reveal. The element flips `data-reveal` from hidden to shown
+ * from the component's IntersectionObserver; the CSS only describes the two
+ * states. Transform/opacity/filter only — nothing layout-triggering — and a
+ * blur small enough to be a one-shot sharpen rather than a repaint tax.
+ */
+.wesup-reveal {
+  transition-property: opacity, transform, filter;
+  transition-duration: 850ms;
+  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/*
+ * The hidden state only exists while scripting does. The component
+ * server-renders `data-reveal="hidden"` and flips it from JavaScript, so an
+ * unscripted render would otherwise stay invisible forever. Browsers that do
+ * not support the `scripting` media feature evaluate the query as false and
+ * fall through to the visible state — fail-open in either direction.
+ * Guarded by tests/unit/landing-reveal-css.test.ts.
+ */
+@media (scripting: enabled) {
+  .wesup-reveal[data-reveal="hidden"] {
+    opacity: 0;
+    transform: translateY(2rem);
+    filter: blur(6px);
+  }
+}
+
+.wesup-reveal[data-reveal="shown"] {
+  opacity: 1;
+  transform: translateY(0);
+  filter: blur(0);
+}
+
+/*
+ * Shared editorial easing for interactive chrome (pills, underlines, arrow
+ * discs). One definition instead of the arbitrary `ease-[cubic-bezier(...)]`
+ * literal repeated across the landing sections.
+ */
+.wesup-ease {
+  transition-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
