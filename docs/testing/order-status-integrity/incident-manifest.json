@@ -1,0 +1,162 @@
+{
+  "incidentId": "registration-mass-cancel-20261002T074542Z",
+  "start": "2026-10-02T07:45:42Z",
+  "end": "2026-10-02T07:45:43Z",
+  "entries": [
+    {
+      "id": "92b44275-31ec-4e8b-9ff9-b240438cb631",
+      "eventId": "484af38e-0603-4935-b1cb-d09682c513f6",
+      "previousStatus": "paid"
+    },
+    {
+      "id": "4a07fdc5-8001-4406-82bf-e3e7a7f82b7f",
+      "eventId": "d5c6bce2-1340-4e9f-b9e9-b37ae9d2d373",
+      "previousStatus": "pending_payment"
+    },
+    {
+      "id": "d209eec1-1f20-4eee-beb7-c71900d8fa6b",
+      "eventId": "561c0c11-618e-4819-b931-41586977a560",
+      "previousStatus": "paid"
+    },
+    {
+      "id": "14df50d9-d7d4-4a79-87f2-2b29dbc8c96c",
+      "eventId": "78046e3d-8a41-4ce6-8498-5bb06d04ba44",
+      "previousStatus": "pending_payment"
+    },
+    {
+      "id": "6f64efef-e6d3-4797-9b09-d98bb9f9ef84",
+      "eventId": "3954ae82-91fb-45e3-8860-c9dd4a2b6ee4",
+      "previousStatus": "paid"
+    },
+    {
+      "id": "37652645-4a63-4961-beda-ffbea5e440de",
+      "eventId": "81562221-3a9e-4f9c-9a6c-b28eeedf5010",
+      "previousStatus": "paid"
+    },
+    {
+      "id": "0f66dfa7-6297-4aac-94b4-9de609dfbafe",
+      "eventId": "616310cd-46ac-4a40-af09-c4a4780a80e7",
+      "previousStatus": "refund_pending"
+    },
+    {
+      "id": "bdb017a8-468e-4428-9e55-63aab1fbd3c8",
+      "eventId": "279fa6d4-6bcc-4a1c-8ec7-083e77e93437",
+      "previousStatus": "paid"
+    },
+    {
+      "id": "0538d2e6-3727-4930-87cf-0bbd9550f518",
+      "eventId": "ba7bd3cd-5082-44d6-a78a-87b66368db57",
+      "previousStatus": "paid"
+    },
+    {
+      "id": "39d3cbd0-608c-4402-9d82-a2451332c53f",
+      "eventId": "ef0ca5fd-4933-4812-9fac-b338a7baa09f",
+      "previousStatus": "pending_payment"
+    },
+    {
+      "id": "88c8b2ba-8ff8-42c7-9a4d-46d5540c9391",
+      "eventId": "47f4987b-4aa9-4777-aaa6-036dbaef2f9e",
+      "previousStatus": "picked_up"
+    },
+    {
+      "id": "9e5b0c62-f7e2-4e75-9e80-cd6cc16efe1f",
+      "eventId": "ae1d82a5-58a6-456f-957e-01bf2c23b7a9",
+      "previousStatus": "registered"
+    },
+    {
+      "id": "f342c785-a7ee-494c-a2cb-a444fcd16f09",
+      "eventId": "ad3f42bf-8c02-41fe-bce2-43f895aae4df",
+      "previousStatus": "refund_pending"
+    },
+    {
+      "id": "a3c93890-867f-4fc4-ae44-6f73facb1207",
+      "eventId": "63bff36b-45d6-4709-b311-10d2db9cd52b",
+      "previousStatus": "paid"
+    },
+    {
+      "id": "cdfaf85e-c023-4807-bd8b-e47feb971999",
+      "eventId": "ce38964c-e700-45c8-a8a4-a26d163d505d",
+      "previousStatus": "paid"
+    },
+    {
+      "id": "207f14df-e47a-4d5b-aec8-1258a945a988",
+      "eventId": "8db72171-16d4-4cbc-9eaf-c8264ecf4723",
+      "previousStatus": "paid"
+    },
+    {
+      "id": "78b6b480-228d-4f2d-9ef0-00f7a768e274",
+      "eventId": "f1ccfd18-9f93-4b73-99b0-7b40f11b24a4",
+      "previousStatus": "paid"
+    },
+    {
+      "id": "57d1fd56-0db0-4f7e-a70c-08c84de86602",
+      "eventId": "389695f6-e590-4abe-87f1-96b112569d56",
+      "previousStatus": "paid"
+    },
+    {
+      "id": "51eb92f3-5caf-464d-bcae-3e8df92254bc",
+      "eventId": "5d27cfa3-5916-48d5-b509-ed3a7af40faa",
+      "previousStatus": "paid"
+    },
+    {
+      "id": "ca3a02d3-d8cc-4346-af6b-e33b1ab3a738",
+      "eventId": "49ae6b19-306f-445f-b063-8084cf15b02e",
+      "previousStatus": "pending_payment"
+    },
+    {
+      "id": "3fd7d89b-de76-4ec0-8756-05a9f9995090",
+      "eventId": "ba065f49-8db2-4f6f-b7bb-bf1610b7ae0d",
+      "previousStatus": "paid"
+    },
+    {
+      "id": "43d44eca-b7a3-45c1-982d-4c06b7e7c554",
+      "eventId": "19d9fb9a-4c97-4460-b3ce-f3823a33a633",
+      "previousStatus": "refund_pending"
+    },
+    {
+      "id": "4b383b99-64d2-4141-94dc-cdae6063452c",
+      "eventId": "4ce82fec-d237-428c-906c-42f89357131a",
+      "previousStatus": "refund_pending"
+    },
+    {
+      "id": "4342cf3a-bddf-439b-a09a-ff266bbf8113",
+      "eventId": "8cd93a38-627f-4e6b-9784-9110663c3b8b",
+      "previousStatus": "refund_pending"
+    },
+    {
+      "id": "0c015569-0b83-43ae-9038-202472d68b7f",
+      "eventId": "4a364c46-56db-4ac3-9cf4-bc1532340502",
+      "previousStatus": "no_show"
+    },
+    {
+      "id": "db8ced4b-10b0-40cf-923d-c6f90629e8c7",
+      "eventId": "c9c8cf78-bd35-4a81-9633-befc5373bf04",
+      "previousStatus": "no_show"
+    },
+    {
+      "id": "7d582d69-f979-4b82-816e-9adfdbc2b0bd",
+      "eventId": "5c9f7c37-f264-4549-b1a4-6911709fd5ed",
+      "previousStatus": "no_show"
+    },
+    {
+      "id": "9af8fd8d-e7fb-4a17-b037-e3bbcfc6c231",
+      "eventId": "8d90edaf-7cca-4698-afe9-932a1f2ed516",
+      "previousStatus": "no_show"
+    },
+    {
+      "id": "63db3fc8-87b5-4b57-a05a-b5aed8475363",
+      "eventId": "e2383219-2f10-40ae-b732-55a239bbd21d",
+      "previousStatus": "refund_pending"
+    },
+    {
+      "id": "64625262-fa24-4cb5-92eb-a2c072a3a215",
+      "eventId": "cdee5706-7553-44cc-9a69-14c9f3d875b1",
+      "previousStatus": "pending_payment"
+    },
+    {
+      "id": "5e9a2512-a470-4ce1-a214-5468ac5375e9",
+      "eventId": "ddfe3283-3085-4811-872f-02d72db8e3a6",
+      "previousStatus": "paid"
+    }
+  ]
+}

@@ -25,11 +25,11 @@ async function productCardLinks(page: Page) {
 }
 
 test.describe("Landing → Marketplace", () => {
-  test("CTA 'Mulai Belanja (UMKM)' masuk ke marketplace tanpa 404", async ({ page }) => {
+  test("CTA 'Lihat Penawaran' masuk ke marketplace tanpa 404", async ({ page }) => {
     await page.goto("/");
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
 
-    const cta = page.getByRole("link", { name: /mulai belanja \(umkm\)/i });
+    const cta = page.getByRole("link", { name: /lihat penawaran/i });
     await expect(cta).toBeVisible();
     await cta.click();
 

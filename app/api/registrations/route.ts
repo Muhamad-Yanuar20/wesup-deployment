@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser, type AuthClient } from "@/lib/supabase/auth";
 import { getServerClient } from "@/lib/supabase/server";
-import { isUuid, parseJsonBody } from "@/lib/admin/validation";
+import { isUuid, parseJsonBody, validateRegistrationPayload } from "@/lib/admin/validation";
 import { enforceRateLimit } from "@/lib/rate-limit";
+import { csfrRequireSameOrigin } from "@/lib/auth/csrf";
 import {
   evaluateRegistrationWindow,
   type BatchTimeline,
@@ -46,6 +47,9 @@ interface RegistrationBody {
 export async function POST(req: Request) {
   const client = await getServerClient();
 
+  const csrfFail = csfrRequireSameOrigin(req);
+  if (csrfFail) return csrfFail;
+
   const authCtx = await getCurrentUser(client as unknown as AuthClient);
   if (!authCtx) {
     return NextResponse.json({ error: "Sign in required", code: "unauthenticated" }, { status: 401 });
@@ -76,23 +80,24 @@ export async function POST(req: Request) {
   if (limited) return limited;
 
   const body = (await parseJsonBody(req)) as RegistrationBody | null;
-  if (
-    !body ||
-    typeof body.batchId !== "string" ||
-    !isUuid(body.batchId) ||
-    typeof body.quantity !== "number" ||
-    !Number.isSafeInteger(body.quantity) ||
-    body.quantity <= 0
-  ) {
-    return NextResponse.json({ error: "Invalid registration payload" }, { status: 400 });
+  const validated = validateRegistrationPayload(body);
+  if (!validated.ok) {
+    return NextResponse.json(
+      { error: validated.error.message, fieldErrors: validated.error.fieldErrors },
+      { status: 400 },
+    );
   }
 
-  const batchId = body.batchId;
-  const quantity = body.quantity;
-  const consentLat =
-    typeof body.consentLat === "number" ? body.consentLat : null;
-  const consentLng =
-    typeof body.consentLng === "number" ? body.consentLng : null;
+  const batchId = validated.value.batchId;
+  const quantity = validated.value.quantity;
+  const consentLat = validated.value.consentLat;
+  const consentLng = validated.value.consentLng;
+  // validateRegistrationPayload already rejected a null body, so this is the
+  // only downstream read of the raw input that the validator does not carry.
+  const consentSnapshot =
+    body?.consentSnapshot && typeof body.consentSnapshot === "object" && !Array.isArray(body.consentSnapshot)
+      ? (body.consentSnapshot as Record<string, unknown>)
+      : {};
 
   // One read of the batch and everything the gate needs from it. This is the
   // hottest correctness path in the app, so the check order below is
@@ -123,9 +128,9 @@ export async function POST(req: Request) {
   }
 
   if (batch.transaction_policy_version === 2) {
-    if (body.consentAccepted !== true) return NextResponse.json({ error: "Setujui lokasi, harga maksimum, dan jadwal sebelum ikut pesanan." }, { status: 400 });
+    if (body?.consentAccepted !== true) return NextResponse.json({ error: "Setujui lokasi, harga maksimum, dan jadwal sebelum ikut pesanan." }, { status: 400 });
     try {
-      const joined = await joinVersionedBatch(client as unknown as TransactionRpcClient, { batchId, quantity, capacity: batch.capacity_quantity ?? 0, consentLat, consentLng,consentSnapshot: body.consentSnapshot && typeof body.consentSnapshot==='object'&&!Array.isArray(body.consentSnapshot)?body.consentSnapshot as Record<string,unknown>:{} });
+      const joined = await joinVersionedBatch(client as unknown as TransactionRpcClient, { batchId, quantity, capacity: batch.capacity_quantity ?? 0, consentLat, consentLng, consentSnapshot });
       return NextResponse.json({ ok: true, ...joined,serverTime:new Date().toISOString(),phase:joined.phase??"waiting_payment_window",deadlineAt:joined.deadlineAt??timeline.registration_closes_at,capabilities:joined.capabilities??{canWithdraw:!joined.batchClosed,canPay:!!joined.batchClosed},blockedReason:joined.blockedReason??(joined.batchClosed?null:"Pembayaran belum dibuka.") }, { status: 201 });
     } catch (error) {
       if (isBatchCapacityError(error)) return NextResponse.json({ error: "Kapasitas penawaran tidak mencukupi.", code: "BATCH_CAPACITY_EXCEEDED" }, { status: 409 });
@@ -212,7 +217,7 @@ export async function POST(req: Request) {
     batch_id: batchId,
     umkm_id: authCtx.userId,
     quantity,
-    consent_terms: body.consentSnapshot && typeof body.consentSnapshot === "object" && !Array.isArray(body.consentSnapshot) ? body.consentSnapshot : {},
+    consent_terms: consentSnapshot,
     consented_at: new Date().toISOString(),
     consent_latitude: consentLat,
     consent_longitude: consentLng,

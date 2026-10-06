@@ -23,9 +23,14 @@ export const getServerClient = cache(async (): Promise<SupabaseClient<Database>>
       },
       setAll(cookiesToSet) {
         try {
-          cookiesToSet.forEach(({ name, value, options }) =>
-            cookieStore.set(name, value, options),
-          );
+          const isProd = process.env.NODE_ENV === "production";
+          cookiesToSet.forEach(({ name, value, options }) => {
+            if (isProd) {
+              cookieStore.set(name, value, { ...options, secure: true });
+            } else {
+              cookieStore.set(name, value, options);
+            }
+          });
         } catch {
           return;
         }

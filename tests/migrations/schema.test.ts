@@ -36,6 +36,8 @@ function stripUnsupported(sql: string): string {
     .replace(/DROP\s+POLICY[^;]+;/gi, "")
     .replace(/DROP\s+TRIGGER[^;]+;/gi, "")
     .replace(/DROP\s+FUNCTION[^;]+;/gi, "")
+    // PostgreSQL supports function comments; the AST library does not.
+    .replace(/COMMENT\s+ON\s+FUNCTION[^;]+;/gi, "")
     // pgsql-ast-parser does not understand function renames or DO blocks.
     // The SQL runtime harness executes both against PostgreSQL/WASM.
     .replace(/ALTER\s+FUNCTION[^;]+;/gi, "")

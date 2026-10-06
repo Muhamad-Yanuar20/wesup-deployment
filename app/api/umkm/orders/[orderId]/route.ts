@@ -52,7 +52,7 @@ export async function GET(
 
   const rpcClient = viewer.client as RpcCapableClient;
   if (typeof rpcClient.rpc === "function") {
-    const lifecycleRpc = process.env.NODE_ENV === "test" ? "materialize_umkm_order" : "materialize_supplier_order";
+    const lifecycleRpc = "materialize_supplier_order";
     await Promise.resolve(rpcClient.rpc(lifecycleRpc, { p_registration_id: orderId })).catch(() => undefined);
     const refreshed = await (viewer.client.from("registrations") as DetailQuery).select(initial.projection).eq("id", orderId).eq("umkm_id", viewer.context.userId).maybeSingle();
     if (!refreshed.error && refreshed.data) result = refreshed;

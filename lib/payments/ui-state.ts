@@ -11,6 +11,7 @@ export type PaymentUiState =
   | "paid"
   | "retryable_failure"
   | "expired"
+  | "cancelled"
   | "unavailable";
 
 export type PaymentReconcileState = "idle" | "running" | "confirming" | "error";
@@ -49,13 +50,16 @@ export function formatPaymentMethod(paymentType: string | null | undefined): str
 
 export function derivePaymentUiState(input: PaymentUiStateInput): PaymentUiState {
   if (["paid", "picked_up", "completed"].includes(input.orderStatus)) return "paid";
-  if (["payment_expired", "cancelled", "no_show", "refund_pending", "refunded"].includes(input.phase)) return "expired";
+  if (["cancelled", "no_show"].includes(input.phase)) return "cancelled";
+  if (input.phase === "payment_expired") return "expired";
+  if (["refund_pending", "refunded"].includes(input.phase)) return "unavailable";
   if (input.phase === "waiting_payment_window" || input.phase === "registered") return "before_window";
   if (input.reconcileState === "running") return "reconciling";
   if (input.reconcileState === "confirming") return "method_confirming";
   if (input.phase === "payment_verifying") return "unknown";
   if (input.hasError || input.snapState === "error" || input.snapState === "blocked") return "retryable_failure";
   if (input.phase !== "payment_open" || !input.canPay) return "unavailable";
+  if (input.attempt && ["failed", "expired"].includes(input.attempt.status)) return "retryable_failure";
   if (input.attempt?.paymentMethod) return "awaiting_payment";
   if (input.attempt) return "checkout_created";
   return "checkout_ready";

@@ -121,8 +121,15 @@ export function toUmkmOrderListItem(row: OrderReadRow, serverNow: string, canTra
   const readyAt = stringValue(accepted ? accepted.ready_at : batch?.ready_at);
   const attempt = paymentAttemptFromRow(row);
   const payment = firstObject(row.payment);
-  const paymentProgress = derivePaymentProgress({ status, invoiceStatus: payment?.status, providerOrderId: payment?.midtrans_order_id, attempt, now: serverNow, opensAt: deadlines.paymentOpensAt, closesAt: deadlines.paymentClosesAt, lastCheckedAt: stringValue(payment?.reconciled_at), hasLegacyCheckout: Boolean(payment?.qr_code_url || payment?.midtrans_transaction_id) });
+  const paymentProgress = derivePaymentProgress({ status, invoiceStatus: payment?.status, providerOrderId: payment?.midtrans_order_id, attempt, now: serverNow, opensAt: deadlines.paymentOpensAt, closesAt: deadlines.paymentClosesAt, lastCheckedAt: stringValue(payment?.reconciled_at), hasLegacyCheckout: Boolean(payment?.qr_code_url || payment?.midtrans_transaction_id), cancellationReason:row.cancellation_reason ?? null, batchStatus:batch?.status });
   const presentation = deriveTransactionPresentation({policyVersion,status,now:serverNow,orderId:row.id,registrationClosesAt:deadlines.registrationClosesAt,paymentOpensAt:deadlines.paymentOpensAt,paymentClosesAt:deadlines.paymentClosesAt,pickupStartsAt:deadlines.estimatedReadyAt,pickupEndsAt:deadlines.pickupDeadlineAt,readyAt,paymentState:paymentProgress.state,pendingAttempt:paymentProgress.state==='status_unknown',hasDispute:['pending','under_review'].includes(String(firstObject(row.dispute)?.status)),needsRefundAccount:!firstObject(row.refund)?.umkm_bank_account_id,complaintDeadlineAt:deadlines.complaintDeadlineAt});
+  if(paymentProgress.integrityIssue) {
+    presentation.label="Status pesanan perlu diperiksa";
+    presentation.explanation=paymentProgress.blockedReason!;
+    presentation.primaryAction.label="Periksa detail pesanan";
+    presentation.blockedReason=paymentProgress.blockedReason;
+    presentation.group="needs_action";
+  }
   phase=presentation.phase;
   const caps = capabilitiesFor(status,phase,row,serverNow);
   caps.canPay = paymentProgress.canOpenCheckout;

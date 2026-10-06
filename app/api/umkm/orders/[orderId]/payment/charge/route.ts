@@ -26,6 +26,8 @@ type QueryBuilder = PromiseLike<QueryResult> & {
   select: (columns: string) => QueryBuilder;
   eq: (column: string, value: unknown) => QueryBuilder;
   maybeSingle: () => PromiseLike<QueryResult>;
+  order: (column: string, options: {ascending: boolean}) => QueryBuilder;
+  limit: (count: number) => QueryBuilder;
   update: (row: Record<string, unknown>) => QueryBuilder;
   insert: (row: Record<string, unknown>) => QueryBuilder;
 };
@@ -116,7 +118,7 @@ function providerOrderId(registrationId: string): string {
 
 async function runMaterialization(client: AnyClient, registrationId: string): Promise<unknown | null> {
   if (typeof client.rpc !== "function") return null;
-  const rpcName = process.env.NODE_ENV === "test" ? "materialize_umkm_order" : "materialize_supplier_order";
+  const rpcName = "materialize_supplier_order";
   const result = await client.rpc(rpcName, { p_registration_id: registrationId });
   return result?.error ?? null;
 }
@@ -159,6 +161,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ ord
     if (snapshot.status !== "pending_payment" && snapshot.status !== "registered") return fail("Pesanan tidak berada pada status pembayaran", "ORDER_STATE_CONFLICT", 409);
 
     const payment = firstObject(snapshot.payment);
+    if (payment && ["paid", "refunded"].includes(String(payment.status))) return fail("Pembayaran sudah tercatat. Periksa status pesanan sebelum melanjutkan.", "PAYMENT_ALREADY_RECORDED", 409);
+    if (payment && payment.status !== "pending") return fail("Periksa status pembayaran sebelumnya sebelum membuat checkout baru.", "PAYMENT_RECONCILIATION_REQUIRED", 409);
     const grossAmount = Number(snapshot.final_amount ?? payment?.gross_amount);
     const quantity = Number(snapshot.quantity);
     if (!Number.isSafeInteger(grossAmount) || grossAmount <= 0 || !Number.isSafeInteger(quantity) || quantity <= 0 || grossAmount % quantity !== 0) return fail("Harga final belum terkunci", "PRICE_NOT_LOCKED", 409);
@@ -175,15 +179,17 @@ export async function POST(request: Request, { params }: { params: Promise<{ ord
     }
     if (!paymentRow?.id) return fail("Invoice pembayaran tidak ditemukan", "PAYMENT_INVOICE_FAILED", 503);
 
-    const attemptResult = await admin.from("payment_attempts").select("id,provider_order_id,status,integration_type,provider_status,provider_checked_at,payment_type,qr_code_url,expires_at,created_at,payment_checkout_sessions(snap_token,redirect_url,expires_at,cancelled_at)").eq("payment_id", String(paymentRow.id)).eq("status", "pending").maybeSingle();
+    const attemptResult = await admin.from("payment_attempts").select("id,provider_order_id,status,integration_type,provider_status,provider_checked_at,payment_type,qr_code_url,expires_at,created_at,payment_checkout_sessions(snap_token,redirect_url,expires_at,cancelled_at)").eq("payment_id", String(paymentRow.id)).order("created_at", {ascending:false}).limit(1).maybeSingle();
     if (attemptResult.error) return fail("Percobaan pembayaran sebelumnya belum dapat dimuat. Coba periksa lagi sebelum membayar.", "PAYMENT_ATTEMPT_READ_FAILED", 503);
     const active = attemptResult.data as Record<string, unknown> | null;
     const activeSession = firstObject(active?.payment_checkout_sessions ?? active?.payment_checkout_session);
     const activeExpires = Date.parse(String(activeSession?.expires_at ?? active?.expires_at ?? ""));
-    if (active && (activeSession?.cancelled_at || (Number.isFinite(activeExpires) && activeExpires <= Date.now()))) {
+    const unresolved = active && ["pending", "creating"].includes(String(active.status));
+    const resumable = unresolved || (active?.integration_type === "snap" && active.provider_status === "deny");
+    if (unresolved && (activeSession?.cancelled_at || (Number.isFinite(activeExpires) && activeExpires <= Date.now()))) {
       return fail("Periksa status tagihan sebelumnya sebelum membuat pembayaran baru.", "PAYMENT_IN_PROGRESS", 409);
     }
-    if (active && (!Number.isFinite(activeExpires) || activeExpires > Date.now()) && (!activeSession?.cancelled_at)) {
+    if (active && resumable && (!Number.isFinite(activeExpires) || activeExpires > Date.now()) && (!activeSession?.cancelled_at)) {
       const integration = active.integration_type === "snap" ? "snap" : "core_qris";
       if (integration === "core_qris" || activeSession?.snap_token) return attemptResponse(active, activeSession, serverTime,snapshot);
       const createdAt = Date.parse(String(active.created_at ?? ""));
