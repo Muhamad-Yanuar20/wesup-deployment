@@ -4,10 +4,11 @@ import { resolve } from "node:path";
 
 const MIGRATIONS_DIR = resolve(process.cwd(), "supabase/migrations");
 const HARDENING_MIGRATION = "20260920050000_umkm_profile_column_grants.sql";
+const RECOVERY_MIGRATION = "20260910012225_umkm_registration_profile_recovery.sql";
 
 const migration = readFileSync(resolve(MIGRATIONS_DIR, HARDENING_MIGRATION), "utf8");
 const recoveryMigration = readFileSync(
-  resolve(MIGRATIONS_DIR, "20260910012225_umkm_registration_profile_recovery.sql"),
+  resolve(MIGRATIONS_DIR, RECOVERY_MIGRATION),
   "utf8",
 );
 
@@ -89,9 +90,12 @@ describe("UMKM profile column-grant hardening migration", () => {
 describe("no migration re-widens the UMKM profile UPDATE grant after hardening", () => {
   const hardeningIndex = migrationFiles.indexOf(HARDENING_MIGRATION);
 
-  it("applies the hardening migration (sort order sanity check)", () => {
+  it("applies the hardening migration after the recovery policy it hardens", () => {
+    // "Must be last" was only ever a proxy for ordering; migrations added
+    // later are covered by the re-widening scans below, which walk every
+    // file that sorts after the hardening migration.
     expect(hardeningIndex).toBeGreaterThan(-1);
-    expect(hardeningIndex).toBe(migrationFiles.length - 1);
+    expect(hardeningIndex).toBeGreaterThan(migrationFiles.indexOf(RECOVERY_MIGRATION));
   });
 
   it("contains no blanket update grant for umkm_profiles", () => {

@@ -9,13 +9,14 @@ vi.mock("@/lib/supabase/server", () => ({
   getServerClient: vi.fn(),
 }));
 
-const { incrbyMock, evalMock } = vi.hoisted(() => ({
+const { incrbyMock, evalMock, setMock } = vi.hoisted(() => ({
   incrbyMock: vi.fn(),
   evalMock: vi.fn(),
+  setMock: vi.fn(),
 }));
 
 vi.mock("@/lib/redis", () => ({
-  redis: { incrby: incrbyMock, eval: evalMock },
+  redis: { incrby: incrbyMock, eval: evalMock, set: setMock },
 }));
 
 vi.mock("@/lib/rate-limit", async () => {
@@ -112,6 +113,8 @@ describe("POST /api/registrations CSRF", () => {
     mockEnforceRateLimit.mockResolvedValue(null as never);
     incrbyMock.mockReset();
     evalMock.mockReset();
+    setMock.mockReset();
+    setMock.mockResolvedValue("OK");
   });
 
   afterEach(() => {
