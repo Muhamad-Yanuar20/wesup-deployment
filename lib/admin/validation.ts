@@ -146,7 +146,7 @@ export function validateRegistrationPayload(
     }
   }
 
-  if (Object.keys(fieldErrors).length > 0) {
+  if (input == null || Object.keys(fieldErrors).length > 0) {
     return {
       ok: false,
       error: {
