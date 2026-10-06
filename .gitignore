@@ -57,3 +57,6 @@ supabase/.temp/
 *.tsbuildinfo
 next-env.d.ts
 /.worktrees/
+
+# local agent config (machine-specific paths)
+.claude/
