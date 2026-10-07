@@ -50,6 +50,18 @@ export interface SceneController {
 const CRATE_COUNT = CRATE.cols * CRATE.levels * CRATE.rows;
 const SHUTTER_SLATS = 9;
 
+function getQualityMode() {
+  if (typeof window === "undefined") return { isMobile: false, isLowPower: false, isVeryLowPower: false };
+  const isMobile = window.matchMedia("(max-width: 768px)").matches;
+  const cores = navigator.hardwareConcurrency ?? 8;
+  const mem = (navigator as any).deviceMemory ?? 8;
+  const connection = (navigator as any).connection;
+  const saveData = connection?.saveData ?? false;
+  const isLowPower = saveData || isMobile || cores <= 4 || mem <= 4;
+  const isVeryLowPower = saveData || cores <= 2 || mem <= 2 || (isMobile && cores <= 4);
+  return { isMobile, isLowPower, isVeryLowPower };
+}
+
 /** Scroll span of the damped bounce a crate plays after it seats. */
 const SETTLE_WINDOW = 0.045;
 
@@ -119,6 +131,11 @@ export function buildScene(
   initialVisible: boolean,
   reduceMotion = false,
 ): SceneController {
+  const quality = getQualityMode();
+  const isMobile = quality.isMobile;
+  const isLowPower = quality.isLowPower;
+  const isVeryLowPower = quality.isVeryLowPower;
+  const instanceScale = isVeryLowPower ? 0.4 : isLowPower ? 0.6 : isMobile ? 0.8 : 1.0;
   const MOTION = reduceMotion ? 0 : 1;
 
   const scene = new THREE.Scene();
@@ -131,15 +148,20 @@ export function buildScene(
 
   const renderer = new THREE.WebGLRenderer({
     canvas,
-    antialias: true,
+    antialias: !isVeryLowPower,
     alpha: false,
     powerPreference: "high-performance",
   });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-  renderer.shadowMap.enabled = true;
+  const dpr = window.devicePixelRatio || 1;
+  renderer.setPixelRatio(
+    Math.min(dpr, isVeryLowPower ? 1.0 : isLowPower ? 1.2 : isMobile ? 1.4 : 2),
+  );
+  renderer.shadowMap.enabled = !isVeryLowPower;
   /* PCFSoftShadowMap was removed in three r186 and silently falls back to
    * PCFShadowMap while logging a warning on every load. Ask for what we get. */
-  renderer.shadowMap.type = THREE.PCFShadowMap;
+  if (renderer.shadowMap.enabled) {
+    renderer.shadowMap.type = THREE.PCFShadowMap;
+  }
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.02;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -180,7 +202,11 @@ export function buildScene(
 
   const keyLight = new THREE.DirectionalLight(0xffffff, 2.1);
   keyLight.castShadow = true;
-  keyLight.shadow.mapSize.set(2048, 2048);
+  keyLight.shadow.mapSize.set(
+    isVeryLowPower ? 512 : isMobile ? 1024 : 2048,
+    isVeryLowPower ? 512 : isMobile ? 1024 : 2048,
+  );
+  keyLight.castShadow = renderer.shadowMap.enabled;
   keyLight.shadow.camera.near = 2;
   keyLight.shadow.camera.far = 70;
   keyLight.shadow.camera.left = -16;
@@ -228,7 +254,9 @@ export function buildScene(
   const pmrem = new THREE.PMREMGenerator(renderer);
   pmrem.compileEquirectangularShader();
   const envRT = pmrem.fromScene(envScene, 0.04);
-  scene.environment = envRT.texture;
+  if (!isVeryLowPower) {
+    scene.environment = envRT.texture;
+  }
   envGeo.dispose();
   envMat.dispose();
   envTex.dispose();
@@ -257,7 +285,7 @@ export function buildScene(
   builder.queuePart(stationBatches, builder.roundedBox(500, 0.16, 0.22, 0.05), builder.standard(0xccd5e0, 0.9), [0, 0.08, 4.06]);
 
   const DASH_SPACING = 4;
-  const DASH_COUNT = 40;
+  const DASH_COUNT = Math.max(12, Math.floor(40 * instanceScale));
   const DASH_SPAN = DASH_SPACING * DASH_COUNT;
   const dashGeometry = new THREE.PlaneGeometry(2, 0.3);
   dashGeometry.rotateX(-Math.PI / 2);
@@ -420,10 +448,11 @@ export function buildScene(
 
   const trunkMat = builder.standard(0x92400e, 0.9);
   const leafMat = builder.standard(0x6b8f4e, 0.9);
+  const treeCount = Math.max(10, Math.floor(26 * instanceScale));
   addInstances(
     new THREE.CapsuleGeometry(0.16, 1.2, 4, 10),
     trunkMat,
-    26,
+    treeCount,
     (i, d) => {
       d.position.set(-60 + i * 6.5, 0.9, -8.2 + hash(i * 3.3) * 1.6);
       d.scale.set(1, 0.85 + (i % 3) * 0.1, 1);
@@ -434,7 +463,7 @@ export function buildScene(
   addInstances(
     new THREE.SphereGeometry(1.05, 14, 12),
     leafMat,
-    26,
+    treeCount,
     (i, d) => {
       d.position.set(-60 + i * 6.5, 2.35, -8.2 + hash(i * 3.3) * 1.6);
       d.scale.set(1, 0.82 + (i % 3) * 0.08, 1);
@@ -444,7 +473,7 @@ export function buildScene(
   addInstances(
     new THREE.SphereGeometry(0.72, 12, 10),
     leafMat,
-    26,
+    treeCount,
     (i, d) => {
       d.position.set(-60 + i * 6.5, 3.35, -8.2 + hash(i * 3.3) * 1.6);
       d.rotation.set(0, hash(i) * Math.PI, 0);

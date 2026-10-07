@@ -142,7 +142,7 @@ export function HeroScene() {
             the container breakpoints in a calc(). */}
         <div className="hero-scene__overlay pointer-events-none relative container mx-auto h-full w-full px-4 sm:px-6 lg:px-8">
           <div className="hero-scene__column">
-            <ol className="hero-scene__beats" data-active-stage={activeStage}>
+            <ol className="hero-scene__beats mt-6 sm:mt-0" data-active-stage={activeStage}>
               {BEATS.map((beat, index) => (
                 <li
                   key={beat.id}
@@ -154,16 +154,16 @@ export function HeroScene() {
                   aria-hidden={isSceneActive && index !== activeStage ? true : undefined}
                   className="hero-beat"
                 >
-                  <p
-                    className="hero-beat__eyebrow flex items-center gap-3 font-mono text-[0.6875rem] font-medium uppercase tabular-nums tracking-[0.18em] text-slate-500"
-                    style={{ "--i": 0 } as CSSProperties}
-                  >
+              <p
+                className="hero-beat__eyebrow flex items-center gap-3 font-mono text-[0.6875rem] font-medium uppercase tabular-nums tracking-[0.18em] text-slate-500 mt-2 sm:mt-0"
+                style={{ "--i": 0 } as CSSProperties}
+              >
                     <span className="hero-beat__rule inline-block h-px w-6 bg-slate-900/70" aria-hidden="true" />
                     {beat.eyebrow}
                   </p>
                   <BeatHeadline title={beat.title} />
                   <p
-                    className="hero-beat__body mt-3 max-w-[36ch] text-[0.9375rem] leading-[1.65] text-slate-600 text-pretty sm:mt-4 sm:text-base"
+                    className="hero-beat__body mt-4 max-w-[36ch] text-[0.9375rem] leading-[1.65] text-slate-600 text-pretty sm:mt-4 sm:text-base"
                     style={{ "--i": 2 } as CSSProperties}
                   >
                     {beat.body}
