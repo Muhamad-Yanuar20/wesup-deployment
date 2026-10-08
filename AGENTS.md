@@ -8,6 +8,10 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 Product requirements live in `prd/` as Markdown files (e.g. `prd/feature-name.md`). PRDs are private working documents — do not commit changes under `prd/`. When implementing a feature, consult the PRD first and align code and decisions with it.
 
+# UI Design Rules
+
+`DESIGN.md` (repo root) is the source of truth for UI/visual design. Before creating or changing any UI (pages, components, styles, layout, colors, typography), read `DESIGN.md` and follow its rules. If a change would contradict it, follow `DESIGN.md` — or ask the user instead of improvising.
+
 # Project Context
 
 Wesup — group-buying platform for UMKM (Indonesian small businesses): suppliers post volume-tiered batch offers, UMKM register and pay (QRIS) during fixed windows, pickup is self-service at the supplier's location (Bandung only). Competition entry for INSEVENT 2026 (SDG 8). Full product spec: `prd/PRD.md` (private — do not commit changes).
