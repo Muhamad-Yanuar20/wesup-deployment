@@ -12,6 +12,8 @@ import {
   MIN_TRUCK_FRAMING_DISTANCE,
   STATION_MAX_X,
   TRUCK_DEPART_TOTAL,
+  TRUCK_OVERRUN_START,
+  TRUCK_OVERRUN_TOTAL,
   cameraSettle,
   departureCameraRig,
   departureDollyOffset,
@@ -19,6 +21,7 @@ import {
   sampleCamera,
   sampleCameraRail,
   truckDepartureX,
+  truckOverrunX,
 } from "@/lib/landing/camera-rail";
 
 /* The station is the anchor of this scene. It is never given a transform, so
@@ -243,12 +246,118 @@ describe("departure dolly", () => {
     expect(truckRearX - cameraX).toBeGreaterThanOrEqual(MIN_TRUCK_FRAMING_DISTANCE);
   });
 
+  it("holds the truck at a constant lateral offset from the camera look lane", () => {
+    /* Equal travel (DOLLY_TOTAL tracks TRUCK_DEPART_TOTAL) is the anti-sever
+     * fix: both ride the same curve to the same total, so their relative
+     * lateral displacement is identical for the entire drive-away. When the
+     * totals diverged (26 vs 19) the truck pulled ~7 world units past the
+     * frozen look lane and sheared out of the right of the frame on narrow
+     * viewports — reading as "cut off" because nothing ever faded it out.
+     * This pins the equality that prevents any future drift. The invariant
+     * only claims the leg before `TRUCK_OVERRUN_START` — after that the truck
+     * deliberately pulls ahead (see `truckOverrunX`) so it can drive out. */
+    const truckCenterX = (t: number) =>
+      truckDepartureX(t) + (CARGO.rearX + CARGO.frontX) / 2;
+    const lookLaneX = (t: number) => FROZEN_DEPART_LOOK[0] + departureDollyOffset(t);
+
+    let referenceGap: number | null = null;
+    for (let t = 0; t <= TRUCK_OVERRUN_START; t += 0.002) {
+      const gap = truckCenterX(t) - lookLaneX(t);
+      if (referenceGap === null) referenceGap = gap;
+      expect(gap).toBeCloseTo(referenceGap, 10);
+    }
+  });
+
   it("travels forward smoothly with no teleports", () => {
+    /* The dolly ride is the truck's own accelerating curve, so its peak step
+     * scales with the travel total; the bound is expressed relative to
+     * DOLLY_TOTAL (~2% of the run per scroll step) so it survives a change to
+     * the distance without going slack. */
+    const stepBound = DOLLY_TOTAL * 0.0211;
     let previous = departureCameraRig(0).pos[0];
     for (let p = 0.001; p <= 1.0001; p += 0.001) {
       const current = departureCameraRig(p).pos[0];
-      expect(current - previous).toBeLessThan(0.4);
+      expect(current - previous).toBeLessThan(stepBound);
       previous = current;
+    }
+  });
+});
+
+describe("truck overrun peel-off", () => {
+  it("runs from zero to the full overrun across the tail", () => {
+    expect(truckOverrunX(0)).toBe(0);
+    expect(truckOverrunX(TRUCK_OVERRUN_START)).toBe(0);
+    expect(truckOverrunX(1)).toBe(TRUCK_OVERRUN_TOTAL);
+  });
+
+  it("is exactly zero before the splice, so the equal-travel leg is untouched", () => {
+    for (let t = 0; t <= TRUCK_OVERRUN_START; t += 0.001) {
+      expect(truckOverrunX(t)).toBe(0);
+    }
+  });
+
+  it("starts the peel only after the truck has begun receding on its own", () => {
+    expect(TRUCK_OVERRUN_START).toBeGreaterThan(0);
+    expect(TRUCK_OVERRUN_START).toBeLessThan(1);
+    expect(TRUCK_OVERRUN_TOTAL).toBeGreaterThan(0);
+  });
+
+  it("splices into the equal-travel leg without a velocity jerk", () => {
+    /* r² rise has zero slope at the splice, so the first steps are the
+     * smallest and the peel accelerates outward instead of snapping on. */
+    const h = 0.002;
+    const first = truckOverrunX(TRUCK_OVERRUN_START + h);
+    const second = truckOverrunX(TRUCK_OVERRUN_START + 2 * h) - first;
+    expect(first).toBeGreaterThan(0);
+    expect(first).toBeLessThan(second);
+  });
+
+  it("never reverses direction during the peel", () => {
+    let last = -1;
+    for (let t = TRUCK_OVERRUN_START; t <= 1.0001; t += 0.005) {
+      expect(truckOverrunX(t)).toBeGreaterThanOrEqual(last);
+      last = truckOverrunX(t);
+    }
+  });
+
+  it("sweeps out smoothly with no teleport (truck leg)", () => {
+    const total = TRUCK_DEPART_TOTAL + TRUCK_OVERRUN_TOTAL;
+    const stepBound = total * 0.006;
+    let previous = truckDepartureX(0) + truckOverrunX(0);
+    for (let t = 0.001; t <= 1.0001; t += 0.001) {
+      const current = truckDepartureX(t) + truckOverrunX(t);
+      expect(current - previous).toBeLessThan(stepBound);
+      previous = current;
+    }
+  });
+
+  it("clears the right edge of the frame at the end of the drive-away (16:9)", () => {
+    /* The peeled truck has to be fully out of frame at the final scroll
+     * position, not just faded. The last point to leave is the rearmost
+     * (left) side of the truck, so it must sit past the right edge of the
+     * 16:9 viewport as seen from the fully-dollied camera. Depth grows with
+     * the pull-ahead, so the half-width must be computed at the truck, not
+     * at the look target. The 21:9 margin is a fraction of a world unit —
+     * the fog ramp (~35-45%) already hides that sliver. */
+    const truckXEnd = TRUCK_DEPART_TOTAL + TRUCK_OVERRUN_TOTAL;
+    const REAR_PLANE = CARGO.rearX;
+    const rearWorld = truckXEnd + REAR_PLANE;
+    const camEndX = FROZEN_DEPART_POS[0] + DOLLY_TOTAL;
+    const lookEndX = FROZEN_DEPART_LOOK[0] + DOLLY_TOTAL;
+    const depth = Math.hypot(rearWorld - camEndX, FROZEN_DEPART_POS[2]);
+    const halfWidth = depth * Math.tan((36 * Math.PI) / 360) * (16 / 9);
+    expect(rearWorld - lookEndX).toBeGreaterThan(halfWidth);
+  });
+
+  it("only widens the framing from the equal-travel leg onwards", () => {
+    /* The anti-sever minimum still holds: the truck never comes closer than
+     * MIN_TRUCK_FRAMING_DISTANCE, and the overrun only adds distance. */
+    for (let t = 0; t <= 1.0001; t += 0.01) {
+      const truckX = truckDepartureX(t) + truckOverrunX(t);
+      const cameraX = FROZEN_DEPART_POS[0] + departureDollyOffset(t);
+      expect(truckX + CARGO.rearX - cameraX).toBeGreaterThanOrEqual(
+        MIN_TRUCK_FRAMING_DISTANCE,
+      );
     }
   });
 });

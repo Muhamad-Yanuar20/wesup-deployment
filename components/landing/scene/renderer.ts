@@ -23,7 +23,7 @@
 import type { RefObject } from "react";
 
 import { CARGO, CRATE, CRATE_SEATS, SCENE_PHASES, SEAT_ROT_JITTER } from "@/lib/landing/crate-lattice";
-import { cameraSettle, departureCameraRig, departureProgress, truckDepartureX } from "@/lib/landing/camera-rail";
+import { cameraSettle, departureCameraRig, departureProgress, truckDepartureX, truckOverrunX } from "@/lib/landing/camera-rail";
 import { clamp, clamp01, easeOutCubic, hash, lerp, smoothstep, wrap } from "@/lib/landing/math";
 import { STAGE_EDGES } from "@/lib/landing";
 
@@ -54,8 +54,8 @@ function getQualityMode() {
   if (typeof window === "undefined") return { isMobile: false, isLowPower: false, isVeryLowPower: false };
   const isMobile = window.matchMedia("(max-width: 768px)").matches;
   const cores = navigator.hardwareConcurrency ?? 8;
-  const mem = (navigator as any).deviceMemory ?? 8;
-  const connection = (navigator as any).connection;
+  const mem = (navigator as unknown as { deviceMemory?: number }).deviceMemory ?? 8;
+  const connection = (navigator as unknown as { connection?: { saveData?: boolean } }).connection;
   const saveData = connection?.saveData ?? false;
   const isLowPower = saveData || isMobile || cores <= 4 || mem <= 4;
   const isVeryLowPower = saveData || cores <= 2 || mem <= 2 || (isMobile && cores <= 4);
@@ -68,9 +68,10 @@ const SETTLE_WINDOW = 0.045;
 // Must equal --hero-wash in app/globals.css. The wash veils this cove, and it
 // only reads as atmosphere rather than as a translucent panel if the two are the
 // same colour; a two-255th gap is enough to show as a visible band edge across
-// the lower left of the scene.
-const COVE_COLOR = 0xf6f8fb;
-const CRATE_IN_FLIGHT = 0x3b82f6;
+// the lower left of the scene. The Ethereal Glass direction paints both the
+// void and the cove the same OLED black, so the copy sits on true black.
+const COVE_COLOR = 0xF4F4F0;
+const CRATE_IN_FLIGHT = 0xe61919;
 const CRATE_SEATED = 0xd9c7a4;
 
 /* ---------------- crate pipeline ----------------
@@ -118,6 +119,9 @@ const PLANS: CratePlan[] = Array.from({ length: CRATE_COUNT }, (_, i) => {
 });
 
 /**
+ * @param stageEl The DOM box that marks the free area of the hero (the part
+ *   not covered by copy). The projection is centred on it, so the truck is
+ *   composed into the visible area instead of the middle of the full canvas.
  * @param reduceMotion The hook already answers the media query before the
  *   canvas is allowed to mount (the scene only mounts when it is false), so
  *   re-probing `prefers-reduced-motion` in here would double the DOM query for
@@ -126,6 +130,7 @@ const PLANS: CratePlan[] = Array.from({ length: CRATE_COUNT }, (_, i) => {
 export function buildScene(
   THREE: typeof import("three"),
   canvas: HTMLCanvasElement,
+  stageEl: HTMLElement | null,
   progressRef: RefObject<number>,
   onStageChange: (stage: number) => void,
   initialVisible: boolean,
@@ -139,12 +144,22 @@ export function buildScene(
   const MOTION = reduceMotion ? 0 : 1;
 
   const scene = new THREE.Scene();
-  // Infinite white cove: background and fog are the same colour, so every
-  // object fades seamlessly into the "studio" with no visible horizon edge.
+  // Paper cove: background and fog are the same colour, so every object fades
+  // seamlessly into the plate (and the departing truck dissolves into it) with
+  // no visible horizon edge. Fog starts further out because the camera can now
+  // pull back on narrow stages.
   scene.background = new THREE.Color(COVE_COLOR);
-  scene.fog = new THREE.Fog(COVE_COLOR, 26, 110);
+  scene.fog = new THREE.Fog(COVE_COLOR, 40, 130);
 
   const camera = new THREE.PerspectiveCamera(36, 1, 0.1, 220);
+
+  /* Stage framing. The overlay owns the left column / top band; `stageEl` marks
+   * the free area. We centre the projection on it (setViewOffset) and size the
+   * FOV so the truck always fits inside it. The camera pose is untouched, so the
+   * rigid-dolly invariants in camera-rail.ts still hold. */
+  const BASE_TAN = Math.tan(THREE.MathUtils.degToRad(18)); // original 36° vfov
+  const MAX_TAN = Math.tan(THREE.MathUtils.degToRad(26)); // widest FOV we allow (52°)
+  const framing = { pullBack: 1 };
 
   const renderer = new THREE.WebGLRenderer({
     canvas,
@@ -196,11 +211,15 @@ export function buildScene(
     casts = false,
   ): InstancedMesh => builder.addInstances(geometry, material, count, place, parent, casts);
 
-  /* --------- lights --------- */
+  /* --------- lights ---------
+   * Daylight workshop rig: a neutral paper-white hemisphere, a warm sun key
+   * for the cast shadows, a soft paper fill, and a subtle white rim to peel
+   * the truck off the cove. The scene now sits on paper (#F4F4F0), so light
+   * reads as shade and material, not as glow against black. */
 
-  scene.add(new THREE.HemisphereLight(0xeaf1fb, 0xd8dee6, 1.3));
+  scene.add(new THREE.HemisphereLight(0xffffff, 0xeae8e3, 1.0));
 
-  const keyLight = new THREE.DirectionalLight(0xffffff, 2.1);
+  const keyLight = new THREE.DirectionalLight(0xfff6ea, 1.9);
   keyLight.castShadow = true;
   keyLight.shadow.mapSize.set(
     isVeryLowPower ? 512 : isMobile ? 1024 : 2048,
@@ -217,20 +236,28 @@ export function buildScene(
   keyLight.shadow.normalBias = 0.02;
   scene.add(keyLight, keyLight.target);
 
-  const fillLight = new THREE.DirectionalLight(0xbfdbfe, 0.45);
+  const fillLight = new THREE.DirectionalLight(0xeae8e3, 0.5);
   fillLight.position.set(-6, 8, 9);
   scene.add(fillLight);
 
-  const rimLight = new THREE.DirectionalLight(0xdbeafe, 0.6);
+  const rimLight = new THREE.DirectionalLight(0xffffff, 0.5);
   rimLight.position.set(13, 9, -9);
   scene.add(rimLight);
 
-  /* --------- procedural studio environment (for clearcoat/chrome) ----
+  // Warm practical hanging over the apron — the pool of light the loading
+  // bay works under. Lower intensity than the night rig: with a bright key
+  // this now only warms the apron, it no longer carries the exposure.
+  const bayLight = new THREE.PointLight(0xfff3d6, 9, 24, 2);
+  bayLight.position.set(0.3, 5.6, 0);
+  station.add(bayLight);
+
+  /* --------- procedural environment (for clearcoat/chrome) ----
    * A physically-based clearcoat or metal material with no environment
    * to reflect just looks like flat-shaded plastic, however round the
-   * geometry is. This builds a tiny soft-gradient "studio" — a bright
-   * overhead zone, cool horizon band, dim floor — and bakes it into a
-   * PMREM so MeshPhysicalMaterial has something believable to mirror. */
+   * geometry is. This builds a small soft-gradient "daylight studio" — a pale
+   * overhead, a light horizon, a paper floor — and bakes it into a PMREM so
+   * MeshPhysicalMaterial has something believable to mirror. Its stops stay
+   * light so it agrees with the paper cove rather than fighting it. */
   const envScene = new THREE.Scene();
   const envGeo = new THREE.SphereGeometry(24, 20, 14);
   const envCanvas = document.createElement("canvas");
@@ -239,11 +266,11 @@ export function buildScene(
   const envCtx = envCanvas.getContext("2d");
   if (envCtx) {
     const grad = envCtx.createLinearGradient(0, 0, 0, 128);
-    grad.addColorStop(0, "#ffffff");
-    grad.addColorStop(0.35, "#eef3fb");
-    grad.addColorStop(0.55, "#dbe6f5");
-    grad.addColorStop(0.62, "#b9c7dc");
-    grad.addColorStop(1, "#7c8697");
+    grad.addColorStop(0, "#fbfaf7");
+    grad.addColorStop(0.35, "#eceae4");
+    grad.addColorStop(0.55, "#dcd9d2");
+    grad.addColorStop(0.62, "#d0cdc6");
+    grad.addColorStop(1, "#bfbcb6");
     envCtx.fillStyle = grad;
     envCtx.fillRect(0, 0, 8, 128);
   }
@@ -266,23 +293,23 @@ export function buildScene(
 
   const ground = new THREE.Mesh(
     new THREE.PlaneGeometry(500, 500),
-    builder.standard(0xedf1f6, 0.95),
+    builder.standard(0xdedbd4, 0.95),
   );
   ground.rotation.x = -Math.PI / 2;
   ground.receiveShadow = true;
   station.add(ground);
 
-  const road = new THREE.Mesh(new THREE.PlaneGeometry(500, 7.4), builder.standard(0xdde4ec, 0.9));
+  const road = new THREE.Mesh(new THREE.PlaneGeometry(500, 7.4), builder.standard(0xc9c6c0, 0.9));
   road.rotation.x = -Math.PI / 2;
   road.position.y = 0.01;
   road.receiveShadow = true;
   station.add(road);
 
-  const lineMat = builder.standard(0xf6f8fb, 0.85);
+  const lineMat = builder.standard(0x050505, 0.85);
   builder.queuePart(stationBatches, new THREE.BoxGeometry(500, 0.02, 0.14), lineMat, [0, 0.022, -3.62]);
   builder.queuePart(stationBatches, new THREE.BoxGeometry(500, 0.02, 0.14), lineMat, [0, 0.022, 3.62]);
-  builder.queuePart(stationBatches, builder.roundedBox(500, 0.12, 3.2, 0.04), builder.standard(0xe4e9f0, 0.95), [0, 0.06, 5.7]);
-  builder.queuePart(stationBatches, builder.roundedBox(500, 0.16, 0.22, 0.05), builder.standard(0xccd5e0, 0.9), [0, 0.08, 4.06]);
+  builder.queuePart(stationBatches, builder.roundedBox(500, 0.12, 3.2, 0.04), builder.standard(0xd2cfc8, 0.95), [0, 0.06, 5.7]);
+  builder.queuePart(stationBatches, builder.roundedBox(500, 0.16, 0.22, 0.05), builder.standard(0xbcb9b3, 0.9), [0, 0.08, 4.06]);
 
   const DASH_SPACING = 4;
   const DASH_COUNT = Math.max(12, Math.floor(40 * instanceScale));
@@ -291,24 +318,24 @@ export function buildScene(
   dashGeometry.rotateX(-Math.PI / 2);
   const dashes = addInstances(
     dashGeometry,
-    builder.standard(0xf6f8fb, 0.8),
+    builder.standard(0x050505, 0.8),
     DASH_COUNT,
     (i, d) => d.position.set(i * DASH_SPACING - 60, 0.03, 0),
   );
 
   /* --------- loading bay (static, parented to `station`) ---------- */
 
-  const structure = builder.standard(0xcbd5e1, 0.8);
-  const steel = builder.standard(0x94a3b8, 0.55, 0.25);
-  const wallMat = builder.standard(0xe2e8f0, 0.9);
-  const paint = builder.standard(0xfacc15, 0.85);
-  const timber = builder.standard(0xc8a26a, 0.85);
-  const sackMat = builder.standard(0xe7d8b7, 0.95);
+  const structure = builder.standard(0xbfbcb6, 0.8);
+  const steel = builder.standard(0xa9a6a0, 0.55, 0.25);
+  const wallMat = builder.standard(0xd8d5cf, 0.9);
+  const paint = builder.standard(0xe61919, 0.85);
+  const timber = builder.standard(0x8a6f42, 0.85);
+  const sackMat = builder.standard(0xa3926c, 0.95);
   const rubber = builder.standard(0x242930, 0.95);
   const lampGlow = new THREE.MeshStandardMaterial({
-    color: 0xfde68a,
+    color: 0xfff3d6,
     emissive: 0xf59e0b,
-    emissiveIntensity: 0.5,
+    emissiveIntensity: 1.1,
     roughness: 0.4,
   });
 
@@ -319,7 +346,7 @@ export function buildScene(
   builder.queuePart(stationBatches, builder.roundedBox(0.16, 0.02, 7.6, 0.008), paint, [5.8, 0.03, 0]);
   addInstances(
     new THREE.BoxGeometry(0.12, 0.02, 2.4),
-    builder.standard(0xfbbf24, 0.85),
+    builder.standard(0x050505, 0.85),
     14,
     (i, d) => {
       d.position.set(-5.0 + i * 0.42, 0.03, 2.6);
@@ -327,7 +354,7 @@ export function buildScene(
     },
   );
   for (const x of [-2.5, 0.5, 3.5]) {
-    builder.queuePart(stationBatches, new THREE.BoxGeometry(0.04, 0.015, 7.6), builder.standard(0xb9c3cf, 0.95), [x, 0.025, 0]);
+    builder.queuePart(stationBatches, new THREE.BoxGeometry(0.04, 0.015, 7.6), builder.standard(0x1f232b, 0.95), [x, 0.025, 0]);
   }
 
   // Structure: columns with hazard bands, canopy, back wall, wall door.
@@ -392,11 +419,11 @@ export function buildScene(
   // Bollards + cones.
   addInstances(
     new THREE.CapsuleGeometry(0.13, 0.7, 4, 12),
-    builder.standard(0xf97316, 0.6),
+    builder.standard(0xe61919, 0.6),
     4,
     (i, d) => d.position.set(-5.1 + i * 3.6, 0.5, 3.05),
   );
-  const coneOrange = builder.standard(0xf97316, 0.6);
+  const coneOrange = builder.standard(0xe61919, 0.6);
   for (const [cx, cz, ry] of [
     [-4.6, 3.3, 0.2],
     [-3.9, 3.45, -0.3],
@@ -408,7 +435,7 @@ export function buildScene(
 
   // Static decor crates (rounded, kraft + brand tape), clear of the truck.
   const kraftMat = builder.standard(0xd9c7a4, 0.72, 0.03);
-  const tapeMat = builder.standard(0x2563eb, 0.5);
+  const tapeMat = builder.standard(0xe61919, 0.5);
   const decor: [number, number, number, number][] = [
     [-4.75, 0.355, -3.3, 0.05],
     [-3.85, 0.355, -3.32, -0.06],
@@ -434,7 +461,7 @@ export function buildScene(
   jackMesh(builder.roundedBox(1.15, 0.05, 0.16, 0.02), steel, 0.3, 0.09, -0.24);
   jackMesh(builder.roundedBox(0.14, 0.42, 0.1, 0.03), steel, -0.2, 0.3, 0.24);
   jackMesh(builder.roundedBox(0.14, 0.42, 0.1, 0.03), steel, -0.2, 0.3, -0.24);
-  jackMesh(builder.roundedBox(0.55, 0.3, 0.62, 0.08), builder.standard(0xf97316, 0.55), -0.45, 0.6, 0);
+  jackMesh(builder.roundedBox(0.55, 0.3, 0.62, 0.08), builder.standard(0xe61919, 0.55), -0.45, 0.6, 0);
   const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.15, 8), steel);
   handle.position.set(-0.85, 1.0, 0);
   handle.rotation.x = -0.3;
@@ -446,8 +473,8 @@ export function buildScene(
 
   /* --------- roadside & skyline (slides during departure) --------- */
 
-  const trunkMat = builder.standard(0x92400e, 0.9);
-  const leafMat = builder.standard(0x6b8f4e, 0.9);
+  const trunkMat = builder.standard(0x3d2814, 0.9);
+  const leafMat = builder.standard(0x2f4a2b, 0.9);
   const treeCount = Math.max(10, Math.floor(26 * instanceScale));
   addInstances(
     new THREE.CapsuleGeometry(0.16, 1.2, 4, 10),
@@ -497,7 +524,7 @@ export function buildScene(
   );
   addInstances(
     new THREE.BoxGeometry(1, 1, 1),
-    builder.standard(0xe6ecf4, 1),
+    builder.standard(0x2b2b28, 1),
     16,
     (i, d) => {
       const w = 5 + hash(i * 3.1) * 6;
@@ -515,15 +542,15 @@ export function buildScene(
   const truckBody = new THREE.Group(); // suspension: squat, pitch, roll
   truckRoot.add(truckBody);
 
-  const cabMat = builder.painted(0x2563eb);
+  const cabMat = builder.painted(0xe61919);
   const boxMat = builder.painted(0xf4f6f9, 0.5);
   const trimMat = builder.standard(0x242b36, 0.6, 0.25);
-  const glassMat = builder.standard(0x1c2a3a, 0.18, 0.3);
+  const glassMat = builder.standard(0x8f979f, 0.18, 0.3);
   glassMat.envMapIntensity = 1.3;
   const chromeMat = builder.standard(0xdde5ee, 0.3, 0.55);
   chromeMat.envMapIntensity = 1.6;
-  const frameMat = builder.standard(0x9aa8b8, 0.6, 0.2);
-  const interiorMat = builder.standard(0xd3dbe6, 0.85);
+  const frameMat = builder.standard(0x6b7686, 0.6, 0.2);
+  const interiorMat = builder.standard(0xa8b2c0, 0.85);
   const headlampMat = new THREE.MeshStandardMaterial({
     color: 0xfff7cf,
     emissive: 0xfff3b0,
@@ -539,7 +566,7 @@ export function buildScene(
   const amberMat = new THREE.MeshStandardMaterial({
     color: 0xfbbf24,
     emissive: 0xf59e0b,
-    emissiveIntensity: 0.35,
+    emissiveIntensity: 0.9,
     roughness: 0.4,
   });
 
@@ -864,7 +891,15 @@ export function buildScene(
     const px = pointer.x * MOTION * settle;
     const py = pointer.y * MOTION * settle;
     const rail = departureCameraRig(p);
-    camPos.set(rail.pos[0], rail.pos[1], rail.pos[2]);
+    /* Pull-back: uniform scale of the camera offset around the look target.
+     * During the departure the rail is frozen, so this is still a pure
+     * translation of the whole rig. */
+    const pb = framing.pullBack;
+    camPos.set(
+      rail.look[0] + (rail.pos[0] - rail.look[0]) * pb,
+      rail.look[1] + (rail.pos[1] - rail.look[1]) * pb,
+      rail.look[2] + (rail.pos[2] - rail.look[2]) * pb,
+    );
     lookTarget.set(rail.look[0], rail.look[1], rail.look[2]);
     camera.position.set(
       camPos.x + px * 0.6,
@@ -877,8 +912,12 @@ export function buildScene(
 
     /* Departure: the truck accelerates away and the camera dollies with it, so
        the dock stays anchored in the world and falls behind the lens — pure
-       rigid translation, no pan. The scenery slides past independently. */
-    const truckX = truckDepartureX(depT);
+       rigid translation, no pan. The scenery slides past independently. For the
+       first leg the truck rides the same total as the rig, holding a constant
+       lateral offset; the tail (`TRUCK_OVERRUN_START`) lets the truck alone
+       pull ahead, recede and clear the frame, so the departure finishes on
+       empty road instead of an in-place dissolve. */
+    const truckX = truckDepartureX(depT) + truckOverrunX(depT);
     const groundX = 9 * depT + 44 * depT * depT;
     truckRoot.position.x = truckX;
     scenery.position.x = -groundX;
@@ -929,10 +968,14 @@ export function buildScene(
     const idle =
       (Math.sin(time * 33) * 0.0032 + Math.sin(time * 47 + 1.7) * 0.0022) * MOTION * settle;
     truckBody.position.y = clamp(-0.045 * loadFrac + kickY * 0.04 + idle, -0.12, 0.06);
+
+    /* Launch pitch: nose lifts and the rear squats as the truck pulls away,
+     * so the departure reads as weight rather than a slide. */
+    const launch = 0.02 * Math.sin(Math.PI * clamp01(depT / 0.3)) * MOTION;
     truckBody.rotation.set(
       clamp(kickR * 0.03 + Math.sin(time * 0.9) * 0.0035 * MOTION * settle, -0.05, 0.05),
       0,
-      clamp(0.011 * loadFrac + kickP * 0.05 + thunk * 0.05, -0.04, 0.05),
+      clamp(0.011 * loadFrac + kickP * 0.05 + thunk * 0.05, -0.04, 0.05) + launch,
     );
 
     /* Roller shutter unrolls slat by slat out of the housing. */
@@ -1039,8 +1082,25 @@ export function buildScene(
   const resize = () => {
     const width = canvas.clientWidth || canvas.parentElement?.clientWidth || 1;
     const height = canvas.clientHeight || canvas.parentElement?.clientHeight || 1;
+
+    const c = canvas.getBoundingClientRect();
+    const s = stageEl?.getBoundingClientRect();
+    const hasStage = !!s && s.width > 1 && s.height > 1;
+    const stageW = hasStage ? s!.width : width;
+    const stageH = hasStage ? s!.height : height;
+    // Offset of the stage centre from the canvas centre, in px (+x right, +y down).
+    const shiftX = hasStage ? s!.left + s!.width / 2 - c.left - width / 2 : 0;
+    const shiftY = hasStage ? s!.top + s!.height / 2 - c.top - height / 2 : 0;
+
+    // The truck needs ~1.3x the stage height in horizontal room and ~80% of its
+    // height vertically. Widen the FOV to fit; past MAX_TAN, pull the camera back.
+    const need = BASE_TAN * Math.max(1, (1.3 * height) / stageW, (0.8 * height) / stageH);
+    camera.fov = 2 * THREE.MathUtils.radToDeg(Math.atan(Math.min(need, MAX_TAN)));
+    framing.pullBack = clamp(need / MAX_TAN, 1, 2);
+
     camera.aspect = width / Math.max(1, height);
-    camera.updateProjectionMatrix();
+    // Negative window offset = content moves toward the stage centre.
+    camera.setViewOffset(width, height, -shiftX, -shiftY, width, height);
     renderer.setSize(width, height, false);
   };
 
@@ -1095,6 +1155,7 @@ export function buildScene(
     renderer.render(scene, camera);
   });
   resizeObserver.observe(canvas);
+  if (stageEl) resizeObserver.observe(stageEl);
 
   if (initialVisible) setVisible(true);
 

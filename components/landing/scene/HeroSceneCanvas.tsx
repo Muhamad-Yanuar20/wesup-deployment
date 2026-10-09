@@ -6,6 +6,7 @@ import { buildScene, type SceneController } from "./renderer";
 
 interface HeroSceneCanvasProps {
   canvasRef: React.RefObject<HTMLCanvasElement | null>;
+  stageRef: React.RefObject<HTMLElement | null>;
   progressRef: React.RefObject<number>;
   isVisible: boolean;
   reduceMotion: boolean;
@@ -24,6 +25,7 @@ interface HeroSceneCanvasProps {
  */
 export default function HeroSceneCanvas({
   canvasRef,
+  stageRef,
   progressRef,
   isVisible,
   reduceMotion,
@@ -45,6 +47,7 @@ export default function HeroSceneCanvas({
         controllerRef.current = buildScene(
           THREE,
           canvas,
+          stageRef.current,
           progressRef,
           onStageChange,
           // The value read at build time — not the (possibly stale) value
@@ -65,7 +68,7 @@ export default function HeroSceneCanvas({
       controllerRef.current?.dispose();
       controllerRef.current = null;
     };
-  }, [canvasRef, onSceneFailed, onStageChange, progressRef, reduceMotion]);
+  }, [canvasRef, stageRef, onSceneFailed, onStageChange, progressRef, reduceMotion]);
 
   useEffect(() => {
     visibleRef.current = isVisible;

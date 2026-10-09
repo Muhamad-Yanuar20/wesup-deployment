@@ -66,7 +66,7 @@ beforeEach(() => {
   stubWebGL();
 
   buildSceneMock.mockClear();
-  buildSceneMock.mockImplementation((...args) => makeController(args[4]));
+  buildSceneMock.mockImplementation((...args) => makeController(args[5]));
 });
 
 afterEach(() => {
@@ -129,6 +129,7 @@ describe("HeroSceneCanvas render-loop visibility (C1 regression)", () => {
   function Harness({ initialVisible }: { initialVisible: boolean }) {
     const [isVisible, setIsVisible] = useState(initialVisible);
     const progressRef = useRef(0);
+    const stageRef = useRef<HTMLElement | null>(null);
     const canvasRef = useRef<HTMLCanvasElement | null>(document.createElement("canvas"));
 
     return (
@@ -142,6 +143,7 @@ describe("HeroSceneCanvas render-loop visibility (C1 regression)", () => {
         </button>
         <HeroSceneCanvas
           canvasRef={canvasRef}
+          stageRef={stageRef}
           progressRef={progressRef}
           isVisible={isVisible}
           reduceMotion={false}
@@ -166,7 +168,7 @@ describe("HeroSceneCanvas render-loop visibility (C1 regression)", () => {
     // The build lands while the scene is still hidden, so the controller is
     // built frozen. That part is expected — the loop is *not* started yet.
     await settleBuild();
-    expect(buildSceneMock.mock.calls[0][4]).toBe(false);
+    expect(buildSceneMock.mock.calls[0][5]).toBe(false);
     const controller = buildSceneMock.mock.results[0].value as SceneController;
     expect(controller.setVisible).not.toHaveBeenCalled();
 
@@ -189,7 +191,7 @@ describe("HeroSceneCanvas render-loop visibility (C1 regression)", () => {
     render(<Harness initialVisible={true} />);
 
     await settleBuild();
-    expect(buildSceneMock.mock.calls[0][4]).toBe(true);
+    expect(buildSceneMock.mock.calls[0][5]).toBe(true);
     const controller = buildSceneMock.mock.results[0].value as SceneController;
     expect(controller.setVisible).toHaveBeenLastCalledWith(true);
 

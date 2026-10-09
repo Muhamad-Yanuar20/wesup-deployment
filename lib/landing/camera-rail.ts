@@ -133,19 +133,39 @@ export const DEPARTURE_EASE = (t: number): number =>
 /** Total X the truck's cargo travels during the departure, in world units. */
 export const TRUCK_DEPART_TOTAL = 26;
 
-/** Total X the camera rig translates during the departure, in world units. */
-export const DOLLY_TOTAL = 19;
+/**
+ * Total X the camera rig translates during the departure, in world units.
+ *
+ * Deliberately equal to `TRUCK_DEPART_TOTAL`: truck and rig ride the same
+ * curve to the same total, so the truck holds a *constant* lateral offset from
+ * the look target for the whole drive-away. That counteracts the mobile
+ * framing bug where the 26-vs-19 split let the truck drift ~7 world units past
+ * the frozen look lane — on a narrow (portrait) field of view the truck then
+ * crossed the viewport's right edge while still opaque and read as "cut off".
+ * Equal travel keeps the truck dead-centred at every width for the first leg
+ * of the departure; the recede is carried by the scenery slide, the road-dash
+ * wrap and the dock being overtaken, not by the truck shearing across the
+ * frame. (The tail, after `TRUCK_OVERRUN_START`, deliberately breaks this: the
+ * truck alone overruns and drives out of frame — see `truckOverrunX`.)
+ */
+export const DOLLY_TOTAL = 26;
 
 /**
  * Minimum distance the truck's rear cargo plane must keep ahead of the camera
  * at the end of the departure, in world units.
  *
- * With the 36° vertical field of view, a 3.95-unit-tall truck fitting inside
- * ~60% of the frame height needs the camera at least ~10 units away; the
- * departure travel is chosen so the gap is comfortably larger, keeping the
- * truck readable as "down the road" rather than filling the screen.
+ * Because the truck and the rig travel equal totals, this is a *constant*
+ * (not a worst-case): rear cargo plane at world `truckX + rearX` vs camera at
+ * world `-11.3 + dollyX` gives `26 - 3.2 - (-11.3 + 26) = 8.1` lateral gap for
+ * every frame of the drive-away, which at the 7-unit Z standoff is ~10.7 units
+ * of true depth. With the 36° vertical field of view that keeps the 3.95-unit
+ * truck inside ~60% of the frame height, readable as "down the road" rather
+ * than filling the screen, on every aspect ratio. The constant holds through
+ * the equal-travel leg; during the overrun tail the gap only grows (the truck
+ * pulls ahead of the stopped camera), so the framing never gets tighter than
+ * this number.
  */
-export const MIN_TRUCK_FRAMING_DISTANCE = 10;
+export const MIN_TRUCK_FRAMING_DISTANCE = 8.1;
 
 /**
  * The dock's leading (+X) edge in world units.
@@ -160,6 +180,51 @@ export const STATION_MAX_X = 6.5;
 /** Truck position during the departure, in world units. */
 export const truckDepartureX = (t: number): number =>
   TRUCK_DEPART_TOTAL * DEPARTURE_EASE(t);
+
+/**
+ * Progress at which the truck stops riding the equal-travel curve and starts
+ * pulling ahead of the camera on its own.
+ *
+ * The first leg of the drive-away holds the truck dead-centre (equal travels,
+ * see `DOLLY_TOTAL`). At this splice the camera keeps its dolly while the truck
+ * alone accelerates ahead, so it recedes with distance, sweeps past the right
+ * edge of the frame and drives off — "the truck is going somewhere else",
+ * instead of dissolving in place. The splice is continuous (`truckOverrunX` is
+ * exactly 0 up to here) and the overrun easing starts at zero slope, so the
+ * peel begins without a velocity jerk. The window this leaves is the same tail
+ * the old opacity dissolve used, so the overall scroll feel is unchanged.
+ */
+export const TRUCK_OVERRUN_START = 0.72;
+
+/**
+ * Total extra X the truck travels past the camera's travel at the very end,
+ * in world units.
+ *
+ * With the rig sitting on its full dolly, the truck has to pull far enough
+ * ahead that its rearmost (left) point clears the right edge of the frame at
+ * the widest common aspect. Depth grows with the pull-ahead, so the needed
+ * offset is set by viewport width: 48 clears 16:9 with ~11 world units to
+ * spare and just about clears 21:9 (under a unit, where the fog haze base —
+ * the truck is ~35-45% into the 28..110 fog ramp — already reads as "off into
+ * the distance"). There is no hard pop at the end; the frame finishes on empty
+ * road with the truck already gone out of view.
+ */
+export const TRUCK_OVERRUN_TOTAL = 48;
+
+/**
+ * Extra X the truck travels past the equal-travel curve, 0 before
+ * `TRUCK_OVERRUN_START`.
+ *
+ * `r²` rise: zero slope at the splice (no jerk when the truck starts to pull
+ * ahead) and accelerating toward the end, so the truck is moving fastest as it
+ * clears the frame. Closed form like everything else, so the whole ending
+ * rewinds exactly on scrub.
+ */
+export const truckOverrunX = (t: number): number => {
+  if (t <= TRUCK_OVERRUN_START) return 0;
+  const r = clamp01((t - TRUCK_OVERRUN_START) / (1 - TRUCK_OVERRUN_START));
+  return TRUCK_OVERRUN_TOTAL * r * r;
+};
 
 /** Rigid X translation applied to both the camera position and look target. */
 export const departureDollyOffset = (t: number): number =>

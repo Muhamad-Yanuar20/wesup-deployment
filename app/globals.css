@@ -14,22 +14,25 @@
   --wesup-warning: #d97706;
   --wesup-danger: #dc2626;
   /* Hero readability wash, as channel values so it can take an alpha directly.
-   * Deliberately equal to the WebGL scene's COVE_COLOR: the wash has to vanish
-   * against the cove it veils, and the two were two or three 255ths apart. */
-  --hero-wash: 246 248 251;
+   * Deliberately equal to the WebGL scene's COVE_COLOR. Swiss Industrial Print
+   * (light) sets cove to paper (#F4F4F0); pinned by brutalist contract. */
+  --hero-wash: 244 244 240;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-landing-display: var(--font-newsreader);
-  /* Editorial-landing palette. The two accents are borrowed from the WebGL
-   * scene itself so the page and the truck never read as different products:
-   * kraft is the seated-crate cardboard (0xd9c7a4), ivory is the warm paper
-   * base the scene's cove already leans toward. */
-  --color-wesup-ivory: #f7f5ef;
+  --font-mono: var(--font-jetbrains-mono);
+  --font-landing-display: var(--font-archivo-black);
+  /* Swiss Industrial Print (light) palette */
+  --color-wesup-paper: #F4F4F0;
+  --color-wesup-paper-sub: #EAE8E3;
+  --color-wesup-void: #050505;
+  --color-wesup-ink: #050505;
+  --color-wesup-ink-sub: #111111;
+  --color-wesup-red: #E61919;
+  --color-wesup-red-bright: #FF2A2A;
   --color-wesup-kraft: #d9c7a4;
 }
 
@@ -39,10 +42,10 @@ body {
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
   min-width: 320px;
   text-rendering: optimizeLegibility;
-  /* Newsreader carries an opsz axis, loaded in app/layout.tsx. Sizing it per
-   * text size is what lets one family set 2.75rem hero headlines and 0.9375rem
-   * body copy without either looking borrowed. Explicit rather than inherited
-   * from the initial value, so a future reset cannot quietly turn it off. */
+  /* Space Grotesk (landing display, --font-landing-display) and Geist both
+   * benefit from per-size optical handling where available; explicit rather
+   * than inherited from the initial value, so a future reset cannot quietly
+   * turn it off. */
   font-optical-sizing: auto;
 }
 
@@ -107,36 +110,21 @@ input[type="radio"] {
 
 /*
  * Readability wash. Its own full-bleed layer rather than a background on the
- * type overlay: the overlay is the page container, so a gradient painted there
- * was clipped to that container. Above 1152px the white therefore began dead at
- * the container's left edge with nothing beside it, and its fade finished before
- * the screen edge. Anchored at 0 and reaching zero alpha at this element's own
- * right edge, the band dissolves into the scene with no seam at any width.
+ * type overlay. Swiss Industrial Print replaces the old soft fade with a hard
+ * edge: a solid paper band the copy sits on, cut dead against the scene. No
+ * gradient, no seam to manage — the edge itself is the composition.
  */
 .hero-scene__wash {
-  /* Full-bleed on mobile, 52vw from the viewport's left edge on desktop. The
-   * gradient reaches zero alpha at this element's own right edge, so the seam
-   * only reappears if a cap or a percentage of anything but the viewport is
-   * introduced here. */
   width: 100%;
-  background: linear-gradient(
-    to top,
-    rgb(var(--hero-wash) / 0.96) 0%,
-    rgb(var(--hero-wash) / 0.82) 42%,
-    rgb(var(--hero-wash) / 0) 72%
-  );
+  background: rgb(var(--hero-wash));
+  clip-path: polygon(0 50%, 100% 50%, 100% 100%, 0 100%);
 }
 
 @media (min-width: 768px) {
   .hero-scene__wash {
     width: 52vw;
-    background: linear-gradient(
-      to right,
-      rgb(var(--hero-wash) / 0.95) 0%,
-      rgb(var(--hero-wash) / 0.93) 62%,
-      rgb(var(--hero-wash) / 0.6) 82%,
-      rgb(var(--hero-wash) / 0) 100%
-    );
+    clip-path: none;
+    border-right: 2px solid #e61919;
   }
 }
 
@@ -156,7 +144,10 @@ input[type="radio"] {
   width: 100%;
   flex-direction: column;
   justify-content: flex-end;
-  gap: 1.25rem;
+  /* Mobile gap is a hair under the desktop one: the phone panel carries the
+     full copy stack plus two stacked calls to action inside the bottom paper
+     band, and every fraction of rem here is height that has to fit the band. */
+  gap: 1rem;
 }
 
 @media (min-width: 768px) {
@@ -182,6 +173,7 @@ input[type="radio"] {
 
 .hero-beat {
   grid-area: 1 / 1;
+  align-self: start;
   opacity: 0;
   visibility: hidden;
   /* Exits rise, entries rise. The old exit sank, so a beat leaving and the next
@@ -279,8 +271,7 @@ input[type="radio"] {
   bottom: -0.5rem;
   width: 1.5rem;
   height: 2px;
-  border-radius: 999px;
-  background-color: rgb(37 99 235 / 0.9);
+  background-color: #e61919;
   transform: translateX(calc(var(--rail-index, 0) * 2rem));
   transition: transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
   opacity: 0;
@@ -292,7 +283,7 @@ input[type="radio"] {
 
 .hero-scene__rail-step {
   width: 1.5rem;
-  background-color: rgb(148 163 184 / 0.45);
+  background-color: rgb(5 5 5 / 0.3);
   transform-origin: center;
   transition:
     transform 300ms cubic-bezier(0.22, 1, 0.36, 1),
@@ -300,18 +291,20 @@ input[type="radio"] {
 }
 
 .hero-scene__rail-step[data-active="true"] {
-  background-color: var(--color-blue-600, #2563eb);
+  background-color: #e61919;
   transform: scaleX(1.6);
-  animation: hero-rail-breathe 3.2s ease-in-out infinite alternate;
 }
 
-@keyframes hero-rail-breathe {
-  from {
-    opacity: 0.75;
-  }
-
-  to {
-    opacity: 1;
+/*
+ * Phones: the rail is the first thing sacrificed to the bottom paper band. It is
+ * decorative (the beats hold the story), and a 2rem-high strip of steps inside a
+ * ~300px band is not worth the copy space it eats. Kept in the DOM — `display:
+ * none` preserves the travelling progress for a WebGL-on phone that switches to
+ * a wider viewport later.
+ */
+@media (max-width: 639.98px) {
+  .hero-scene__rail {
+    display: none;
   }
 }
 
@@ -401,7 +394,8 @@ input[type="radio"] {
   inset: 0;
   z-index: 40;
   pointer-events: none;
-  opacity: 0.035;
+  opacity: 0.06;
+  mix-blend-mode: multiply;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   background-size: 180px 180px;
 }
@@ -447,5 +441,24 @@ input[type="radio"] {
  */
 .wesup-ease {
   transition-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/*
+ * Staggered mask reveal for the mobile nav overlay: items arrive from below
+ * an invisible box. The delay rides --i, set inline per item, and the whole
+ * sequence is disabled when the menu is closed (items parked pre-entry).
+ */
+.wesup-menu-item {
+  opacity: 0;
+  transform: translateY(1.5rem);
+  transition:
+    opacity 600ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 600ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition-delay: calc(var(--i, 0) * 70ms);
+}
+
+[data-menu-open="true"] .wesup-menu-item {
+  opacity: 1;
+  transform: translateY(0);
 }
 
