@@ -82,7 +82,7 @@ Archivo Black, exclusively uppercase. Tight / compressed blocks.
 ```
 
 - Scale ladder for sections: `text-3xl` → `sm:text-5xl` → `md:text-6xl`.
-- Hero headline: `font-landing-display text-[1.75rem] leading-[1.07] tracking-[-0.03em] text-wesup-ink text-balance sm:text-[2.5rem] sm:leading-[1.06] md:text-[3.25rem] md:leading-[1.04] md:tracking-[-0.035em]`.
+- Hero headline: `font-landing-display text-[1.75rem] leading-[1.07] tracking-[-0.03em] text-wesup-ink text-balance sm:text-[2.5rem] sm:leading-[1.06] md:text-[3.5rem] md:leading-[1.03] md:tracking-[-0.035em] lg:text-[4rem] xl:text-[4.5rem] xl:leading-[1.02]`. The hero working column is `max-width: min(36rem, 38vw)` and centres its beat+CTA group vertically (`justify-content: safe center`) so the flagship type fills the left panel without dead space.
 - Tracked caps (`tracking-[0.08em]`) for long statements; tight negative tracking
   (`-0.03em` to `-0.035em`) for massive hero type so glyphs form solid blocks.
 - Numeric values use `tabular-nums` + `tracking-tight`.

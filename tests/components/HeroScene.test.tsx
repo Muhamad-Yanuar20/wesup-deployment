@@ -312,7 +312,8 @@ describe("HeroScene mobile compression", () => {
     ) as HTMLElement;
     const classes = heading.className;
     expect(classes).toContain("text-[1.75rem]");
-    expect(classes).toContain("md:text-[3.25rem]");
+    expect(classes).toContain("md:text-[3.5rem]");
+    expect(classes).toContain("lg:text-[4rem]");
   });
 });
 

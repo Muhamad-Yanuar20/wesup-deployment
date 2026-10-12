@@ -159,12 +159,14 @@ input[type="radio"] {
   .hero-scene__column {
     /* The two constraints, not one: a flat 40% left the headline stranded in a
        narrow slot on a laptop and pushed the volume meter into the cab. */
-    max-width: min(32rem, 34vw);
+    max-width: min(36rem, 38vw);
     height: 100%;
-    /* flex-start (not space-between): the calls to action trail the active
-       beat's text instead of being pinned to the viewport bottom, so they rise
-       and fall as the copy's height changes while scrolling. */
-    justify-content: flex-start;
+    /* safe center (not space-between): the calls to action trail the active
+       beat's text and the whole group is centred vertically in the left panel,
+       so nothing is pinned to the viewport bottom. `safe` means a beat too tall
+       for the viewport falls back to top alignment and can only overflow below
+       the fold — never up under the fixed header. */
+    justify-content: safe center;
     gap: 1.5rem;
   }
 }

@@ -88,4 +88,15 @@ describe("landing brutalist design contract", () => {
       expect(read(file)).not.toContain("bg-wesup-ivory");
     }
   });
+
+  it("centres the desktop hero column and widens it for the enlarged type", () => {
+    const globals = read("app", "globals.css");
+    expect(globals).toContain("justify-content: safe center");
+    expect(globals).toContain("max-width: min(36rem, 38vw)");
+    // The static fallback must still top-align its stacked story — the safe
+    // centring applies to the live scene column, never the degraded layout.
+    expect(globals).toMatch(
+      /\[data-webgl="off"\] \.hero-scene__column\s*\{[^}]*justify-content:\s*flex-start/,
+    );
+  });
 });

@@ -603,3 +603,59 @@ Decisions:
 
 - **No committed e2e asserts the rendered CTA `y` moves.** The component tests mock `offsetHeight`; the real browser contract (button group visibly glides between a short beat and the instrumented `pintu-ditutup` beat at 1440×900) is an uncommitted visual check. Highest-value follow-up is a Playwright assertion that `.hero-scene__cta`'s bounding box `y` differs between scroll stages.
 - **Height is measured, not clamped.** On unusually short desktop viewports a tall beat can push the CTA below the fold; this matches the pre-change pinned behaviour and is deliberately not clamped (clamping overlaps text with the CTA).
+
+# Revision 8 — centre the hero panel and enlarge the desktop type
+
+## The defect
+
+Two complaints, one cause: the left panel's copy sat at the *top* of the viewport (`justify-content: flex-start`), and on large monitors the 52px headline + 16px body left a wide band of empty space between the text and the CTA — and empty space around the whole group.
+
+## Fix
+
+| # | Change | Where |
+|---|--------|-------|
+| 43 | Desktop column centres the beat+CTA group vertically, degrading safely on overflow | `globals.css` md block: `justify-content: safe center` |
+| 44 | Column widens to give the enlarged type room: `max-width: min(36rem, 38vw)` | `globals.css` md block |
+| 45 | Headline ladder 3.25 → 3.5 → 4 → 4.5rem (`md`/`lg`/`xl`), leading tightened | `HeroScene.tsx` `BeatHeadline` |
+| 46 | Body 16 → 18px (`md`) → 20px (`xl`); eyebrow, chip, meter and CTA labels step up to match; beat margins unchanged (no looser rhythm — white space is filled by type, not spacing) | `HeroScene.tsx` |
+
+Decisions:
+
+- **`safe center`** keeps both behaviours: the group is centred when it fits, but a beat taller than the viewport (the volume-meter stage on a 720px-tall laptop) falls back to top alignment — overflow can only escape below the fold, never under the fixed header. This carries the Revision 7 no-clamp contract forward.
+- **Mobile untouched** (`.hero-scene__column { justify-content: flex-end }` and all `sm:`/base type) — the low-end-Android panel and perf budget are not disturbed.
+- **Fallback untouched** (`[data-webgl="off"]` still `justify-content: flex-start`, `height: auto`); it is the only writer of the column's vertical alignment in degraded mode, asserted by the contract test.
+- **`xl` not `lg` for the largest step** so 1024-wide laptops (768px tall) never get a 72px headline; 64px is the ceiling at `lg`.
+
+## Task report (revision 8)
+
+| Plan task | Execution summary | Validation command | Result |
+|-----------|-------------------|--------------------|--------|
+| `landing-brutalist-contract.test.ts` (RED) | Added the centring/width contract test | `npx vitest run tests/unit/landing-brutalist-contract.test.ts` | RED → **GREEN** |
+| `HeroScene.test.tsx` (RED) | Headline-size pin updated to the new ladder | `npx vitest run tests/components/HeroScene.test.tsx` | RED → **GREEN (22)** |
+| `app/globals.css` | `safe center` + `min(36rem, 38vw)` column | `npx vitest run tests/unit/landing-brutalist-contract.test.ts` | PASS |
+| `components/landing/scene/HeroScene.tsx` | Type sizes stepped up on `md`/`lg`/`xl` | `npx tsc --noEmit`, `npx eslint components/landing/scene/HeroScene.tsx` | PASS |
+| `DESIGN.md` | Hero headline recipe (§2.1) updated to the new ladder + centring note | `npx vitest run tests/unit/landing-brutalist-contract.test.ts` | PASS |
+
+## Test specification (revision 8)
+
+| # | What is guaranteed | Test file | Test type | Result |
+|---|--------------------|-----------|-----------|--------|
+| 43 | Desktop `.hero-scene__column` uses `justify-content: safe center` and `max-width: min(36rem, 38vw)` | `landing-brutalist-contract.test.ts` | unit (CSS contract) | PASS |
+| 44 | The `data-webgl="off"` fallback still top-aligns its stack (`flex-start`) | `landing-brutalist-contract.test.ts` | unit (CSS contract) | PASS |
+| 45 | Headline ladder is `md:text-[3.5rem]` / `lg:text-[4rem]` (mobile 1.75rem unchanged) | `HeroScene.test.tsx` | component | PASS |
+
+`HeroScene.test.tsx` (22) + `HeroScene.scene.test.tsx` (8) + `landing-brutalist-contract.test.ts` — **green.**
+
+## Mutation checks
+
+| Mutation | Result |
+|----------|--------|
+| `safe center` reverted to bare `center` (no safe fallback) | killed by the width/centring contract pin |
+| Column max-width reverted to `min(32rem, 34vw)` | killed |
+| Headline ladder reverted to `md:text-[3.25rem]` | killed by test 45 |
+| Fallback column set to `center` | killed by test 44 |
+
+## Known gaps (revision 8)
+
+- **No numeric check of "less white space".** Bigger type + centring are the remedy, but the perceived emptiness is only verifiable by eye. A future pass could measure the gap between the group's bottom and the viewport bottom at a fixed viewport and assert it shrank vs `3.25rem`/`flex-start`.
+- **Type scale values are tunable.** `3.5/4/4.5rem` were chosen to keep 1024×768 laptops from overflowing; if the product owner wants more presence still, `xl:text-[5rem]` is the next step, re-checked at 1280×720.

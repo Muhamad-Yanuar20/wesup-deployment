@@ -42,7 +42,7 @@ function BeatHeadline({ title }: { title: string }) {
   const words = title.split(" ");
 
   return (
-    <h2 className="hero-beat__title mt-3 font-landing-display text-[1.75rem] font-medium leading-[1.07] tracking-[-0.03em] text-wesup-ink text-balance sm:text-[2.5rem] sm:leading-[1.06] md:mt-4 md:text-[3.25rem] md:leading-[1.04] md:tracking-[-0.035em]">
+    <h2 className="hero-beat__title mt-3 font-landing-display text-[1.75rem] font-medium leading-[1.07] tracking-[-0.03em] text-wesup-ink text-balance sm:text-[2.5rem] sm:leading-[1.06] md:mt-4 md:text-[3.5rem] md:leading-[1.03] md:tracking-[-0.035em] lg:text-[4rem] lg:leading-[1.03] xl:text-[4.5rem] xl:leading-[1.02]">
       <span className="sr-only">{title}</span>
       <span aria-hidden="true">
         {words.map((word, index) => (
@@ -211,7 +211,7 @@ export function HeroScene() {
                   className="hero-beat"
                 >
                   <p
-                    className="hero-beat__eyebrow flex items-center gap-3 font-mono text-[0.6875rem] font-medium uppercase tabular-nums tracking-[0.2em] text-wesup-ink-sub"
+                    className="hero-beat__eyebrow flex items-center gap-3 font-mono text-[0.6875rem] font-medium uppercase tabular-nums tracking-[0.2em] text-wesup-ink-sub md:text-[0.75rem]"
                     style={{ "--i": 0 } as CSSProperties}
                   >
                     <span className="hero-beat__rule inline-block h-px w-6 bg-wesup-red" aria-hidden="true" />
@@ -219,7 +219,7 @@ export function HeroScene() {
                   </p>
                   <BeatHeadline title={beat.title} />
                   <p
-                    className="hero-beat__body mt-6 max-w-[36ch] text-[0.9375rem] leading-[1.65] text-wesup-ink-sub text-pretty sm:mt-4 sm:text-base"
+                    className="hero-beat__body mt-6 max-w-[36ch] text-[0.9375rem] leading-[1.65] text-wesup-ink-sub text-pretty sm:mt-4 sm:text-base md:mt-5 md:max-w-[42ch] md:text-lg md:leading-[1.65] xl:text-xl"
                     style={{ "--i": 2 } as CSSProperties}
                   >
                     {beat.body}
@@ -228,7 +228,7 @@ export function HeroScene() {
                   {/* Plain statement, not a badge: red rule + text. */}
                   {beat.chip ? (
                     <p
-                      className="hero-beat__chip mt-3 flex items-baseline gap-3 text-[0.875rem] font-medium text-wesup-ink sm:mt-4"
+                      className="hero-beat__chip mt-3 flex items-baseline gap-3 text-[0.875rem] font-medium text-wesup-ink sm:mt-4 md:text-[0.9375rem]"
                       style={{ "--i": 3 } as CSSProperties}
                     >
                       <span className="mt-[0.6em] inline-block h-px w-4 shrink-0 bg-wesup-red" aria-hidden="true" />
@@ -239,14 +239,14 @@ export function HeroScene() {
                   {beat.id === "pintu-ditutup" ? (
                     <div
                       data-testid="scene-volume-meter"
-                      className="hero-beat__meter mt-4 max-w-[21rem] border-t border-wesup-ink/20 pt-3 sm:mt-5 sm:max-w-sm"
+                      className="hero-beat__meter mt-4 max-w-[21rem] border-t border-wesup-ink/20 pt-3 sm:mt-5 sm:max-w-sm md:max-w-md"
                       style={{ "--i": 4 } as CSSProperties}
                     >
                       <div className="flex items-baseline justify-between gap-4">
-                        <span className="font-mono text-[0.6875rem] uppercase tracking-[0.18em] text-wesup-ink-sub">
+                        <span className="font-mono text-[0.6875rem] uppercase tracking-[0.18em] text-wesup-ink-sub md:text-[0.75rem]">
                           Volume terkumpul
                         </span>
-                        <span className="font-mono text-sm font-medium tabular-nums text-wesup-ink">
+                        <span className="font-mono text-sm font-medium tabular-nums text-wesup-ink md:text-base">
                           {formatKg(TARGET_REGISTERED_KG)}
                           <span className="text-wesup-ink-sub"> / {formatKg(TARGET_QUOTA_KG)} kg</span>
                         </span>
@@ -264,7 +264,7 @@ export function HeroScene() {
                           style={{ width: `${filledRatio * 100}%` }}
                         />
                       </div>
-                      <p className="mt-3 text-sm leading-relaxed text-wesup-ink-sub">
+                      <p className="mt-3 text-sm leading-relaxed text-wesup-ink-sub md:text-[0.9375rem]">
                         Terkunci di <strong className="font-semibold text-wesup-ink">{lockedTier.label}</strong>,{" "}
                         {formatRupiah(lockedTier.unitPrice)}/kg. {upcomingTier.label} terbuka di{" "}
                         {formatKg(upcomingTier.minQuantityKg)} kg.
@@ -297,7 +297,7 @@ export function HeroScene() {
               <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:gap-6">
                 <Link
                   href="/register?role=umkm"
-                  className="group inline-flex min-h-12 w-full items-center justify-center gap-3 border border-wesup-ink bg-wesup-ink px-7 py-3 text-[0.9375rem] font-semibold tracking-[-0.01em] text-wesup-paper transition-colors duration-300 hover:border-wesup-red hover:bg-wesup-red focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wesup-red sm:w-auto"
+                  className="group inline-flex min-h-12 w-full items-center justify-center gap-3 border border-wesup-ink bg-wesup-ink px-7 py-3 text-[0.9375rem] font-semibold tracking-[-0.01em] text-wesup-paper transition-colors duration-300 hover:border-wesup-red hover:bg-wesup-red focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wesup-red sm:w-auto md:text-base"
                 >
                   Mulai hemat bersama
                   <ArrowRight
@@ -308,14 +308,14 @@ export function HeroScene() {
                 </Link>
                 <Link
                   href="/marketplace"
-                  className="inline-flex min-h-12 items-center justify-center text-[0.9375rem] font-semibold text-wesup-ink underline decoration-wesup-ink/30 underline-offset-[6px] transition-colors duration-300 hover:decoration-wesup-red focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wesup-red"
+                  className="inline-flex min-h-12 items-center justify-center text-[0.9375rem] font-semibold text-wesup-ink underline decoration-wesup-ink/30 underline-offset-[6px] transition-colors duration-300 hover:decoration-wesup-red focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wesup-red md:text-base"
                 >
                   Lihat penawaran
                 </Link>
               </div>
 
               {/* One quiet line instead of three icon chips. */}
-              <ul className="mt-5 hidden flex-col gap-1 border-t border-wesup-ink/15 pt-3 text-[0.8125rem] text-wesup-ink-sub md:flex md:flex-row md:flex-wrap md:gap-x-5">
+              <ul className="mt-5 hidden flex-col gap-1 border-t border-wesup-ink/15 pt-3 text-[0.8125rem] text-wesup-ink-sub md:flex md:flex-row md:flex-wrap md:gap-x-5 md:text-[0.875rem]">
                 {TRUST_NOTES.map((note) => (
                   <li key={note}>{note}</li>
                 ))}
