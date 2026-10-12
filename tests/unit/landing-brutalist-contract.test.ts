@@ -14,6 +14,7 @@ const read = (...segments: string[]) =>
   readFileSync(join(process.cwd(), ...segments), "utf8");
 
 const LANDING_COMPONENTS = [
+  // Landing surface
   "components/landing/sections/BatchManifest.tsx",
   "components/landing/sections/HowItWorks.tsx",
   "components/landing/sections/Features.tsx",
@@ -22,6 +23,43 @@ const LANDING_COMPONENTS = [
   "components/landing/sections/SiteHeader.tsx",
   "components/landing/scene/HeroScene.tsx",
   "app/page.tsx",
+  // Person B — buyer journey + supplier account
+  "app/umkm/page.tsx",
+  "app/umkm/onboarding/page.tsx",
+  "app/umkm/akun/page.tsx",
+  "app/umkm/notifikasi/page.tsx",
+  "app/umkm/pesanan/page.tsx",
+  "app/umkm/pesanan/[orderId]/page.tsx",
+  "app/pesanan/[orderId]/bayar/page.tsx",
+  "app/pesanan/[orderId]/serah-terima/page.tsx",
+  "app/pesanan/[orderId]/komplain/page.tsx",
+  "app/pesanan/[orderId]/sengketa/page.tsx",
+  "app/pesanan/[orderId]/nilai/page.tsx",
+  "app/pesanan/[orderId]/refund/rekening/page.tsx",
+  "app/supplier/akun/page.tsx",
+  "components/umkm/UmkmDashboardClient.tsx",
+  "components/umkm/UmkmAccountClient.tsx",
+  "components/umkm/UmkmNotificationsClient.tsx",
+  "components/umkm/UmkmOnboardingForm.tsx",
+  "components/umkm/UmkmOrdersClient.tsx",
+  "components/umkm/UmkmOrderDetailClient.tsx",
+  "components/orders/TransactionOverview.tsx",
+  "components/orders/TransactionSupport.tsx",
+  "components/orders/EarlyPaymentDecision.tsx",
+  "components/orders/PickupQrBlock.tsx",
+  "components/orders/PickupCredentialClient.tsx",
+  "components/orders/OrderCenterClient.tsx",
+  "components/payments/UmkmPaymentPanel.tsx",
+  "components/payments/PaymentInvoiceCard.tsx",
+  "components/payments/PaymentWindowClient.tsx",
+  "components/payments/QrisPaymentMock.tsx",
+  "components/payments/PaymentCountdown.tsx",
+  "components/payments/HitAndRunBanner.tsx",
+  "components/ratings/RatingFormClient.tsx",
+  "components/feedback/core.tsx",
+  "components/feedback/ConfirmDialog.tsx",
+  "components/ui/EmptyState.tsx",
+  "components/ui/SkeletonLoading.tsx",
 ];
 
 describe("landing brutalist design contract", () => {

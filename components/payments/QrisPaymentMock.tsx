@@ -27,15 +27,15 @@ export default function QrisPaymentMock({
   return (
     <section
       aria-label="Pembayaran QRIS"
-      className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
+      className="border border-wesup-ink/15 bg-wesup-paper"
     >
-      <header className="border-b border-slate-100 bg-slate-50 px-5 py-4">
+      <header className="border-b border-wesup-ink/10 px-4 py-3 sm:px-5">
         <div className="flex items-center gap-2">
-          <QrCode aria-hidden="true" className="h-4 w-4 text-slate-400" />
-          <h2 className="text-sm font-bold uppercase tracking-wide text-slate-700">
+          <QrCode aria-hidden="true" className="size-4 text-wesup-ink-sub" strokeWidth={1.5} />
+          <h2 className="font-mono text-[0.6875rem] font-medium uppercase tracking-[0.2em] text-wesup-ink-sub">
             Bayar via QRIS
           </h2>
-          <span className="ml-auto rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+          <span className="ml-auto bg-wesup-paper-sub px-2 py-1 font-mono text-[0.625rem] font-semibold uppercase tracking-[0.14em] text-wesup-ink-sub">
             Midtrans Sandbox
           </span>
         </div>
@@ -43,20 +43,20 @@ export default function QrisPaymentMock({
 
       <div className="flex flex-col items-center gap-4 px-5 py-6">
         <div
-          className="flex h-44 w-44 items-center justify-center rounded-xl border-2 border-dashed border-slate-300 bg-slate-50"
+          className="relative flex size-44 items-center justify-center border border-dashed border-wesup-ink/30 bg-wesup-paper-sub"
           aria-hidden="true"
         >
           <div className="text-center">
-            <QrCode className="mx-auto h-12 w-12 text-slate-400" />
-            <p className="mt-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+            <QrCode className="mx-auto size-12 text-wesup-ink-sub/60" strokeWidth={1} />
+            <p className="mt-2 font-mono text-[0.625rem] font-semibold uppercase tracking-[0.14em] text-wesup-ink-sub">
               QRIS Placeholder
             </p>
           </div>
         </div>
 
         <div className="text-center">
-          <p className="text-xs text-slate-500">Nominal tagihan</p>
-          <p className="text-2xl font-black text-slate-900">
+          <p className="font-mono text-[0.6875rem] uppercase tracking-[0.14em] text-wesup-ink-sub">Nominal tagihan</p>
+          <p className="mt-1 font-landing-display text-3xl tabular-nums text-wesup-ink">
             {money.format(grossAmount)}
           </p>
         </div>
@@ -65,20 +65,20 @@ export default function QrisPaymentMock({
           type="button"
           disabled={locked}
           aria-disabled={locked}
-          className={`inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold transition-colors ${
+          className={`inline-flex w-full items-center justify-center gap-2 border px-4 py-3 text-sm font-semibold transition-colors duration-500 wesup-ease ${
             locked
-              ? "cursor-not-allowed bg-slate-200 text-slate-500"
-              : "bg-emerald-600 text-white hover:bg-emerald-700"
+              ? "cursor-not-allowed border-wesup-ink/15 bg-wesup-paper-sub text-wesup-ink-sub/60"
+              : "border-wesup-ink bg-wesup-ink text-wesup-paper hover:border-wesup-red hover:bg-wesup-red"
           }`}
         >
-          <ShieldCheck aria-hidden="true" className="h-4 w-4" />
+          <ShieldCheck aria-hidden="true" className="size-4" strokeWidth={1.5} />
           {resolution === "waiting" && "Tunggu jendela pembayaran dibuka"}
           {resolution === "expired" && "Jendela pembayaran sudah ditutup"}
           {resolution === "paid" && "Pembayaran lunas"}
           {resolution === "open" && "Bayar via QRIS"}
         </button>
 
-        <p className="text-center text-[11px] leading-relaxed text-slate-400">
+        <p className="text-center text-[0.6875rem] leading-relaxed text-wesup-ink-sub">
           Pembayaran harus diselesaikan di dalam Payment Window. Di luar jendela,
           API Gatekeeper menolak transaksi dan tombol akan terkunci.
         </p>

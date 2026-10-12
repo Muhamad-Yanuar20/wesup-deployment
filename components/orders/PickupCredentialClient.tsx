@@ -43,6 +43,11 @@ const dates = new Intl.DateTimeFormat("id-ID", {
   timeZone: "Asia/Jakarta",
 });
 
+const panel = "border border-wesup-ink/15 bg-wesup-paper";
+const panelHeading = "flex items-center gap-2 font-landing-display text-lg uppercase tracking-[0.05em] text-wesup-ink";
+const primaryBtn = "inline-flex min-h-12 items-center gap-2 border border-wesup-ink bg-wesup-ink px-4 py-2.5 text-sm font-semibold text-wesup-paper transition-all duration-500 wesup-ease hover:border-wesup-red hover:bg-wesup-red hover:translate-x-0.5";
+const alertBtn = "inline-flex min-h-11 items-center gap-1.5 border border-wesup-red bg-wesup-paper px-4 py-2 text-sm font-semibold text-wesup-red transition-colors duration-500 wesup-ease hover:bg-wesup-paper-sub";
+
 function formatDate(value: string | null): string {
   if (!value) return "—";
   const date = new Date(value);
@@ -102,59 +107,52 @@ export default function PickupCredentialClient({
 
   return (
     <div className="space-y-6">
-      <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-sm">
+      <nav aria-label="Breadcrumb" className="flex items-center gap-2 font-mono text-[0.6875rem] uppercase tracking-[0.14em]">
         <Link
           href="/pesanan"
-          className="inline-flex items-center gap-1 font-semibold text-slate-600 transition hover:text-slate-900"
+          className="inline-flex min-h-11 items-center gap-1 font-semibold text-wesup-ink underline decoration-wesup-ink/30 underline-offset-[6px] transition-colors duration-300 hover:decoration-wesup-red focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wesup-red"
         >
-          <ArrowLeft aria-hidden="true" className="h-4 w-4" />
+          <ArrowLeft aria-hidden="true" className="size-4" strokeWidth={1.5} />
           Pesanan
         </Link>
-        <span aria-hidden="true" className="text-slate-300">
-          /
-        </span>
-        <span className="truncate font-medium text-slate-500">
-          Serah Terima
-        </span>
+        <span aria-hidden="true" className="text-wesup-ink-sub/40">/</span>
+        <span className="truncate text-wesup-ink-sub">Serah Terima</span>
       </nav>
 
-      <header>
-        <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-blue-600">
-          <QrCode aria-hidden="true" className="h-4 w-4" />
+      <header className="border-b border-wesup-ink/10 pb-6">
+        <p className="inline-flex items-center gap-2 font-mono text-[0.6875rem] font-medium uppercase tracking-[0.24em] text-wesup-ink-sub">
+          <span aria-hidden="true" className="inline-block h-px w-6 bg-wesup-red" />
           Serah Terima Pengambilan
         </p>
-        <h1 className="mt-1 text-2xl font-extrabold tracking-tight text-slate-900">
+        <h1 className="mt-4 font-landing-display text-3xl uppercase leading-[0.95] tracking-[0.06em] text-wesup-ink">
           {credential.batchTitle}
         </h1>
-        <p className="mt-1 text-sm text-slate-500">
-          {credential.supplierName} ·{" "}
-          <span className="font-mono">{credential.batchDisplayCode}</span>
+        <p className="mt-1 font-mono text-[0.6875rem] uppercase tracking-[0.14em] text-wesup-ink-sub">
+          {credential.supplierName} · {credential.batchDisplayCode}
         </p>
       </header>
 
       {banner ? (
         <section
           aria-label={`Status pesanan: ${banner.label}`}
-          className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
+          className="relative border border-wesup-ink/15 bg-wesup-paper p-5 pl-6"
         >
+          <span aria-hidden="true" className={`absolute inset-y-0 left-0 w-0.5 ${credential.status === "no_show" ? "bg-wesup-red" : "bg-wesup-ink/30"}`} />
           <div className="flex items-start gap-3">
             <span
               aria-hidden="true"
-              className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100"
+              className="flex size-10 shrink-0 items-center justify-center border border-wesup-ink/20 text-wesup-ink-sub"
             >
               <StatusIcon status={credential.status} />
             </span>
             <div>
-              <h2 className="font-bold text-slate-900">{banner.label}</h2>
-              <p className="mt-1 text-sm leading-relaxed text-slate-600">
+              <h2 className="font-landing-display text-lg uppercase tracking-[0.05em] text-wesup-ink">{banner.label}</h2>
+              <p className="mt-1 text-sm leading-relaxed text-wesup-ink-sub">
                 {banner.description}
               </p>
               {credential.status === "pending_payment" && (
-                <PaymentPageLink
-                  href={`/pesanan/${credential.orderId}/bayar`}
-                  className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700"
-                >
-                  <CreditCard aria-hidden="true" size={16} />
+                <PaymentPageLink href={`/pesanan/${credential.orderId}/bayar`} className={`mt-3 ${primaryBtn}`}>
+                  <CreditCard aria-hidden="true" size={16} strokeWidth={1.5} />
                   Bayar Sekarang
                 </PaymentPageLink>
               )}
@@ -176,25 +174,18 @@ export default function PickupCredentialClient({
 }
 
 function StatusIcon({ status }: { status: AccountOrderStatus }) {
-  const className = "h-5 w-5";
+  const className = "size-5";
   switch (status) {
     case "registered":
-      return <Clock aria-hidden="true" className={`${className} text-slate-500`} />;
+      return <Clock aria-hidden="true" className={`${className} text-wesup-ink-sub`} strokeWidth={1.5} />;
     case "pending_payment":
-      return (
-        <CreditCard aria-hidden="true" className={`${className} text-amber-600`} />
-      );
+      return <CreditCard aria-hidden="true" className={`${className} text-wesup-ink-sub`} strokeWidth={1.5} />;
     case "picked_up":
-      return (
-        <PackageCheck
-          aria-hidden="true"
-          className={`${className} text-emerald-600`}
-        />
-      );
+      return <PackageCheck aria-hidden="true" className={`${className} text-wesup-ink`} strokeWidth={1.5} />;
     case "no_show":
-      return <XCircle aria-hidden="true" className={`${className} text-red-600`} />;
+      return <XCircle aria-hidden="true" className={`${className} text-wesup-red`} strokeWidth={1.5} />;
     case "cancelled":
-      return <Ban aria-hidden="true" className={`${className} text-slate-500`} />;
+      return <Ban aria-hidden="true" className={`${className} text-wesup-red`} strokeWidth={1.5} />;
     default:
       return null;
   }
@@ -207,26 +198,20 @@ function PickupCompletedSection({ credential }: { credential: PickupCredential }
   const scenario = getComplaintScenario(credential.orderId);
 
   return (
-    <div className="mt-4 space-y-3 border-t border-slate-100 pt-3">
+    <div className="mt-4 space-y-3 border-t border-wesup-ink/10 pt-4">
       {deadlineAt && <EscrowCountdown deadlineAt={deadlineAt} />}
-      <p className="text-xs leading-relaxed text-slate-500">
+      <p className="text-xs leading-relaxed text-wesup-ink-sub">
         Hitung mundur escrow 1×24 jam berjalan sejak pengambilan. Ajukan komplain sebelum batas
         waktu ini untuk membekukan pencairan dana ke Supplier.
       </p>
       {scenario?.kind === "filed" ? (
-        <Link
-          href={`/pesanan/${credential.orderId}/sengketa`}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-700 transition hover:bg-amber-100"
-        >
-          <ShieldCheck aria-hidden="true" size={16} />
+        <Link href={`/pesanan/${credential.orderId}/sengketa`} className={alertBtn}>
+          <ShieldCheck aria-hidden="true" size={16} strokeWidth={1.5} />
           Lacak Sengketa
         </Link>
       ) : scenario?.kind === "window_open" ? (
-        <Link
-          href={`/pesanan/${credential.orderId}/komplain`}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-100"
-        >
-          <ShieldAlert aria-hidden="true" size={16} />
+        <Link href={`/pesanan/${credential.orderId}/komplain`} className={alertBtn}>
+          <ShieldAlert aria-hidden="true" size={16} strokeWidth={1.5} />
           Ajukan Komplain
         </Link>
       ) : null}
@@ -241,76 +226,63 @@ function PaidCredential({ credential }: { credential: PickupCredential }) {
   return (
     <section
       aria-label="Kode QR dan PIN pengambilan"
-      className="grid grid-cols-1 gap-5 lg:grid-cols-2"
+      className="grid grid-cols-1 gap-px border border-wesup-ink/10 bg-wesup-ink/10 lg:grid-cols-2"
     >
-      {/* QR */}
-      <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h2 className="mb-2 flex items-center gap-2 font-semibold text-slate-900">
-          <QrCode aria-hidden="true" size={18} className="text-blue-600" />
+      <div className="bg-wesup-paper p-5">
+        <h2 className={panelHeading}>
+          <QrCode aria-hidden="true" size={18} className="text-wesup-red" strokeWidth={1.5} />
           Kode QR Pengambilan
         </h2>
-        <p className="mb-4 text-xs text-slate-500">
+        <p className="mb-4 mt-1 text-xs text-wesup-ink-sub">
           Perlihatkan kode ini ke Supplier saat tiba di titik kumpul.
         </p>
         {credential.pickupCode ? (
           <PickupQrBlock seed={seed} />
         ) : (
-          <p className="text-sm text-slate-500">Kode QR belum tersedia.</p>
+          <p className="text-sm text-wesup-ink-sub">Kode QR belum tersedia.</p>
         )}
       </div>
 
-      {/* PIN */}
-      <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h2 className="mb-2 flex items-center gap-2 font-semibold text-slate-900">
-          <KeyRound aria-hidden="true" size={18} className="text-blue-600" />
+      <div className="bg-wesup-paper p-5">
+        <h2 className={panelHeading}>
+          <KeyRound aria-hidden="true" size={18} className="text-wesup-ink-sub" strokeWidth={1.5} />
           PIN 4-digit Cadangan
         </h2>
-        <p className="mb-4 text-xs text-slate-500">
+        <p className="mb-4 mt-1 text-xs text-wesup-ink-sub">
           Gunakan PIN ini jika kamera Supplier bermasalah (fallback operasional).
         </p>
         {credential.pinCode ? (
           <PinDisplay pin={credential.pinCode} orderId={credential.orderId} />
         ) : (
-          <p className="text-sm text-slate-500">PIN belum tersedia.</p>
+          <p className="text-sm text-wesup-ink-sub">PIN belum tersedia.</p>
         )}
       </div>
 
-      {/* Pickup window & address */}
-      <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm lg:col-span-2">
-        <h2 className="mb-3 flex items-center gap-2 font-semibold text-slate-900">
-          <CalendarClock aria-hidden="true" size={18} className="text-blue-600" />
-          Lokasi & Jendela Pengambilan
+      <div className="bg-wesup-paper p-5 lg:col-span-2">
+        <h2 className={panelHeading}>
+          <CalendarClock aria-hidden="true" size={18} className="text-wesup-ink-sub" strokeWidth={1.5} />
+          Lokasi &amp; Jendela Pengambilan
         </h2>
-        <dl className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
+        <dl className="mt-3 grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
           <div className="flex items-start gap-2">
-            <MapPin
-              aria-hidden="true"
-              className="mt-0.5 h-4 w-4 shrink-0 text-slate-400"
-            />
+            <MapPin aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-wesup-ink-sub" strokeWidth={1.5} />
             <div>
-              <dt className="font-semibold text-slate-900">Titik kumpul</dt>
-              <dd className="text-slate-600">{credential.pickupAddress}</dd>
+              <dt className="font-mono text-[0.6875rem] uppercase tracking-[0.18em] text-wesup-ink-sub">Titik kumpul</dt>
+              <dd className="mt-0.5 text-wesup-ink">{credential.pickupAddress}</dd>
             </div>
           </div>
           <div className="flex items-start gap-2">
-            <Clock
-              aria-hidden="true"
-              className="mt-0.5 h-4 w-4 shrink-0 text-slate-400"
-            />
+            <Clock aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-wesup-ink-sub" strokeWidth={1.5} />
             <div>
-              <dt className="font-semibold text-slate-900">
-                Estimasi siap (awal jendela)
-              </dt>
-              <dd className="text-slate-600">
-                {formatDate(credential.estimatedReadyAt)}
-              </dd>
+              <dt className="font-mono text-[0.6875rem] uppercase tracking-[0.18em] text-wesup-ink-sub">Estimasi siap (awal jendela)</dt>
+              <dd className="mt-0.5 tabular-nums text-wesup-ink">{formatDate(credential.estimatedReadyAt)}</dd>
             </div>
           </div>
         </dl>
-        <p className="mt-3 rounded-lg bg-blue-50 px-3 py-2 text-xs text-blue-900">
+        <p className="mt-3 border-l-2 border-wesup-red bg-wesup-paper-sub px-3 py-2 text-xs leading-5 text-wesup-ink-sub">
           Waktu pengambilan tersedia hingga{" "}
-          <strong>{formatDate(credential.pickupDeadlineAt)}</strong> — jendela
-          toleransi 12 jam sejak estimasi siap. Melewati batas tersebut
+          <strong className="tabular-nums text-wesup-ink">{formatDate(credential.pickupDeadlineAt)}</strong>{" "}
+          — jendela toleransi 12 jam sejak estimasi siap. Melewati batas tersebut
           mengaktifkan skenario No-Show (dana hangus 100%, non-refundable).
         </p>
       </div>
@@ -332,14 +304,11 @@ function PinDisplay({ pin, orderId }: { pin: string; orderId: string }) {
 
   return (
     <div>
-      <div
-        aria-hidden="true"
-        className="grid grid-cols-4 gap-2"
-      >
+      <div aria-hidden="true" className="grid grid-cols-4 gap-2 border-y border-wesup-ink/15 py-4">
         {pin.split("").map((digit, index) => (
           <div
             key={`${orderId}-pin-${index}`}
-            className="rounded-xl border border-slate-300 bg-slate-50 py-4 text-center font-mono text-3xl font-black text-slate-900"
+            className="border border-wesup-ink/20 bg-wesup-paper-sub py-4 text-center font-mono text-3xl font-black tabular-nums text-wesup-ink"
           >
             {digit}
           </div>
@@ -350,16 +319,16 @@ function PinDisplay({ pin, orderId }: { pin: string; orderId: string }) {
         type="button"
         onClick={copyPin}
         aria-label={copied ? "PIN tersalin ke clipboard" : "Salin PIN"}
-        className="mt-4 inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
+        className="mt-4 inline-flex min-h-11 items-center gap-1.5 border border-wesup-ink/20 bg-wesup-paper px-4 py-2 text-xs font-semibold text-wesup-ink transition-colors duration-500 wesup-ease hover:bg-wesup-paper-sub"
       >
         {copied ? (
           <>
-            <CheckCheck aria-hidden="true" className="h-4 w-4 text-emerald-600" />
+            <CheckCheck aria-hidden="true" className="size-4 text-wesup-red" strokeWidth={1.5} />
             PIN tersalin
           </>
         ) : (
           <>
-            <Copy aria-hidden="true" className="h-4 w-4" />
+            <Copy aria-hidden="true" className="size-4" strokeWidth={1.5} />
             Salin PIN
           </>
         )}
@@ -370,45 +339,29 @@ function PinDisplay({ pin, orderId }: { pin: string; orderId: string }) {
 
 function OrderSummaryCard({ credential }: { credential: PickupCredential }) {
   return (
-    <section
-      aria-label="Ringkasan pesanan"
-      className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
-    >
-      <header className="border-b border-slate-100 bg-slate-50 px-5 py-3">
-        <div className="flex items-center gap-2">
-          <ShoppingBag aria-hidden="true" className="h-4 w-4 text-slate-400" />
-          <h2 className="text-sm font-bold uppercase tracking-wide text-slate-700">
-            Ringkasan Pesanan
-          </h2>
-        </div>
+    <section aria-label="Ringkasan pesanan" className={panel}>
+      <header className="flex items-center gap-2 border-b border-wesup-ink/10 px-4 py-3 sm:px-5">
+        <ShoppingBag aria-hidden="true" className="size-4 text-wesup-ink-sub" strokeWidth={1.5} />
+        <h2 className="font-mono text-[0.6875rem] font-medium uppercase tracking-[0.2em] text-wesup-ink-sub">Ringkasan Pesanan</h2>
       </header>
-      <dl className="grid grid-cols-2 gap-x-4 gap-y-3 px-5 py-4 text-sm sm:grid-cols-4">
+      <dl className="grid grid-cols-2 gap-x-4 gap-y-3 p-4 text-sm sm:grid-cols-4 sm:p-5">
         <div>
-          <dt className="flex items-center gap-1.5 text-xs text-slate-500">
-            <Store aria-hidden="true" className="h-3.5 w-3.5" />
-            Supplier
+          <dt className="flex items-center gap-1.5 font-mono text-[0.6875rem] uppercase tracking-[0.18em] text-wesup-ink-sub">
+            <Store aria-hidden="true" className="size-3.5" strokeWidth={1.5} />Supplier
           </dt>
-          <dd className="mt-0.5 font-semibold text-slate-900">
-            {credential.supplierName}
-          </dd>
+          <dd className="mt-0.5 font-semibold text-wesup-ink">{credential.supplierName}</dd>
         </div>
         <div>
-          <dt className="text-xs text-slate-500">Kuantitas</dt>
-          <dd className="mt-0.5 font-semibold text-slate-900">
-            {credential.quantity} {credential.unit}
-          </dd>
+          <dt className="font-mono text-[0.6875rem] uppercase tracking-[0.18em] text-wesup-ink-sub">Kuantitas</dt>
+          <dd className="mt-0.5 font-semibold tabular-nums text-wesup-ink">{credential.quantity} {credential.unit}</dd>
         </div>
         <div>
-          <dt className="text-xs text-slate-500">Tier terkunci</dt>
-          <dd className="mt-0.5 font-semibold text-slate-900">
-            Tier {credential.lockedTier ?? 1}
-          </dd>
+          <dt className="font-mono text-[0.6875rem] uppercase tracking-[0.18em] text-wesup-ink-sub">Tier terkunci</dt>
+          <dd className="mt-0.5 font-semibold tabular-nums text-wesup-ink">Tier {credential.lockedTier ?? 1}</dd>
         </div>
         <div>
-          <dt className="text-xs text-slate-500">Total tagihan</dt>
-          <dd className="mt-0.5 font-semibold text-slate-900">
-            {money.format(credential.finalAmount)}
-          </dd>
+          <dt className="font-mono text-[0.6875rem] uppercase tracking-[0.18em] text-wesup-ink-sub">Total tagihan</dt>
+          <dd className="mt-0.5 font-semibold tabular-nums text-wesup-ink">{money.format(credential.finalAmount)}</dd>
         </div>
       </dl>
     </section>
@@ -417,23 +370,12 @@ function OrderSummaryCard({ credential }: { credential: PickupCredential }) {
 
 function PickupRulesNote() {
   return (
-    <section
-      aria-label="Aturan serah terima"
-      className="rounded-xl border border-blue-100 bg-blue-50 p-4 text-sm text-blue-900"
-    >
-      <p className="font-semibold">Aturan serah terima (PRD 2.2.4)</p>
-      <ul className="mt-1 list-inside list-disc space-y-1 text-blue-800">
-        <li>
-          Kode QR &amp; PIN hanya diterbitkan setelah tagihan <strong>lunas</strong>.
-        </li>
-        <li>
-          Berhasil dipindai menandai pesanan <strong>Sudah Diambil</strong> dan
-          memulai hitung mundur escrow 1×24 jam.
-        </li>
-        <li>
-          Tidak hadir hingga batas toleransi 12 jam sejak estimasi siap memicu
-          skenario No-Show: dana hangus 100% dan tidak dapat di-refund.
-        </li>
+    <section aria-label="Aturan serah terima" className="border border-wesup-ink/15 bg-wesup-paper-sub p-4 text-sm text-wesup-ink-sub">
+      <p className="font-mono text-[0.6875rem] font-medium uppercase tracking-[0.2em] text-wesup-ink">Aturan serah terima (PRD 2.2.4)</p>
+      <ul className="mt-2 space-y-1.5">
+        <li className="flex gap-2"><span aria-hidden="true" className="mt-2 size-1 shrink-0 bg-wesup-red" />Kode QR &amp; PIN hanya diterbitkan setelah tagihan <strong className="text-wesup-ink">lunas</strong>.</li>
+        <li className="flex gap-2"><span aria-hidden="true" className="mt-2 size-1 shrink-0 bg-wesup-red" />Berhasil dipindai menandai pesanan <strong className="text-wesup-ink">Sudah Diambil</strong> dan memulai hitung mundur escrow 1×24 jam.</li>
+        <li className="flex gap-2"><span aria-hidden="true" className="mt-2 size-1 shrink-0 bg-wesup-red" />Tidak hadir hingga batas toleransi 12 jam sejak estimasi siap memicu skenario No-Show: dana hangus 100% dan tidak dapat di-refund.</li>
       </ul>
     </section>
   );
