@@ -116,6 +116,71 @@ describe("HeroScene scene mode", () => {
   });
 });
 
+describe("HeroScene CTA follows the active beat (desktop)", () => {
+  function stubDesktop() {
+    vi.stubGlobal("matchMedia", (query: string) => ({
+      matches: query.includes("min-width"),
+      media: query,
+      onchange: null,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    }));
+  }
+
+  /**
+   * A beat's height comes back at `index * 100 + 50` px, so stage 00 measures
+   * 50px, stage 03 (the volume-meter beat) 350px, and the tallest (05) 550px.
+   */
+  function stubBeatHeights() {
+    Object.defineProperty(HTMLElement.prototype, "offsetHeight", {
+      configurable: true,
+      get(this: HTMLElement) {
+        const beat = this.getAttribute("data-beat");
+        return beat === null ? 0 : Number(beat) * 100 + 50;
+      },
+    });
+  }
+
+  it("sizes the beats list to the active beat and re-measures on stage change", async () => {
+    stubDesktop();
+    stubBeatHeights();
+
+    const { container } = render(<HeroScene />);
+    const beats = container.querySelector(".hero-scene__beats") as HTMLElement;
+
+    // Stage 00 is active on mount: the CTA hugs the short first beat, not the
+    // tallest one.
+    expect(beats.style.height).toBe("50px");
+
+    // Let the async scene build settle so the renderer's onStageChange is wired.
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    await vi.waitFor(() => expect(buildSceneMock).toHaveBeenCalled());
+    const onStageChange = buildSceneMock.mock.calls[0][4] as (stage: number) => void;
+
+    // Stage 03 has the chip and volume meter — the tallest copy — so the group
+    // must travel down with it.
+    await act(async () => {
+      onStageChange(3);
+    });
+    expect(beats.style.height).toBe("350px");
+  });
+
+  it("keeps the group pinned on phones (no inline height below 768px)", () => {
+    stubBeatHeights();
+
+    const { container } = render(<HeroScene />);
+    const beats = container.querySelector(".hero-scene__beats") as HTMLElement;
+
+    expect(beats).not.toBeNull();
+    expect(beats.style.height).toBe("");
+  });
+});
+
 /**
  * The C1 regression drives HeroSceneCanvas directly rather than through
  * useScrollProgress: the race is entirely inside the canvas component (read

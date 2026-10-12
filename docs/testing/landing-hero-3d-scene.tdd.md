@@ -552,3 +552,54 @@ After all five, the result is stable and the failures had nothing to do with the
 - **SwiftShader only.** WebGL ran on a software rasteriser. Real GPU drivers may composite the WebGL layer and the CSS gradient differently, and a blend-mode or filter added later would not show up here.
 - **The wash colour is duplicated as a hex literal in `HeroSceneCanvas.tsx`.** `COVE_COLOR = 0xf6f8fb` and `--hero-wash: 246 248 251` must stay in sync by hand. A comment records the coupling; nothing enforces it.
 - **The dev server crashed mid-run** at 1920×1080 (WebSocket `ERR_CONNECTION_REFUSED`, then a failed navigation), and full-viewport 2560×1440 screenshots time out on a page this heavy. Both were worked around — per-viewport browsers and clipped strips — but the underlying instability was not diagnosed, and the earlier runs in this report were re-taken after it.
+
+# Revision 7 — the calls to action follow the active beat
+
+## The defect
+
+The desktop CTA group (stage rail, **Mulai hemat bersama**, **Lihat penawaran**, three trust notes) was pinned to the bottom of the hero viewport. `.hero-scene__beats` is a grid where all six `.hero-beat` elements share one cell (`grid-area: 1 / 1`), so the list is exactly as tall as the *tallest* beat, and the desktop column (`height: 100%` + `justify-content: space-between`) parked the CTA at the column's bottom. As the cross-faded copy changed height while scrolling, the button group never moved.
+
+## Root cause and fix
+
+| # | Defect | Root cause | Fix |
+|---|--------|-----------|-----|
+| 41 | The CTA group sat fixed at the viewport bottom instead of trailing the active beat | Beats share one grid cell (list height = tallest beat) and the desktop column uses `justify-content: space-between` | The list is now sized to the *active* beat's measured height (inline `style.height`, re-measured on stage change, resize and font-ready via `ResizeObserver`), transitioned in CSS alongside the copy cross-fade; the desktop column drops `space-between` for `flex-start` so the CTA sits right under the text |
+
+Decisions:
+
+- **Desktop (≥768px) only.** Phones keep the bottom-anchored panel — the space there is too tight to detach the CTA from the thumb. The measurement effect is gated on `(min-width: 768px)` via `matchMedia`, and the static fallback (no WebGL / reduced motion) is untouched: the effect bails unless the scene is live and the inline height is cleared on the fallback path.
+- **`useIsomorphicLayoutEffect`** (client = `useLayoutEffect`, server = `useEffect`) so the measurement lands before paint on the client without the server-render warning; SSR output carries no inline height, so hydration matches.
+- **No height clamp.** If a beat's copy is taller than the viewport, the group overflows below the fold exactly as the pinned layout did; clamping to the available space would instead slide the CTA up *over* the copy.
+- **No `overflow: hidden`** on the beats list (it would clip the entrance `translateY`).
+- **Motion token:** `height 500ms cubic-bezier(0.22, 1, 0.36, 1)` — the same 3D-scene ease as the copy cross-fade, so buttons and text travel together.
+
+## Task report (revision 7)
+
+| Plan task | Execution summary | Validation command | Result |
+|-----------|-------------------|--------------------|--------|
+| `HeroScene.scene.test.tsx` (RED) | Added 2 tests: active-beat sizing + re-measure on stage change (desktop), no inline height below 768px | `npx vitest run tests/components/HeroScene.scene.test.tsx` | RED → **GREEN (8)** |
+| `components/landing/scene/HeroScene.tsx` | `beatsRef`, `useIsomorphicLayoutEffect` measuring the `data-active` beat (gated on scene live + desktop) | `npx vitest run tests/components/HeroScene` | PASS |
+| `app/globals.css` | `[data-webgl="on"] .hero-scene__beats` height transition; desktop `.hero-scene__column` `justify-content: flex-start` | `npx vitest run tests/components/HeroScene` | PASS |
+
+## Test specification (revision 7)
+
+| # | What is guaranteed | Test file | Test type | Result |
+|---|--------------------|-----------|-----------|--------|
+| 41 | On desktop the beats list is sized to the active beat (50px at stage 00) and re-sizes to 350px on stage 03 | `HeroScene.scene.test.tsx` | component | PASS |
+| 42 | Below 768px / fallback the list carries no inline height (group stays pinned) | `HeroScene.scene.test.tsx` | component | PASS |
+
+`tests/components/HeroScene.test.tsx` (22) + `tests/components/HeroScene.scene.test.tsx` (8) — **30 passed**.
+
+## Mutation checks
+
+| Mutation | Result |
+|----------|--------|
+| Effect gated on a `(min-width: 768px)` query that never matches | killed by the stage-change test asserting `350px` |
+| Effect wrote the container's height, not the active beat's | killed by `50px` vs `350px` |
+| Inline height cleared on the mobile path | killed by test 42 |
+| Desktop column reverted to `justify-content: space-between` | (visual contract; no component assertion — see known gap) |
+
+## Known gaps (revision 7)
+
+- **No committed e2e asserts the rendered CTA `y` moves.** The component tests mock `offsetHeight`; the real browser contract (button group visibly glides between a short beat and the instrumented `pintu-ditutup` beat at 1440×900) is an uncommitted visual check. Highest-value follow-up is a Playwright assertion that `.hero-scene__cta`'s bounding box `y` differs between scroll stages.
+- **Height is measured, not clamped.** On unusually short desktop viewports a tall beat can push the CTA below the fold; this matches the pre-change pinned behaviour and is deliberately not clamped (clamping overlaps text with the CTA).

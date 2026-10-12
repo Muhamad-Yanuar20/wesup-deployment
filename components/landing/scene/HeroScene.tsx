@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
@@ -23,6 +23,14 @@ import { useScrollProgress } from "@/hooks/use-scroll-progress";
  * so a reduced-motion or data-saver visitor never downloads the library at all.
  */
 const HeroSceneCanvas = dynamic(() => import("./HeroSceneCanvas"), { ssr: false });
+
+/**
+ * `useLayoutEffect` warns when a client component is server-rendered, yet the
+ * measurement below must land before paint or the calls to action would flash
+ * at the tallest beat's height for one frame. Resolve to the layout effect on
+ * the client and the passive effect on the server, where neither runs.
+ */
+const useIsomorphicLayoutEffect = typeof window === "undefined" ? useEffect : useLayoutEffect;
 
 const TRUST_NOTES = [
   "Harga terkunci saat pendaftaran ditutup",
@@ -58,6 +66,7 @@ export function HeroScene() {
   const sceneRef = useRef<HTMLElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
+  const beatsRef = useRef<HTMLOListElement>(null);
   const { progressRef, isVisible, canRenderScene, reduceMotion } = useScrollProgress(sceneRef);
 
   /**
@@ -80,6 +89,59 @@ export function HeroScene() {
   const upcomingTier = nextTier(TARGET_QUOTA_KG);
   const filledRatio = TARGET_REGISTERED_KG / TARGET_QUOTA_KG;
   const isSceneActive = canRenderScene && !sceneFailed;
+
+  /**
+   * Desktop only: the calls to action follow the active beat rather than sitting
+   * pinned to the column's bottom. The beats share one grid cell, so the list is
+   * otherwise as tall as the *tallest* beat and the CTA never moves. Sizing the
+   * list to the active beat's measured height — transitioned in CSS alongside the
+   * copy cross-fade — lets the group glide up and down as the story scrolls.
+   *
+   * Phones keep their bottom-anchored panel: the space there is too tight to
+   * detach the CTA from the thumb. The static fallback (no WebGL or reduced
+   * motion) keeps its ordinary stacked layout untouched.
+   */
+  useIsomorphicLayoutEffect(() => {
+    if (!isSceneActive) return;
+
+    const beats = beatsRef.current;
+    if (!beats) return;
+
+    const desktop = window.matchMedia("(min-width: 768px)");
+    let disconnect: () => void = () => undefined;
+
+    const measure = () => {
+      disconnect();
+      disconnect = () => undefined;
+
+      const active = beats.querySelector<HTMLElement>('[data-beat][data-active="true"]');
+      if (!desktop.matches || !active) {
+        beats.style.height = "";
+        return;
+      }
+
+      // No clamp: if the copy is taller than the viewport, the group overflows
+      // below the fold exactly as the pinned layout did — clamping to the
+      // available space would instead slide the CTA up over the copy itself.
+      const apply = () => {
+        beats.style.height = `${active.offsetHeight}px`;
+      };
+      apply();
+
+      const observer = new ResizeObserver(apply);
+      observer.observe(active);
+      disconnect = () => observer.disconnect();
+    };
+
+    measure();
+    desktop.addEventListener("change", measure);
+
+    return () => {
+      desktop.removeEventListener("change", measure);
+      disconnect();
+      beats.style.height = "";
+    };
+  }, [isSceneActive, activeStage]);
 
   return (
     <section
@@ -138,7 +200,7 @@ export function HeroScene() {
 
         <div className="hero-scene__overlay pointer-events-none relative container mx-auto h-full w-full px-4 sm:px-6 lg:px-8">
           <div className="hero-scene__column">
-            <ol className="hero-scene__beats" data-active-stage={activeStage}>
+            <ol ref={beatsRef} className="hero-scene__beats" data-active-stage={activeStage}>
               {BEATS.map((beat, index) => (
                 <li
                   key={beat.id}
