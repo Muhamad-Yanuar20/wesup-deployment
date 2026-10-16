@@ -4,9 +4,22 @@
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
 <!-- END:nextjs-agent-rules -->
 
+# Design System
+
+The product uses **Swiss Industrial Print (brutalist)**, codified in `DESIGN.md` at
+the repo root. **Read `DESIGN.md` before writing or editing any UI**. It is the
+source of truth — tokens, type recipes, component recipes, layout, motion, and the
+rollout rules for every page (landing, auth, marketplace, UMKM, supplier, admin).
+If a rule in `DESIGN.md` contradicts existing markup, redesign to match the system
+(verified by `tests/unit/landing-brutalist-contract.test.ts` for landing scope).
+
 # Product Requirements (PRD)
 
 Product requirements live in `prd/` as Markdown files (e.g. `prd/feature-name.md`). PRDs are private working documents — do not commit changes under `prd/`. When implementing a feature, consult the PRD first and align code and decisions with it.
+
+# UI Design Rules
+
+`DESIGN.md` (repo root) is the source of truth for UI/visual design. Before creating or changing any UI (pages, components, styles, layout, colors, typography), read `DESIGN.md` and follow its rules. If a change would contradict it, follow `DESIGN.md` — or ask the user instead of improvising.
 
 # Project Context
 

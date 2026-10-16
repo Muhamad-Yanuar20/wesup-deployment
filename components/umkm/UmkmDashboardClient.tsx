@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useFeedbackResource } from "@/lib/feedback/use-resource";
-import { ErrorState, ContentSkeleton, AsyncButton } from "@/components/feedback";
-import { ArrowRight, Bell, CircleAlert, ClipboardList, MapPin, Store } from "lucide-react";
+import { ErrorState, ContentSkeleton, AsyncButton, ArrowDisc } from "@/components/feedback";
+import { ArrowRight, CircleAlert, MapPin } from "lucide-react";
 
 interface DashboardData {
   profileComplete: boolean;
@@ -27,32 +27,74 @@ export default function UmkmDashboardClient() {
   if (!data) return <ErrorState title="Dashboard belum dapat dimuat." description={error} action={<AsyncButton onClick={() => void reload()}>Coba lagi</AsyncButton>} />;
 
   return (
-    <div className="space-y-5 sm:space-y-6">
+    <div className="space-y-8">
       {!data.profileComplete ? (
-        <section className="flex flex-col gap-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:p-5">
-          <div className="flex items-start gap-3"><CircleAlert className="mt-0.5 h-5 w-5 shrink-0 text-amber-700" aria-hidden="true" /><div><h2 className="font-bold text-amber-950">Profil usaha belum lengkap</h2><p className="mt-1 text-sm leading-6 text-amber-900">Lengkapi nama, alamat, dan pin lokasi agar bisa bergabung ke batch.</p></div></div>
-          <Link href="/umkm/onboarding" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-amber-700 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-amber-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-700 focus-visible:ring-offset-2">Lengkapi profil<ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>
+        <section className="relative flex flex-col gap-4 border border-wesup-red bg-wesup-paper p-4 pl-5 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+          <span aria-hidden="true" className="absolute inset-y-0 left-0 w-0.5 bg-wesup-red" />
+          <div className="flex items-start gap-3">
+            <CircleAlert className="mt-0.5 size-5 shrink-0 text-wesup-red" strokeWidth={1.5} aria-hidden="true" />
+            <div>
+              <h2 className="font-landing-display text-lg uppercase tracking-[0.05em] text-wesup-ink">Profil usaha belum lengkap</h2>
+              <p className="mt-1 text-sm leading-6 text-wesup-ink-sub">Lengkapi nama, alamat, dan pin lokasi agar bisa bergabung ke batch.</p>
+            </div>
+          </div>
+          <Link href="/umkm/onboarding" className="group inline-flex min-h-12 items-center justify-center gap-3 border border-wesup-ink bg-wesup-ink px-6 py-3 text-[0.9375rem] font-semibold tracking-[-0.01em] text-wesup-paper transition-all duration-500 wesup-ease hover:border-wesup-red hover:bg-wesup-red hover:translate-x-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wesup-red">Lengkapi profil<ArrowDisc /></Link>
         </section>
       ) : (
-        <section className="rounded-2xl border border-blue-100 bg-blue-50 p-4 shadow-sm sm:p-5"><p className="text-sm font-semibold text-blue-800">Profil usaha aktif</p><p className="mt-1 text-lg font-bold text-blue-950">{data.profile?.businessName || "Usaha Anda"}</p><p className="mt-1 flex items-center gap-1.5 text-sm text-blue-800"><MapPin className="h-4 w-4" aria-hidden="true" />{data.profile?.address || "Alamat tersimpan"}</p></section>
+        <section className="border border-wesup-ink/15 bg-wesup-paper p-4 sm:p-5">
+          <p className="font-mono text-[0.6875rem] font-medium uppercase tracking-[0.2em] text-wesup-ink-sub">Profil usaha aktif</p>
+          <p className="mt-2 font-landing-display text-xl uppercase tracking-[0.04em] text-wesup-ink">{data.profile?.businessName || "Usaha Anda"}</p>
+          <p className="mt-2 flex items-center gap-1.5 font-mono text-xs uppercase tracking-[0.14em] text-wesup-ink-sub"><MapPin className="size-4" strokeWidth={1.5} aria-hidden="true" />{data.profile?.address || "Alamat tersimpan"}</p>
+        </section>
       )}
 
-      <section className="grid grid-cols-1 gap-3 sm:grid-cols-3" aria-label="Ringkasan aktivitas">
-        <SummaryCard icon={<ClipboardList className="h-5 w-5 text-blue-700" aria-hidden="true" />} label="Pesanan aktif" value={String(data.activeOrderCount)} />
-        <SummaryCard icon={<Bell className="h-5 w-5 text-amber-700" aria-hidden="true" />} label="Notifikasi belum dibaca" value={String(data.unreadNotificationCount)} />
-        <SummaryCard icon={<Store className="h-5 w-5 text-emerald-700" aria-hidden="true" />} label="Akses marketplace" value="Terbuka" />
+      <section aria-label="Ringkasan aktivitas" className="grid grid-cols-2 gap-px border border-wesup-ink/10 bg-wesup-ink/10 sm:grid-cols-3">
+        <SummaryCell label="Pesanan aktif" value={String(data.activeOrderCount)} />
+        <SummaryCell label="Notifikasi belum dibaca" value={String(data.unreadNotificationCount)} />
+        <SummaryCell label="Akses marketplace" value="Terbuka" />
       </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-        <div className="flex items-center justify-between gap-3"><h2 className="text-base font-bold text-slate-900">Tindakan terdekat</h2><Link href="/umkm/pesanan" className="text-sm font-semibold text-blue-700 hover:text-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">Lihat pesanan</Link></div>
-        {data.nextAction ? <div className="mt-4 rounded-xl border border-slate-100 bg-slate-50 p-4"><p className="text-sm font-bold text-slate-900">{data.nextAction.type === "payment" ? "Bayar" : "Siapkan pengambilan"} {data.nextAction.batchTitle}</p><p className="mt-1 text-sm text-slate-600">{data.nextAction.type === "payment" ? "Jendela pembayaran" : "Estimasi barang siap"}: {formatDueAt(data.nextAction.dueAt)}</p></div> : <p className="mt-4 rounded-xl border border-dashed border-slate-300 p-5 text-sm text-slate-600">Belum ada tindakan yang perlu dilakukan. Jelajahi batch yang tersedia.</p>}
+      <section className="border border-wesup-ink/15 bg-wesup-paper">
+        <header className="flex items-center justify-between gap-3 border-b border-wesup-ink/10 px-4 py-3 sm:px-5">
+          <h2 className="font-mono text-[0.6875rem] font-medium uppercase tracking-[0.2em] text-wesup-ink-sub">Tindakan terdekat</h2>
+          <Link href="/umkm/pesanan" className="inline-flex min-h-11 items-center text-sm font-semibold text-wesup-ink underline decoration-wesup-ink/30 underline-offset-[6px] transition-colors duration-300 hover:decoration-wesup-red focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wesup-red">Lihat pesanan</Link>
+        </header>
+        {data.nextAction ? (
+          <div className="p-4 sm:p-5">
+            <p className="font-landing-display text-lg uppercase tracking-[0.04em] text-wesup-ink">{data.nextAction.type === "payment" ? "Bayar" : "Siapkan pengambilan"} {data.nextAction.batchTitle}</p>
+            <dl className="mt-4 grid grid-cols-2 gap-px border border-wesup-ink/10 bg-wesup-ink/10">
+              <div className="bg-wesup-paper px-3 py-2">
+                <dt className="font-mono text-[0.6875rem] uppercase tracking-[0.18em] text-wesup-ink-sub">{data.nextAction.type === "payment" ? "Jendela pembayaran" : "Estimasi barang siap"}</dt>
+                <dd className="mt-1 text-sm font-semibold tabular-nums text-wesup-ink">{formatDueAt(data.nextAction.dueAt)}</dd>
+              </div>
+              <div className="bg-wesup-paper px-3 py-2">
+                <dt className="font-mono text-[0.6875rem] uppercase tracking-[0.18em] text-wesup-ink-sub">Status aksi</dt>
+                <dd className="mt-1 text-sm font-semibold text-wesup-ink">{data.nextAction.type === "payment" ? "Perlu dibayar" : "Perlu diambil"}</dd>
+              </div>
+            </dl>
+          </div>
+        ) : (
+          <p className="border-b-0 p-5 text-sm leading-6 text-wesup-ink-sub">Belum ada tindakan yang perlu dilakukan. Jelajahi batch yang tersedia.</p>
+        )}
       </section>
 
-      <Link href="/marketplace" className="group flex min-h-24 items-center justify-between rounded-2xl bg-blue-700 p-4 text-white shadow-sm transition hover:bg-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"><div><p className="text-lg font-bold">Cari bahan baku bersama</p><p className="mt-1 text-sm text-blue-100">Lihat batch publik tanpa langkah tambahan.</p></div><ArrowRight className="h-5 w-5 transition group-hover:translate-x-1" aria-hidden="true" /></Link>
+      <Link href="/marketplace" className="group flex min-h-24 items-center justify-between border border-wesup-ink bg-wesup-ink p-5 text-wesup-paper transition-all duration-500 wesup-ease hover:translate-x-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wesup-red">
+        <div>
+          <p className="font-landing-display text-xl uppercase tracking-[0.04em]">Cari bahan baku bersama</p>
+          <p className="mt-1.5 text-sm text-wesup-paper/70">Lihat batch publik tanpa langkah tambahan.</p>
+        </div>
+        <span aria-hidden="true" className="inline-flex size-9 shrink-0 items-center justify-center border border-wesup-paper/30 transition-transform duration-500 wesup-ease group-hover:translate-x-1"><ArrowRight className="size-4" strokeWidth={1.5} /></span>
+      </Link>
     </div>
   );
 }
 
-function SummaryCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
-  return <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"><div className="flex items-center gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-50">{icon}</span><div><p className="text-xs font-medium text-slate-500">{label}</p><p className="mt-1 text-xl font-bold text-slate-900">{value}</p></div></div></div>;
+function SummaryCell({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="bg-wesup-paper p-4 sm:p-5">
+      <span aria-hidden="true" className="mb-3 block h-px w-8 bg-wesup-red" />
+      <p className="font-mono text-[0.6875rem] uppercase tracking-[0.18em] text-wesup-ink-sub">{label}</p>
+      <p className="mt-2 font-landing-display text-3xl uppercase tabular-nums tracking-[0.02em] text-wesup-ink">{value}</p>
+    </div>
+  );
 }

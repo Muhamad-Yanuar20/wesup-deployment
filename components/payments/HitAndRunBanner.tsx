@@ -33,54 +33,46 @@ export default function HitAndRunBanner({
     <section
       role="alert"
       aria-label="Peringatan sanksi Hit and Run"
-      className="overflow-hidden rounded-xl border border-rose-200 bg-rose-50"
+      className="relative border border-wesup-red bg-wesup-paper p-4 pl-6"
     >
-      <div className="flex items-start gap-3 p-4">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-rose-100">
-          <ShieldAlert aria-hidden="true" className="h-5 w-5 text-rose-600" />
-        </div>
-        <div>
-          <h2 className="text-sm font-bold text-rose-800">
-            Pembayaran terlewat — Sanksi Hit & Run
+      <span aria-hidden="true" className="absolute inset-y-0 left-0 w-0.5 bg-wesup-red" />
+      <div className="flex items-start gap-3">
+        <span aria-hidden="true" className="flex size-10 shrink-0 items-center justify-center border border-wesup-red text-wesup-red"><ShieldAlert className="size-5" strokeWidth={1.5} /></span>
+        <div className="min-w-0">
+          <h2 className="font-landing-display text-lg uppercase tracking-[0.05em] text-wesup-ink">
+            Pembayaran terlewat — Sanksi Hit &amp; Run
           </h2>
-          <p className="mt-1 text-xs leading-relaxed text-rose-700">
+          <p className="mt-1 text-xs leading-relaxed text-wesup-ink-sub">
             Jendela pembayaran sudah ditutup dan tagihan tidak dapat diproses.
             Sistem menjatuhkan sanksi berjenjang bagi UMKM yang gagal membayar.
           </p>
 
-          <ul className="mt-3 space-y-1.5">
+          <ol className="mt-3 divide-y divide-wesup-ink/10 border border-wesup-ink/15">
             {([1, 2, 3] as const).map((level) => {
               const policy = STRIKE_POLICY[level];
               const isCurrent = level === strikes;
               return (
                 <li
                   key={level}
-                  className={`flex items-center gap-2 rounded-lg px-3 py-2 text-xs ${
-                    isCurrent
-                      ? "bg-rose-100 font-bold text-rose-800"
-                      : "bg-white/60 text-rose-600"
-                  }`}
+                  className={`flex items-start gap-2 px-3 py-2 text-xs ${isCurrent ? "bg-wesup-paper-sub font-bold text-wesup-ink" : "text-wesup-ink-sub"}`}
                 >
                   <AlertTriangle
                     aria-hidden="true"
-                    className={`h-3.5 w-3.5 shrink-0 ${
-                      isCurrent ? "text-rose-700" : "text-rose-400"
-                    }`}
+                    className={`mt-0.5 size-3.5 shrink-0 ${isCurrent ? "text-wesup-red" : "text-wesup-ink-sub/50"}`}
+                    strokeWidth={1.5}
                   />
                   <span>
-                    {level}. {policy.label}
+                    <span className="tabular-nums">{level}.</span> {policy.label}
                     {isCurrent ? (
-                      <span className="ml-1 rounded-full bg-rose-600 px-2 py-0.5 text-[10px] font-bold text-white">
-                        {current.description}
-                      </span>
+                      <span className="ml-1 inline-flex items-center bg-wesup-red px-1.5 py-0.5 font-mono text-[0.625rem] font-semibold uppercase tracking-[0.14em] text-wesup-paper">{current.description}</span>
                     ) : (
-                      <span className="text-rose-500"> — {policy.description}</span>
+                      <span className="text-wesup-ink-sub/70"> — {policy.description}</span>
                     )}
                   </span>
                 </li>
               );
             })}
-          </ul>
+          </ol>
         </div>
       </div>
     </section>

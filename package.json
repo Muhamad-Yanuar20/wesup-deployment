@@ -7,7 +7,6 @@
     "db:check:order-integrity": "node scripts/check-order-status-integrity.mjs",
     "db:recover:order-integrity": "node scripts/recover-order-status-incident.mjs",
     "db:check:transaction-ux": "node scripts/check-transaction-ux-schema.mjs",
-    "predev": "npm run db:check:transaction-ux",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",

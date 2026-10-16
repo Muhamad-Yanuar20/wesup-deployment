@@ -27,7 +27,7 @@ export default async function PaymentWindowPage({
 
   return (
     <Layout>
-      <div className="px-4 py-8 sm:px-6 lg:px-8">
+      <div className="bg-wesup-paper px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
         <UmkmOrderDetailClient orderId={orderId} mode="payment" snapConfig={snapConfig} />
       </div>
     </Layout>

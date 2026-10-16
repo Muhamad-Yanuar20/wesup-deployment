@@ -1,15 +1,18 @@
-.wesup-app { color: var(--wesup-ink, #0f172a); font-family: var(--font-geist-sans), Arial, sans-serif; }
-.wesup-app h1, .wesup-state-title { font-family: var(--font-newsreader), Georgia, serif; font-weight: 500; letter-spacing: -.025em; text-wrap: balance; }
-.wesup-app h1 { font-size: 2rem; line-height: 1.15; }
+.wesup-app { color: var(--color-wesup-ink, #050505); font-family: var(--font-geist-sans), Arial, sans-serif; }
+/* Macro headings are Archivo Black across every surface (Swiss Industrial Print). */
+.wesup-app h1, .wesup-state-title { font-family: var(--font-landing-display, var(--font-archivo-black)), var(--font-geist-sans), sans-serif; font-weight: 400; letter-spacing: .04em; text-transform: uppercase; text-wrap: balance; }
+.wesup-app h1 { font-size: 2rem; line-height: .98; }
 .wesup-app :where(input:not([type=checkbox]):not([type=radio]), select, textarea) { font-size: 1rem; }
 .wesup-app :where(button, a) { text-underline-offset: .2em; }
 .wesup-app :where(td, dd, [role=timer]) { font-variant-numeric: tabular-nums; }
-.wesup-app :where(input, textarea) { caret-color: var(--wesup-brand, #2563eb); }
-.wesup-app .text-slate-400 { color: #64748b; }
+.wesup-app :where(input, textarea) { caret-color: var(--color-wesup-red, #e61919); }
 .wesup-feedback { font-family: var(--font-geist-sans), Arial, sans-serif; overflow-wrap: anywhere; }
 .wesup-toast-region { position: fixed; inset-inline: 1rem; bottom: calc(5.5rem + env(safe-area-inset-bottom)); z-index: 80; display: flex; flex-direction: column; gap: .625rem; pointer-events: none; }
 .wesup-toast-region article { pointer-events: auto; }
-.wesup-dialog::backdrop { background: rgb(15 23 42 / .5); }
+/* Inverted red hairline marks the live/active toast edge without a glow. */
+.wesup-toast-region article::before { content: ""; position: absolute; inset-block: 0; inset-inline-start: 0; width: 2px; background: var(--color-wesup-red, #e61919); }
+.wesup-toast-region article { position: relative; padding-inline-start: 1.25rem; }
+.wesup-dialog::backdrop { background: rgb(5 5 5 / .55); }
 .wesup-spinner { animation: wesup-spin .8s linear infinite; }
 @keyframes wesup-spin { to { transform: rotate(360deg); } }
 @media (min-width: 1024px) { .wesup-app h1 { font-size: 2.5rem; } .wesup-toast-region { inset-inline-start: auto; width: min(24rem, calc(100vw - 2rem)); bottom: 1rem; } }

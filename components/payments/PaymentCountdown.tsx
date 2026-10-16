@@ -11,22 +11,11 @@ interface PaymentCountdownProps {
   tone: "info" | "warning" | "danger";
 }
 
+/* Red is signal: only the danger/critical band is red. */
 const TONE_CLASSES = {
-  info: {
-    wrap: "bg-indigo-50 border-indigo-200 text-indigo-700",
-    digits: "text-indigo-800",
-    note: "text-indigo-500",
-  },
-  warning: {
-    wrap: "bg-amber-50 border-amber-200 text-amber-700",
-    digits: "text-amber-800",
-    note: "text-amber-600",
-  },
-  danger: {
-    wrap: "bg-rose-50 border-rose-200 text-rose-700",
-    digits: "text-rose-800",
-    note: "text-rose-600",
-  },
+  info: { wrap: "border-wesup-ink/20 bg-wesup-paper-sub text-wesup-ink", digits: "text-wesup-ink" },
+  warning: { wrap: "border-wesup-ink/20 bg-wesup-paper-sub text-wesup-ink", digits: "text-wesup-ink" },
+  danger: { wrap: "border-wesup-red bg-wesup-paper text-wesup-red", digits: "text-wesup-red" },
 } as const;
 
 function toParts(remainingMs: number): { h: string; m: string; s: string } {
@@ -76,13 +65,13 @@ export default function PaymentCountdown({
       role="timer"
       aria-live="polite"
       aria-label="Hitung mundur berdasarkan waktu server"
-      className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 ${toneClass.wrap}`}
+      className={`inline-flex items-center gap-2 border px-3 py-2 ${toneClass.wrap}`}
     >
-      <Timer aria-hidden="true" className="h-4 w-4" />
-      <span className="font-mono text-lg font-bold tabular-nums tracking-tight">
+      <Timer aria-hidden="true" className="size-4" strokeWidth={1.5} />
+      <span className={`font-mono text-lg font-bold tabular-nums tracking-tight ${toneClass.digits}`}>
         {parts.h}:{parts.m}:{parts.s}
       </span>
-      <span className={`text-[11px] font-medium ${toneClass.note}`}>Waktu server</span>
+      <span className="font-mono text-[0.625rem] uppercase tracking-[0.14em] opacity-80">Waktu server</span>
     </div>
   );
 }

@@ -49,7 +49,7 @@ export function LandingFaq() {
                     description="Masih ragu? Temukan jawaban paling umum seputar belanja kolektif di Wesup."
                 />
 
-                <div className="space-y-3">
+                <dl className="mt-12 border-t border-wesup-ink/10">
                     {FAQS.map((faq, index) => {
                         const isOpen = openIndex === index;
                         return (
@@ -61,7 +61,7 @@ export function LandingFaq() {
                             />
                         );
                     })}
-                </div>
+                </dl>
             </div>
         </section>
     );
@@ -78,7 +78,7 @@ function FaqItem({ faq, isOpen, onToggle }: FaqItemProps) {
     const contentId = useId();
 
     return (
-        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-shadow hover:shadow-md">
+        <div className="border-b border-wesup-ink/10 bg-wesup-paper">
             <h3>
                 <button
                     id={buttonId}
@@ -86,11 +86,11 @@ function FaqItem({ faq, isOpen, onToggle }: FaqItemProps) {
                     onClick={onToggle}
                     aria-expanded={isOpen}
                     aria-controls={contentId}
-                    className="flex w-full items-center justify-between gap-4 px-6 py-5 text-left text-base font-semibold text-slate-900 transition-colors hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-blue-600"
+                    className="group flex w-full items-center justify-between gap-4 px-2 py-5 text-left font-landing-display text-lg font-medium tracking-[-0.01em] text-wesup-ink transition-colors duration-300 hover:bg-wesup-paper-sub focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-wesup-red sm:px-4"
                 >
                     <span className="text-balance">{faq.question}</span>
                     <ChevronDown
-                        className={`h-5 w-5 shrink-0 text-blue-600 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+                        className={`h-5 w-5 shrink-0 text-wesup-red transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
                         aria-hidden="true"
                     />
                 </button>
@@ -100,10 +100,10 @@ function FaqItem({ faq, isOpen, onToggle }: FaqItemProps) {
                 role="region"
                 aria-labelledby={buttonId}
                 hidden={!isOpen}
-                className="px-6 pb-5"
+                className="px-2 pb-6 sm:px-4"
             >
                 {isOpen ? (
-                    <p className="text-sm leading-relaxed text-slate-600 text-pretty">{faq.answer}</p>
+                    <p className="max-w-2xl text-[0.9375rem] leading-[1.7] text-wesup-ink-sub text-pretty">{faq.answer}</p>
                 ) : null}
             </div>
         </div>

@@ -8,7 +8,7 @@ export function Skeleton({ className }: SkeletonProps) {
   return (
     <div
       className={cn(
-        "animate-pulse motion-reduce:animate-none rounded-md bg-gray-200",
+        "animate-pulse bg-wesup-paper-sub motion-reduce:animate-none",
         className,
       )}
     />
@@ -20,13 +20,13 @@ export function Skeleton({ className }: SkeletonProps) {
 /** Card skeleton — used across catalog & order lists */
 export function SkeletonCard() {
   return (
-    <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
-      <Skeleton className="mb-3 h-40 w-full rounded-lg" />
+    <div className="border border-wesup-ink/15 bg-wesup-paper p-4">
+      <Skeleton className="mb-3 h-40 w-full" />
       <Skeleton className="mb-2 h-5 w-3/4" />
       <Skeleton className="mb-4 h-4 w-1/2" />
       <div className="flex items-center gap-2">
-        <Skeleton className="h-8 w-24 rounded-full" />
-        <Skeleton className="h-8 w-24 rounded-full" />
+        <Skeleton className="h-8 w-24" />
+        <Skeleton className="h-8 w-24" />
       </div>
     </div>
   );

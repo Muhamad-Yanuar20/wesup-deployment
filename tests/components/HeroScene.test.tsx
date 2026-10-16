@@ -289,6 +289,34 @@ describe("HeroScene wash", () => {
   });
 });
 
+describe("HeroScene mobile compression", () => {
+  it("hides the decorative stage rail on phones to free the paper band for copy", () => {
+    /* The phone panel carries the full copy stack inside the bottom paper band;
+     * the rail is the first strip sacrificed. The hide lives in the stylesheet
+     * (display:none keeps it in the DOM so a phone that rotates to a wider
+     * viewport still gets the travelling progress), so the pin reads the source
+     * like the wash-width test does. */
+    const css = readFileSync(join(process.cwd(), "app/globals.css"), "utf8");
+    const block =
+      css.match(
+        /@media\s*\(max-width:\s*639\.98px\)\s*\{[^}]*\.hero-scene__rail\s*\{[^}]*\}/,
+      )?.[0] ?? "";
+    expect(block).toContain("display: none");
+  });
+
+  it("compresses the headline size at the smallest breakpoint", () => {
+    const { container } = render(<HeroScene />);
+
+    const heading = container.querySelector(
+      '[data-beat="00"] .hero-beat__title',
+    ) as HTMLElement;
+    const classes = heading.className;
+    expect(classes).toContain("text-[1.75rem]");
+    expect(classes).toContain("md:text-[3.5rem]");
+    expect(classes).toContain("lg:text-[4rem]");
+  });
+});
+
 describe("HeroScene degradation", () => {
   it("marks the scene as unavailable when WebGL is missing", () => {
     const { container } = render(<HeroScene />);

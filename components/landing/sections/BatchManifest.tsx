@@ -14,7 +14,7 @@ import {
 } from "@/lib/landing";
 
 interface Stat {
-  /** Hairline rule colour above the value. */
+  /** Accent hairline colour above the value. */
   rule: string;
   value: ReactNode;
   label: string;
@@ -28,37 +28,37 @@ export function BatchManifest() {
 
   const stats: Stat[] = [
     {
-      rule: "bg-slate-900/20",
+      rule: "bg-wesup-red",
       value: (
         <>
           {formatKg(TARGET_REGISTERED_KG)}
-          <span className="text-lg text-slate-500 sm:text-xl"> / {formatKg(TARGET_QUOTA_KG)} kg</span>
+          <span className="text-lg text-wesup-ink-sub sm:text-xl"> / {formatKg(TARGET_QUOTA_KG)} kg</span>
         </>
       ),
       label: "Terkumpul · kuota",
     },
     {
-      rule: "bg-wesup-kraft",
+      rule: "bg-wesup-red",
       value: (
         <>
           {formatRupiah(lockedTier.unitPrice)}
-          <span className="text-lg text-slate-500 sm:text-xl">/kg</span>
+          <span className="text-lg text-wesup-ink-sub sm:text-xl">/kg</span>
         </>
       ),
       label: `Harga terkunci · ${lockedTier.label}`,
     },
     {
-      rule: "bg-slate-900/20",
+      rule: "bg-wesup-red",
       value: (
         <>
           {formatKg(upcomingTier.minQuantityKg)}
-          <span className="text-lg text-slate-500 sm:text-xl"> kg</span>
+          <span className="text-lg text-wesup-ink-sub sm:text-xl"> kg</span>
         </>
       ),
       label: `Membuka ${upcomingTier.label} · ${formatRupiah(upcomingTier.unitPrice)}`,
     },
     {
-      rule: "bg-emerald-600/70",
+      rule: "bg-wesup-red",
       value: <>1×24 jam</>,
       label: "Dana ditahan escrow setelah barang diterima",
     },
@@ -67,17 +67,17 @@ export function BatchManifest() {
   return (
     <section
       aria-label="Ringkasan batch berjalan"
-      className="relative bg-gradient-to-b from-white to-wesup-ivory px-4 pt-14 sm:px-6 sm:pt-20 lg:px-8"
+      className="relative overflow-hidden border-t border-wesup-ink/10 px-4 py-24 sm:px-6 sm:py-28 lg:px-8"
     >
-      <div className="container mx-auto">
+      <div className="container relative mx-auto">
         <div className="max-w-3xl">
           <Reveal>
             <Eyebrow>Manifest · Batch berjalan</Eyebrow>
-            <h2 className={`mt-5 ${SECTION_TITLE} text-slate-900`}>
+            <h2 className={`mt-5 ${SECTION_TITLE} text-wesup-ink`}>
               Terkumpul {formatKg(TARGET_REGISTERED_KG)} dari {formatKg(TARGET_QUOTA_KG)} kg — harga
               terkunci di {lockedTier.label}.
             </h2>
-            <p className="mt-5 max-w-xl text-base leading-relaxed text-slate-600 text-pretty sm:text-lg">
+            <p className="mt-5 max-w-xl text-base leading-[1.7] text-wesup-ink-sub text-pretty sm:text-lg">
               {upcomingTier.label} ({formatRupiah(upcomingTier.unitPrice)}/kg) terbuka saat volume
               mencapai {formatKg(upcomingTier.minQuantityKg)} kg. Dana Anda tidak bergerak sebelum
               barang diterima.
@@ -87,19 +87,19 @@ export function BatchManifest() {
 
         <Reveal delayMs={120}>
           <CardFrame
-            className="mt-10 bg-slate-900/[0.04] shadow-[inset_0_1px_0_#ffffff99] ring-1 ring-slate-900/[0.06] sm:mt-14"
-            panelClassName="overflow-hidden bg-slate-900/[0.07]"
+            className="mt-10 border border-wesup-ink/10 bg-wesup-paper-sub sm:mt-14"
+            panelClassName="overflow-hidden bg-wesup-paper"
           >
             {/* dt precedes dd per the dl content model; flex `order` keeps the
                 value visually above its label. The decorative rule lives inside
                 the dd so no non-dt/dd element sits in the dl. */}
-            <dl className="grid grid-cols-2 gap-px lg:grid-cols-4">
+            <dl className="grid grid-cols-2 gap-px bg-wesup-ink/10 lg:grid-cols-4">
               {stats.map((stat) => (
-                <div key={stat.label} className="flex flex-col bg-white p-6 sm:p-8">
-                  <dt className="order-2 mt-1.5 font-mono text-[0.6875rem] uppercase tracking-[0.18em] text-slate-500">
+                <div key={stat.label} className="flex flex-col bg-wesup-paper p-6 sm:p-8">
+                  <dt className="order-2 mt-1.5 font-mono text-[0.6875rem] uppercase tracking-[0.18em] text-wesup-ink-sub">
                     {stat.label}
                   </dt>
-                  <dd className="order-1 font-landing-display text-2xl font-medium tabular-nums tracking-tight text-slate-900 sm:text-3xl">
+                  <dd className="order-1 font-landing-display text-2xl font-medium tabular-nums tracking-tight text-wesup-ink sm:text-3xl">
                     <span aria-hidden="true" className={`mb-4 block h-px w-8 ${stat.rule}`} />
                     {stat.value}
                   </dd>
@@ -108,7 +108,7 @@ export function BatchManifest() {
             </dl>
           </CardFrame>
 
-          <p className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[0.6875rem] uppercase tracking-[0.18em] text-slate-500">
+          <p className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[0.6875rem] uppercase tracking-[0.18em] text-wesup-ink-sub">
             {TIERS.map((tier, index) => (
               <span key={tier.label} className="inline-flex items-center gap-2">
                 {index > 0 && <span aria-hidden="true">·</span>}

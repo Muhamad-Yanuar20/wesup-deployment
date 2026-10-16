@@ -552,3 +552,110 @@ After all five, the result is stable and the failures had nothing to do with the
 - **SwiftShader only.** WebGL ran on a software rasteriser. Real GPU drivers may composite the WebGL layer and the CSS gradient differently, and a blend-mode or filter added later would not show up here.
 - **The wash colour is duplicated as a hex literal in `HeroSceneCanvas.tsx`.** `COVE_COLOR = 0xf6f8fb` and `--hero-wash: 246 248 251` must stay in sync by hand. A comment records the coupling; nothing enforces it.
 - **The dev server crashed mid-run** at 1920×1080 (WebSocket `ERR_CONNECTION_REFUSED`, then a failed navigation), and full-viewport 2560×1440 screenshots time out on a page this heavy. Both were worked around — per-viewport browsers and clipped strips — but the underlying instability was not diagnosed, and the earlier runs in this report were re-taken after it.
+
+# Revision 7 — the calls to action follow the active beat
+
+## The defect
+
+The desktop CTA group (stage rail, **Mulai hemat bersama**, **Lihat penawaran**, three trust notes) was pinned to the bottom of the hero viewport. `.hero-scene__beats` is a grid where all six `.hero-beat` elements share one cell (`grid-area: 1 / 1`), so the list is exactly as tall as the *tallest* beat, and the desktop column (`height: 100%` + `justify-content: space-between`) parked the CTA at the column's bottom. As the cross-faded copy changed height while scrolling, the button group never moved.
+
+## Root cause and fix
+
+| # | Defect | Root cause | Fix |
+|---|--------|-----------|-----|
+| 41 | The CTA group sat fixed at the viewport bottom instead of trailing the active beat | Beats share one grid cell (list height = tallest beat) and the desktop column uses `justify-content: space-between` | The list is now sized to the *active* beat's measured height (inline `style.height`, re-measured on stage change, resize and font-ready via `ResizeObserver`), transitioned in CSS alongside the copy cross-fade; the desktop column drops `space-between` for `flex-start` so the CTA sits right under the text |
+
+Decisions:
+
+- **Desktop (≥768px) only.** Phones keep the bottom-anchored panel — the space there is too tight to detach the CTA from the thumb. The measurement effect is gated on `(min-width: 768px)` via `matchMedia`, and the static fallback (no WebGL / reduced motion) is untouched: the effect bails unless the scene is live and the inline height is cleared on the fallback path.
+- **`useIsomorphicLayoutEffect`** (client = `useLayoutEffect`, server = `useEffect`) so the measurement lands before paint on the client without the server-render warning; SSR output carries no inline height, so hydration matches.
+- **No height clamp.** If a beat's copy is taller than the viewport, the group overflows below the fold exactly as the pinned layout did; clamping to the available space would instead slide the CTA up *over* the copy.
+- **No `overflow: hidden`** on the beats list (it would clip the entrance `translateY`).
+- **Motion token:** `height 500ms cubic-bezier(0.22, 1, 0.36, 1)` — the same 3D-scene ease as the copy cross-fade, so buttons and text travel together.
+
+## Task report (revision 7)
+
+| Plan task | Execution summary | Validation command | Result |
+|-----------|-------------------|--------------------|--------|
+| `HeroScene.scene.test.tsx` (RED) | Added 2 tests: active-beat sizing + re-measure on stage change (desktop), no inline height below 768px | `npx vitest run tests/components/HeroScene.scene.test.tsx` | RED → **GREEN (8)** |
+| `components/landing/scene/HeroScene.tsx` | `beatsRef`, `useIsomorphicLayoutEffect` measuring the `data-active` beat (gated on scene live + desktop) | `npx vitest run tests/components/HeroScene` | PASS |
+| `app/globals.css` | `[data-webgl="on"] .hero-scene__beats` height transition; desktop `.hero-scene__column` `justify-content: flex-start` | `npx vitest run tests/components/HeroScene` | PASS |
+
+## Test specification (revision 7)
+
+| # | What is guaranteed | Test file | Test type | Result |
+|---|--------------------|-----------|-----------|--------|
+| 41 | On desktop the beats list is sized to the active beat (50px at stage 00) and re-sizes to 350px on stage 03 | `HeroScene.scene.test.tsx` | component | PASS |
+| 42 | Below 768px / fallback the list carries no inline height (group stays pinned) | `HeroScene.scene.test.tsx` | component | PASS |
+
+`tests/components/HeroScene.test.tsx` (22) + `tests/components/HeroScene.scene.test.tsx` (8) — **30 passed**.
+
+## Mutation checks
+
+| Mutation | Result |
+|----------|--------|
+| Effect gated on a `(min-width: 768px)` query that never matches | killed by the stage-change test asserting `350px` |
+| Effect wrote the container's height, not the active beat's | killed by `50px` vs `350px` |
+| Inline height cleared on the mobile path | killed by test 42 |
+| Desktop column reverted to `justify-content: space-between` | (visual contract; no component assertion — see known gap) |
+
+## Known gaps (revision 7)
+
+- **No committed e2e asserts the rendered CTA `y` moves.** The component tests mock `offsetHeight`; the real browser contract (button group visibly glides between a short beat and the instrumented `pintu-ditutup` beat at 1440×900) is an uncommitted visual check. Highest-value follow-up is a Playwright assertion that `.hero-scene__cta`'s bounding box `y` differs between scroll stages.
+- **Height is measured, not clamped.** On unusually short desktop viewports a tall beat can push the CTA below the fold; this matches the pre-change pinned behaviour and is deliberately not clamped (clamping overlaps text with the CTA).
+
+# Revision 8 — centre the hero panel and enlarge the desktop type
+
+## The defect
+
+Two complaints, one cause: the left panel's copy sat at the *top* of the viewport (`justify-content: flex-start`), and on large monitors the 52px headline + 16px body left a wide band of empty space between the text and the CTA — and empty space around the whole group.
+
+## Fix
+
+| # | Change | Where |
+|---|--------|-------|
+| 43 | Desktop column centres the beat+CTA group vertically, degrading safely on overflow | `globals.css` md block: `justify-content: safe center` |
+| 44 | Column widens to give the enlarged type room: `max-width: min(36rem, 38vw)` | `globals.css` md block |
+| 45 | Headline ladder 3.25 → 3.5 → 4 → 4.5rem (`md`/`lg`/`xl`), leading tightened | `HeroScene.tsx` `BeatHeadline` |
+| 46 | Body 16 → 18px (`md`) → 20px (`xl`); eyebrow, chip, meter and CTA labels step up to match; beat margins unchanged (no looser rhythm — white space is filled by type, not spacing) | `HeroScene.tsx` |
+
+Decisions:
+
+- **`safe center`** keeps both behaviours: the group is centred when it fits, but a beat taller than the viewport (the volume-meter stage on a 720px-tall laptop) falls back to top alignment — overflow can only escape below the fold, never under the fixed header. This carries the Revision 7 no-clamp contract forward.
+- **Mobile untouched** (`.hero-scene__column { justify-content: flex-end }` and all `sm:`/base type) — the low-end-Android panel and perf budget are not disturbed.
+- **Fallback untouched** (`[data-webgl="off"]` still `justify-content: flex-start`, `height: auto`); it is the only writer of the column's vertical alignment in degraded mode, asserted by the contract test.
+- **`xl` not `lg` for the largest step** so 1024-wide laptops (768px tall) never get a 72px headline; 64px is the ceiling at `lg`.
+
+## Task report (revision 8)
+
+| Plan task | Execution summary | Validation command | Result |
+|-----------|-------------------|--------------------|--------|
+| `landing-brutalist-contract.test.ts` (RED) | Added the centring/width contract test | `npx vitest run tests/unit/landing-brutalist-contract.test.ts` | RED → **GREEN** |
+| `HeroScene.test.tsx` (RED) | Headline-size pin updated to the new ladder | `npx vitest run tests/components/HeroScene.test.tsx` | RED → **GREEN (22)** |
+| `app/globals.css` | `safe center` + `min(36rem, 38vw)` column | `npx vitest run tests/unit/landing-brutalist-contract.test.ts` | PASS |
+| `components/landing/scene/HeroScene.tsx` | Type sizes stepped up on `md`/`lg`/`xl` | `npx tsc --noEmit`, `npx eslint components/landing/scene/HeroScene.tsx` | PASS |
+| `DESIGN.md` | Hero headline recipe (§2.1) updated to the new ladder + centring note | `npx vitest run tests/unit/landing-brutalist-contract.test.ts` | PASS |
+
+## Test specification (revision 8)
+
+| # | What is guaranteed | Test file | Test type | Result |
+|---|--------------------|-----------|-----------|--------|
+| 43 | Desktop `.hero-scene__column` uses `justify-content: safe center` and `max-width: min(36rem, 38vw)` | `landing-brutalist-contract.test.ts` | unit (CSS contract) | PASS |
+| 44 | The `data-webgl="off"` fallback still top-aligns its stack (`flex-start`) | `landing-brutalist-contract.test.ts` | unit (CSS contract) | PASS |
+| 45 | Headline ladder is `md:text-[3.5rem]` / `lg:text-[4rem]` (mobile 1.75rem unchanged) | `HeroScene.test.tsx` | component | PASS |
+
+`HeroScene.test.tsx` (22) + `HeroScene.scene.test.tsx` (8) + `landing-brutalist-contract.test.ts` — **green.**
+
+## Mutation checks
+
+| Mutation | Result |
+|----------|--------|
+| `safe center` reverted to bare `center` (no safe fallback) | killed by the width/centring contract pin |
+| Column max-width reverted to `min(32rem, 34vw)` | killed |
+| Headline ladder reverted to `md:text-[3.25rem]` | killed by test 45 |
+| Fallback column set to `center` | killed by test 44 |
+
+## Known gaps (revision 8)
+
+- **No numeric check of "less white space".** Bigger type + centring are the remedy, but the perceived emptiness is only verifiable by eye. A future pass could measure the gap between the group's bottom and the viewport bottom at a fixed viewport and assert it shrank vs `3.25rem`/`flex-start`.
+- **Type scale values are tunable.** `3.5/4/4.5rem` were chosen to keep 1024×768 laptops from overflowing; if the product owner wants more presence still, `xl:text-[5rem]` is the next step, re-checked at 1280×720.

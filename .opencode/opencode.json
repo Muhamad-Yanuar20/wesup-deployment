@@ -27,6 +27,15 @@
       "../skills"
     ]
   },
+  "mcp": {
+    "stitch": {
+      "type": "remote",
+      "url": "https://stitch.googleapis.com/mcp",
+      "headers": {
+        "X-Goog-Api-Key": "AQ.Ab8RN6KOsMx7oZVbiCm20zQvZ_oP7GHBnFsrJp967axdcKdgNA"
+      }
+    }
+  },
   "agent": {
     "build": {
       "description": "Primary coding agent for development work",

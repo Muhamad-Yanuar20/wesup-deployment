@@ -16,7 +16,7 @@ export default async function Home() {
   await connection();
 
   return (
-    <div className="relative flex min-h-screen flex-col bg-wesup-ivory text-slate-900 antialiased">
+    <div className="relative flex min-h-screen flex-col bg-wesup-paper text-wesup-ink antialiased">
       {/* Editorial film grain, fixed and pointer-transparent. */}
       <div aria-hidden="true" className="wesup-grain" />
 

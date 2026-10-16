@@ -1,9 +1,9 @@
 "use client";
 
-import { useCallback, useRef, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { LockKeyhole, MapPin, ShieldCheck, ShoppingBag, Wallet } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import {
   BEATS,
   SCENE_LENGTH_MOBILE_VH,
@@ -24,26 +24,32 @@ import { useScrollProgress } from "@/hooks/use-scroll-progress";
  */
 const HeroSceneCanvas = dynamic(() => import("./HeroSceneCanvas"), { ssr: false });
 
-const TRUST_MARKERS = [
-  { icon: LockKeyhole, label: "Harga terkunci saat pendaftaran ditutup" },
-  { icon: Wallet, label: "Bayar sekali lewat QRIS" },
-  { icon: MapPin, label: "Ambil sendiri di Bandung" },
+/**
+ * `useLayoutEffect` warns when a client component is server-rendered, yet the
+ * measurement below must land before paint or the calls to action would flash
+ * at the tallest beat's height for one frame. Resolve to the layout effect on
+ * the client and the passive effect on the server, where neither runs.
+ */
+const useIsomorphicLayoutEffect = typeof window === "undefined" ? useEffect : useLayoutEffect;
+
+const TRUST_NOTES = [
+  "Harga terkunci saat pendaftaran ditutup",
+  "Bayar sekali lewat QRIS",
+  "Ambil sendiri di Bandung",
 ] as const;
 
 function BeatHeadline({ title }: { title: string }) {
   const words = title.split(" ");
 
   return (
-    <h2 className="hero-beat__title mt-3 font-landing-display text-2xl font-medium leading-[1.15] tracking-[-0.02em] text-slate-900 text-balance sm:mt-4 sm:text-[2.75rem] sm:leading-[1.08] sm:tracking-[-0.028em]">
+    <h2 className="hero-beat__title mt-3 font-landing-display text-[1.75rem] font-medium leading-[1.07] tracking-[-0.03em] text-wesup-ink text-balance sm:text-[2.5rem] sm:leading-[1.06] md:mt-4 md:text-[3.5rem] md:leading-[1.03] md:tracking-[-0.035em] lg:text-[4rem] lg:leading-[1.03] xl:text-[4.5rem] xl:leading-[1.02]">
       <span className="sr-only">{title}</span>
       <span aria-hidden="true">
         {words.map((word, index) => (
           <span key={`${word}-${index}`}>
             <span
               className="hero-beat__word"
-              // Offset by one so the headline cascades in after the eyebrow
-              // rather than alongside it. The reading order is eyebrow ->
-              // headline -> body, and --i is what encodes that.
+              // Offset by one so the headline cascades in after the eyebrow.
               style={{ "--i": index + 1 } as CSSProperties}
             >
               {word}
@@ -59,6 +65,8 @@ function BeatHeadline({ title }: { title: string }) {
 export function HeroScene() {
   const sceneRef = useRef<HTMLElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
+  const beatsRef = useRef<HTMLOListElement>(null);
   const { progressRef, isVisible, canRenderScene, reduceMotion } = useScrollProgress(sceneRef);
 
   /**
@@ -82,21 +90,66 @@ export function HeroScene() {
   const filledRatio = TARGET_REGISTERED_KG / TARGET_QUOTA_KG;
   const isSceneActive = canRenderScene && !sceneFailed;
 
+  /**
+   * Desktop only: the calls to action follow the active beat rather than sitting
+   * pinned to the column's bottom. The beats share one grid cell, so the list is
+   * otherwise as tall as the *tallest* beat and the CTA never moves. Sizing the
+   * list to the active beat's measured height — transitioned in CSS alongside the
+   * copy cross-fade — lets the group glide up and down as the story scrolls.
+   *
+   * Phones keep their bottom-anchored panel: the space there is too tight to
+   * detach the CTA from the thumb. The static fallback (no WebGL or reduced
+   * motion) keeps its ordinary stacked layout untouched.
+   */
+  useIsomorphicLayoutEffect(() => {
+    if (!isSceneActive) return;
+
+    const beats = beatsRef.current;
+    if (!beats) return;
+
+    const desktop = window.matchMedia("(min-width: 768px)");
+    let disconnect: () => void = () => undefined;
+
+    const measure = () => {
+      disconnect();
+      disconnect = () => undefined;
+
+      const active = beats.querySelector<HTMLElement>('[data-beat][data-active="true"]');
+      if (!desktop.matches || !active) {
+        beats.style.height = "";
+        return;
+      }
+
+      // No clamp: if the copy is taller than the viewport, the group overflows
+      // below the fold exactly as the pinned layout did — clamping to the
+      // available space would instead slide the CTA up over the copy itself.
+      const apply = () => {
+        beats.style.height = `${active.offsetHeight}px`;
+      };
+      apply();
+
+      const observer = new ResizeObserver(apply);
+      observer.observe(active);
+      disconnect = () => observer.disconnect();
+    };
+
+    measure();
+    desktop.addEventListener("change", measure);
+
+    return () => {
+      desktop.removeEventListener("change", measure);
+      disconnect();
+      beats.style.height = "";
+    };
+  }, [isSceneActive, activeStage]);
+
   return (
     <section
       ref={sceneRef}
       aria-label="Cara kerja Wesup"
       data-scene-root=""
-      // One attribute gates both the 3D render and every scroll-linked
-      // animation in the scene: the staggered beat entrance, the travelling
-      // stage rail, the wash's ambient drift. The static fallback and reduced
-      // motion both read it rather than being matched by a selector no test
-      // can see. `data-motion` used to be a separate flag, but it was always
-      // the same value — the canvas only mounts when WebGL is available and
-      // reduced motion is not preferred, so "render the scene" already implies
-      // "animate the beats".
       data-webgl={isSceneActive ? "on" : "off"}
-      className="hero-scene relative bg-gradient-to-b from-blue-50 via-slate-50 to-white"
+      className="hero-scene relative bg-wesup-paper"
       style={
         {
           "--scene-length": `${SCENE_LENGTH_VH}vh`,
@@ -113,8 +166,20 @@ export function HeroScene() {
               aria-hidden="true"
               className="absolute inset-0 h-full w-full"
             />
+            {/* The free area the 3D scene is composed into. The renderer
+                centres the truck on this box, so layout is decided here in
+                CSS, not in camera maths. Tune these classes to move the truck.
+                Mobile: the band between headline and CTA.
+                Desktop: the right 58% of the viewport. */}
+            <div
+              ref={stageRef}
+              data-testid="hero-scene-stage"
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-x-0 top-[9%] bottom-[50%] md:inset-y-0 md:left-[52vw] md:right-0 md:top-[4.5rem] md:bottom-0"
+            />
             <HeroSceneCanvas
               canvasRef={canvasRef}
+              stageRef={stageRef}
               progressRef={progressRef}
               isVisible={isVisible}
               reduceMotion={reduceMotion}
@@ -126,55 +191,47 @@ export function HeroScene() {
           <div data-testid="scene-static-fallback" className="absolute inset-0" aria-hidden="true" />
         )}
 
-        {/* Readability wash. Its own full-bleed layer rather than a background
-            on the type overlay: the overlay is the page container, so a
-            background there was clipped to that column and began dead at its
-            left edge. Anchored at 0 with the gradient reaching zero alpha at
-            this element's own right edge, there is no seam at any width. */}
+        {/* Readability wash, scoped to the text side (see globals.css). */}
         <div
           data-testid="hero-scene-wash"
           aria-hidden="true"
           className="hero-scene__wash pointer-events-none absolute inset-y-0 left-0 w-full"
         />
 
-        {/* Shares the fixed header's container classes so the headline lands on
-            the wordmark's left edge at every breakpoint, without duplicating
-            the container breakpoints in a calc(). */}
         <div className="hero-scene__overlay pointer-events-none relative container mx-auto h-full w-full px-4 sm:px-6 lg:px-8">
           <div className="hero-scene__column">
-            <ol className="hero-scene__beats" data-active-stage={activeStage}>
+            <ol ref={beatsRef} className="hero-scene__beats" data-active-stage={activeStage}>
               {BEATS.map((beat, index) => (
                 <li
                   key={beat.id}
                   data-beat={beat.index}
                   data-active={index === activeStage}
-                  // Only the scroll-scrubbed overlay hides the inactive stages. In
-                  // the static fallback every stage is visible, so hiding them would
-                  // hide the whole product story from assistive technology.
+                  // Only the scroll-scrubbed overlay hides the inactive stages.
                   aria-hidden={isSceneActive && index !== activeStage ? true : undefined}
                   className="hero-beat"
                 >
                   <p
-                    className="hero-beat__eyebrow flex items-center gap-3 font-mono text-[0.6875rem] font-medium uppercase tabular-nums tracking-[0.18em] text-slate-500"
+                    className="hero-beat__eyebrow flex items-center gap-3 font-mono text-[0.6875rem] font-medium uppercase tabular-nums tracking-[0.2em] text-wesup-ink-sub md:text-[0.75rem]"
                     style={{ "--i": 0 } as CSSProperties}
                   >
-                    <span className="hero-beat__rule inline-block h-px w-6 bg-slate-900/70" aria-hidden="true" />
+                    <span className="hero-beat__rule inline-block h-px w-6 bg-wesup-red" aria-hidden="true" />
                     {beat.eyebrow}
                   </p>
                   <BeatHeadline title={beat.title} />
                   <p
-                    className="hero-beat__body mt-3 max-w-[36ch] text-[0.9375rem] leading-[1.65] text-slate-600 text-pretty sm:mt-4 sm:text-base"
+                    className="hero-beat__body mt-6 max-w-[36ch] text-[0.9375rem] leading-[1.65] text-wesup-ink-sub text-pretty sm:mt-4 sm:text-base md:mt-5 md:max-w-[42ch] md:text-lg md:leading-[1.65] xl:text-xl"
                     style={{ "--i": 2 } as CSSProperties}
                   >
                     {beat.body}
                   </p>
 
+                  {/* Plain statement, not a badge: red rule + text. */}
                   {beat.chip ? (
                     <p
-                      className="hero-beat__chip mt-4 inline-flex items-center gap-1.5 rounded-full border border-emerald-200/70 bg-emerald-50/70 px-3 py-1.5 text-[0.8125rem] font-semibold tracking-[0.01em] text-emerald-800"
+                      className="hero-beat__chip mt-3 flex items-baseline gap-3 text-[0.875rem] font-medium text-wesup-ink sm:mt-4 md:text-[0.9375rem]"
                       style={{ "--i": 3 } as CSSProperties}
                     >
-                      <ShieldCheck className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
+                      <span className="mt-[0.6em] inline-block h-px w-4 shrink-0 bg-wesup-red" aria-hidden="true" />
                       {beat.chip}
                     </p>
                   ) : null}
@@ -182,13 +239,16 @@ export function HeroScene() {
                   {beat.id === "pintu-ditutup" ? (
                     <div
                       data-testid="scene-volume-meter"
-                      className="hero-beat__meter mt-5 max-w-sm rounded-2xl border border-white/80 bg-white/70 p-4 shadow-[0_12px_40px_-20px_rgba(15,23,42,0.28)] ring-1 ring-slate-900/5 backdrop-blur-xl"
+                      className="hero-beat__meter mt-4 max-w-[21rem] border-t border-wesup-ink/20 pt-3 sm:mt-5 sm:max-w-sm md:max-w-md"
                       style={{ "--i": 4 } as CSSProperties}
                     >
-                      <div className="flex items-baseline justify-between gap-4 text-sm">
-                        <span className="font-medium text-slate-700">Volume terkumpul</span>
-                        <span className="font-semibold tabular-nums text-blue-700">
-                          {formatKg(TARGET_REGISTERED_KG)}/{formatKg(TARGET_QUOTA_KG)} kg
+                      <div className="flex items-baseline justify-between gap-4">
+                        <span className="font-mono text-[0.6875rem] uppercase tracking-[0.18em] text-wesup-ink-sub md:text-[0.75rem]">
+                          Volume terkumpul
+                        </span>
+                        <span className="font-mono text-sm font-medium tabular-nums text-wesup-ink md:text-base">
+                          {formatKg(TARGET_REGISTERED_KG)}
+                          <span className="text-wesup-ink-sub"> / {formatKg(TARGET_QUOTA_KG)} kg</span>
                         </span>
                       </div>
                       <div
@@ -197,15 +257,15 @@ export function HeroScene() {
                         aria-valuemin={0}
                         aria-valuemax={100}
                         aria-label="Volume terkumpul"
-                        className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-slate-100"
+                        className="mt-2 h-px w-full bg-wesup-ink/20"
                       >
                         <div
-                          className="h-full rounded-full bg-gradient-to-r from-blue-500 to-blue-600"
+                          className="h-[3px] -translate-y-px bg-wesup-red"
                           style={{ width: `${filledRatio * 100}%` }}
                         />
                       </div>
-                      <p className="mt-3 text-sm text-slate-600">
-                        Terkunci di <strong className="text-blue-700">{lockedTier.label}</strong> —{" "}
+                      <p className="mt-3 text-sm leading-relaxed text-wesup-ink-sub md:text-[0.9375rem]">
+                        Terkunci di <strong className="font-semibold text-wesup-ink">{lockedTier.label}</strong>,{" "}
                         {formatRupiah(lockedTier.unitPrice)}/kg. {upcomingTier.label} terbuka di{" "}
                         {formatKg(upcomingTier.minQuantityKg)} kg.
                       </p>
@@ -216,19 +276,10 @@ export function HeroScene() {
             </ol>
 
             <div className="hero-scene__cta pointer-events-auto">
-              <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-blue-200/70 bg-white/70 px-3.5 py-1.5 text-[0.8125rem] font-semibold text-blue-800 shadow-sm shadow-blue-600/5 backdrop-blur-md">
-                <span className="relative flex h-2 w-2" aria-hidden="true">
-                  <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-60 motion-safe:animate-ping" />
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
-                </span>
-                Beli bareng, harga grosir
-              </p>
               <ol
                 data-testid="scene-stage-rail"
                 className="hero-scene__rail mb-5 flex items-center gap-2"
-                // Drives the travelling underline in globals.css. The steps keep a
-                // constant pitch (an active step scales rather than widens) so
-                // this index maps to an exact offset instead of a cumulative one.
+                // Drives the travelling underline in globals.css.
                 style={{ "--rail-index": activeStage } as CSSProperties}
                 aria-hidden="true"
               >
@@ -236,35 +287,37 @@ export function HeroScene() {
                   <li
                     key={beat.id}
                     data-active={index === activeStage}
-                    className="hero-scene__rail-step h-1 rounded-full transition-all duration-300"
+                    className="hero-scene__rail-step h-1 transition-all duration-300"
                   >
                     <span className="sr-only">{beat.index}</span>
                   </li>
                 ))}
               </ol>
 
-              <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
+              <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:gap-6">
                 <Link
                   href="/register?role=umkm"
-                  className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-slate-900 px-8 py-3.5 text-[0.9375rem] font-semibold tracking-[-0.01em] text-white shadow-lg shadow-slate-900/25 ring-1 ring-inset ring-white/10 transition-all duration-500 wesup-ease hover:bg-slate-800 hover:shadow-slate-900/35 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 active:scale-[0.98] sm:w-auto"
+                  className="group inline-flex min-h-12 w-full items-center justify-center gap-3 border border-wesup-ink bg-wesup-ink px-7 py-3 text-[0.9375rem] font-semibold tracking-[-0.01em] text-wesup-paper transition-colors duration-300 hover:border-wesup-red hover:bg-wesup-red focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wesup-red sm:w-auto md:text-base"
                 >
-                  <ShoppingBag className="h-5 w-5" strokeWidth={1.5} aria-hidden="true" />
-                  Mulai Hemat Bersama
+                  Mulai hemat bersama
+                  <ArrowRight
+                    className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1"
+                    strokeWidth={1.5}
+                    aria-hidden="true"
+                  />
                 </Link>
                 <Link
                   href="/marketplace"
-                  className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full border border-slate-900/10 bg-white/80 px-8 py-3.5 text-[0.9375rem] font-semibold tracking-[-0.01em] text-slate-800 backdrop-blur-sm shadow-sm transition-colors duration-500 hover:border-slate-900/20 hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 active:scale-[0.98] sm:w-auto"
+                  className="inline-flex min-h-12 items-center justify-center text-[0.9375rem] font-semibold text-wesup-ink underline decoration-wesup-ink/30 underline-offset-[6px] transition-colors duration-300 hover:decoration-wesup-red focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wesup-red md:text-base"
                 >
-                  Lihat Penawaran
+                  Lihat penawaran
                 </Link>
               </div>
 
-              <ul className="mt-5 flex flex-wrap gap-2">
-                {TRUST_MARKERS.map((marker) => (
-                  <li key={marker.label} className="flex items-center gap-2 rounded-full border border-slate-900/10 bg-white/70 px-3 py-1.5 text-xs text-slate-700 backdrop-blur-sm sm:text-sm">
-                    <marker.icon className="h-4 w-4 shrink-0 text-slate-900" strokeWidth={1.5} aria-hidden="true" />
-                    {marker.label}
-                  </li>
+              {/* One quiet line instead of three icon chips. */}
+              <ul className="mt-5 hidden flex-col gap-1 border-t border-wesup-ink/15 pt-3 text-[0.8125rem] text-wesup-ink-sub md:flex md:flex-row md:flex-wrap md:gap-x-5 md:text-[0.875rem]">
+                {TRUST_NOTES.map((note) => (
+                  <li key={note}>{note}</li>
                 ))}
               </ul>
             </div>

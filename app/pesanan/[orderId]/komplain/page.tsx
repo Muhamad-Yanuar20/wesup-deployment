@@ -18,7 +18,7 @@ export default async function ComplaintPage({
   const { orderId } = await params;
   return (
     <Layout>
-      <div className="mx-auto w-full max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="bg-wesup-paper px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
         <UmkmOrderDetailClient orderId={orderId} mode="complaint" />
       </div>
     </Layout>
