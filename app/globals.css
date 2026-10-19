@@ -79,6 +79,34 @@ input[type="radio"] {
   background: rgb(37 99 235 / 0.18);
 }
 
+/* Keep shared sizing neutral; each surface owns its substrate and text colors. */
+.wesup-app {
+  min-width: 0;
+}
+
+.wesup-app :where(a, button, input, select, textarea, summary):focus-visible {
+  outline: 2px solid var(--color-wesup-red);
+  outline-offset: 2px;
+}
+
+.wesup-app :where(input[type="number"], time) {
+  font-variant-numeric: tabular-nums;
+}
+
+.wesup-app .lucide { stroke-width: 1.5; }
+
+/* Leaflet controls follow the app chrome; geographic tile imagery is preserved. */
+.wesup-app .leaflet-container { background: var(--color-wesup-paper-sub); font-family: var(--font-geist-sans), sans-serif; }
+.wesup-app :is(.leaflet-bar, .leaflet-bar a, .leaflet-popup-content-wrapper, .leaflet-popup-tip, .leaflet-control-attribution) {
+  border-radius: 0;
+  box-shadow: none;
+  background: var(--color-wesup-paper);
+  color: var(--color-wesup-ink);
+}
+.wesup-app .leaflet-bar { border: 1px solid rgb(5 5 5 / 0.2); }
+.wesup-app .leaflet-bar a { min-width: 2.75rem; min-height: 2.75rem; line-height: 2.75rem; border-color: rgb(5 5 5 / 0.15); }
+.wesup-app .leaflet-bar a:hover { background: var(--color-wesup-paper-sub); }
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

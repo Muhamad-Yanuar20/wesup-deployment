@@ -1,0 +1,581 @@
+erDiagram
+    %% ========================================================================
+    %% Wesup — Supabase public schema ERD
+    %% AUTO-GENERATED from the live database (read-only pg_catalog queries).
+    %% Source of truth = live DB. Regenerate after applying migrations.
+    %% ========================================================================
+
+    %% ---- ENUMS (legend; enum types appear as column types below) ----
+    %% account_status: active | suspended_temporary | suspended_permanent | banned
+    %% audit_action: verify_supplier | reject_supplier | takedown_batch | resolve_dispute | approve_refund | complete_refund | suspend_user | ban_user | unban_user | cancel_batch | cut_off_batch | generate_pickup_code | confirm_pickup | create_batch | update_batch | delete_batch
+    %% batch_status: draft | published | closed | cancelled | takedown | completed
+    %% dispute_status: pending | under_review | resolved_supplier | resolved_umkm | rejected | resolved_refund | resolved_payout | refund | payout
+    %% escrow_status: held | released | refunded | forfeited | frozen
+    %% notification_type: payment_due | payment_success | pickup_ready | dispute | refund | suspension | referral | batch_update
+    %% payment_status: pending | paid | expired | failed | refunded
+    %% refund_status: pending | waiting_bank_account | processing | completed | failed
+    %% refund_trigger: takedown | force_majeure | dispute_won | supplier_cancel
+    %% registration_status: registered | pending_payment | paid | picked_up | completed | no_show | cancelled | refund_pending | refunded
+    %% user_role: supplier | umkm | admin
+    %% verification_status: pending | approved | rejected
+
+    %% ---- TABLE ----
+    admin_audit_logs {
+        uuid id PK "not null"
+        uuid admin_id FK "not null"
+        audit_action action_type "not null"
+        text target_type "not null"
+        uuid target_id "not null"
+        jsonb details
+        text ip_address
+        text user_agent
+        timestamp_with_time_zone created_at "not null"
+    }
+
+    %% ---- TABLE ----
+    batch_status_events {
+        uuid id PK "not null"
+        uuid batch_id FK "not null"
+        batch_status from_status
+        batch_status to_status "not null"
+        text source "not null"
+        uuid actor_id FK
+        jsonb metadata "not null"
+        timestamp_with_time_zone created_at "not null"
+    }
+
+    %% ---- TABLE ----
+    batch_tiers {
+        uuid id PK "not null"
+        uuid batch_id FK "not null"
+        integer tier_number "not null"
+        integer min_volume "not null"
+        integer max_volume
+        numeric price_per_unit "not null"
+        timestamp_with_time_zone created_at "not null"
+    }
+
+    %% ---- TABLE ----
+    batch_timeline {
+        uuid batch_id PK "FK, not null"
+        timestamp_with_time_zone registration_opens_at "not null"
+        timestamp_with_time_zone registration_closes_at "not null"
+        timestamp_with_time_zone payment_opens_at "not null"
+        timestamp_with_time_zone payment_closes_at "not null"
+        timestamp_with_time_zone estimated_ready_at "not null"
+        timestamp_with_time_zone created_at "not null"
+        timestamp_with_time_zone effective_payment_opens_at
+        timestamp_with_time_zone effective_payment_closes_at
+        timestamp_with_time_zone pickup_ends_at
+    }
+
+    %% ---- TABLE ----
+    batches {
+        uuid id PK "not null"
+        uuid supplier_id FK "not null"
+        uuid recurring_config_id FK
+        text title "not null"
+        text description
+        text category "not null"
+        integer min_quantity "not null"
+        text product_photo_url
+        text pickup_address "not null"
+        numeric latitude "not null"
+        numeric longitude "not null"
+        batch_status status "not null"
+        text takedown_reason
+        uuid takedown_by FK
+        timestamp_with_time_zone takedown_at
+        text cancelled_reason
+        timestamp_with_time_zone created_at "not null"
+        timestamp_with_time_zone updated_at "not null"
+        text pickup_name "not null"
+        text unit "not null"
+        integer capacity_quantity
+        smallint payment_window_hours "not null"
+        timestamp_with_time_zone registration_closed_at
+        text close_reason
+        integer final_registered_quantity
+        integer locked_tier_number
+        numeric locked_unit_price
+        timestamp_with_time_zone invoices_issued_at
+        timestamp_with_time_zone ready_at
+        timestamp_with_time_zone completed_at
+        smallint transaction_policy_version "not null"
+        text payment_opening_policy "not null"
+    }
+
+    %% ---- TABLE ----
+    dispute_evidence {
+        uuid id PK "not null"
+        uuid dispute_id FK "not null"
+        uuid uploaded_by FK "not null"
+        text file_url "not null"
+        text description
+        timestamp_with_time_zone created_at "not null"
+    }
+
+    %% ---- TABLE ----
+    disputes {
+        uuid id PK "not null"
+        uuid registration_id FK "not null"
+        uuid umkm_id FK "not null"
+        uuid supplier_id FK "not null"
+        text description "not null"
+        jsonb photo_urls "not null"
+        dispute_status status "not null"
+        uuid admin_id FK
+        text admin_notes
+        timestamp_with_time_zone decided_at
+        timestamp_with_time_zone created_at "not null"
+        timestamp_with_time_zone updated_at "not null"
+        text complaint_category "not null"
+        text reason
+        text resolution_notes
+    }
+
+    %% ---- TABLE ----
+    escrow_holds {
+        uuid id PK "not null"
+        uuid registration_id FK "not null"
+        numeric amount "not null"
+        escrow_status status "not null"
+        timestamp_with_time_zone pickup_confirmed_at
+        timestamp_with_time_zone auto_release_at
+        timestamp_with_time_zone released_at
+        text release_destination
+        uuid dispute_id FK
+        timestamp_with_time_zone created_at "not null"
+    }
+
+    %% ---- TABLE ----
+    notifications {
+        uuid id PK "not null"
+        uuid user_id FK "not null"
+        notification_type type "not null"
+        text title "not null"
+        text message "not null"
+        jsonb data
+        timestamp_with_time_zone read_at
+        boolean sent_via_whatsapp "not null"
+        text whatsapp_status
+        timestamp_with_time_zone created_at "not null"
+    }
+
+    %% ---- TABLE ----
+    order_status_recoveries {
+        text incident_id PK "not null"
+        uuid registration_id PK "FK, not null"
+        uuid event_id FK "not null"
+        registration_status target_status "not null"
+        timestamp_with_time_zone expected_updated_at
+        uuid request_id "not null"
+        text state "not null"
+        jsonb evidence "not null"
+        timestamp_with_time_zone restored_at
+    }
+
+    %% ---- TABLE ----
+    payment_attempts {
+        uuid id PK "not null"
+        uuid payment_id FK "not null"
+        text provider_order_id "not null"
+        text provider_transaction_id
+        payment_status status "not null"
+        text qr_code_url
+        timestamp_with_time_zone expires_at
+        text idempotency_key "not null"
+        jsonb provider_payload
+        timestamp_with_time_zone created_at "not null"
+        timestamp_with_time_zone updated_at "not null"
+        text integration_type "not null"
+        text provider_status
+        text payment_type
+        text provider_fraud_status
+        timestamp_with_time_zone provider_checked_at
+    }
+
+    %% ---- TABLE ----
+    payment_checkout_sessions {
+        uuid id PK "not null"
+        uuid payment_attempt_id FK "not null"
+        text snap_token "not null"
+        text redirect_url
+        timestamp_with_time_zone expires_at "not null"
+        timestamp_with_time_zone created_at "not null"
+        timestamp_with_time_zone updated_at "not null"
+        timestamp_with_time_zone cancelled_at
+    }
+
+    %% ---- TABLE ----
+    payment_webhook_logs {
+        uuid id PK "not null"
+        uuid payment_id FK "not null"
+        text event_type "not null"
+        jsonb payload "not null"
+        text status "not null"
+        text error_message
+        timestamp_with_time_zone created_at "not null"
+        text payload_hash
+    }
+
+    %% ---- TABLE ----
+    payments {
+        uuid id PK "not null"
+        uuid registration_id FK "not null"
+        text midtrans_order_id "not null"
+        text midtrans_transaction_id
+        numeric gross_amount "not null"
+        payment_status status "not null"
+        text qr_code_url
+        timestamp_with_time_zone qr_code_expires_at
+        timestamp_with_time_zone paid_at
+        jsonb webhook_payload
+        timestamp_with_time_zone reconciled_at
+        timestamp_with_time_zone created_at "not null"
+        timestamp_with_time_zone updated_at "not null"
+    }
+
+    %% ---- TABLE ----
+    pickup_codes {
+        uuid id PK "not null"
+        uuid registration_id FK "not null"
+        text qr_code_token "not null"
+        text pin_code "not null"
+        timestamp_with_time_zone generated_at "not null"
+        timestamp_with_time_zone used_at
+        uuid used_by_supplier_id FK
+    }
+
+    %% ---- TABLE ----
+    pickup_events {
+        uuid id PK "not null"
+        uuid registration_id FK "not null"
+        uuid supplier_id FK "not null"
+        text method "not null"
+        numeric latitude
+        numeric longitude
+        text notes
+        timestamp_with_time_zone created_at "not null"
+    }
+
+    %% ---- TABLE ----
+    pickup_replacement_decisions {
+        uuid registration_id PK "FK, not null"
+        uuid replacement_id PK "FK, not null"
+        text decision "not null"
+        timestamp_with_time_zone decided_at "not null"
+    }
+
+    %% ---- TABLE ----
+    pickup_replacements {
+        uuid id PK "not null"
+        uuid batch_id FK "not null"
+        integer revision "not null"
+        timestamp_with_time_zone starts_at "not null"
+        timestamp_with_time_zone ends_at "not null"
+        timestamp_with_time_zone ready_at
+        text reason "not null"
+        timestamp_with_time_zone created_at "not null"
+    }
+
+    %% ---- TABLE ----
+    profiles {
+        uuid id PK "FK, not null"
+        user_role role "not null"
+        account_status status "not null"
+        text full_name "not null"
+        text phone
+        timestamp_with_time_zone created_at "not null"
+        timestamp_with_time_zone updated_at "not null"
+        text email
+    }
+
+    %% ---- TABLE ----
+    ratings {
+        uuid id PK "not null"
+        uuid registration_id FK "not null"
+        uuid umkm_id FK "not null"
+        uuid supplier_id FK "not null"
+        smallint score "not null"
+        text comment
+        timestamp_with_time_zone created_at "not null"
+    }
+
+    %% ---- TABLE ----
+    recurring_configs {
+        uuid id PK "not null"
+        uuid supplier_id FK "not null"
+        text name
+        integer interval_days "not null"
+        smallint[] days_of_week "not null"
+        boolean is_active "not null"
+        timestamp_with_time_zone last_generated_at
+        timestamp_with_time_zone next_generation_at
+        timestamp_with_time_zone created_at "not null"
+        timestamp_with_time_zone updated_at "not null"
+    }
+
+    %% ---- TABLE ----
+    refund_requests {
+        uuid id PK "not null"
+        uuid registration_id FK "not null"
+        uuid batch_id FK "not null"
+        refund_trigger trigger_type "not null"
+        numeric amount "not null"
+        refund_status status "not null"
+        uuid umkm_bank_account_id FK
+        uuid admin_id FK
+        text admin_notes
+        text transfer_proof_url
+        timestamp_with_time_zone requested_at "not null"
+        timestamp_with_time_zone processed_at
+        timestamp_with_time_zone completed_at
+        timestamp_with_time_zone created_at "not null"
+        text reason
+    }
+
+    %% ---- TABLE ----
+    registration_counters {
+        uuid batch_id PK "FK, not null"
+        integer current_count "not null"
+        timestamp_with_time_zone updated_at "not null"
+    }
+
+    %% ---- TABLE ----
+    registration_status_events {
+        uuid id PK "not null"
+        uuid registration_id FK "not null"
+        registration_status from_status
+        registration_status to_status "not null"
+        text source "not null"
+        uuid actor_id FK
+        jsonb metadata "not null"
+        timestamp_with_time_zone created_at "not null"
+    }
+
+    %% ---- TABLE ----
+    registrations {
+        uuid id PK "not null"
+        uuid batch_id FK "not null"
+        uuid umkm_id FK "not null"
+        integer quantity "not null"
+        timestamp_with_time_zone consented_at "not null"
+        numeric consent_latitude
+        numeric consent_longitude
+        registration_status status "not null"
+        integer locked_tier_number
+        numeric locked_price_per_unit
+        numeric final_amount
+        timestamp_with_time_zone created_at "not null"
+        timestamp_with_time_zone updated_at "not null"
+        text cancellation_reason
+        jsonb consent_terms
+        boolean payment_penalty_exempt "not null"
+        uuid accepted_pickup_revision FK
+    }
+
+    %% ---- TABLE ----
+    supplier_bank_accounts {
+        uuid id PK "not null"
+        uuid supplier_id FK "not null"
+        text bank_name "not null"
+        text account_number "not null"
+        text account_holder_name "not null"
+        boolean is_primary "not null"
+        timestamp_with_time_zone created_at "not null"
+        timestamp_with_time_zone updated_at "not null"
+    }
+
+    %% ---- TABLE ----
+    supplier_ledger_entries {
+        uuid id PK "not null"
+        uuid supplier_id FK "not null"
+        uuid registration_id FK
+        uuid payout_id
+        text from_bucket
+        text to_bucket
+        numeric amount "not null"
+        text entry_type "not null"
+        text idempotency_key "not null"
+        jsonb metadata "not null"
+        timestamp_with_time_zone created_at "not null"
+    }
+
+    %% ---- TABLE ----
+    supplier_offer_drafts {
+        uuid id PK "not null"
+        uuid supplier_id FK "not null"
+        jsonb payload "not null"
+        smallint step "not null"
+        integer revision "not null"
+        uuid published_batch_id FK
+        timestamp_with_time_zone created_at "not null"
+        timestamp_with_time_zone updated_at "not null"
+    }
+
+    %% ---- TABLE ----
+    supplier_payouts {
+        uuid id PK "not null"
+        uuid supplier_id FK "not null"
+        uuid supplier_bank_account_id FK
+        numeric amount "not null"
+        text status "not null"
+        jsonb bank_account_snapshot "not null"
+        text transfer_proof_url
+        timestamp_with_time_zone requested_at "not null"
+        timestamp_with_time_zone approved_at
+        timestamp_with_time_zone transferred_at
+        uuid processed_by FK
+        text notes
+        text idempotency_key "not null"
+        timestamp_with_time_zone created_at "not null"
+        timestamp_with_time_zone updated_at "not null"
+    }
+
+    %% ---- TABLE ----
+    supplier_profiles {
+        uuid user_id PK "FK, not null"
+        text business_name "not null"
+        text address "not null"
+        numeric latitude "not null"
+        numeric longitude "not null"
+        text business_photo_url
+        text ktp_photo_url
+        text nik
+        verification_status verification_status "not null"
+        text verification_notes
+        uuid verified_by FK
+        timestamp_with_time_zone verified_at
+        boolean is_location_locked "not null"
+        timestamp_with_time_zone created_at "not null"
+        timestamp_with_time_zone updated_at "not null"
+    }
+
+    %% ---- TABLE ----
+    transaction_logs {
+        uuid id PK "not null"
+        uuid registration_id FK "not null"
+        uuid payment_id FK
+        uuid payment_attempt_id FK
+        text event_type "not null"
+        payment_status from_status
+        payment_status to_status
+        text provider_status
+        text gateway_transaction_id
+        jsonb payload "not null"
+        text source "not null"
+        uuid actor_id FK
+        timestamp_with_time_zone created_at "not null"
+    }
+
+    %% ---- TABLE ----
+    transaction_support_requests {
+        uuid id PK "not null"
+        uuid user_id FK "not null"
+        uuid registration_id FK
+        uuid batch_id FK
+        text message "not null"
+        text status "not null"
+        timestamp_with_time_zone created_at "not null"
+        text resolution_note
+        uuid resolved_by FK
+        timestamp_with_time_zone resolved_at
+    }
+
+    %% ---- TABLE ----
+    umkm_bank_accounts {
+        uuid id PK "not null"
+        uuid umkm_id FK "not null"
+        text bank_name "not null"
+        text account_number "not null"
+        text account_holder_name "not null"
+        timestamp_with_time_zone created_at "not null"
+        timestamp_with_time_zone updated_at "not null"
+    }
+
+    %% ---- TABLE ----
+    umkm_profiles {
+        uuid user_id PK "FK, not null"
+        text business_name
+        text address
+        numeric latitude "not null"
+        numeric longitude "not null"
+        integer strike_count "not null"
+        timestamp_with_time_zone suspended_until
+        timestamp_with_time_zone created_at "not null"
+        timestamp_with_time_zone updated_at "not null"
+    }
+
+    %% ---- EXTERNAL (outside public schema; referenced by FKs) ----
+    auth_users {
+        uuid id PK
+        text email
+    }
+
+    %% ---- RELATIONSHIPS (FK child }o--|| parent; ||--|| = one-to-one) ----
+    admin_audit_logs }o--|| profiles : "admin_audit_logs_admin_id_fkey"
+    batch_status_events }o--|| batches : "batch_status_events_batch_id_fkey"
+    batch_status_events }o--|| profiles : "batch_status_events_actor_id_fkey"
+    batch_tiers }o--|| batches : "batch_tiers_batch_id_fkey"
+    batch_timeline ||--|| batches : "batch_timeline_batch_id_fkey"
+    batches }o--|| profiles : "batches_supplier_id_fkey"
+    batches }o--|| profiles : "batches_takedown_by_fkey"
+    batches }o--|| recurring_configs : "batches_recurring_config_id_fkey"
+    dispute_evidence }o--|| disputes : "dispute_evidence_dispute_id_fkey"
+    dispute_evidence }o--|| profiles : "dispute_evidence_uploaded_by_fkey"
+    disputes ||--|| registrations : "disputes_registration_id_fkey"
+    disputes }o--|| profiles : "disputes_admin_id_fkey"
+    disputes }o--|| profiles : "disputes_supplier_id_fkey"
+    disputes }o--|| profiles : "disputes_umkm_id_fkey"
+    escrow_holds ||--|| registrations : "escrow_holds_registration_id_fkey"
+    escrow_holds }o--|| disputes : "escrow_holds_dispute_id_fkey"
+    notifications }o--|| profiles : "notifications_user_id_fkey"
+    order_status_recoveries }o--|| registration_status_events : "order_status_recoveries_event_id_fkey"
+    order_status_recoveries }o--|| registrations : "order_status_recoveries_registration_id_fkey"
+    payment_attempts }o--|| payments : "payment_attempts_payment_id_fkey"
+    payment_checkout_sessions ||--|| payment_attempts : "payment_checkout_sessions_payment_attempt_id_fkey"
+    payment_webhook_logs }o--|| payments : "payment_webhook_logs_payment_id_fkey"
+    payments ||--|| registrations : "payments_registration_id_fkey"
+    pickup_codes ||--|| registrations : "pickup_codes_registration_id_fkey"
+    pickup_codes }o--|| profiles : "pickup_codes_used_by_supplier_id_fkey"
+    pickup_events }o--|| profiles : "pickup_events_supplier_id_fkey"
+    pickup_events }o--|| registrations : "pickup_events_registration_id_fkey"
+    pickup_replacement_decisions }o--|| pickup_replacements : "pickup_replacement_decisions_replacement_id_fkey"
+    pickup_replacement_decisions }o--|| registrations : "pickup_replacement_decisions_registration_id_fkey"
+    pickup_replacements }o--|| batches : "pickup_replacements_batch_id_fkey"
+    profiles ||--|| auth_users : "profiles_id_fkey"
+    ratings ||--|| registrations : "ratings_registration_id_fkey"
+    ratings }o--|| profiles : "ratings_supplier_id_fkey"
+    ratings }o--|| profiles : "ratings_umkm_id_fkey"
+    recurring_configs }o--|| profiles : "recurring_configs_supplier_id_fkey"
+    refund_requests }o--|| batches : "refund_requests_batch_id_fkey"
+    refund_requests }o--|| profiles : "refund_requests_admin_id_fkey"
+    refund_requests }o--|| registrations : "refund_requests_registration_id_fkey"
+    refund_requests }o--|| umkm_bank_accounts : "refund_requests_umkm_bank_account_id_fkey"
+    registration_counters ||--|| batches : "registration_counters_batch_id_fkey"
+    registration_status_events }o--|| profiles : "registration_status_events_actor_id_fkey"
+    registration_status_events }o--|| registrations : "registration_status_events_registration_id_fkey"
+    registrations }o--|| batches : "registrations_batch_id_fkey"
+    registrations }o--|| pickup_replacements : "registrations_accepted_pickup_revision_fkey"
+    registrations }o--|| profiles : "registrations_umkm_id_fkey"
+    supplier_bank_accounts }o--|| profiles : "supplier_bank_accounts_supplier_id_fkey"
+    supplier_ledger_entries }o--|| profiles : "supplier_ledger_entries_supplier_id_fkey"
+    supplier_ledger_entries }o--|| registrations : "supplier_ledger_entries_registration_id_fkey"
+    supplier_offer_drafts }o--|| batches : "supplier_offer_drafts_published_batch_id_fkey"
+    supplier_offer_drafts }o--|| profiles : "supplier_offer_drafts_supplier_id_fkey"
+    supplier_payouts }o--|| profiles : "supplier_payouts_processed_by_fkey"
+    supplier_payouts }o--|| profiles : "supplier_payouts_supplier_id_fkey"
+    supplier_payouts }o--|| supplier_bank_accounts : "supplier_payouts_supplier_bank_account_id_fkey"
+    supplier_profiles ||--|| profiles : "supplier_profiles_user_id_fkey"
+    supplier_profiles }o--|| profiles : "supplier_profiles_verified_by_fkey"
+    transaction_logs }o--|| payment_attempts : "transaction_logs_payment_attempt_id_fkey"
+    transaction_logs }o--|| payments : "transaction_logs_payment_id_fkey"
+    transaction_logs }o--|| profiles : "transaction_logs_actor_id_fkey"
+    transaction_logs }o--|| registrations : "transaction_logs_registration_id_fkey"
+    transaction_support_requests }o--|| batches : "transaction_support_requests_batch_id_fkey"
+    transaction_support_requests }o--|| profiles : "transaction_support_requests_resolved_by_fkey"
+    transaction_support_requests }o--|| profiles : "transaction_support_requests_user_id_fkey"
+    transaction_support_requests }o--|| registrations : "transaction_support_requests_registration_id_fkey"
+    umkm_bank_accounts }o--|| profiles : "umkm_bank_accounts_umkm_id_fkey"
+    umkm_profiles ||--|| profiles : "umkm_profiles_user_id_fkey"

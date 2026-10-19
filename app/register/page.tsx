@@ -16,22 +16,22 @@ export default async function RegisterPage() {
   if (accessState) redirect(resolveHomePath(accessState));
 
   return (
-    <main className="wesup-app min-h-screen bg-[radial-gradient(circle_at_top_left,_#dbeafe,_transparent_38%),linear-gradient(180deg,_#f8fafc,_#eff6ff)] px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
+    <main className="wesup-app min-h-dvh bg-wesup-paper px-4 py-8 sm:px-6 sm:py-12 lg:px-8 text-wesup-ink">
       <div className="mx-auto w-full max-w-6xl">
         <header className="mb-8 flex items-center justify-between gap-4 sm:mb-12">
           <Link
             href="/"
-            className="inline-flex min-h-11 items-center gap-2 rounded-xl text-slate-900 transition hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+            className="inline-flex min-h-11 items-center gap-2 text-wesup-ink transition-colors duration-500 wesup-ease hover:opacity-80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wesup-red"
             aria-label="Wesup - Kembali ke beranda"
           >
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-sm font-extrabold text-white shadow-sm shadow-blue-600/20" aria-hidden="true">
+            <span className="flex h-9 w-9 items-center justify-center border border-wesup-ink/20 text-sm font-bold text-wesup-red" aria-hidden="true">
               W
             </span>
-            <span className="text-lg font-extrabold tracking-tight">Wesup</span>
+            <span className="font-landing-display text-xl tracking-[-0.02em]">Wesup</span>
           </Link>
           <Link
             href="/marketplace"
-            className="inline-flex min-h-11 items-center rounded-xl px-3 text-sm font-bold text-blue-700 transition hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+            className="inline-flex min-h-11 items-center px-3 text-sm font-bold text-wesup-ink-sub transition-colors duration-500 wesup-ease hover:bg-wesup-paper focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wesup-red"
           >
             Lihat Marketplace
           </Link>

@@ -1,0 +1,64 @@
+/* Override vendor chrome only inside documentation. Map/vendor assets elsewhere retain their rendering. */
+.docs-paper-shell {
+  background: var(--color-wesup-paper);
+  color: var(--color-wesup-ink);
+  color-scheme: light;
+}
+.docs-paper-shell .swagger-ui {
+  min-width: 0;
+  color: var(--color-wesup-ink);
+  font-family: var(--font-geist-sans), sans-serif;
+}
+.docs-paper-shell .swagger-ui * {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+.docs-paper-shell .swagger-ui .wrapper { max-width: 100%; padding: 0; }
+.docs-paper-shell .swagger-ui :is(h1, h2, h3, h4, h5, h6, p, li, label, th, td, legend, a, .parameter__name, .parameter__type, .model-title, .model, .prop-type, .response-col_status, .opblock-summary-description, .opblock-summary-path) {
+  color: var(--color-wesup-ink);
+  font-family: inherit;
+  overflow-wrap: anywhere;
+}
+.docs-paper-shell .swagger-ui :is(h2, h3, .info .title) {
+  font-family: var(--font-archivo-black), sans-serif;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.docs-paper-shell .swagger-ui :is(.information-container, .info, .scheme-container) { background: transparent; }
+.docs-paper-shell .swagger-ui .info { margin: 2rem 0; }
+.docs-paper-shell .swagger-ui :is(.opblock, .opblock .opblock-section-header, section.models, .model-container, .model-box, .model-example, .responses-inner, .opblock-body, .opblock-description-wrapper, .btn) {
+  background: var(--color-wesup-paper);
+  border-color: rgb(5 5 5 / 0.15);
+  color: var(--color-wesup-ink);
+}
+.docs-paper-shell .swagger-ui .opblock { border-width: 1px; margin-bottom: 1rem; }
+.docs-paper-shell .swagger-ui .opblock .opblock-summary { flex-wrap: wrap; gap: 0.5rem; border-color: rgb(5 5 5 / 0.15); padding: 0.75rem; }
+.docs-paper-shell .swagger-ui .opblock .opblock-summary-method {
+  min-width: 4.5rem;
+  background: var(--color-wesup-ink);
+  color: var(--color-wesup-paper);
+  font-family: var(--font-jetbrains-mono), monospace;
+}
+.docs-paper-shell .swagger-ui .opblock-summary-control { min-width: 0; gap: 0.5rem; text-align: left; }
+.docs-paper-shell .swagger-ui .opblock .opblock-summary-path { min-width: 0; font-family: var(--font-jetbrains-mono), monospace; font-size: 0.8125rem; }
+.docs-paper-shell .swagger-ui :is(.opblock-summary-path a, .opblock-summary-description) { overflow-wrap: anywhere; }
+.docs-paper-shell .swagger-ui :is(pre, code, .microlight, .highlight-code, .highlight-code *, .model-box, .info .title small) {
+  background: var(--color-wesup-paper-sub) !important;
+  color: var(--color-wesup-ink) !important;
+  font-family: var(--font-jetbrains-mono), monospace !important;
+}
+.docs-paper-shell .swagger-ui pre { max-width: 100%; overflow-x: auto; white-space: pre-wrap; overflow-wrap: anywhere; }
+.docs-paper-shell .swagger-ui :is(table, .responses-table) { width: 100%; table-layout: fixed; }
+.docs-paper-shell .swagger-ui :is(th, td) { border-color: rgb(5 5 5 / 0.15); padding: 0.75rem 0.5rem; }
+.docs-paper-shell .swagger-ui :is(input, select, textarea) { max-width: 100%; border: 1px solid rgb(5 5 5 / 0.2); background: var(--color-wesup-paper); color: var(--color-wesup-ink); }
+.docs-paper-shell .swagger-ui :is(button, select, input, a) { min-height: 2.75rem; }
+.docs-paper-shell .swagger-ui :is(button, select, input, textarea, a):focus-visible { outline: 2px solid var(--color-wesup-red); outline-offset: 2px; }
+.docs-paper-shell .swagger-ui svg { fill: var(--color-wesup-ink); }
+.docs-paper-shell .swagger-ui .opblock-tag { padding: 1rem 0; border-color: rgb(5 5 5 / 0.15); }
+@media (max-width: 639px) {
+  .docs-paper-shell .swagger-ui .opblock-summary-control { flex-wrap: wrap; }
+  .docs-paper-shell .swagger-ui .opblock .opblock-summary-path { flex-basis: calc(100% - 6rem); }
+  .docs-paper-shell .swagger-ui .opblock-summary-description { flex-basis: 100%; }
+  .docs-paper-shell .swagger-ui :is(.opblock-body, .responses-wrapper, .opblock-section-header) { padding: 0.5rem; }
+}

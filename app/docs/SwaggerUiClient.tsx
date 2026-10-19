@@ -4,7 +4,7 @@ import { useFeedbackResource } from "@/lib/feedback/use-resource";
 import { ContentSkeleton, ErrorState, AsyncButton } from "@/components/feedback";
 import dynamic from "next/dynamic";
 import "swagger-ui-react/swagger-ui.css";
-import "./swagger-dark.css";
+import "./swagger-paper.css";
 
 const SwaggerUI = dynamic(() => import("swagger-ui-react"), {
   ssr: false,
@@ -20,7 +20,7 @@ export default function SwaggerUiClient({ specUrl }: SwaggerUiClientProps) {
   if (!data && loading) return <ContentSkeleton label="Memuat dokumentasi…" variant="table" />;
   if (!data) return <ErrorState title="Dokumentasi belum dapat dimuat." description={error} action={<AsyncButton onClick={() => void reload()}>Coba lagi</AsyncButton>} />;
   return (
-    <div className="swagger-dark" data-testid="swagger-ui-dark">
+    <div className="swagger-paper" data-testid="swagger-ui-paper">
       <SwaggerUI
         spec={data}
         docExpansion="list"

@@ -103,16 +103,16 @@ export default function LeafletMap() {
   }
 
   return (
-    <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl shadow-emerald-950/5">
-      <div className="grid gap-4 border-b border-slate-100 p-5 lg:grid-cols-[1fr_auto] lg:items-center">
+    <section className="overflow-hidden border border-wesup-ink/15 bg-wesup-paper">
+      <div className="grid gap-4 border-b border-wesup-ink/10 p-5 lg:grid-cols-[1fr_auto] lg:items-center">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">
+          <p className="font-mono text-[0.6875rem] uppercase tracking-[0.2em] text-wesup-ink-sub">
             Titik terpilih
           </p>
-          <p className="mt-1 font-mono text-lg font-semibold text-slate-900">
+          <p className="mt-1 font-mono text-lg font-semibold text-wesup-ink">
             {formatCoordinate(coordinate)}
           </p>
-          <p className="mt-1 text-sm text-slate-500" aria-live="polite">
+          <p className="mt-1 text-sm text-wesup-ink-sub" aria-live="polite">
             {message}
           </p>
         </div>
@@ -122,7 +122,7 @@ export default function LeafletMap() {
             type="button"
             onClick={locateUser}
             disabled={locationStatus === "locating"}
-            className="rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 disabled:cursor-wait disabled:opacity-60"
+            className="bg-wesup-ink px-4 py-2.5 text-sm font-semibold text-wesup-paper transition-colors duration-500 wesup-ease hover:bg-wesup-red disabled:cursor-wait disabled:opacity-60"
           >
             {locationStatus === "locating"
               ? "Mencari lokasi…"
@@ -131,7 +131,7 @@ export default function LeafletMap() {
           <button
             type="button"
             onClick={resetToBandung}
-            className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-emerald-300 hover:text-emerald-700"
+            className="border border-wesup-ink/15 bg-wesup-paper px-4 py-2.5 text-sm font-semibold text-wesup-ink-sub transition-colors duration-500 wesup-ease hover:border-wesup-ink/20 hover:text-wesup-ink-sub"
           >
             Reset ke Bandung
           </button>
@@ -155,8 +155,8 @@ export default function LeafletMap() {
             center={[coordinate.lat, coordinate.lng]}
             radius={10}
             pathOptions={{
-              color: "#ffffff",
-              fillColor: "#059669",
+              color: "#F4F4F0",
+              fillColor: "#E61919",
               fillOpacity: 1,
               weight: 4,
             }}

@@ -17,7 +17,7 @@ export default function PickupLocationMap({
   return (
     <div
       data-testid="pickup-location-map"
-      className="relative h-[260px] w-full overflow-hidden rounded-xl border border-slate-200"
+      className="relative h-[260px] w-full overflow-hidden border border-wesup-ink/15"
     >
       <MapContainer
         center={[latitude, longitude]}
@@ -39,8 +39,8 @@ export default function PickupLocationMap({
           center={[latitude, longitude]}
           radius={10}
           pathOptions={{
-            color: "#ffffff",
-            fillColor: "#2563eb",
+            color: "#F4F4F0",
+            fillColor: "#E61919",
             fillOpacity: 1,
             weight: 4,
           }}
@@ -50,15 +50,15 @@ export default function PickupLocationMap({
             <br />
             <span className="text-xs">{address}</span>
             <br />
-            <span className="text-xs text-slate-500">
+            <span className="text-xs text-wesup-ink-sub">
               {formatCoordinate({ lat: latitude, lng: longitude })}
             </span>
           </Popup>
         </CircleMarker>
       </MapContainer>
-      <div className="absolute bottom-0 left-0 right-0 z-[1000] border-t border-slate-200 bg-white/95 backdrop-blur-sm px-3 py-2">
-        <p className="text-xs font-medium text-slate-700 truncate">{address}</p>
-        <p className="text-[10px] text-slate-400 font-mono">
+      <div className="absolute bottom-0 left-0 right-0 z-[1000] border-t border-wesup-ink/15 bg-wesup-paper px-3 py-2">
+        <p className="text-xs font-medium text-wesup-ink-sub truncate">{address}</p>
+        <p className="text-[10px] text-wesup-ink-sub font-mono">
           {formatCoordinate({ lat: latitude, lng: longitude })}
         </p>
       </div>

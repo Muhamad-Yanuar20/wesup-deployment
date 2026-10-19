@@ -29,7 +29,7 @@ function ResetRouteView({ coordinates }: { coordinates: Array<[number, number]> 
     <button
       type="button"
       onClick={() => map.fitBounds(coordinates, { padding: [32, 32], maxZoom: 16 })}
-      className="absolute right-3 top-3 z-[1000] inline-flex min-h-11 items-center rounded-lg border border-slate-300 bg-white px-3 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
+      className="absolute right-3 top-3 z-[1000] inline-flex min-h-11 items-center border border-wesup-ink/20 bg-wesup-paper px-3 text-xs font-bold text-wesup-ink-sub transition-colors duration-500 wesup-ease hover:bg-wesup-paper focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wesup-red"
       aria-label="Tampilkan seluruh rute"
     >
       Tampilkan seluruh rute
@@ -44,7 +44,7 @@ export default function MarketplaceRouteMap({ route }: { route: MarketplaceRoute
   const isFallback = route.route.source === "straight_line_fallback";
 
   return (
-    <div className="relative h-[320px] w-full overflow-hidden rounded-xl border border-slate-200">
+    <div className="relative h-[320px] w-full overflow-hidden border border-wesup-ink/15">
       <MapContainer
         center={origin}
         zoom={13}
@@ -62,7 +62,7 @@ export default function MarketplaceRouteMap({ route }: { route: MarketplaceRoute
         <Polyline
           positions={coordinates}
           pathOptions={{
-            color: isFallback ? "#b45309" : "#2563eb",
+            color: isFallback ? "#050505" : "#E61919",
             weight: 6,
             opacity: 0.9,
             dashArray: isFallback ? "10 10" : undefined,
@@ -71,7 +71,7 @@ export default function MarketplaceRouteMap({ route }: { route: MarketplaceRoute
         <CircleMarker
           center={origin}
           radius={10}
-          pathOptions={{ color: "#ffffff", fillColor: "#2563eb", fillOpacity: 1, weight: 4 }}
+          pathOptions={{ color: "#F4F4F0", fillColor: "#050505", fillOpacity: 1, weight: 4 }}
         >
           <Popup>
             <strong className="text-sm">Lokasi UMKM Anda</strong>
@@ -82,32 +82,32 @@ export default function MarketplaceRouteMap({ route }: { route: MarketplaceRoute
         <CircleMarker
           center={destination}
           radius={10}
-          pathOptions={{ color: "#ffffff", fillColor: "#ea580c", fillOpacity: 1, weight: 4 }}
+          pathOptions={{ color: "#F4F4F0", fillColor: "#E61919", fillOpacity: 1, weight: 4 }}
         >
           <Popup>
             <strong className="text-sm">Lokasi Pickup</strong>
             <br />
             <span className="text-xs">{route.destination.address}</span>
             <br />
-            <span className="text-xs text-slate-500">
+            <span className="text-xs text-wesup-ink-sub">
               {formatCoordinate({ lat: destination[0], lng: destination[1] })}
             </span>
           </Popup>
         </CircleMarker>
       </MapContainer>
-      <div className="pointer-events-none absolute bottom-0 left-0 right-0 z-[1000] border-t border-slate-200 bg-white/95 px-3 py-2 backdrop-blur-sm">
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-semibold text-slate-700">
+      <div className="pointer-events-none absolute bottom-0 left-0 right-0 z-[1000] border-t border-wesup-ink/15 bg-wesup-paper px-3 py-2">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-semibold text-wesup-ink-sub tabular-nums">
           <span className="inline-flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-full bg-blue-600" aria-hidden="true" />
+            <span className="h-2.5 w-2.5 bg-wesup-ink" aria-hidden="true" />
             Lokasi UMKM
           </span>
           <span className="inline-flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-full bg-orange-600" aria-hidden="true" />
+            <span className="h-2.5 w-2.5 bg-wesup-red" aria-hidden="true" />
             Lokasi pickup
           </span>
           <span>{isFallback ? "Perkiraan garis lurus" : "Rute berkendara"}</span>
         </div>
-        <p className="mt-1 text-[10px] text-slate-500">
+        <p className="mt-1 text-[10px] text-wesup-ink-sub">
           {isFallback ? "Perkiraan geodesik" : "Rute: OSRM"} · Peta: OpenStreetMap
         </p>
       </div>

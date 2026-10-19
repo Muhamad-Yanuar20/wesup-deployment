@@ -156,13 +156,13 @@ function MarketplaceController() {
 
   return (
     <div className="space-y-1 font-sans">
-      <div className="flex flex-col gap-5">
-        <div className="sticky top-[4.5rem] z-20 -mx-1 flex items-stretch gap-2 rounded-2xl bg-slate-50/95 p-1 backdrop-blur-sm sm:static sm:mx-0 sm:bg-transparent sm:p-0">
-          <div className="flex-1 relative group">
+      <div className="flex flex-col gap-5 tabular-nums">
+        <div className="sticky top-[4.5rem] z-20 -mx-1 flex items-stretch gap-2 bg-wesup-paper p-1 sm:static sm:mx-0 sm:bg-transparent sm:p-0">
+          <div className="flex-1 relative group tabular-nums">
             <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
               <Search
                 aria-hidden="true"
-                className="w-4 h-4 text-slate-400 group-focus-within:text-blue-600 transition-colors"
+                className="w-4 h-4 text-wesup-ink-sub group-focus-within:text-wesup-ink-sub transition-colors"
               />
             </div>
             <label htmlFor="marketplace-search" className="sr-only">
@@ -174,14 +174,14 @@ function MarketplaceController() {
               value={draftQuery}
               maxLength={120}
               onChange={(event) => setDraftQuery(event.target.value)}
-              className="block w-full pl-10 pr-4 py-3 text-sm bg-white border border-slate-200 rounded-xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition-all shadow-sm"
+              className="block w-full pl-10 pr-4 py-3 text-sm bg-wesup-paper border border-wesup-ink/15 text-wesup-ink placeholder:text-wesup-ink-sub focus:outline-none focus:border-wesup-ink/20 transition-colors duration-500 wesup-ease"
               placeholder="Cari produk UMKM terdekat..."
             />
           </div>
           <button
             type="button"
             onClick={openFilterDrawer}
-            className="lg:hidden inline-flex items-center justify-center gap-2 px-4 py-3 min-h-11 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50"
+            className="lg:hidden inline-flex items-center justify-center gap-2 px-4 py-3 min-h-11 border border-wesup-ink/15 bg-wesup-paper px-4 py-3 text-sm font-semibold text-wesup-ink-sub transition-colors hover:bg-wesup-paper"
             aria-label="Buka filter pencarian"
           >
             <ListFilter aria-hidden="true" className="w-4 h-4" />
@@ -190,9 +190,9 @@ function MarketplaceController() {
         </div>
 
         {origin?.needsProfileLocation ? (
-          <div className="flex flex-col gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950 sm:flex-row sm:items-center sm:justify-between" role="status" aria-live="polite">
+          <div className="flex flex-col gap-3 border border-wesup-ink/15 bg-wesup-paper px-4 py-3 text-sm text-wesup-ink sm:flex-row sm:items-center sm:justify-between tabular-nums" role="status" aria-live="polite">
             <p><strong>Lokasi usaha belum tersimpan.</strong> Jarak sementara dihitung dari pusat Bandung.</p>
-            <Link href="/umkm/onboarding?returnTo=/marketplace" className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-xl bg-amber-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-amber-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-700 focus-visible:ring-offset-2">Simpan lokasi</Link>
+            <Link href="/umkm/onboarding?returnTo=/marketplace" className="inline-flex min-h-11 shrink-0 items-center justify-center bg-wesup-ink px-4 py-2.5 text-sm font-bold text-wesup-paper hover:bg-wesup-red focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wesup-red">Simpan lokasi</Link>
           </div>
         ) : null}
 
@@ -200,8 +200,8 @@ function MarketplaceController() {
           <MarketplaceRadiusMapClient origin={origin} items={items} radiusKm={radiusKm} />
         ) : null}
 
-        <div className="flex flex-col items-stretch gap-5 lg:flex-row lg:items-start lg:gap-6">
-          <aside className="hidden w-[280px] shrink-0 flex-col rounded-2xl border border-slate-200 bg-white shadow-sm lg:sticky lg:top-24 lg:flex">
+        <div className="flex flex-col items-stretch gap-5 lg:flex-row lg:items-start lg:gap-6 tabular-nums">
+          <aside className="hidden w-[280px] shrink-0 flex-col border border-wesup-ink/15 bg-wesup-paper lg:sticky lg:top-24 lg:flex">
             <MarketplaceFilters
               idPrefix="desktop"
               value={filters}
@@ -209,18 +209,18 @@ function MarketplaceController() {
               onChange={updateAppliedFilters}
             />
           </aside>
-          <main className="flex-1 w-full min-w-0">
-            <div className="w-full rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6 lg:p-8">
-              <div className="mb-5 flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 pb-5">
+          <div className="flex-1 w-full min-w-0 tabular-nums">
+            <div className="w-full border border-wesup-ink/15 bg-wesup-paper p-4 sm:p-6 lg:p-8">
+              <div className="mb-5 flex flex-wrap items-start justify-between gap-3 border-b border-wesup-ink/10 pb-5">
                 <div>
                   <h2
                     ref={resultHeadingRef}
                     tabIndex={-1}
-                    className="text-xl font-bold text-slate-800 focus:outline-none"
+                    className="text-xl text-wesup-ink focus:outline-none font-landing-display font-normal uppercase tracking-[0.04em]"
                   >
                     Penawaran marketplace
                   </h2>
-                  <p className="mt-1 text-sm font-medium text-slate-500">
+                  <p className="mt-1 text-sm font-medium text-wesup-ink-sub">
                     {total} penawaran ditemukan
                   </p>
                 </div>
@@ -228,7 +228,7 @@ function MarketplaceController() {
                   <button
                     type="button"
                     onClick={resetAllFilters}
-                    className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
+                    className="border border-wesup-ink/15 px-3 py-2 text-sm font-semibold text-wesup-ink-sub hover:bg-wesup-paper transition-colors"
                   >
                     Reset filter
                   </button>
@@ -247,7 +247,7 @@ function MarketplaceController() {
                 onReset={resetAllFilters}
               />
             </div>
-          </main>
+          </div>
         </div>
       </div>
 

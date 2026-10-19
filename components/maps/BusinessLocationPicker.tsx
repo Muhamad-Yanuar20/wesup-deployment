@@ -68,24 +68,24 @@ export default function BusinessLocationPicker({ value, onChange, error, disable
     <div>
       <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-700">{value ? "Titik lokasi terpilih" : "Titik lokasi belum dipilih"}</p>
-          <p className="mt-1 font-mono text-sm font-semibold text-slate-900">{value ? formatCoordinate(value) : "Pilih titik pada peta"}</p>
-          <p className="mt-1 text-sm text-slate-600" aria-live="polite">{message}</p>
+          <p className="font-mono text-[0.6875rem] uppercase tracking-[0.18em] text-wesup-ink-sub">{value ? "Titik lokasi terpilih" : "Titik lokasi belum dipilih"}</p>
+          <p className="mt-1 font-mono text-sm font-semibold text-wesup-ink">{value ? formatCoordinate(value) : "Pilih titik pada peta"}</p>
+          <p className="mt-1 text-sm text-wesup-ink-sub" aria-live="polite">{message}</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <button type="button" onClick={locateUser} disabled={disabled || locationStatus === "locating"} className="inline-flex min-h-11 items-center justify-center rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60">{locationStatus === "locating" ? "Mencari lokasi…" : "Gunakan lokasi saya"}</button>
-          <button type="button" onClick={() => selectCoordinate(mapCenter)} disabled={disabled} className="inline-flex min-h-11 items-center justify-center rounded-xl border border-blue-200 bg-white px-4 py-2.5 text-sm font-semibold text-blue-700 transition hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60">Pilih titik tengah peta</button>
+          <button type="button" onClick={locateUser} disabled={disabled || locationStatus === "locating"} className="inline-flex min-h-11 items-center justify-center bg-wesup-ink px-4 py-2.5 text-sm font-semibold text-wesup-paper transition-colors duration-500 wesup-ease hover:bg-wesup-red focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wesup-red disabled:cursor-not-allowed disabled:opacity-60">{locationStatus === "locating" ? "Mencari lokasi…" : "Gunakan lokasi saya"}</button>
+          <button type="button" onClick={() => selectCoordinate(mapCenter)} disabled={disabled} className="inline-flex min-h-11 items-center justify-center border border-wesup-ink/15 bg-wesup-paper px-4 py-2.5 text-sm font-semibold text-wesup-ink-sub transition-colors duration-500 wesup-ease hover:bg-wesup-paper focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wesup-red disabled:cursor-not-allowed disabled:opacity-60">Pilih titik tengah peta</button>
         </div>
       </div>
-      <div className="relative h-72 overflow-hidden rounded-2xl border border-slate-200 sm:h-80" role="region" aria-label={`${label} pada peta`}>
+      <div className="relative h-72 overflow-hidden border border-wesup-ink/15 sm:h-80" role="region" aria-label={`${label} pada peta`}>
         <MapContainer center={[BANDUNG_SERVICE_CENTER.lat, BANDUNG_SERVICE_CENTER.lng]} zoom={13} scrollWheelZoom={!disabled} dragging={!disabled} keyboard={!disabled} className="h-full w-full">
           <TileLayer attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
           <MapInteraction disabled={disabled} onSelect={selectCoordinate} onCenterChange={setMapCenter} />
           <MapViewport coordinate={coordinate} />
-          {value ? <CircleMarker center={[value.lat, value.lng]} radius={10} pathOptions={{ color: "#ffffff", fillColor: "#2563eb", fillOpacity: 1, weight: 4 }}><Popup><strong>{label}</strong><br />{formatCoordinate(value)}</Popup></CircleMarker> : null}
+          {value ? <CircleMarker center={[value.lat, value.lng]} radius={10} pathOptions={{ color: "#F4F4F0", fillColor: "#E61919", fillOpacity: 1, weight: 4 }}><Popup><strong>{label}</strong><br />{formatCoordinate(value)}</Popup></CircleMarker> : null}
         </MapContainer>
       </div>
-      {error ? <p className="mt-2 text-sm font-medium text-red-600" role="alert">{error}</p> : null}
+      {error ? <p className="mt-2 text-sm font-medium text-wesup-ink" role="alert">{error}</p> : null}
     </div>
   );
 }

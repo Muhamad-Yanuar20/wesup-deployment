@@ -4,25 +4,25 @@ export function Footer() {
     const year = new Date().getFullYear();
 
     return (
-        <footer className="mt-auto border-t border-slate-200 bg-white">
-            <div className="mx-auto w-full max-w-7xl px-4 py-7 pb-28 sm:px-6 sm:py-9 lg:pb-9 lg:px-8">
+        <footer className="mt-auto border-t border-wesup-ink bg-wesup-ink text-wesup-paper">
+            <div className="mx-auto w-full max-w-7xl px-4 py-12 pb-28 sm:px-6 lg:pb-12 lg:px-8">
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-3 sm:gap-8">
                     {/* Brand column */}
                     <div className="space-y-2">
                         <div className="flex items-center gap-2">
-                            <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-blue-600 text-white text-xs font-bold">
+                            <span className="flex h-8 w-8 items-center justify-center border border-wesup-paper/30 text-xs font-bold text-wesup-red-bright">
                                 W
                             </span>
-                            <span className="text-sm font-bold text-slate-900">Wesup</span>
+                            <span className="font-landing-display text-xl text-wesup-paper">Wesup</span>
                         </div>
-                        <p className="text-xs text-slate-500 leading-relaxed max-w-xs">
+                        <p className="text-sm text-wesup-paper/80 leading-7 max-w-sm">
                             Platform pembelian kolektif bahan baku untuk UMKM Bandung dengan sistem escrow &amp; tier diskon otomatis.
                         </p>
                     </div>
 
                     {/* Platform links */}
                     <div>
-                        <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">
+                        <h4 className="mb-3 font-mono text-[0.6875rem] uppercase tracking-[0.2em] text-wesup-paper/70">
                             Platform
                         </h4>
                         <ul className="space-y-2">
@@ -34,7 +34,7 @@ export function Footer() {
                                 <li key={link.href}>
                                     <Link
                                         href={link.href}
-                                        className="text-sm text-slate-500 hover:text-slate-900 transition-colors"
+                                        className="inline-flex min-h-11 items-center text-sm text-wesup-paper/80 transition-colors duration-300 hover:text-wesup-paper focus-visible:outline-wesup-red-bright"
                                     >
                                         {link.label}
                                     </Link>
@@ -45,7 +45,7 @@ export function Footer() {
 
                     {/* About links */}
                     <div>
-                        <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">
+                        <h4 className="mb-3 font-mono text-[0.6875rem] uppercase tracking-[0.2em] text-wesup-paper/70">
                             Tentang
                         </h4>
                         <ul className="space-y-2">
@@ -57,7 +57,7 @@ export function Footer() {
                                 <li key={link.href}>
                                     <Link
                                         href={link.href}
-                                        className="text-sm text-slate-500 hover:text-slate-900 transition-colors"
+                                        className="inline-flex min-h-11 items-center text-sm text-wesup-paper/80 transition-colors duration-300 hover:text-wesup-paper focus-visible:outline-wesup-red-bright"
                                     >
                                         {link.label}
                                     </Link>
@@ -67,7 +67,7 @@ export function Footer() {
                     </div>
                 </div>
 
-                <div className="mt-7 border-t border-slate-200 pt-4 text-center text-xs leading-5 text-slate-400">
+                <div className="mt-8 border-t border-wesup-paper/20 pt-5 font-mono text-[0.6875rem] uppercase leading-6 tracking-[0.14em] text-wesup-paper/70">
                     © {year} Wesup — INSEVENT 2026 · Fullstack Web Development Competition
                 </div>
             </div>
