@@ -130,15 +130,15 @@ export default function LoginForm({
   }
 
   const inputClass = (field: keyof LoginFieldErrors) =>
-    `mt-2 block w-full rounded-xl border px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 ${
+    `mt-2 block font-sans normal-case tracking-normal w-full  border px-4 py-3 text-sm text-wesup-ink outline-none transition-colors duration-500 wesup-ease placeholder:text-wesup-ink-sub focus:border-wesup-ink/20   ${
       fieldErrors[field]
-        ? "border-red-400 bg-red-50/30"
-        : "border-slate-200 bg-white"
+        ? "border-wesup-red bg-wesup-paper"
+        : "border-wesup-ink/15 bg-wesup-paper"
     }`;
 
   function fieldError(field: keyof LoginFieldErrors) {
     return fieldErrors[field] ? (
-      <p id={`${field}-error`} className="mt-1.5 text-xs font-medium text-red-600" role="alert">
+      <p id={`${field}-error`} className="mt-1.5 text-xs font-medium text-wesup-ink" role="alert">
         {fieldErrors[field]}
       </p>
     ) : null;
@@ -148,7 +148,7 @@ export default function LoginForm({
     <form onSubmit={handleSubmit} noValidate className="space-y-6 sm:space-y-7">
       {globalError ? (
         <div
-          className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium leading-6 text-red-700"
+          className="border border-wesup-red bg-wesup-paper px-4 py-3 text-sm font-medium leading-6 text-wesup-ink"
           role="alert"
         >
           {globalError}
@@ -156,12 +156,12 @@ export default function LoginForm({
       ) : null}
 
       {fixedRole ? (
-        <div className="rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-800">
+        <div className="border border-wesup-ink/10 bg-wesup-paper px-4 py-3 text-sm font-semibold text-wesup-ink">
           Login Admin
         </div>
       ) : (
         <fieldset disabled={submitting} className="space-y-3">
-          <legend className="text-sm font-semibold text-slate-800">Login sebagai</legend>
+          <legend className="text-wesup-ink font-mono text-[0.6875rem] uppercase tracking-[0.18em]">Login sebagai</legend>
           <div className="grid gap-3 sm:grid-cols-2">
             {roleOptions.map((option) => {
               const Icon = option.icon;
@@ -169,10 +169,10 @@ export default function LoginForm({
               return (
                 <label
                   key={option.value}
-                  className={`relative flex min-h-11 cursor-pointer flex-col rounded-2xl border p-4 transition focus-within:ring-2 focus-within:ring-blue-200 ${
+                  className={`relative flex min-h-11 cursor-pointer flex-col  border p-4 transition-colors duration-500 wesup-ease focus-within:ring-2 focus-within:ring-wesup-red ${
                     selected
-                      ? "border-blue-500 bg-blue-50 text-blue-700 shadow-sm"
-                      : "border-slate-200 bg-white text-slate-700 hover:border-blue-300 hover:bg-blue-50/50"
+                      ? "border-wesup-red bg-wesup-paper-sub text-wesup-ink"
+                      : "border-wesup-ink/15 bg-wesup-paper text-wesup-ink-sub hover:border-wesup-ink/20 hover:bg-wesup-paper"
                   }`}
                 >
                   <input
@@ -186,19 +186,19 @@ export default function LoginForm({
                   />
                   <Icon className="h-5 w-5" aria-hidden="true" />
                   <span className="mt-3 text-sm font-bold">{option.label}</span>
-                  <span className="mt-1 text-xs leading-5 text-slate-500">{option.description}</span>
+                  <span className="mt-1 text-xs leading-5 text-wesup-ink-sub">{option.description}</span>
                 </label>
               );
             })}
           </div>
-          <p id="role-description" className="text-xs text-slate-500">Pilih sesuai role akun yang sudah terdaftar di Wesup.</p>
+          <p id="role-description" className="text-xs text-wesup-ink-sub">Pilih sesuai role akun yang sudah terdaftar di Wesup.</p>
           {fieldError("role")}
         </fieldset>
       )}
 
       <div>
-        <label htmlFor="login-email" className="flex items-center gap-2 text-sm font-semibold text-slate-800">
-          <Mail className="h-4 w-4 text-blue-600" aria-hidden="true" />
+        <label htmlFor="login-email" className="flex items-center gap-2 text-wesup-ink font-mono text-[0.6875rem] uppercase tracking-[0.18em]">
+          <Mail className="h-4 w-4 text-wesup-ink-sub" aria-hidden="true" />
           Email
         </label>
         <input
@@ -217,8 +217,8 @@ export default function LoginForm({
       </div>
 
       <div>
-        <label htmlFor="login-password" className="flex items-center gap-2 text-sm font-semibold text-slate-800">
-          <LockKeyhole className="h-4 w-4 text-blue-600" aria-hidden="true" />
+        <label htmlFor="login-password" className="flex items-center gap-2 text-wesup-ink font-mono text-[0.6875rem] uppercase tracking-[0.18em]">
+          <LockKeyhole className="h-4 w-4 text-wesup-ink-sub" aria-hidden="true" />
           Password
         </label>
         <div className="relative">
@@ -237,7 +237,7 @@ export default function LoginForm({
           <button
             type="button"
             onClick={() => setShowPassword((visible) => !visible)}
-            className="absolute inset-y-0 right-0 mt-2 flex min-h-11 items-center px-3 text-slate-400 transition hover:text-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+            className="absolute inset-y-0 right-0 mt-2 flex min-h-11 items-center px-3 text-wesup-ink-sub transition-colors duration-500 wesup-ease hover:text-wesup-ink-sub focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wesup-red"
             aria-label={showPassword ? "Sembunyikan password" : "Tampilkan password"}
             aria-pressed={showPassword}
           >
@@ -250,22 +250,22 @@ export default function LoginForm({
       <button
         type="submit"
         disabled={submitting || !selectedRole}
-        className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-8 py-3.5 text-base font-semibold text-white shadow-sm transition hover:bg-blue-700 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+        className="inline-flex min-h-11 w-full items-center justify-center gap-2 bg-wesup-ink px-8 py-3.5 text-base font-semibold text-wesup-paper transition-colors duration-500 wesup-ease hover:bg-wesup-red focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wesup-red disabled:cursor-not-allowed disabled:opacity-60"
       >
         {submitting ? <LoaderCircle className="h-5 w-5 animate-spin" aria-hidden="true" /> : <ShieldCheck className="h-5 w-5" aria-hidden="true" />}
         {submitting ? "Sedang masuk…" : "Masuk ke akun"}
       </button>
 
-      <p className="text-center text-sm text-slate-500">
+      <p className="text-center text-sm text-wesup-ink-sub">
         {fixedRole ? (
           <>
             Bukan login Admin?{" "}
-            <a href="/login" className="font-semibold text-blue-700 underline-offset-4 hover:underline">Login UMKM/Supplier</a>
+            <a href="/login" className="font-semibold text-wesup-ink-sub underline-offset-4 hover:underline">Login UMKM/Supplier</a>
           </>
         ) : (
           <>
             Belum punya akun?{" "}
-            <a href="/register" className="font-semibold text-blue-700 underline-offset-4 hover:underline">Pilih role untuk daftar</a>
+            <a href="/register" className="font-semibold text-wesup-ink-sub underline-offset-4 hover:underline">Pilih role untuk daftar</a>
           </>
         )}
       </p>

@@ -1,0 +1,189 @@
+
+> wesup@0.1.0 prebuild
+> npm run db:check:transaction-ux && npm run db:check:order-integrity -- --schema-only
+
+
+> wesup@0.1.0 db:check:transaction-ux
+> node scripts/check-transaction-ux-schema.mjs
+
+Transaction UX schema, RLS, grants and REST relationships are ready.
+
+> wesup@0.1.0 db:check:order-integrity
+> node scripts/check-order-status-integrity.mjs --schema-only
+
+{
+  "schemaReady": true,
+  "guards": [
+    "payment_cancellation_guard",
+    "registration_status_integrity_guard"
+  ],
+  "privileges": [
+    {
+      "rolname": "authenticated",
+      "unsafe": false
+    },
+    {
+      "rolname": "anon",
+      "unsafe": false
+    },
+    {
+      "rolname": "service_role",
+      "unsafe": false
+    }
+  ],
+  "anomalies": []
+}
+
+> wesup@0.1.0 build
+> next build
+
+⚠ Warning: Next.js inferred your workspace root, but it may not be correct.
+ We detected multiple lockfiles and selected the directory of C:\Users\hpyan\package-lock.json as the root directory.
+ To silence this warning, set `turbopack.root` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
+   See https://nextjs.org/docs/app/api-reference/config/next-config-js/turbopack#root-directory for more information.
+ Detected additional lockfiles:
+   * C:\Users\hpyan\Project\wesup\package-lock.json
+
+▲ Next.js 16.2.10 (Turbopack)
+- Environments: .env.local, .env
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 21.3s
+  Running TypeScript ...
+  Finished TypeScript in 68s ...
+  Collecting page data using 11 workers ...
+  Generating static pages using 11 workers (0/14) ...
+  Generating static pages using 11 workers (3/14)
+  Generating static pages using 11 workers (6/14)
+  Generating static pages using 11 workers (10/14)
+✓ Generating static pages using 11 workers (14/14) in 310ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ƒ /
+├ ƒ /_not-found
+├ ƒ /admin
+├ ƒ /admin/catalog
+├ ƒ /admin/catalog/[id]/takedown
+├ ƒ /admin/disputes
+├ ƒ /admin/login
+├ ƒ /admin/refunds
+├ ƒ /admin/suppliers
+├ ƒ /akun
+├ ƒ /api/admin/audit-logs
+├ ƒ /api/admin/batches/[id]/takedown
+├ ƒ /api/admin/catalog
+├ ƒ /api/admin/disputes
+├ ƒ /api/admin/disputes/[id]/resolve
+├ ƒ /api/admin/refunds
+├ ƒ /api/admin/refunds/[id]/approve
+├ ƒ /api/admin/refunds/[id]/complete
+├ ƒ /api/admin/supplier-payouts/[payoutId]
+├ ƒ /api/admin/suppliers
+├ ƒ /api/admin/suppliers/[id]/approve
+├ ƒ /api/admin/suppliers/[id]/reject
+├ ƒ /api/admin/transaction-support
+├ ƒ /api/admin/users/[id]/ban
+├ ƒ /api/admin/users/[id]/suspend
+├ ƒ /api/admin/users/[id]/unban
+├ ƒ /api/auth/forgot-password
+├ ƒ /api/auth/login
+├ ƒ /api/auth/logout
+├ ƒ /api/auth/reset-password
+├ ƒ /api/auth/session
+├ ƒ /api/auth/signup
+├ ƒ /api/batches/[id]/cutoff
+├ ƒ /api/batches/[id]/progress
+├ ƒ /api/marketplace/[id]
+├ ƒ /api/marketplace/[id]/route
+├ ƒ /api/marketplace/search
+├ ƒ /api/pickups/[registrationId]/code
+├ ƒ /api/pickups/[registrationId]/confirm
+├ ƒ /api/registrations
+├ ƒ /api/suppliers/batches
+├ ƒ /api/suppliers/batches/[id]
+├ ƒ /api/suppliers/batches/[id]/cancel
+├ ƒ /api/suppliers/batches/[id]/close
+├ ƒ /api/suppliers/batches/[id]/early-payment
+├ ƒ /api/suppliers/batches/[id]/orders
+├ ƒ /api/suppliers/batches/[id]/pickup-replacement
+├ ƒ /api/suppliers/batches/[id]/ready
+├ ƒ /api/suppliers/batches/[id]/transactions
+├ ƒ /api/suppliers/dashboard
+├ ƒ /api/suppliers/finance
+├ ƒ /api/suppliers/finance/bank-account
+├ ƒ /api/suppliers/finance/payouts
+├ ƒ /api/suppliers/notifications
+├ ƒ /api/suppliers/offers
+├ ƒ /api/suppliers/offers/[id]
+├ ƒ /api/suppliers/register
+├ ƒ /api/transactions/support
+├ ƒ /api/umkm/dashboard
+├ ƒ /api/umkm/notifications
+├ ƒ /api/umkm/orders
+├ ƒ /api/umkm/orders/[orderId]
+├ ƒ /api/umkm/orders/[orderId]/complaints
+├ ƒ /api/umkm/orders/[orderId]/early-payment-decision
+├ ƒ /api/umkm/orders/[orderId]/payment/charge
+├ ƒ /api/umkm/orders/[orderId]/payment/reconcile
+├ ƒ /api/umkm/orders/[orderId]/pickup-decision
+├ ƒ /api/umkm/orders/[orderId]/ratings
+├ ƒ /api/umkm/orders/[orderId]/refund-account
+├ ƒ /api/umkm/orders/[orderId]/withdraw
+├ ƒ /api/umkm/profile
+├ ƒ /api/webhook/midtrans
+├ ƒ /api/webhooks/midtrans
+├ ƒ /bantuan
+├ ƒ /beranda-umkm
+├ ƒ /demo/leaflet
+├ ƒ /docs
+├ ƒ /docs/openapi.json
+├ ƒ /login
+├ ƒ /marketplace
+├ ƒ /marketplace/[id]
+├ ƒ /notifikasi
+├ ƒ /pesanan
+├ ƒ /pesanan/[orderId]/bayar
+├ ƒ /pesanan/[orderId]/komplain
+├ ƒ /pesanan/[orderId]/nilai
+├ ƒ /pesanan/[orderId]/refund/rekening
+├ ƒ /pesanan/[orderId]/sengketa
+├ ƒ /pesanan/[orderId]/serah-terima
+├ ƒ /privasi
+├ ƒ /register
+├ ƒ /register/umkm
+├ ƒ /supplier
+├ ƒ /supplier/akun
+├ ƒ /supplier/akun/escrow
+├ ƒ /supplier/akun/laporan
+├ ƒ /supplier/akun/laporan/riwayat
+├ ƒ /supplier/akun/rekening
+├ ƒ /supplier/akun/ulasan
+├ ƒ /supplier/batch/[id]
+├ ƒ /supplier/batch/[id]/orders
+├ ƒ /supplier/batch/[id]/pickup
+├ ƒ /supplier/batches/[batchId]/transaksi
+├ ƒ /supplier/catalog
+├ ƒ /supplier/catalog/[id]/edit
+├ ƒ /supplier/catalog/new
+├ ƒ /supplier/keuangan
+├ ƒ /supplier/notifikasi
+├ ƒ /supplier/pesanan
+├ ƒ /supplier/recurring
+├ ƒ /supplier/recurring/[id]
+├ ƒ /supplier/recurring/new
+├ ƒ /supplier/register
+├ ƒ /supplier/status
+├ ƒ /syarat
+├ ƒ /tentang
+├ ƒ /umkm
+├ ƒ /umkm/akun
+├ ƒ /umkm/notifikasi
+├ ƒ /umkm/onboarding
+├ ƒ /umkm/pesanan
+└ ƒ /umkm/pesanan/[orderId]
+
+
+ƒ Proxy (Middleware)
+
+ƒ  (Dynamic)  server-rendered on demand

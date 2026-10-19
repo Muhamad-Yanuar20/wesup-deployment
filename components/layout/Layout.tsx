@@ -8,12 +8,12 @@ interface LayoutProps {
 
 export function Layout({ children }: LayoutProps) {
   return (
-    <div className="wesup-app flex min-h-screen flex-col bg-slate-50">
-      <a href="#main-content" className="sr-only z-50 rounded-lg bg-blue-700 px-4 py-3 text-sm font-semibold text-white focus:not-sr-only focus:fixed focus:left-4 focus:top-4">
+    <div className="wesup-app flex min-h-dvh flex-col bg-wesup-paper text-wesup-ink">
+      <a href="#main-content" className="sr-only z-50 bg-wesup-ink px-4 py-3 text-sm font-semibold text-wesup-paper focus:not-sr-only focus:fixed focus:left-4 focus:top-4">
         Lewati ke konten utama
       </a>
       <NavigationBar />
-      <main id="main-content" className="flex-1 bg-slate-50 pb-24 md:pb-0">
+      <main id="main-content" className="min-w-0 flex-1 bg-wesup-paper pb-24 lg:pb-0">
         {children}
       </main>
       <Footer />

@@ -6,7 +6,7 @@ import { LogOut } from "lucide-react";
 import { useNavigationSession } from "./NavigationSessionProvider";
 import { ConfirmDialog } from "@/components/feedback/ConfirmDialog";
 
-export function LogoutAction({ className = "inline-flex min-h-11 items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100" }: { className?: string }) {
+export function LogoutAction({ className = "inline-flex min-h-11 items-center gap-2  px-4 py-2 text-sm font-semibold text-wesup-ink-sub hover:bg-wesup-paper-sub" }: { className?: string }) {
   const [open, setOpen] = useState(false), [pending, setPending] = useState(false), [error, setError] = useState("");
   const locked = useRef(false);
   const router = useRouter();

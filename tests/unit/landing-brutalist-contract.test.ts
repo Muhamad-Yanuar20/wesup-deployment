@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -13,7 +13,29 @@ import { describe, expect, it } from "vitest";
 const read = (...segments: string[]) =>
   readFileSync(join(process.cwd(), ...segments), "utf8");
 
+const filesIn = (directory: string): string[] => readdirSync(join(process.cwd(), directory), { withFileTypes: true }).flatMap(entry => entry.isDirectory() ? filesIn(`${directory}/${entry.name}`) : entry.name.endsWith(".tsx") ? [`${directory}/${entry.name}`] : []);
+
+const ROLE_A_COMPONENTS = [
+  ...["components/auth", "components/layout", "components/marketplace", "components/maps", "components/demo", "components/supplier/finance", "components/supplier/steps"].flatMap(filesIn),
+  "components/supplier/SupplierRegistrationForm.tsx",
+  "components/supplier/SupplierRegistrationStepper.tsx",
+  "components/supplier/BusinessPhotoField.tsx",
+  "components/supplier/SupplierLocationMap.tsx",
+  "components/supplier/SupplierLocationMapClient.tsx",
+  "components/supplier/RegistrationSuccessDialog.tsx",
+  "components/supplier/SupplierNotificationsClient.tsx",
+  "components/supplier/SupplierModuleUnavailable.tsx",
+  "app/login/page.tsx", "app/register/page.tsx", "app/register/umkm/page.tsx",
+  "app/supplier/register/page.tsx", "app/supplier/status/page.tsx",
+  "app/marketplace/page.tsx", "app/marketplace/[id]/page.tsx",
+  "app/marketplace/loading.tsx", "app/marketplace/[id]/loading.tsx", "app/marketplace/error.tsx",
+  "app/bantuan/page.tsx", "app/docs/page.tsx", "app/docs/SwaggerUiClient.tsx", "app/docs/loading.tsx", "app/docs/error.tsx", "app/demo/leaflet/page.tsx",
+  "app/supplier/(dashboard)/keuangan/page.tsx", "app/supplier/(dashboard)/akun/escrow/page.tsx", "app/supplier/(dashboard)/akun/rekening/page.tsx", "app/supplier/notifikasi/page.tsx",
+  "app/supplier/(dashboard)/layout.tsx", "app/umkm/layout.tsx", "app/pesanan/layout.tsx",
+];
+
 const LANDING_COMPONENTS = [
+  ...ROLE_A_COMPONENTS,
   // Landing surface
   "components/landing/sections/BatchManifest.tsx",
   "components/landing/sections/HowItWorks.tsx",
@@ -63,6 +85,14 @@ const LANDING_COMPONENTS = [
 ];
 
 describe("landing brutalist design contract", () => {
+  it.each(ROLE_A_COMPONENTS)("keeps role A on paper, ink and red without legacy decoration: %s", file => {
+    const src = read(file);
+    expect(src).not.toMatch(/\b(?:rounded(?:-[\w\[\].%-]+)?|shadow(?:-[^\s"'`]+)?|backdrop-blur(?:-[^\s"'`]+)?)\b/);
+    expect(src).not.toMatch(/\b(?:bg|text|border|ring|outline|divide|decoration|accent|placeholder:text|caret)-(?:slate|blue|gray|zinc|emerald|amber|green|yellow|teal|indigo|purple|orange|rose|cyan|sky|lime|violet|fuchsia|pink|stone|neutral|red)-\d+/);
+    expect(src).not.toMatch(/\b(?:bg|text|border)-white\b|radial-gradient|linear-gradient|bg-gradient-to-/);
+    expect(src).not.toMatch(/#(?:2563eb|ffffff|dbeafe)\b/i);
+  });
+
   it("wires landing display to Archivo Black (macro sans), no Space Grotesk", () => {
     const layout = read("app", "layout.tsx");
     const globals = read("app", "globals.css");

@@ -35,7 +35,7 @@ export default function MarketplaceRadiusMap({
 
   return (
     <section
-      className={`relative overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm ${className}`}
+      className={`relative overflow-hidden  border border-wesup-ink/15 bg-wesup-paper  ${className}`}
       data-testid="marketplace-radius-map"
       aria-label={`Peta penawaran dalam radius ${safeRadiusKm} kilometer`}
     >
@@ -55,9 +55,9 @@ export default function MarketplaceRadiusMap({
             center={center}
             radius={safeRadiusKm * 1_000}
             pathOptions={{
-              color: "#2563eb",
-              fillColor: "#3b82f6",
-              fillOpacity: 0.1,
+              color: "#050505",
+              fillColor: "#050505",
+              fillOpacity: 0.04,
               weight: 2,
             }}
           />
@@ -65,8 +65,8 @@ export default function MarketplaceRadiusMap({
             center={center}
             radius={9}
             pathOptions={{
-              color: "#ffffff",
-              fillColor: "#1d4ed8",
+              color: "#F4F4F0",
+              fillColor: "#050505",
               fillOpacity: 1,
               weight: 3,
             }}
@@ -83,8 +83,8 @@ export default function MarketplaceRadiusMap({
               center={[item.pickupLatitude, item.pickupLongitude]}
               radius={7}
               pathOptions={{
-                color: "#ffffff",
-                fillColor: "#059669",
+                color: "#F4F4F0",
+                fillColor: "#E61919",
                 fillOpacity: 0.95,
                 weight: 2,
               }}
@@ -103,10 +103,10 @@ export default function MarketplaceRadiusMap({
             </CircleMarker>
           ))}
         </MapContainer>
-        <div className="pointer-events-none absolute bottom-3 left-3 right-3 z-[1000] flex flex-wrap items-center gap-3 rounded-lg border border-slate-200 bg-white/95 px-3 py-2 text-xs font-medium text-slate-600 shadow-sm backdrop-blur-sm">
-          <span className="font-bold text-slate-800">Radius {safeRadiusKm} km</span>
-          <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-blue-700" /> Pusat pencarian</span>
-          <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-emerald-600" /> {validItems.length} titik pickup</span>
+        <div className="pointer-events-none absolute bottom-3 left-3 right-3 z-[1000] flex flex-wrap items-center gap-3 border border-wesup-ink/15 bg-wesup-paper px-3 py-2 text-xs font-medium text-wesup-ink-sub">
+          <span className="font-bold text-wesup-ink">Radius {safeRadiusKm} km</span>
+          <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 bg-wesup-ink" /> Pusat pencarian</span>
+          <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 bg-wesup-red" /> {validItems.length} titik pickup</span>
         </div>
       </div>
     </section>

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { sanitizeReturnTo } from "@/lib/auth/access-state";
 import LoginForm from "@/components/auth/LoginForm";
+import { AuthHeader } from "@/components/auth/AuthHeader";
 
 export const dynamic = "force-dynamic";
 
@@ -22,29 +23,20 @@ export default async function LoginPage({
   const returnTo = sanitizeReturnTo(rawReturnTo, initialRole);
 
   return (
-    <main className="wesup-app min-h-screen bg-[radial-gradient(circle_at_top_left,_#dbeafe,_transparent_38%),linear-gradient(180deg,_#f8fafc,_#eff6ff)] px-4 py-12 sm:px-6 lg:px-8">
+    <main className="wesup-app min-h-dvh bg-wesup-paper px-4 py-12 sm:px-6 lg:px-8 text-wesup-ink">
       <div className="mx-auto w-full max-w-2xl">
-        <header className="mb-8 text-center">
-          <div className="flex flex-col items-center gap-6">
-            <Link href="/" className="inline-flex items-center gap-2 text-slate-900 transition hover:opacity-80" aria-label="Wesup - Kembali ke beranda">
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-sm font-extrabold text-white shadow-sm shadow-blue-600/20" aria-hidden="true">W</span>
-              <span className="text-lg font-extrabold tracking-tight">Wesup</span>
-            </Link>
-          </div>
-          <h1 className="mt-4 text-3xl font-extrabold tracking-tight text-slate-950 sm:text-4xl">Masuk ke akun Anda</h1>
-          <p className="mx-auto mt-3 max-w-md text-base leading-7 text-slate-600">Pilih role akun UMKM atau Supplier untuk melanjutkan aktivitas di Wesup.</p>
-        </header>
+        <AuthHeader title="Masuk ke akun Anda" eyebrow="Akses / Wesup" description="Pilih role akun UMKM atau Supplier untuk melanjutkan aktivitas di Wesup." />
 
-        <div className="rounded-3xl border border-white/80 bg-white/95 p-5 shadow-xl shadow-blue-950/5 sm:p-9">
+        <div className="border border-wesup-ink/15 bg-wesup-paper-sub p-1.5"><div className="border border-wesup-ink/10 bg-wesup-paper p-5 sm:p-9">
           <LoginForm initialRole={initialRole} returnTo={returnTo} />
-        </div>
+        </div></div>
 
-        <p className="mt-6 text-center text-sm text-slate-500">
-          <Link href="/" className="font-semibold text-blue-700 underline-offset-4 hover:underline">Kembali ke beranda</Link>
-          <span className="mx-2 text-slate-300" aria-hidden="true">·</span>
-          <Link href="/admin/login" className="font-semibold text-slate-600 underline-offset-4 hover:underline">Login Admin</Link>
-          <span className="mx-2 text-slate-300" aria-hidden="true">·</span>
-          <Link href="/bantuan" className="font-semibold text-blue-700 hover:underline">Bantuan dan keberatan</Link>
+        <p className="mt-6 text-center text-sm text-wesup-ink-sub">
+          <Link href="/" className="font-semibold text-wesup-ink-sub underline-offset-4 hover:underline">Kembali ke beranda</Link>
+          <span className="mx-2 text-wesup-ink-sub" aria-hidden="true">·</span>
+          <Link href="/admin/login" className="font-semibold text-wesup-ink-sub underline-offset-4 hover:underline">Login Admin</Link>
+          <span className="mx-2 text-wesup-ink-sub" aria-hidden="true">·</span>
+          <Link href="/bantuan" className="font-semibold text-wesup-ink-sub hover:underline">Bantuan dan keberatan</Link>
         </p>
       </div>
     </main>

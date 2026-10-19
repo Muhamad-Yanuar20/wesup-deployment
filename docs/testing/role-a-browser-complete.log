@@ -1,0 +1,76 @@
+[WebServer] (node:16032) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:23632) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] ⚠ Warning: Next.js inferred your workspace root, but it may not be correct.
+[WebServer]  We detected multiple lockfiles and selected the directory of C:\Users\hpyan\package-lock.json as the root directory.
+[WebServer]  To silence this warning, set `turbopack.root` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
+[WebServer]    See https://nextjs.org/docs/app/api-reference/config/next-config-js/turbopack#root-directory for more information.
+[WebServer]  Detected additional lockfiles:
+[WebServer]    * C:\Users\hpyan\Project\wesup\package-lock.json
+[WebServer]
+[WebServer] (node:5792) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 6 tests using 1 worker
+
+(node:10156) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] [browser] Using UNSAFE_componentWillReceiveProps in strict mode is not recommended and may indicate bugs in your code. See https://react.dev/link/unsafe-component-lifecycles for details.
+[WebServer]
+[WebServer] * Move data fetching code or side effects to componentDidUpdate.
+[WebServer] * If you're updating state whenever props change, refactor your code to use memoization techniques or move it to static getDerivedStateFromProps. Learn more at: https://react.dev/link/derived-state
+[WebServer]
+[WebServer] Please update the following components: ModelCollapse
+  ok 1 [Supplier Flow] › tests\e2e\docs.spec.ts:6:7 › protected API documentation › opens Swagger UI with configured Basic Auth and disables Try it out (9.1s)
+  ok 2 [Supplier Flow] › tests\e2e\role-a-redesign.spec.ts:34:5 › shared login form keeps admin login readable (4.8s)
+[WebServer] [browser] Image with src "/file.svg" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+[WebServer] Read more: https://nextjs.org/docs/app/api-reference/components/image#loading
+[WebServer] (node:19528) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] [browser] Image with src "/file.svg" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+[WebServer] Read more: https://nextjs.org/docs/app/api-reference/components/image#loading
+[WebServer] [browser] Using UNSAFE_componentWillReceiveProps in strict mode is not recommended and may indicate bugs in your code. See https://react.dev/link/unsafe-component-lifecycles for details.
+[WebServer]
+[WebServer] * Move data fetching code or side effects to componentDidUpdate.
+[WebServer] * If you're updating state whenever props change, refactor your code to use memoization techniques or move it to static getDerivedStateFromProps. Learn more at: https://react.dev/link/derived-state
+[WebServer]
+[WebServer] Please update the following components: ModelCollapse
+[WebServer] [browser] Image with src "/file.svg" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+[WebServer] Read more: https://nextjs.org/docs/app/api-reference/components/image#loading
+  ok 3 [Supplier Flow] › tests\e2e\role-a-redesign.spec.ts:92:9 › Role A responsive redesign with disposable fixtures › all fourteen routes, recovery and keyboard at 320px (45.9s)
+[WebServer] [browser] Image with src "/file.svg" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+[WebServer] Read more: https://nextjs.org/docs/app/api-reference/components/image#loading
+[WebServer] (node:27100) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] [browser] Using UNSAFE_componentWillReceiveProps in strict mode is not recommended and may indicate bugs in your code. See https://react.dev/link/unsafe-component-lifecycles for details.
+[WebServer]
+[WebServer] * Move data fetching code or side effects to componentDidUpdate.
+[WebServer] * If you're updating state whenever props change, refactor your code to use memoization techniques or move it to static getDerivedStateFromProps. Learn more at: https://react.dev/link/derived-state
+[WebServer]
+[WebServer] Please update the following components: ModelCollapse
+  ok 4 [Supplier Flow] › tests\e2e\role-a-redesign.spec.ts:92:9 › Role A responsive redesign with disposable fixtures › all fourteen routes, recovery and keyboard at 390px (23.0s)
+[WebServer] [browser] Image with src "/file.svg" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+[WebServer] Read more: https://nextjs.org/docs/app/api-reference/components/image#loading
+[WebServer] (node:21280) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] [browser] Using UNSAFE_componentWillReceiveProps in strict mode is not recommended and may indicate bugs in your code. See https://react.dev/link/unsafe-component-lifecycles for details.
+[WebServer]
+[WebServer] * Move data fetching code or side effects to componentDidUpdate.
+[WebServer] * If you're updating state whenever props change, refactor your code to use memoization techniques or move it to static getDerivedStateFromProps. Learn more at: https://react.dev/link/derived-state
+[WebServer]
+[WebServer] Please update the following components: ModelCollapse
+  ok 5 [Supplier Flow] › tests\e2e\role-a-redesign.spec.ts:92:9 › Role A responsive redesign with disposable fixtures › all fourteen routes, recovery and keyboard at 768px (18.7s)
+[WebServer] [browser] Image with src "/file.svg" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+[WebServer] Read more: https://nextjs.org/docs/app/api-reference/components/image#loading
+[WebServer] (node:4092) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] [browser] Using UNSAFE_componentWillReceiveProps in strict mode is not recommended and may indicate bugs in your code. See https://react.dev/link/unsafe-component-lifecycles for details.
+[WebServer]
+[WebServer] * Move data fetching code or side effects to componentDidUpdate.
+[WebServer] * If you're updating state whenever props change, refactor your code to use memoization techniques or move it to static getDerivedStateFromProps. Learn more at: https://react.dev/link/derived-state
+[WebServer]
+[WebServer] Please update the following components: ModelCollapse
+  ok 6 [Supplier Flow] › tests\e2e\role-a-redesign.spec.ts:92:9 › Role A responsive redesign with disposable fixtures › all fourteen routes, recovery and keyboard at 1440px (16.7s)
+
+  6 passed (2.3m)

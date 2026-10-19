@@ -32,29 +32,29 @@ export default function SupplierRegistrationStepper({
               {index < SUPPLIER_REGISTRATION_STEPS.length - 1 && (
                 <span
                   className={`absolute left-1/2 top-5 h-px w-full ${
-                    complete ? "bg-blue-600" : "bg-slate-200"
+                    complete ? "bg-wesup-ink" : "bg-wesup-paper-sub"
                   }`}
                   aria-hidden="true"
                 />
               )}
               <span
-                className={`relative z-10 flex h-10 w-10 items-center justify-center rounded-full border text-sm font-bold transition-colors ${
+                className={`relative z-10 flex h-10 w-10 items-center justify-center  border text-sm font-bold transition-colors ${
                   complete
-                    ? "border-blue-600 bg-blue-600 text-white"
+                    ? "border-wesup-ink/20 bg-wesup-ink text-wesup-paper"
                     : current
-                      ? "border-blue-600 bg-blue-600 text-white ring-4 ring-blue-100"
-                      : "border-slate-300 bg-white text-slate-500"
+                      ? "border-wesup-red bg-wesup-red text-wesup-paper"
+                      : "border-wesup-ink/20 bg-wesup-paper text-wesup-ink-sub"
                 }`}
                 aria-hidden="true"
               >
-                {complete ? <Check className="h-5 w-5" strokeWidth={2.5} /> : step.id}
+                {complete ? <Check className="h-5 w-5" strokeWidth={1.5} /> : step.id}
               </span>
-              <span className="mt-2 max-w-full truncate px-1 text-center text-[10px] font-semibold text-slate-500 sm:hidden">
+              <span className="mt-2 max-w-full truncate px-1 text-center text-[10px] font-semibold text-wesup-ink-sub sm:hidden">
                 {step.shortLabel}
               </span>
               <span
                 className={`mt-2 hidden max-w-full truncate px-1 text-center text-xs font-semibold sm:block ${
-                  current || complete ? "text-blue-700" : "text-slate-500"
+                  current || complete ? "text-wesup-ink-sub" : "text-wesup-ink-sub"
                 }`}
               >
                 {step.label}

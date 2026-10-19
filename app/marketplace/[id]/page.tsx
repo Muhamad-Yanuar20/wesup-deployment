@@ -50,7 +50,7 @@ export default async function MarketplaceDetailPage({
       <div className="mx-auto w-full max-w-6xl px-4 py-8 md:px-6 lg:px-8">
         <Link
           href="/marketplace"
-          className="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-slate-900 transition-colors"
+          className="inline-flex items-center gap-2 text-sm font-semibold text-wesup-ink-sub hover:text-wesup-ink transition-colors"
         >
           <ArrowLeft aria-hidden="true" className="w-4 h-4" />
           Kembali ke Marketplace
