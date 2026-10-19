@@ -26,8 +26,8 @@ export default function SupplierRatingBadge({
 }) {
   if (!rating || rating.total <= 0) {
     return (
-      <span className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-400">
-        <Star aria-hidden="true" className="h-3.5 w-3.5 text-slate-300" />
+      <span className="inline-flex items-center gap-1.5 text-xs font-medium text-wesup-ink-sub">
+        <Star aria-hidden="true" className="h-3.5 w-3.5 text-wesup-ink-sub" />
         Belum ada penilaian
       </span>
     );
@@ -35,10 +35,10 @@ export default function SupplierRatingBadge({
 
   return (
     <span
-      className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-700"
+      className="inline-flex items-center gap-1.5 text-sm font-semibold text-wesup-ink-sub"
       aria-label={`Rating ${formatAverage(rating.average)} dari 5, ${rating.total} ulasan`}
     >
-      <span className="flex gap-0.5">
+      <span className="flex gap-0.5 tabular-nums">
         {FULL_STARS.map((value) => (
           <Star
             key={value}
@@ -46,15 +46,15 @@ export default function SupplierRatingBadge({
             className={cn(
               "h-3.5 w-3.5",
               value <= filledStars(rating.average)
-                ? "text-amber-500"
-                : "text-slate-200",
+                ? "text-wesup-ink-sub"
+                : "text-wesup-ink-sub",
             )}
             fill={value <= filledStars(rating.average) ? "currentColor" : "none"}
           />
         ))}
       </span>
       {formatAverage(rating.average)}
-      <span className="font-medium text-slate-400">
+      <span className="font-medium text-wesup-ink-sub">
         ({rating.total} ulasan)
       </span>
     </span>

@@ -89,14 +89,14 @@ export default function JoinBatchForm({
 
   if (succeeded) {
     return (
-      <div className="flex flex-col gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4" role="status">
-        <p className="font-semibold text-emerald-800">Pendaftaran berhasil.</p>
-        <p className="text-sm text-emerald-700">
+      <div className="flex flex-col gap-3 border border-wesup-ink/15 bg-wesup-paper p-4 tabular-nums" role="status">
+        <p className="font-semibold text-wesup-ink">Pendaftaran berhasil.</p>
+        <p className="text-sm text-wesup-ink-sub">
           Pantau detail pesanan untuk jadwal pembayaran dan pengambilan.
         </p>
         <Link
           href="/umkm/pesanan"
-          className="inline-flex w-fit items-center rounded-lg bg-emerald-600 px-3 py-2 text-sm font-bold text-white hover:bg-emerald-700"
+          className="inline-flex w-fit items-center bg-wesup-ink px-3 py-2 text-sm font-bold text-wesup-paper hover:bg-wesup-red"
         >
           Lihat Pesanan
         </Link>
@@ -105,9 +105,9 @@ export default function JoinBatchForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-3" noValidate>
-      <div className="flex flex-col gap-1.5">
-        <label htmlFor="join-batch-quantity" className="text-sm font-semibold text-slate-700">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-3 tabular-nums" noValidate>
+      <div className="flex flex-col gap-1.5 tabular-nums">
+        <label htmlFor="join-batch-quantity" className="text-wesup-ink-sub font-mono text-[0.6875rem] uppercase tracking-[0.18em]">
           {item.policyVersion===2?`Jumlah (${item.unit ?? "pcs"})`:"Jumlah porsi"}
         </label>
         <input
@@ -124,13 +124,13 @@ export default function JoinBatchForm({
             setTerms(false);
           }}
           disabled={submitting}
-          className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+          className="w-full border border-wesup-ink/15 bg-wesup-paper px-3 py-2 text-sm text-wesup-ink focus:border-wesup-ink/20 focus:outline-none"
         />
       </div>
 
-      {(item.policyVersion===2 || item.earlyPayment?.proposal?.status === "pending" || earlyMinimum != null) && <section className="space-y-3 rounded-xl border bg-blue-50 p-4 text-sm"><p>Jumlah: {quantity || 0} {item.unit}. Total maksimum: <strong>{new Intl.NumberFormat("id-ID",{style:"currency",currency:"IDR",maximumFractionDigits:0}).format(Number(quantity)*item.basePrice)}</strong></p><p>Estimasi saat ini: {new Intl.NumberFormat("id-ID",{style:"currency",currency:"IDR",maximumFractionDigits:0}).format(Number(quantity)*item.currentTierPrice)}. Harga belum final.</p>{item.paymentOpeningPolicy==="capacity_or_cutoff"?<p>Pembayaran dibuka segera ketika kapasitas penuh, atau paling lambat {formatTransactionDate(item.paymentOpensAt)}. Batas bayar 24 jam sejak pengumpulan ditutup. Jadwal pengambilan tetap.</p>:<p>Bayar {formatTransactionDate(item.paymentOpensAt)} sampai {formatTransactionDate(item.paymentClosesAt)}.</p>}{earlyMinimum != null && <p>Supplier dapat menutup pendaftaran setelah terkumpul minimal {earlyMinimum} {item.unit}. Pembayaran berlangsung 24 jam sejak pendaftaran ditutup. Jadwal pengambilan tetap.</p>}{item.earlyPayment?.proposal?.status === "pending" && <p>Dengan bergabung, Anda menyetujui usulan pembukaan lebih awal revisi {item.earlyPayment.proposal.revision}. Seluruh peserta aktif harus setuju; supplier tetap mengonfirmasi pembukaan.</p>}<p>Ambil di {item.pickupAddress}, {formatTransactionDate(item.pickupStartsAt)} sampai {formatTransactionDate(item.pickupEndsAt)}.</p><label className="flex items-start gap-3"><input className="mt-1 size-5 shrink-0" type="checkbox" checked={terms} onChange={e=>setTerms(e.target.checked)}/>Saya memahami harga dapat berubah sampai batas ikut; saya boleh batal tanpa penalti selama pengumpulan masih dibuka. {item.paymentOpeningPolicy === "capacity_or_cutoff" ? "Pengumpulan dapat ditutup lebih awal ketika kapasitas penuh. " : ""}Sesudahnya harga final terkunci dan saya wajib membayar. Tidak membayar dapat memicu peringatan, suspend 7 hari, lalu permanen. Tidak mengambil pada jadwal yang disetujui saat supplier siap membuat dana diberikan kepada supplier.</label></section>}
+      {(item.policyVersion===2 || item.earlyPayment?.proposal?.status === "pending" || earlyMinimum != null) && <section className="space-y-3 border bg-wesup-paper p-4 text-sm"><p>Jumlah: {quantity || 0} {item.unit}. Total maksimum: <strong>{new Intl.NumberFormat("id-ID",{style:"currency",currency:"IDR",maximumFractionDigits:0}).format(Number(quantity)*item.basePrice)}</strong></p><p>Estimasi saat ini: {new Intl.NumberFormat("id-ID",{style:"currency",currency:"IDR",maximumFractionDigits:0}).format(Number(quantity)*item.currentTierPrice)}. Harga belum final.</p>{item.paymentOpeningPolicy==="capacity_or_cutoff"?<p>Pembayaran dibuka segera ketika kapasitas penuh, atau paling lambat {formatTransactionDate(item.paymentOpensAt)}. Batas bayar 24 jam sejak pengumpulan ditutup. Jadwal pengambilan tetap.</p>:<p>Bayar {formatTransactionDate(item.paymentOpensAt)} sampai {formatTransactionDate(item.paymentClosesAt)}.</p>}{earlyMinimum != null && <p>Supplier dapat menutup pendaftaran setelah terkumpul minimal {earlyMinimum} {item.unit}. Pembayaran berlangsung 24 jam sejak pendaftaran ditutup. Jadwal pengambilan tetap.</p>}{item.earlyPayment?.proposal?.status === "pending" && <p>Dengan bergabung, Anda menyetujui usulan pembukaan lebih awal revisi {item.earlyPayment.proposal.revision}. Seluruh peserta aktif harus setuju; supplier tetap mengonfirmasi pembukaan.</p>}<p>Ambil di {item.pickupAddress}, {formatTransactionDate(item.pickupStartsAt)} sampai {formatTransactionDate(item.pickupEndsAt)}.</p><label className="flex items-start gap-3 font-mono text-[0.6875rem] uppercase tracking-[0.18em] tabular-nums"><input className="mt-1 size-5 shrink-0 font-sans normal-case tracking-normal" type="checkbox" checked={terms} onChange={e=>setTerms(e.target.checked)}/>Saya memahami harga dapat berubah sampai batas ikut; saya boleh batal tanpa penalti selama pengumpulan masih dibuka. {item.paymentOpeningPolicy === "capacity_or_cutoff" ? "Pengumpulan dapat ditutup lebih awal ketika kapasitas penuh. " : ""}Sesudahnya harga final terkunci dan saya wajib membayar. Tidak membayar dapat memicu peringatan, suspend 7 hari, lalu permanen. Tidak mengambil pada jadwal yang disetujui saat supplier siap membuat dana diberikan kepada supplier.</label></section>}
       {error ? (
-        <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700" role="alert">
+        <p className="border border-wesup-red bg-wesup-paper px-3 py-2 text-sm font-medium text-wesup-ink" role="alert">
           {error}
         </p>
       ) : null}
@@ -138,17 +138,17 @@ export default function JoinBatchForm({
       <button
         type="submit"
         disabled={!consentGiven || submitting || ((item.policyVersion===2 || item.earlyPayment?.proposal?.status === "pending" || earlyMinimum != null)&&!terms)}
-        className={`inline-flex w-full items-center justify-center rounded-xl px-4 py-3 text-sm font-bold transition-colors ${
+        className={`inline-flex w-full items-center justify-center  px-4 py-3 text-sm font-bold transition-colors ${
           consentGiven && !submitting
-            ? "bg-blue-600 text-white hover:bg-blue-700"
-            : "cursor-not-allowed bg-slate-200 text-slate-500"
+            ? "bg-wesup-ink text-wesup-paper hover:bg-wesup-red"
+            : "cursor-not-allowed bg-wesup-paper-sub text-wesup-ink-sub"
         }`}
       >
         {submitting ? "Mendaftarkan…" : item.policyVersion===2 ? "Konfirmasi ikut pesanan" : "Daftar Sekarang"}
       </button>
 
       {!consentGiven ? (
-        <p className="text-xs font-medium text-slate-500">
+        <p className="text-xs font-medium text-wesup-ink-sub">
           Centang persetujuan lokasi pengambilan untuk mengaktifkan tombol daftar.
         </p>
       ) : null}

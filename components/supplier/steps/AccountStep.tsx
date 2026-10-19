@@ -160,7 +160,7 @@ function PasswordInput({
         type="button"
         onClick={onToggle}
         disabled={disabled}
-        className="absolute inset-y-0 right-0 mt-2 flex min-h-11 items-center px-3 text-slate-400 transition hover:text-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
+        className="absolute inset-y-0 right-0 mt-2 flex min-h-11 items-center px-3 text-wesup-ink-sub transition-colors duration-500 wesup-ease hover:text-wesup-ink-sub focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wesup-red disabled:cursor-not-allowed disabled:opacity-50"
         aria-label={ariaLabel}
         aria-pressed={visible}
       >
@@ -182,14 +182,14 @@ function StepHeader({
   step: string;
 }) {
   return (
-    <div className="flex flex-col gap-3 border-b border-slate-100 pb-6 sm:flex-row sm:items-start sm:justify-between">
+    <div className="flex flex-col gap-3 border-b border-wesup-ink/10 pb-6 sm:flex-row sm:items-start sm:justify-between">
       <div>
-        <h2 ref={headingRef} id="supplier-registration-account-title" tabIndex={-1} className="text-2xl font-bold tracking-tight text-slate-950 outline-none sm:text-3xl">
+        <h2 ref={headingRef} id="supplier-registration-account-title" tabIndex={-1} className="text-2xl tracking-tight text-wesup-ink outline-none sm:text-3xl font-landing-display font-normal uppercase tracking-[0.04em]">
           {title}
         </h2>
-        <p className="mt-2 text-sm leading-6 text-slate-600">{description}</p>
+        <p className="mt-2 text-sm leading-6 text-wesup-ink-sub">{description}</p>
       </div>
-      <span className="w-fit rounded-full border border-blue-100 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700">{step}</span>
+      <span className="w-fit border border-wesup-ink/10 bg-wesup-paper px-3 py-1.5 text-xs font-semibold text-wesup-ink-sub">{step}</span>
     </div>
   );
 }
@@ -211,19 +211,19 @@ function Field({
 }) {
   return (
     <div>
-      <label htmlFor={htmlFor} className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-        {icon && <span className="text-slate-400">{icon}</span>}
+      <label htmlFor={htmlFor} className="flex items-center gap-2 text-wesup-ink-sub font-mono text-[0.6875rem] uppercase tracking-[0.18em]">
+        {icon && <span className="text-wesup-ink-sub">{icon}</span>}
         {label}
       </label>
       <div className="mt-2">{children}</div>
-      {helper && <p id={`${htmlFor}-help`} className="mt-1.5 text-xs text-slate-500">{helper}</p>}
-      {error && <p id={`${htmlFor}-error`} className="mt-1.5 text-xs font-medium text-red-600" role="alert">{error}</p>}
+      {helper && <p id={`${htmlFor}-help`} className="mt-1.5 text-xs text-wesup-ink-sub">{helper}</p>}
+      {error && <p id={`${htmlFor}-error`} className="mt-1.5 text-xs font-medium text-wesup-ink" role="alert">{error}</p>}
     </div>
   );
 }
 
 function inputClass(hasError: boolean) {
-  return `block w-full rounded-xl border px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100 ${hasError ? "border-red-400 bg-red-50/30" : "border-slate-200 bg-white"}`;
+  return `block w-full  border px-4 py-3 text-sm text-wesup-ink outline-none transition-colors duration-500 wesup-ease focus:border-wesup-ink/20   disabled:cursor-not-allowed disabled:bg-wesup-paper-sub ${hasError ? "border-wesup-red bg-wesup-paper" : "border-wesup-ink/15 bg-wesup-paper"}`;
 }
 
 import * as React from "react";

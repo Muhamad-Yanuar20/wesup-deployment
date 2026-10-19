@@ -5,5 +5,5 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Monitoring Escrow | Wesup", description: "Modul monitoring escrow Supplier Wesup." };
 
 export default function SupplierEscrowPage() {
-  return <SupplierFinanceClient />;
+  return <SupplierFinanceClient view="escrow" />;
 }

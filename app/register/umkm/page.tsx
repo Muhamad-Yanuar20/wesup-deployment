@@ -1,7 +1,7 @@
 import "leaflet/dist/leaflet.css";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import Link from "next/link";
+import { AuthHeader } from "@/components/auth/AuthHeader";
 import UmkmSignupForm from "@/components/auth/UmkmSignupForm";
 import { getViewerAccessState, resolveHomePath, sanitizeReturnTo } from "@/lib/auth/access-state";
 
@@ -25,22 +25,13 @@ export default async function UmkmRegistrationPage({
   const returnTo = sanitizeReturnTo(rawReturnTo, "umkm");
 
   return (
-    <main className="wesup-app min-h-screen bg-[radial-gradient(circle_at_top_left,_#dbeafe,_transparent_38%),linear-gradient(180deg,_#f8fafc,_#eff6ff)] px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
+    <main className="wesup-app min-h-dvh bg-wesup-paper px-4 py-8 sm:px-6 sm:py-12 lg:px-8 text-wesup-ink">
       <div className="mx-auto w-full max-w-2xl">
-        <header className="mb-8 text-center sm:mb-10">
-          <Link href="/register" className="inline-flex min-h-11 items-center gap-2 rounded-xl text-sm font-bold text-blue-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
-            ← Pilih role lain
-          </Link>
-          <span className="mt-6 inline-flex rounded-full border border-blue-200 bg-white/80 px-3 py-1 text-xs font-bold uppercase tracking-[0.2em] text-blue-700 shadow-sm">
-            Akun UMKM
-          </span>
-          <h1 className="mt-4 text-3xl font-extrabold tracking-tight text-slate-950 sm:text-4xl">Mulai belanja bersama</h1>
-          <p className="mx-auto mt-3 max-w-md text-base leading-7 text-slate-600">Buat akun singkat sekarang. Profil usaha dan lokasi pickup bisa Anda lengkapi saat ingin bergabung batch.</p>
-        </header>
+        <AuthHeader title="Mulai belanja bersama" eyebrow="Pendaftaran / UMKM" description="Buat akun singkat sekarang. Profil usaha dan lokasi pickup bisa Anda lengkapi saat ingin bergabung batch." backHref="/register" backLabel="← Pilih role lain" />
 
-        <div className="rounded-3xl border border-white/80 bg-white/95 p-5 shadow-xl shadow-blue-950/5 sm:p-9">
+        <div className="border border-wesup-ink/15 bg-wesup-paper-sub p-1.5"><div className="border border-wesup-ink/10 bg-wesup-paper p-5 sm:p-9">
           <UmkmSignupForm returnTo={returnTo} />
-        </div>
+        </div></div>
       </div>
     </main>
   );

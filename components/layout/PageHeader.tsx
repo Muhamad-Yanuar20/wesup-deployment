@@ -10,14 +10,14 @@ interface PageHeaderProps {
 
 export function PageHeader({ title, description, icon, eyebrow, actions }: PageHeaderProps) {
   return (
-    <header className="mb-7 flex flex-col gap-4 sm:mb-8 sm:flex-row sm:items-end sm:justify-between">
+    <header className="mb-8 flex flex-col gap-5 border-b border-wesup-ink/15 pb-7 sm:mb-10 sm:flex-row sm:items-end sm:justify-between">
       <div className="min-w-0">
-        {eyebrow ? <p className="mb-2 text-xs font-bold uppercase tracking-[0.16em] text-blue-700">{eyebrow}</p> : null}
-        <h1 className="flex items-center gap-2 text-2xl font-extrabold tracking-tight text-slate-950 text-balance sm:text-3xl">
-          {icon ? <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-700" aria-hidden="true">{icon}</span> : null}
-          <span>{title}</span>
+        <p className="mb-5 flex items-center gap-3 font-mono text-[0.6875rem] uppercase tracking-[0.24em] text-wesup-ink-sub"><span aria-hidden="true" className="h-px w-6 bg-wesup-red" />{eyebrow ?? "Wesup / Bandung"}</p>
+        <h1 className="flex items-center gap-3 font-landing-display text-3xl font-normal uppercase leading-[1.05] tracking-[0.06em] text-wesup-ink text-balance sm:text-4xl md:text-5xl">
+          {icon ? <span className="hidden h-10 w-10 shrink-0 items-center justify-center border border-wesup-ink/20 text-wesup-red sm:flex" aria-hidden="true">{icon}</span> : null}
+          <span className="min-w-0 break-words">{title}</span>
         </h1>
-        {description ? <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">{description}</p> : null}
+        {description ? <p className="mt-4 max-w-2xl text-[0.9375rem] leading-[1.7] text-wesup-ink-sub text-pretty">{description}</p> : null}
       </div>
       {actions ? <div className="shrink-0">{actions}</div> : null}
     </header>

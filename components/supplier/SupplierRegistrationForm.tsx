@@ -205,15 +205,15 @@ export default function SupplierRegistrationForm() {
     void submitRegistration();
   }
 
-  if (success) return <SuccessState title="Pendaftaran diterima." description={success.requiresEmailConfirmation ? "Konfirmasi email Anda, lalu masuk untuk memantau verifikasi usaha." : "Masuk untuk memantau verifikasi usaha Anda."} action={<Link href="/login?role=supplier" className="inline-flex min-h-11 items-center rounded-xl bg-blue-700 px-5 py-3 font-semibold text-white">Masuk</Link>} />;
+  if (success) return <SuccessState title="Pendaftaran diterima." description={success.requiresEmailConfirmation ? "Konfirmasi email Anda, lalu masuk untuk memantau verifikasi usaha." : "Masuk untuk memantau verifikasi usaha Anda."} action={<Link href="/login?role=supplier" className="inline-flex min-h-11 items-center bg-wesup-ink px-5 py-3 font-semibold text-wesup-paper">Masuk</Link>} />;
 
   return (
     <>
       <SupplierRegistrationStepper currentStep={currentStep} />
 
-      <form onSubmit={handleSubmit} noValidate className="mt-6 rounded-3xl border border-slate-200 bg-white p-5 shadow-xl shadow-blue-950/5 sm:p-8 lg:p-10">
+      <form onSubmit={handleSubmit} noValidate className="mt-6 border border-wesup-ink/15 bg-wesup-paper p-5 sm:p-8 lg:p-10">
         {globalError && (
-          <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700" role="alert">
+          <div className="mb-6 border border-wesup-red bg-wesup-paper px-4 py-3 text-sm font-medium text-wesup-ink" role="alert">
             {globalError}
           </div>
         )}
@@ -264,13 +264,13 @@ export default function SupplierRegistrationForm() {
           />
         )}
 
-        <div className="mt-8 flex flex-col-reverse gap-3 border-t border-slate-100 pt-6 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-8 flex flex-col-reverse gap-3 border-t border-wesup-ink/10 pt-6 sm:flex-row sm:items-center sm:justify-between">
           {currentStep > 1 ? (
             <button
               type="button"
               onClick={goBack}
               disabled={submitting}
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex min-h-11 items-center justify-center gap-2 border border-wesup-ink/15 px-5 py-3 text-sm font-semibold text-wesup-ink-sub transition-colors duration-500 wesup-ease hover:border-wesup-ink/20 hover:bg-wesup-paper hover:text-wesup-ink-sub focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wesup-red disabled:cursor-not-allowed disabled:opacity-50"
             >
               <ArrowLeft className="h-4 w-4" aria-hidden="true" />
               Kembali
@@ -282,7 +282,7 @@ export default function SupplierRegistrationForm() {
           <button
             type="submit"
             disabled={submitting}
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-60 sm:min-w-56"
+            className="inline-flex min-h-11 items-center justify-center gap-2 bg-wesup-ink px-6 py-3 text-sm font-semibold text-wesup-paper transition-colors duration-500 wesup-ease hover:bg-wesup-red focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wesup-red disabled:cursor-not-allowed disabled:opacity-60 sm:min-w-56"
           >
             {submitting ? <LoaderCircle className="h-5 w-5 animate-spin" aria-hidden="true" /> : currentStep === 4 ? <CheckCircle2 className="h-5 w-5" aria-hidden="true" /> : <ArrowRight className="h-5 w-5" aria-hidden="true" />}
             {submitting
@@ -298,7 +298,7 @@ export default function SupplierRegistrationForm() {
         </div>
 
         {currentStep === 4 && (
-          <p className="mt-4 text-center text-xs leading-5 text-slate-500">Dengan mengirim pendaftaran, Anda menyetujui Syarat & Ketentuan serta Kebijakan Privasi Wesup.</p>
+          <p className="mt-4 text-center text-xs leading-5 text-wesup-ink-sub">Dengan mengirim pendaftaran, Anda menyetujui Syarat & Ketentuan serta Kebijakan Privasi Wesup.</p>
         )}
       </form>
 

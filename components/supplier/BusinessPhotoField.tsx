@@ -126,7 +126,7 @@ export default function BusinessPhotoField({
         ref={inputRef}
         type="file"
         accept="image/jpeg,image/png,image/webp"
-        className="sr-only"
+        className="sr-only font-sans normal-case tracking-normal"
         onChange={(event) => {
           const file = event.target.files?.[0];
           if (file) void processFile(file);
@@ -136,10 +136,10 @@ export default function BusinessPhotoField({
       />
 
       {!value && existingUrl && status !== "compressing" && (
-        <div className="mb-3 flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3">
+        <div className="mb-3 flex items-center gap-3 border border-wesup-ink/15 bg-wesup-paper p-3">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={existingUrl} alt={previewAlt} className="h-20 w-20 rounded-xl object-cover" />
-          <p className="text-sm text-slate-600">Foto saat ini tersimpan. Unggah foto baru untuk menggantinya.</p>
+          <img src={existingUrl} alt={previewAlt} className="h-20 w-20 object-cover" />
+          <p className="text-sm text-wesup-ink-sub">Foto saat ini tersimpan. Unggah foto baru untuk menggantinya.</p>
         </div>
       )}
 
@@ -159,41 +159,41 @@ export default function BusinessPhotoField({
             if (file) void processFile(file);
           }}
           disabled={disabled}
-          className={`flex w-full flex-col items-center justify-center rounded-2xl border-2 border-dashed px-6 py-10 transition ${
-            dragActive ? "border-blue-500 bg-blue-50" : "border-slate-300 bg-slate-50/70 hover:border-blue-400 hover:bg-blue-50/50"
+          className={`flex w-full flex-col items-center justify-center  border-2 border-dashed px-6 py-10 transition-colors duration-500 wesup-ease ${
+            dragActive ? "border-wesup-ink/20 bg-wesup-paper" : "border-wesup-ink/20 bg-wesup-paper hover:border-wesup-ink/20 hover:bg-wesup-paper"
           } disabled:cursor-not-allowed disabled:opacity-60`}
         >
-          <UploadCloud className="h-11 w-11 text-blue-500" aria-hidden="true" />
-          <span className="mt-3 text-sm font-semibold text-blue-700">{uploadLabel}</span>
-          <span className="mt-1 text-xs text-slate-500">JPEG, PNG, atau WebP · maksimal 10 MB</span>
-          <span className="mt-1 text-xs text-slate-500">{uploadHint}</span>
+          <UploadCloud className="h-11 w-11 text-wesup-ink-sub" aria-hidden="true" />
+          <span className="mt-3 text-sm font-semibold text-wesup-ink-sub">{uploadLabel}</span>
+          <span className="mt-1 text-xs text-wesup-ink-sub">JPEG, PNG, atau WebP · maksimal 10 MB</span>
+          <span className="mt-1 text-xs text-wesup-ink-sub">{uploadHint}</span>
         </button>
       ) : status === "compressing" ? (
-        <div className="flex items-center gap-3 rounded-2xl border border-blue-200 bg-blue-50 px-5 py-6 text-sm font-medium text-blue-800" role="status" aria-live="polite">
+        <div className="flex items-center gap-3 border border-wesup-ink/15 bg-wesup-paper px-5 py-6 text-sm font-medium text-wesup-ink" role="status" aria-live="polite">
           <LoaderCircle className="h-5 w-5 animate-spin" aria-hidden="true" />
           Mengompres foto tanpa mengganggu halaman…
         </div>
       ) : value ? (
-        <div className="grid gap-4 rounded-2xl border border-slate-200 bg-white p-4 sm:grid-cols-[128px_1fr_auto] sm:items-center">
+        <div className="grid gap-4 border border-wesup-ink/15 bg-wesup-paper p-4 sm:grid-cols-[128px_1fr_auto] sm:items-center">
           {previewUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={previewUrl} alt={previewAlt} className="h-28 w-32 rounded-xl object-cover" />
+            <img src={previewUrl} alt={previewAlt} className="h-28 w-32 object-cover" />
           ) : (
-            <div className="flex h-28 w-32 items-center justify-center rounded-xl bg-slate-100"><ImageIcon className="h-8 w-8 text-slate-400" /></div>
+            <div className="flex h-28 w-32 items-center justify-center bg-wesup-paper-sub"><ImageIcon className="h-8 w-8 text-wesup-ink-sub" /></div>
           )}
           <div>
-            <p className="font-semibold text-slate-900">{value.name}</p>
-            <p className="mt-1 text-sm text-slate-500">WebP · {formatFileSize(compressedSize ?? value.size)}</p>
-            {originalSize !== null && <p className="mt-1 text-xs font-medium text-blue-700">{formatSavings(originalSize, compressedSize ?? value.size)}</p>}
+            <p className="font-semibold text-wesup-ink">{value.name}</p>
+            <p className="mt-1 text-sm text-wesup-ink-sub">WebP · {formatFileSize(compressedSize ?? value.size)}</p>
+            {originalSize !== null && <p className="mt-1 text-xs font-medium text-wesup-ink-sub">{formatSavings(originalSize, compressedSize ?? value.size)}</p>}
           </div>
-          <button type="button" onClick={removeFile} disabled={disabled} className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-200 px-3 py-2 text-sm font-semibold text-red-600 hover:bg-red-50 disabled:opacity-60">
+          <button type="button" onClick={removeFile} disabled={disabled} className="inline-flex items-center justify-center gap-2 border border-wesup-red px-3 py-2 text-sm font-semibold text-wesup-ink hover:bg-wesup-paper disabled:opacity-60">
             <Trash2 className="h-4 w-4" aria-hidden="true" /> Hapus
           </button>
         </div>
       ) : null}
 
       {(error || errorMessage) && (
-        <p id={errorId} className="mt-2 text-sm font-medium text-red-600" role="alert">
+        <p id={errorId} className="mt-2 text-sm font-medium text-wesup-ink" role="alert">
           {error || errorMessage}
         </p>
       )}

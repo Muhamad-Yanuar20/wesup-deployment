@@ -112,11 +112,11 @@ export default function MarketplaceRouteSection({
     return (
       <div
         data-testid="pickup-location-map"
-        className="flex h-[320px] items-center justify-center rounded-xl border border-slate-200 bg-slate-50"
+        className="flex h-[320px] items-center justify-center border border-wesup-ink/15 bg-wesup-paper tabular-nums"
         role="status"
         aria-live="polite"
       >
-        <span className="text-sm font-medium text-slate-500">Memuat rute dari lokasi usaha Anda…</span>
+        <span className="text-sm font-medium text-wesup-ink-sub">Memuat rute dari lokasi usaha Anda…</span>
       </div>
     );
   }
@@ -126,7 +126,7 @@ export default function MarketplaceRouteSection({
       <div>
         <MarketplaceRouteMapClient route={route} />
         {route.route.warning ? (
-          <p className="mt-2 text-xs font-medium text-amber-700" role="status" aria-live="polite">
+          <p className="mt-2 text-xs font-medium text-wesup-ink-sub" role="status" aria-live="polite">
             {route.route.warning}
           </p>
         ) : null}
@@ -141,7 +141,7 @@ export default function MarketplaceRouteSection({
         longitude={pickupLongitude}
         address={pickupAddress}
       />
-      <p className="mt-2 text-xs font-medium text-amber-700" role="status" aria-live="polite">
+      <p className="mt-2 text-xs font-medium text-wesup-ink-sub" role="status" aria-live="polite">
         {error ?? "Rute belum dapat dimuat. Lokasi pickup tetap ditampilkan."}<button type="button" onClick={() => setRetry(value => value + 1)} className="ml-2 min-h-11 font-semibold underline">Coba lagi</button>
       </p>
     </div>

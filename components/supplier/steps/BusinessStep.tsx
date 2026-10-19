@@ -22,14 +22,14 @@ export default function BusinessStep({
 }: BusinessStepProps) {
   return (
     <section aria-labelledby="supplier-registration-business-title">
-      <div className="flex flex-col gap-3 border-b border-slate-100 pb-6 sm:flex-row sm:items-start sm:justify-between">
+      <div className="flex flex-col gap-3 border-b border-wesup-ink/10 pb-6 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h2 ref={headingRef} id="supplier-registration-business-title" tabIndex={-1} className="text-2xl font-bold tracking-tight text-slate-950 outline-none sm:text-3xl">
+          <h2 ref={headingRef} id="supplier-registration-business-title" tabIndex={-1} className="text-2xl tracking-tight text-wesup-ink outline-none sm:text-3xl font-landing-display font-normal uppercase tracking-[0.04em]">
             Ceritakan usaha Anda
           </h2>
-          <p className="mt-2 text-sm leading-6 text-slate-600">Lengkapi nama dan alamat tempat usaha.</p>
+          <p className="mt-2 text-sm leading-6 text-wesup-ink-sub">Lengkapi nama dan alamat tempat usaha.</p>
         </div>
-        <span className="w-fit rounded-full border border-blue-100 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700">Langkah 2 dari 4</span>
+        <span className="w-fit border border-wesup-ink/10 bg-wesup-paper px-3 py-1.5 text-xs font-semibold text-wesup-ink-sub">Langkah 2 dari 4</span>
       </div>
 
       <div className="mt-8 space-y-6">
@@ -83,16 +83,16 @@ function Field({
 }) {
   return (
     <div>
-      <label htmlFor={htmlFor} className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-        {icon && <span className="text-slate-400">{icon}</span>}
+      <label htmlFor={htmlFor} className="flex items-center gap-2 text-wesup-ink-sub font-mono text-[0.6875rem] uppercase tracking-[0.18em]">
+        {icon && <span className="text-wesup-ink-sub">{icon}</span>}
         {label}
       </label>
       <div className="mt-2">{children}</div>
-      {error && <p id={`${htmlFor}-error`} className="mt-1.5 text-xs font-medium text-red-600" role="alert">{error}</p>}
+      {error && <p id={`${htmlFor}-error`} className="mt-1.5 text-xs font-medium text-wesup-ink" role="alert">{error}</p>}
     </div>
   );
 }
 
 function inputClass(hasError: boolean) {
-  return `block w-full rounded-xl border px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100 ${hasError ? "border-red-400 bg-red-50/30" : "border-slate-200 bg-white"}`;
+  return `block w-full  border px-4 py-3 text-sm text-wesup-ink outline-none transition-colors duration-500 wesup-ease focus:border-wesup-ink/20   disabled:cursor-not-allowed disabled:bg-wesup-paper-sub ${hasError ? "border-wesup-red bg-wesup-paper" : "border-wesup-ink/15 bg-wesup-paper"}`;
 }
