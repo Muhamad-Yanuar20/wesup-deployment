@@ -5,8 +5,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Manajemen Pesanan | Wesup",
-  description:
-    "Kelola daftar UMKM yang akan mengambil barang pada batch Anda di Wesup.",
+  description: "Kelola daftar UMKM yang akan mengambil barang pada batch Anda di Wesup.",
 };
 
 export default async function SupplierBatchOrdersPage({
@@ -16,10 +15,8 @@ export default async function SupplierBatchOrdersPage({
 }) {
   const { id } = await params;
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
-      <div className="mx-auto w-full max-w-6xl">
-        <OrderListClient key={id} batchId={id} />
-      </div>
-    </main>
+    <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
+      <OrderListClient key={id} batchId={id} />
+    </div>
   );
 }

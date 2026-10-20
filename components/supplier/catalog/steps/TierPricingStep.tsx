@@ -74,20 +74,20 @@ export default function TierPricingStep({
       <h2
         ref={headingRef}
         tabIndex={-1}
-        className="text-xl font-bold text-slate-900 outline-none"
+        className="text-xl font-bold text-wesup-ink outline-none"
       >
         Harga Tier
       </h2>
-      <p className="text-sm text-slate-500">
+      <p className="text-sm text-wesup-ink-sub">
         Tentukan minimal 2 tingkatan harga berdasarkan volume pendaftar. Tier dengan kuantitas lebih besar harus lebih murah.
       </p>
 
       {/* Validation warnings */}
       {(errors.tierOverlap || errors.tierInversion) && (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4" role="alert">
+        <div className=" border   p-4" role="alert">
           <div className="flex items-start gap-2">
-            <AlertCircle size={18} className="mt-0.5 shrink-0 text-amber-600" />
-            <div className="text-sm text-amber-800">
+            <AlertCircle size={18} className="mt-0.5 shrink-0 " />
+            <div className="text-sm ">
               {errors.tierOverlap && <p>{errors.tierOverlap}</p>}
               {errors.tierInversion && <p>{errors.tierInversion}</p>}
             </div>
@@ -97,9 +97,9 @@ export default function TierPricingStep({
 
       {/* Location lock notice */}
       {locked && (
-        <div className="flex items-start gap-3 rounded-xl border border-orange-200 bg-orange-50 p-4" role="alert">
-          <Lock size={18} className="mt-0.5 shrink-0 text-orange-600" />
-          <div className="text-sm text-orange-800">
+        <div className="flex items-start gap-3  border border-wesup-ink/20 bg-wesup-paper-sub p-4" role="alert">
+          <Lock size={18} className="mt-0.5 shrink-0 text-wesup-ink-sub" />
+          <div className="text-sm text-wesup-ink-sub">
             <p className="font-semibold">Skema harga terkunci</p>
             <p className="mt-1">
               Sudah ada peserta terdaftar pada penawaran ini, sehingga skema harga tier tidak dapat diubah. Buat penawaran baru jika ingin mengubah harga.
@@ -113,17 +113,17 @@ export default function TierPricingStep({
         {tiers.map((tier, index) => (
           <div
             key={tier.tierNumber}
-            className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+            className=" border border-wesup-ink/15 bg-wesup-paper p-4 "
           >
             <div className="mb-3 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-700">
+                <span className="flex h-7 w-7 items-center justify-center  bg-wesup-paper-sub text-xs font-bold text-wesup-ink">
                   {tier.tierNumber}
                 </span>
-                <span className="text-sm font-semibold text-slate-800">
+                <span className="text-sm font-semibold ">
                   Tier {tier.tierNumber}
                   {index === 0 && (
-                    <span className="ml-2 text-xs font-normal text-slate-500">
+                    <span className="ml-2 text-xs font-normal text-wesup-ink-sub">
                       (Harga Dasar/Tertinggi)
                     </span>
                   )}
@@ -134,7 +134,7 @@ export default function TierPricingStep({
                   type="button"
                   onClick={() => removeTier(index)}
                   disabled={blocked}
-                  className="rounded-lg p-1 text-slate-400 transition hover:bg-red-50 hover:text-red-500 disabled:cursor-not-allowed disabled:opacity-50"
+                  className=" p-1 text-wesup-ink-sub transition hover:bg-wesup-paper hover:text-wesup-red disabled:cursor-not-allowed disabled:opacity-50"
                   aria-label={`Hapus Tier ${tier.tierNumber}`}
                 >
                   <MinusCircle size={18} />
@@ -145,7 +145,7 @@ export default function TierPricingStep({
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               {/* Min Qty */}
               <div>
-                <label className="block text-xs font-medium text-slate-600">
+                <label className="block text-xs font-medium text-wesup-ink-sub">
                   Kuantitas Minimum
                 </label>
                 <input
@@ -154,13 +154,13 @@ export default function TierPricingStep({
                   value={tier.minimumQuantity || ""}
                   onChange={(e) => updateTier(index, "minimumQuantity", e.target.value)}
                   disabled={blocked || index === 0}
-                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-50"
+                  className="mt-1 w-full  border border-wesup-ink/15 px-3 py-2 text-sm text-wesup-ink outline-none focus:border-wesup-red focus:ring-2  disabled:cursor-not-allowed disabled:bg-wesup-paper"
                 />
               </div>
 
               {/* Max Qty */}
               <div>
-                <label className="block text-xs font-medium text-slate-600">
+                <label className="block text-xs font-medium text-wesup-ink-sub">
                   Kuantitas Maksimum
                 </label>
                 <input
@@ -170,13 +170,13 @@ export default function TierPricingStep({
                   onChange={(e) => updateTier(index, "maximumQuantity", e.target.value === "" ? null : e.target.value)}
                   disabled={blocked || index === 0}
                   placeholder={index === 0 ? "Tanpa batas" : ""}
-                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-50 placeholder:text-slate-400"
+                  className="mt-1 w-full  border border-wesup-ink/15 px-3 py-2 text-sm text-wesup-ink outline-none focus:border-wesup-red focus:ring-2  disabled:cursor-not-allowed disabled:bg-wesup-paper placeholder:text-wesup-ink-sub"
                 />
               </div>
 
               {/* Price */}
               <div>
-                <label className="block text-xs font-medium text-slate-600">
+                <label className="block text-xs font-medium text-wesup-ink-sub">
                   Harga per Unit
                 </label>
                 <input
@@ -187,10 +187,10 @@ export default function TierPricingStep({
                   onChange={(e) => updateTier(index, "pricePerUnit", e.target.value)}
                   disabled={blocked}
                   placeholder="Rp"
-                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-50 placeholder:text-slate-400"
+                  className="mt-1 w-full  border border-wesup-ink/15 px-3 py-2 text-sm text-wesup-ink outline-none focus:border-wesup-red focus:ring-2  disabled:cursor-not-allowed disabled:bg-wesup-paper placeholder:text-wesup-ink-sub"
                 />
                 {tier.pricePerUnit > 0 && (
-                  <p className="mt-1 text-xs text-slate-500">
+                  <p className="mt-1 text-xs text-wesup-ink-sub">
                     {money.format(tier.pricePerUnit)}/pcs
                   </p>
                 )}
@@ -205,14 +205,14 @@ export default function TierPricingStep({
         type="button"
         onClick={addTier}
         disabled={blocked}
-        className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-300 bg-white py-3 text-sm font-medium text-slate-600 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+        className="flex w-full items-center justify-center gap-2  border-2 border-dashed border-wesup-ink/15 bg-wesup-paper py-3 text-sm font-medium text-wesup-ink-sub transition hover:border-wesup-red hover:bg-wesup-paper-sub hover:text-wesup-ink disabled:cursor-not-allowed disabled:opacity-50"
       >
         <PlusCircle size={18} />
         Tambah Tier
       </button>
 
       {/* Info */}
-      <div className="flex items-start gap-2 rounded-xl bg-blue-50 p-4 text-xs text-blue-800">
+      <div className="flex items-start gap-2  bg-wesup-paper-sub p-4 text-xs text-wesup-ink">
         <TrendingDown size={16} className="mt-0.5 shrink-0" />
         <div>
           <p className="font-semibold">Aturan Harga Tier:</p>

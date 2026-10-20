@@ -70,16 +70,16 @@ export default function RecurringListClient() {
       {/* Header */}
       <section className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">
+          <h1 className="text-2xl font-bold text-wesup-ink sm:text-3xl">
             Postingan Berulang
           </h1>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-sm text-wesup-ink-sub">
             Kelola jadwal penawaran otomatis yang tayang berulang.
           </p>
         </div>
         <Link
           href="/supplier/recurring/new"
-          className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+          className="inline-flex items-center justify-center gap-2  bg-wesup-ink px-5 py-3 text-sm font-semibold text-wesup-paper  transition hover:bg-wesup-red focus-visible:outline-none focus-visible:ring-2 focus-visible:outline-wesup-red focus-visible:ring-offset-2"
         >
           <Plus aria-hidden="true" size={18} />
           Buat Jadwal Baru
@@ -92,23 +92,23 @@ export default function RecurringListClient() {
           <Search
             aria-hidden="true"
             size={18}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-wesup-ink-sub"
           />
           <input
             type="search"
             placeholder="Cari jadwal berdasarkan nama, produk, atau kategori..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+            className="w-full  border border-wesup-ink/15 bg-wesup-paper py-2.5 pl-10 pr-4 text-sm text-wesup-ink outline-none placeholder:text-wesup-ink-sub focus:border-wesup-red focus:ring-2 "
             aria-label="Cari jadwal postingan berulang"
           />
         </div>
 
-        <div className="flex items-center gap-1 rounded-xl border border-slate-200 bg-white p-1">
+        <div className="flex items-center gap-1  border border-wesup-ink/15 bg-wesup-paper p-1">
           <SlidersHorizontal
             aria-hidden="true"
             size={14}
-            className="ml-2 shrink-0 text-slate-400"
+            className="ml-2 shrink-0 text-wesup-ink-sub"
           />
           {FILTER_TABS.map((tab) => (
             <button
@@ -117,8 +117,8 @@ export default function RecurringListClient() {
               onClick={() => setActiveTab(tab.value)}
               className={
                 activeTab === tab.value
-                  ? "flex-1 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm sm:flex-none sm:px-4"
-                  : "flex-1 rounded-lg px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-slate-100 sm:flex-none sm:px-4"
+                  ? "flex-1  bg-wesup-ink px-3 py-1.5 text-xs font-semibold text-wesup-paper  sm:flex-none sm:px-4"
+                  : "flex-1  px-3 py-1.5 text-xs font-medium text-wesup-ink-sub transition hover:bg-wesup-paper-sub sm:flex-none sm:px-4"
               }
               aria-pressed={activeTab === tab.value}
             >
@@ -134,24 +134,24 @@ export default function RecurringListClient() {
       {/* Results */}
       <section aria-label="Daftar jadwal postingan berulang">
         {state.loadPhase === "loading" || state.loadPhase === "idle" ? (
-          <div className="rounded-xl border border-slate-200 bg-white p-10 text-center shadow-sm">
+          <div className=" border border-wesup-ink/15 bg-wesup-paper p-10 text-center ">
             <CalendarClock
               aria-hidden="true"
               size={40}
-              className="mx-auto animate-pulse text-slate-300"
+              className="mx-auto animate-pulse text-wesup-ink-sub"
             />
-            <p className="mt-3 text-sm font-medium text-slate-500">
+            <p className="mt-3 text-sm font-medium text-wesup-ink-sub">
               Memuat jadwal postingan berulang...
             </p>
           </div>
         ) : filteredConfigs.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-slate-300 bg-white p-10 text-center shadow-sm">
+          <div className=" border border-dashed border-wesup-ink/15 bg-wesup-paper p-10 text-center ">
             <CalendarClock
               aria-hidden="true"
               size={40}
-              className="mx-auto text-slate-300"
+              className="mx-auto text-wesup-ink-sub"
             />
-            <p className="mt-3 text-sm font-medium text-slate-500">
+            <p className="mt-3 text-sm font-medium text-wesup-ink-sub">
               {searchQuery.trim()
                 ? `Tidak ada jadwal yang cocok dengan "${searchQuery}".`
                 : activeTab === "ACTIVE"
@@ -163,7 +163,7 @@ export default function RecurringListClient() {
             {!searchQuery.trim() && (
               <Link
                 href="/supplier/recurring/new"
-                className="mt-4 inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+                className="mt-4 inline-flex items-center gap-2  bg-wesup-ink px-4 py-2 text-sm font-semibold text-wesup-paper hover:bg-wesup-red"
               >
                 <Plus aria-hidden="true" size={16} />
                 Buat Jadwal
@@ -172,7 +172,7 @@ export default function RecurringListClient() {
           </div>
         ) : (
           <>
-            <p className="mb-3 text-xs text-slate-500">
+            <p className="mb-3 text-xs text-wesup-ink-sub">
               Menampilkan {filteredConfigs.length} jadwal
               {searchQuery.trim() && ` untuk "${searchQuery}"`}
             </p>

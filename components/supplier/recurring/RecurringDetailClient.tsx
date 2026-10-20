@@ -62,8 +62,8 @@ export default function RecurringDetailClient({ configId }: RecurringDetailClien
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-slate-50 p-6 text-slate-900 md:p-8">
-        <p role="status" className="mx-auto max-w-5xl text-sm text-slate-700">
+      <main className="min-h-screen bg-wesup-paper p-6 text-wesup-ink md:p-8">
+        <p role="status" className="mx-auto max-w-5xl text-sm text-wesup-ink">
           Memuat detail jadwal...
         </p>
       </main>
@@ -72,15 +72,15 @@ export default function RecurringDetailClient({ configId }: RecurringDetailClien
 
   if (notFound || !config) {
     return (
-      <main className="min-h-screen bg-slate-50 p-6 text-slate-900 md:p-8">
-        <section className="mx-auto max-w-5xl rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h1 className="text-xl font-bold text-slate-900">Jadwal tidak ditemukan</h1>
-          <p className="mt-2 text-sm text-slate-700">
+      <main className="min-h-screen bg-wesup-paper p-6 text-wesup-ink md:p-8">
+        <section className="mx-auto max-w-5xl  border border-wesup-ink/15 bg-wesup-paper p-6 ">
+          <h1 className="text-xl font-bold text-wesup-ink">Jadwal tidak ditemukan</h1>
+          <p className="mt-2 text-sm text-wesup-ink">
             ID jadwal yang diminta: {configId}
           </p>
           <Link
             href="/supplier/recurring"
-            className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-blue-700"
+            className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-wesup-ink"
           >
             <ArrowLeft size={16} />
             Kembali ke daftar jadwal
@@ -111,27 +111,27 @@ export default function RecurringDetailClient({ configId }: RecurringDetailClien
   };
 
   return (
-    <main className="min-h-screen bg-slate-50 p-6 text-slate-900 md:p-8">
+    <main className="min-h-screen bg-wesup-paper p-6 text-wesup-ink md:p-8">
       <div className="mx-auto max-w-5xl space-y-6">
         {/* Back link */}
         <Link
           href="/supplier/recurring"
-          className="inline-flex items-center gap-1 text-sm font-semibold text-blue-600 hover:text-blue-800"
+          className="inline-flex items-center gap-1 text-sm font-semibold text-wesup-red hover:text-wesup-ink-sub"
         >
           <ArrowLeft size={16} />
           Kembali ke daftar jadwal
         </Link>
 
         {/* Header */}
-        <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <section className=" border border-wesup-ink/15 bg-wesup-paper p-6 ">
           <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
             <div>
               <div className="mb-2 flex items-center gap-3">
                 <span
                   className={
                     config.isActive
-                      ? "inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700"
-                      : "inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600"
+                      ? "inline-flex items-center gap-1  bg-wesup-paper-sub px-2.5 py-1 text-xs font-semibold text-wesup-ink"
+                      : "inline-flex items-center gap-1  bg-wesup-paper-sub px-2.5 py-1 text-xs font-semibold text-wesup-ink-sub"
                   }
                 >
                   {config.isActive ? (
@@ -141,15 +141,15 @@ export default function RecurringDetailClient({ configId }: RecurringDetailClien
                   )}
                   {config.isActive ? "Aktif" : "Nonaktif"}
                 </span>
-                <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-600">
+                <span className="inline-flex items-center gap-1  bg-wesup-paper-sub px-2.5 py-1 text-xs font-medium text-wesup-red">
                   <Package aria-hidden="true" size={14} />
                   {config.templateBatch.category}
                 </span>
               </div>
-              <h1 className="text-2xl font-bold text-slate-900 md:text-3xl">
+              <h1 className="text-2xl font-bold text-wesup-ink md:text-3xl">
                 {config.name}
               </h1>
-              <p className="mt-1 text-sm text-slate-500">
+              <p className="mt-1 text-sm text-wesup-ink-sub">
                 ID: {config.id}
               </p>
             </div>
@@ -157,7 +157,7 @@ export default function RecurringDetailClient({ configId }: RecurringDetailClien
               type="button"
               onClick={() => setConfirmOpen(true)}
               disabled={!config.isActive}
-              className="inline-flex items-center justify-center gap-2 rounded-lg border-2 border-blue-600 px-5 py-2.5 text-sm font-medium text-blue-600 transition hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex items-center justify-center gap-2  border-2 border-wesup-ink/20 600 px-5 py-2.5 text-sm font-medium text-wesup-red transition hover:bg-wesup-paper-sub disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Power aria-hidden="true" size={16} />
               {config.isActive ? "Konfirmasi Tayang" : "Nonaktif"}
@@ -166,27 +166,27 @@ export default function RecurringDetailClient({ configId }: RecurringDetailClien
         </section>
 
         {/* Schedule Info */}
-        <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="mb-4 flex items-center gap-2 border-b pb-3 text-sm font-bold text-slate-900">
-            <Calendar size={18} className="text-blue-500" />
+        <section className=" border border-wesup-ink/15 bg-wesup-paper p-6 ">
+          <h2 className="mb-4 flex items-center gap-2 border-b pb-3 text-sm font-bold text-wesup-ink">
+            <Calendar size={18} className="text-wesup-red" />
             Jadwal
           </h2>
           <dl className="space-y-3 text-sm">
             <div className="flex items-start gap-3">
-              <Clock size={16} className="mt-1 shrink-0 text-indigo-500" />
+              <Clock size={16} className="mt-1 shrink-0 text-wesup-ink-sub" />
               <div>
-                <dt className="text-xs text-slate-500">Interval</dt>
-                <dd className="font-semibold text-slate-900">
+                <dt className="text-xs text-wesup-ink-sub">Interval</dt>
+                <dd className="font-semibold text-wesup-ink">
                   {formatInterval(config.intervalDays)}
                   {dayLabels ? ` \u00b7 ${dayLabels}` : ""}
                 </dd>
               </div>
             </div>
             <div className="flex items-start gap-3">
-              <CalendarClock size={16} className="mt-1 shrink-0 text-blue-500" />
+              <CalendarClock size={16} className="mt-1 shrink-0 text-wesup-red" />
               <div>
-                <dt className="text-xs text-slate-500">Batch Berikutnya</dt>
-                <dd className="font-semibold text-slate-900">
+                <dt className="text-xs text-wesup-ink-sub">Batch Berikutnya</dt>
+                <dd className="font-semibold text-wesup-ink">
                   {config.nextGenerationAt
                     ? dates.format(new Date(config.nextGenerationAt))
                     : "Belum dijadwalkan"}
@@ -195,10 +195,10 @@ export default function RecurringDetailClient({ configId }: RecurringDetailClien
             </div>
             {config.lastGeneratedAt && (
               <div className="flex items-start gap-3">
-                <CalendarClock size={16} className="mt-1 shrink-0 text-slate-400" />
+                <CalendarClock size={16} className="mt-1 shrink-0 text-wesup-ink-sub" />
                 <div>
-                  <dt className="text-xs text-slate-500">Terakhir Generate</dt>
-                  <dd className="font-semibold text-slate-900">
+                  <dt className="text-xs text-wesup-ink-sub">Terakhir Generate</dt>
+                  <dd className="font-semibold text-wesup-ink">
                     {dates.format(new Date(config.lastGeneratedAt))}
                   </dd>
                 </div>
@@ -208,50 +208,50 @@ export default function RecurringDetailClient({ configId }: RecurringDetailClien
         </section>
 
         {/* Template Summary */}
-        <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="mb-4 flex items-center gap-2 border-b pb-3 text-sm font-bold text-slate-900">
-            <Package size={18} className="text-blue-500" />
+        <section className=" border border-wesup-ink/15 bg-wesup-paper p-6 ">
+          <h2 className="mb-4 flex items-center gap-2 border-b pb-3 text-sm font-bold text-wesup-ink">
+            <Package size={18} className="text-wesup-red" />
             Template Batch
           </h2>
           <dl className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <dt className="text-slate-500">Nama Produk</dt>
-              <dd className="font-semibold text-slate-900">
+              <dt className="text-wesup-ink-sub">Nama Produk</dt>
+              <dd className="font-semibold text-wesup-ink">
                 {config.templateBatch.title}
               </dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-slate-500">Deskripsi</dt>
-              <dd className="max-w-sm text-right text-slate-900">
+              <dt className="text-wesup-ink-sub">Deskripsi</dt>
+              <dd className="max-w-sm text-right text-wesup-ink">
                 {config.templateBatch.description}
               </dd>
             </div>
             <div className="flex justify-between gap-4">
-              <dt className="shrink-0 text-slate-500">Lokasi</dt>
+              <dt className="shrink-0 text-wesup-ink-sub">Lokasi</dt>
               <dd className="text-right">
-                <p className="font-semibold text-slate-900">
+                <p className="font-semibold text-wesup-ink">
                   {config.templateBatch.pickupName}
                 </p>
-                <p className="text-slate-600">{config.templateBatch.pickupAddress}</p>
+                <p className="text-wesup-ink-sub">{config.templateBatch.pickupAddress}</p>
               </dd>
             </div>
           </dl>
         </section>
 
         {/* Tier */}
-        <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="mb-4 flex items-center gap-2 border-b pb-3 text-sm font-bold text-slate-900">
-            <TrendingDown size={18} className="text-blue-500" />
+        <section className=" border border-wesup-ink/15 bg-wesup-paper p-6 ">
+          <h2 className="mb-4 flex items-center gap-2 border-b pb-3 text-sm font-bold text-wesup-ink">
+            <TrendingDown size={18} className="text-wesup-red" />
             Skema Harga Tier
           </h2>
           <ul className="space-y-2 text-sm">
             {config.templateBatch.tiers.map((tier) => (
               <li key={tier.tierNumber} className="flex justify-between gap-3">
-                <span className="text-slate-600">
+                <span className="text-wesup-ink-sub">
                   Tier {tier.tierNumber}: {tier.minimumQuantity}–
                   {tier.maximumQuantity ?? "+"} pcs
                 </span>
-                <strong className="text-slate-900">{money.format(tier.pricePerUnit)}</strong>
+                <strong className="text-wesup-ink">{money.format(tier.pricePerUnit)}</strong>
               </li>
             ))}
           </ul>
@@ -261,7 +261,7 @@ export default function RecurringDetailClient({ configId }: RecurringDetailClien
         <RecurringBatchPreviewCard preview={preview} />
 
         {/* Reminder info */}
-        <section className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+        <section className="flex items-start gap-2  border border-wesup-ink/20 bg-wesup-paper-sub p-4 text-sm text-wesup-ink">
           <AlertCircle size={16} className="mt-0.5 shrink-0" />
           <div>
             <p className="font-semibold">Notifikasi H-1</p>

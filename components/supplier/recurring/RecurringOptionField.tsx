@@ -19,17 +19,17 @@ export default function RecurringOptionField({
   onEnabledChange,
   onFieldChange,
 }: RecurringOptionFieldProps) {  return (
-    <section className="rounded-xl border border-indigo-200 bg-indigo-50/60 p-5">
+    <section className=" border border-wesup-ink/20 bg-wesup-paper-sub p-5">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-3">
           <span className="mt-0.5 shrink-0">
-            <CalendarClock size={20} className="text-indigo-600" />
+            <CalendarClock size={20} className="text-wesup-ink-sub" />
           </span>
           <div>
-            <h3 className="text-sm font-bold text-indigo-900">
+            <h3 className="text-sm font-bold text-wesup-ink-sub">
               Jadikan Postingan Berulang (Opsional)
             </h3>
-            <p className="mt-1 text-xs text-indigo-700">
+            <p className="mt-1 text-xs text-wesup-ink-sub">
               Tayangkan penawaran ini berulang secara otomatis sesuai jadwal,
               dengan konfirmasi manual sebelum tiap batch tayang.
             </p>
@@ -43,7 +43,7 @@ export default function RecurringOptionField({
             className="peer sr-only"
           />
           <span
-            className="h-6 w-11 rounded-full bg-slate-300 after:absolute after:left-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:shadow after:transition after:content-[''] peer-checked:bg-indigo-600 peer-checked:after:translate-x-5"
+            className="h-6 w-11  bg-wesup-ink/20 after:absolute after:left-0.5 after:top-0.5 after:h-5 after:w-5 after: after:bg-wesup-paper after: after:transition after:content-[''] peer-checked:bg-wesup-red peer-checked:after:translate-x-5"
             aria-hidden="true"
           />
           <span className="sr-only">Aktifkan postingan berulang</span>
@@ -51,12 +51,12 @@ export default function RecurringOptionField({
       </div>
 
       {recurring.enabled && (
-        <div className="mt-4 space-y-4 border-t border-indigo-200 pt-4">
+        <div className="mt-4 space-y-4 border-t border-wesup-ink/20 pt-4">
           {/* Nama jadwal */}
           <div>
             <label
               htmlFor="recurring-option-name"
-              className="flex items-center gap-1 text-xs font-semibold text-indigo-900"
+              className="flex items-center gap-1 text-xs font-semibold text-wesup-ink-sub"
             >
               <Sparkles size={12} />
               Nama Jadwal
@@ -67,7 +67,7 @@ export default function RecurringOptionField({
               value={recurring.name}
               onChange={(e) => onFieldChange("name", e.target.value)}
               placeholder="Contoh: Beras Rojolele Mingguan"
-              className="mt-1 w-full rounded-lg border border-indigo-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+              className="mt-1 w-full  border border-wesup-ink/20 bg-wesup-paper px-3 py-2 text-sm text-wesup-ink outline-none focus:border-wesup-ink/20 focus:ring-2 focus:wesup-ink"
             />
           </div>
 
@@ -75,7 +75,7 @@ export default function RecurringOptionField({
           <div>
             <label
               htmlFor="recurring-option-interval"
-              className="flex items-center gap-1 text-xs font-semibold text-indigo-900"
+              className="flex items-center gap-1 text-xs font-semibold text-wesup-ink-sub"
             >
               <Clock size={12} />
               Interval (hari)
@@ -90,16 +90,16 @@ export default function RecurringOptionField({
                 onChange={(e) =>
                   onFieldChange("intervalDays", Number(e.target.value) || 1)
                 }
-                className="w-24 rounded-lg border border-indigo-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                className="w-24  border border-wesup-ink/20 bg-wesup-paper px-3 py-2 text-sm text-wesup-ink outline-none focus:border-wesup-ink/20 focus:ring-2 focus:wesup-ink"
               />
-              <span className="text-xs text-indigo-700">hari</span>
+              <span className="text-xs text-wesup-ink-sub">hari</span>
             </div>
           </div>
 
           {/* Days of week */}
           {recurring.intervalDays > 1 && (
             <div>
-              <label className="flex items-center gap-1 text-xs font-semibold text-indigo-900">
+              <label className="flex items-center gap-1 text-xs font-semibold text-wesup-ink-sub">
                 <Calendar size={12} />
                 Hari Tayang (opsional)
               </label>
@@ -118,10 +118,10 @@ export default function RecurringOptionField({
                             : [...recurring.daysOfWeek, day].sort((a, b) => a - b),
                         )
                       }
-                      className={`inline-flex items-center rounded-md px-2 py-1 text-[11px] font-semibold transition ${
+                      className={`inline-flex items-center -md px-2 py-1 text-[11px] font-semibold transition ${
                         selected
-                          ? "border border-indigo-400 bg-indigo-100 text-indigo-700"
-                          : "border border-indigo-200 bg-white text-indigo-600 hover:bg-indigo-50"
+                          ? "border border-wesup-ink/20 bg-wesup-paper-sub text-wesup-ink-sub"
+                          : "border border-wesup-ink/20 bg-wesup-paper text-wesup-ink-sub hover:bg-wesup-paper-sub"
                       }`}
                       aria-pressed={selected}
                     >
@@ -133,7 +133,7 @@ export default function RecurringOptionField({
             </div>
           )}
 
-          <div className="flex items-start gap-2 rounded-lg bg-white/70 p-3 text-xs text-indigo-800">
+          <div className="flex items-start gap-2  bg-wesup-paper/70 p-3 text-xs text-wesup-ink-sub">
             <AlertCircle size={14} className="mt-0.5 shrink-0" />
             <p>
               Batch berikutnya di-generate otomatis dari detail penawaran ini.

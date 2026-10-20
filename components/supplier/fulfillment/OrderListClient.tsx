@@ -42,33 +42,33 @@ type StatusMeta = {
 const STATUS_META: Record<string, StatusMeta> = {
   registered: {
     label: "Terdaftar",
-    className: "bg-slate-100 text-slate-700",
-    dot: "bg-slate-400",
+    className: "bg-wesup-paper-sub text-wesup-ink",
+    dot: "bg-wesup-ink-sub",
   },
   pending_payment: {
     label: "Menunggu Bayar",
-    className: "bg-amber-100 text-amber-700",
-    dot: "bg-amber-500",
+    className: " ",
+    dot: "",
   },
   paid: {
     label: "Lunas",
-    className: "bg-blue-100 text-blue-700",
-    dot: "bg-blue-500",
+    className: "bg-wesup-paper-sub text-wesup-ink",
+    dot: "bg-wesup-paper-sub0",
   },
   picked_up: {
     label: "Sudah Diambil",
-    className: "bg-emerald-100 text-emerald-700",
-    dot: "bg-emerald-500",
+    className: " text-wesup-ink",
+    dot: "",
   },
   no_show: {
     label: "Tidak Hadir",
-    className: "bg-red-100 text-red-700",
-    dot: "bg-red-500",
+    className: "bg-wesup-red/10 text-wesup-red",
+    dot: "bg-wesup-paper0",
   },
   cancelled: {
     label: "Dibatalkan",
-    className: "bg-slate-100 text-slate-600",
-    dot: "bg-slate-400",
+    className: "bg-wesup-paper-sub text-wesup-ink-sub",
+    dot: "bg-wesup-ink-sub",
   },
 };
 
@@ -143,9 +143,9 @@ export default function OrderListClient({ batchId }: { batchId: string }) {
       <div className="space-y-4">
         <BackLink batchId={batchId} />
         <Skeleton className="mb-4 h-9 w-64" />
-        <div className="rounded-xl border border-slate-200 bg-white p-2 shadow-sm">
+        <div className=" border border-wesup-ink/15 bg-wesup-paper p-2 ">
           <table className="w-full text-left text-sm">
-            <thead className="border-b border-slate-100 text-xs text-slate-500">
+            <thead className="border-b border-wesup-ink/10 text-xs text-wesup-ink-sub">
               <tr>
                 {["UMKM", "Kuantitas", "Total", "Status", ""].map((h) => (
                   <th key={h} className="px-4 py-3 font-medium">
@@ -169,20 +169,20 @@ export default function OrderListClient({ batchId }: { batchId: string }) {
     return (
       <div className="space-y-4">
         <BackLink batchId={batchId} />
-        <section className="flex flex-col items-center justify-center gap-3 rounded-xl border border-red-200 bg-white p-10 text-center shadow-sm">
-          <AlertCircle aria-hidden="true" size={40} className="text-red-300" />
+        <section className="flex flex-col items-center justify-center gap-3  border border-wesup-red/40 bg-wesup-paper p-10 text-center ">
+          <AlertCircle aria-hidden="true" size={40} className="text-wesup-red/70" />
           <div>
-            <h2 className="text-lg font-bold text-slate-900">
+            <h2 className="text-lg font-bold text-wesup-ink">
               Pesanan belum dapat dimuat
             </h2>
-            <p className="mt-1 text-sm text-red-700">
+            <p className="mt-1 text-sm text-wesup-red">
               {state.loadError ?? "Terjadi kesalahan."}
             </p>
           </div>
           <button
             type="button"
             onClick={() => setRetry((v) => v + 1)}
-            className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+            className="inline-flex items-center gap-2  bg-wesup-ink px-4 py-2 text-sm font-semibold text-wesup-paper hover:bg-wesup-red"
           >
             <RefreshCw aria-hidden="true" size={16} />
             Muat Ulang
@@ -201,17 +201,17 @@ export default function OrderListClient({ batchId }: { batchId: string }) {
       {/* Header */}
       <section className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="flex items-center gap-2 text-2xl font-bold text-slate-900 sm:text-3xl">
-            <ClipboardList aria-hidden="true" size={26} className="text-blue-600" />
+          <h1 className="flex items-center gap-2 text-2xl font-bold text-wesup-ink sm:text-3xl">
+            <ClipboardList aria-hidden="true" size={26} className="text-wesup-red" />
             Manajemen Pesanan
           </h1>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-sm text-wesup-ink-sub">
             Daftar UMKM yang akan mengambil barang pada batch ini.
           </p>
         </div>
         <Link
           href={`/supplier/batch/${batchId}/pickup`}
-          className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+          className="inline-flex items-center justify-center gap-2  bg-wesup-ink px-5 py-3 text-sm font-semibold text-wesup-paper  transition hover:bg-wesup-red focus-visible:outline-none focus-visible:ring-2 focus-visible:outline-wesup-red focus-visible:ring-offset-2"
         >
           <ScanLine aria-hidden="true" size={18} />
           Buka Serah Terima
@@ -221,33 +221,33 @@ export default function OrderListClient({ batchId }: { batchId: string }) {
       {/* Summary strip */}
       <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <SummaryCard
-          icon={<Users className="text-blue-600" size={20} />}
-          iconBg="bg-blue-100"
+          icon={<Users className="text-wesup-red" size={20} />}
+          iconBg="bg-wesup-paper-sub"
           label="Total Pesanan"
           value={String(state.orders.length)}
         />
         <SummaryCard
-          icon={<QrCode className="text-blue-600" size={20} />}
-          iconBg="bg-blue-100"
+          icon={<QrCode className="text-wesup-red" size={20} />}
+          iconBg="bg-wesup-paper-sub"
           label="Lunas (siap ambil)"
           value={String(paidReadyCount)}
         />
         <SummaryCard
-          icon={<Package className="text-emerald-600" size={20} />}
-          iconBg="bg-emerald-100"
+          icon={<Package className="" size={20} />}
+          iconBg=""
           label="Sudah Diambil"
           value={String(counts("picked_up"))}
         />
         <SummaryCard
-          icon={<Package className="text-amber-600" size={20} />}
-          iconBg="bg-amber-100"
+          icon={<Package className="" size={20} />}
+          iconBg=""
           label="Menunggu Bayar"
           value={String(counts("pending_payment"))}
         />
       </section>
 
       {/* Filter tabs */}
-      <section className="flex flex-wrap items-center gap-1 rounded-xl border border-slate-200 bg-white p-1">
+      <section className="flex flex-wrap items-center gap-1  border border-wesup-ink/15 bg-wesup-paper p-1">
         {FILTER_TABS.map((tab) => (
           <button
             key={tab}
@@ -256,8 +256,8 @@ export default function OrderListClient({ batchId }: { batchId: string }) {
             aria-pressed={state.filter === tab}
             className={
               state.filter === tab
-                ? "rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm"
-                : "rounded-lg px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-slate-100"
+                ? " bg-wesup-ink px-3 py-1.5 text-xs font-semibold text-wesup-paper "
+                : " px-3 py-1.5 text-xs font-medium text-wesup-ink-sub transition hover:bg-wesup-paper-sub"
             }
           >
             {FILTER_LABELS[tab]}
@@ -270,13 +270,13 @@ export default function OrderListClient({ batchId }: { batchId: string }) {
 
       {/* Empty state */}
       {isEmpty || visibleOrders.length === 0 ? (
-        <section className="rounded-xl border border-dashed border-slate-300 bg-white p-10 text-center shadow-sm">
+        <section className=" border border-dashed border-wesup-ink/15 bg-wesup-paper p-10 text-center ">
           <ClipboardList
             aria-hidden="true"
             size={40}
-            className="mx-auto text-slate-300"
+            className="mx-auto text-wesup-ink-sub"
           />
-          <p className="mt-3 text-sm font-medium text-slate-500">
+          <p className="mt-3 text-sm font-medium text-wesup-ink-sub">
             {isEmpty
               ? "Belum ada pesanan untuk batch ini."
               : `Tidak ada pesanan berstatus "${FILTER_LABELS[state.filter]}".`}
@@ -284,7 +284,7 @@ export default function OrderListClient({ batchId }: { batchId: string }) {
           {isEmpty && (
             <Link
               href={`/supplier/batch/${batchId}/pickup`}
-              className="mt-4 inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+              className="mt-4 inline-flex items-center gap-2  bg-wesup-ink px-4 py-2 text-sm font-semibold text-wesup-paper hover:bg-wesup-red"
             >
               <ScanLine aria-hidden="true" size={16} />
               Buka Serah Terima
@@ -292,10 +292,10 @@ export default function OrderListClient({ batchId }: { batchId: string }) {
           )}
         </section>
       ) : (
-        <section aria-label="Daftar pesanan" className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+        <section aria-label="Daftar pesanan" className="overflow-hidden  border border-wesup-ink/15 bg-wesup-paper ">
           <div className="hidden overflow-x-auto md:block">
             <table className="w-full text-left text-sm">
-              <thead className="border-b border-slate-100 bg-slate-50 text-xs text-slate-500">
+              <thead className="border-b border-wesup-ink/10 bg-wesup-paper text-xs text-wesup-ink-sub">
                 <tr>
                   <th className="px-4 py-3 font-medium">UMKM</th>
                   <th className="px-4 py-3 font-medium">Kode</th>
@@ -306,7 +306,7 @@ export default function OrderListClient({ batchId }: { batchId: string }) {
                   <th className="px-4 py-3 font-medium text-right">Aksi</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-wesup-ink/10">
                 {visibleOrders.map((order) => (
                   <OrderRow key={order.registrationId} order={order} batchId={batchId} />
                 ))}
@@ -314,7 +314,7 @@ export default function OrderListClient({ batchId }: { batchId: string }) {
             </table>
           </div>
 
-          <div className="divide-y divide-slate-100 md:hidden">
+          <div className="divide-y divide-wesup-ink/10 md:hidden">
             {visibleOrders.map((order) => (
               <OrderCard key={order.registrationId} order={order} batchId={batchId} />
             ))}
@@ -329,7 +329,7 @@ function BackLink({ batchId }: { batchId: string }) {
   return (
     <Link
       href={`/supplier/batch/${batchId}`}
-      className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-500 transition hover:text-blue-700"
+      className="inline-flex items-center gap-1.5 text-sm font-semibold text-wesup-ink-sub transition hover:text-wesup-ink"
     >
       <ArrowLeft aria-hidden="true" size={16} />
       Kembali ke detail batch
@@ -341,14 +341,14 @@ function StatusBadge({ status }: { status: string }) {
   const meta =
     STATUS_META[status] ?? {
       label: status,
-      className: "bg-slate-100 text-slate-700",
-      dot: "bg-slate-400",
+      className: "bg-wesup-paper-sub text-wesup-ink",
+      dot: "bg-wesup-ink-sub",
     };
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${meta.className}`}
+      className={`inline-flex items-center gap-1.5  px-2.5 py-1 text-xs font-semibold ${meta.className}`}
     >
-      <span aria-hidden="true" className={`h-1.5 w-1.5 rounded-full ${meta.dot}`} />
+      <span aria-hidden="true" className={`h-1.5 w-1.5  ${meta.dot}`} />
       {meta.label}
     </span>
   );
@@ -362,21 +362,21 @@ function OrderRow({
   batchId: string;
 }) {
   return (
-    <tr className="transition hover:bg-slate-50">
+    <tr className="transition hover:bg-wesup-paper">
       <td className="px-4 py-3">
-        <p className="font-semibold text-slate-900">{order.umkmName}</p>
-        <p className="text-xs text-slate-500">
+        <p className="font-semibold text-wesup-ink">{order.umkmName}</p>
+        <p className="text-xs text-wesup-ink-sub">
           {dates.format(new Date(order.createdAt))}
         </p>
       </td>
-      <td className="px-4 py-3 font-mono text-xs text-slate-500">
+      <td className="px-4 py-3 font-mono text-xs text-wesup-ink-sub">
         {order.displayCode}
       </td>
       <td className="px-4 py-3">{order.quantity} pcs</td>
       <td className="px-4 py-3">
         {order.lockedTier ? `Tier ${order.lockedTier}` : "—"}
       </td>
-      <td className="px-4 py-3 font-semibold text-slate-900">
+      <td className="px-4 py-3 font-semibold text-wesup-ink">
         {order.finalAmount != null ? money.format(order.finalAmount) : "—"}
       </td>
       <td className="px-4 py-3">
@@ -386,13 +386,13 @@ function OrderRow({
         {order.status === "paid" ? (
           <Link
             href={`/supplier/batch/${batchId}/pickup?reg=${order.registrationId}`}
-            className="inline-flex items-center gap-1 rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 transition hover:bg-blue-100"
+            className="inline-flex items-center gap-1  bg-wesup-paper-sub px-3 py-1.5 text-xs font-semibold text-wesup-ink transition hover:bg-wesup-paper-sub"
           >
             <ScanLine aria-hidden="true" size={14} />
             Serah Terima
           </Link>
         ) : (
-          <span className="text-xs text-slate-300">—</span>
+          <span className="text-xs text-wesup-ink-sub">—</span>
         )}
       </td>
     </tr>
@@ -410,30 +410,30 @@ function OrderCard({
     <div className="p-4">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="font-semibold text-slate-900">{order.umkmName}</p>
-          <p className="font-mono text-xs text-slate-500">{order.displayCode}</p>
+          <p className="font-semibold text-wesup-ink">{order.umkmName}</p>
+          <p className="font-mono text-xs text-wesup-ink-sub">{order.displayCode}</p>
         </div>
         <StatusBadge status={order.status} />
       </div>
-      <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-slate-500">
+      <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-wesup-ink-sub">
         <span>
-          Kuantitas: <strong className="text-slate-900">{order.quantity} pcs</strong>
+          Kuantitas: <strong className="text-wesup-ink">{order.quantity} pcs</strong>
         </span>
         <span>
           Tier:{" "}
-          <strong className="text-slate-900">
+          <strong className="text-wesup-ink">
             {order.lockedTier ? `Tier ${order.lockedTier}` : "—"}
           </strong>
         </span>
         <span>
           Total:{" "}
-          <strong className="text-slate-900">
+          <strong className="text-wesup-ink">
             {order.finalAmount != null ? money.format(order.finalAmount) : "—"}
           </strong>
         </span>
         <span>
           Daftar:{" "}
-          <strong className="text-slate-900">
+          <strong className="text-wesup-ink">
             {dates.format(new Date(order.createdAt))}
           </strong>
         </span>
@@ -441,7 +441,7 @@ function OrderCard({
       {order.status === "paid" && (
         <Link
           href={`/supplier/batch/${batchId}/pickup?reg=${order.registrationId}`}
-          className="mt-3 inline-flex items-center gap-1 rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 transition hover:bg-blue-100"
+          className="mt-3 inline-flex items-center gap-1  bg-wesup-paper-sub px-3 py-1.5 text-xs font-semibold text-wesup-ink transition hover:bg-wesup-paper-sub"
         >
           <ScanLine aria-hidden="true" size={14} />
           Serah Terima
@@ -463,16 +463,16 @@ function SummaryCard({
   value: string;
 }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+    <div className=" border border-wesup-ink/15 bg-wesup-paper p-4 ">
       <div className="flex items-center gap-3">
         <span
-          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${iconBg}`}
+          className={`flex h-10 w-10 shrink-0 items-center justify-center  ${iconBg}`}
         >
           {icon}
         </span>
         <div className="min-w-0">
-          <p className="truncate text-xs font-medium text-slate-500">{label}</p>
-          <p className="truncate text-lg font-bold text-slate-900">{value}</p>
+          <p className="truncate text-xs font-medium text-wesup-ink-sub">{label}</p>
+          <p className="truncate text-lg font-bold text-wesup-ink">{value}</p>
         </div>
       </div>
     </div>

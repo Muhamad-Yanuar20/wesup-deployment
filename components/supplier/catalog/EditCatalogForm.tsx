@@ -107,12 +107,12 @@ export default function EditCatalogForm() {
 
   if (phase === "not-found") {
     return (
-      <div className="rounded-xl border border-slate-200 bg-white p-8 text-center shadow-sm">
-        <h2 className="text-lg font-bold text-slate-900">Katalog tidak ditemukan</h2>
-        <p className="mt-2 text-sm text-slate-600">ID katalog: {batchId}</p>
+      <div className=" border border-wesup-ink/15 bg-wesup-paper p-8 text-center ">
+        <h2 className="text-lg font-bold text-wesup-ink">Katalog tidak ditemukan</h2>
+        <p className="mt-2 text-sm text-wesup-ink-sub">ID katalog: {batchId}</p>
         <Link
           href="/supplier/catalog"
-          className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-blue-700 hover:text-blue-900"
+          className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-wesup-ink hover:text-wesup-ink"
         >
           <ArrowLeft size={16} />
           Kembali ke daftar katalog
@@ -123,13 +123,13 @@ export default function EditCatalogForm() {
 
   if (phase === "read-only") {
     return (
-      <div className="rounded-xl border border-slate-200 bg-white p-8 text-center shadow-sm">
-        <AlertCircle className="mx-auto h-6 w-6 text-slate-500" />
-        <h2 className="mt-3 text-lg font-bold text-slate-900">Katalog hanya dapat dibaca</h2>
-        <p className="mt-2 text-sm text-slate-600">{error ?? "Status katalog ini tidak mengizinkan perubahan."}</p>
+      <div className=" border border-wesup-ink/15 bg-wesup-paper p-8 text-center ">
+        <AlertCircle className="mx-auto h-6 w-6 text-wesup-ink-sub" />
+        <h2 className="mt-3 text-lg font-bold text-wesup-ink">Katalog hanya dapat dibaca</h2>
+        <p className="mt-2 text-sm text-wesup-ink-sub">{error ?? "Status katalog ini tidak mengizinkan perubahan."}</p>
         <Link
           href={`/supplier/batch/${batchId}`}
-          className="mt-4 inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+          className="mt-4 inline-flex items-center gap-2  bg-wesup-ink px-4 py-2 text-sm font-semibold text-wesup-paper hover:bg-wesup-red"
         >
           <ArrowLeft size={16} />
           Kembali ke detail katalog
@@ -140,14 +140,14 @@ export default function EditCatalogForm() {
 
   if (phase === "error" || !initialDraft) {
     return (
-      <div className="rounded-xl border border-red-200 bg-white p-8 text-center shadow-sm">
-        <AlertCircle className="mx-auto h-6 w-6 text-red-500" />
-        <h2 className="mt-3 text-lg font-bold text-slate-900">Gagal memuat katalog</h2>
-        <p className="mt-1 text-sm text-red-600">{error ?? "Terjadi kesalahan."}</p>
+      <div className=" border border-wesup-red/40 bg-wesup-paper p-8 text-center ">
+        <AlertCircle className="mx-auto h-6 w-6 text-wesup-red" />
+        <h2 className="mt-3 text-lg font-bold text-wesup-ink">Gagal memuat katalog</h2>
+        <p className="mt-1 text-sm text-wesup-red">{error ?? "Terjadi kesalahan."}</p>
         <button
           type="button"
           onClick={() => setRetry(value => value + 1)}
-          className="mt-4 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+          className="mt-4  bg-wesup-ink px-4 py-2 text-sm font-semibold text-wesup-paper hover:bg-wesup-red"
         >
           Coba Lagi
         </button>
@@ -162,7 +162,7 @@ export default function EditCatalogForm() {
       <div className="mb-6">
         <Link
           href={`/supplier/batch/${batchId}`}
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-blue-700"
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-wesup-ink-sub hover:text-wesup-ink"
         >
           <ArrowLeft size={16} />
           Kembali ke detail katalog
@@ -171,9 +171,9 @@ export default function EditCatalogForm() {
 
       {/* Location lock notice */}
       {locationLocked && (
-        <div className="mb-6 flex items-start gap-3 rounded-xl border border-orange-200 bg-orange-50 p-4">
-          <AlertCircle size={18} className="mt-0.5 shrink-0 text-orange-600" />
-          <div className="text-sm text-orange-800">
+        <div className="mb-6 flex items-start gap-3  border border-wesup-ink/15 bg-wesup-paper p-4">
+          <AlertCircle size={18} className="mt-0.5 shrink-0 text-wesup-ink" />
+          <div className="text-sm text-wesup-ink">
             <p className="font-semibold">Lokasi terkunci</p>
             <p className="mt-1">
               Penawaran ini sudah memiliki peserta terdaftar. Lokasi pengambilan tidak dapat diubah. Detail lainnya tetap bisa diedit.
@@ -184,9 +184,9 @@ export default function EditCatalogForm() {
 
       {/* Tier lock notice */}
       {tiersLocked && (
-        <div className="mb-6 flex items-start gap-3 rounded-xl border border-orange-200 bg-orange-50 p-4">
-          <AlertCircle size={18} className="mt-0.5 shrink-0 text-orange-600" />
-          <div className="text-sm text-orange-800">
+        <div className="mb-6 flex items-start gap-3  border border-wesup-ink/15 bg-wesup-paper p-4">
+          <AlertCircle size={18} className="mt-0.5 shrink-0 text-wesup-ink" />
+          <div className="text-sm text-wesup-ink">
             <p className="font-semibold">Skema harga terkunci</p>
             <p className="mt-1">
               Penawaran ini sudah memiliki peserta terdaftar. Skema harga tier tidak dapat diubah. Buat penawaran baru jika ingin mengubah harga.

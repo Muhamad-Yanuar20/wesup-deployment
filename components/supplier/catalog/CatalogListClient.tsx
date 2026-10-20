@@ -2,10 +2,11 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { AlertCircle, Package, Plus, Search, SlidersHorizontal } from "lucide-react";
+import { Package, Plus, Search } from "lucide-react";
 import { supplierCatalogApiRepository } from "@/lib/supplier-catalog/api-repository";
 import type { SupplierBatchDetail, SupplierBatchStatus } from "@/lib/supplier-batch/types";
 import CatalogCard from "@/components/supplier/catalog/CatalogCard";
+import { ArrowDisc, ErrorState, AsyncButton, Skeleton } from "@/components/feedback";
 
 type FilterTab = "ALL" | "DRAFT" | "PUBLISHED" | "COMPLETED" | "CANCELLED_BY_SUPPLIER";
 type LoadPhase = "loading" | "success" | "error";
@@ -27,7 +28,7 @@ const EMPTY_MESSAGES: Record<FilterTab, string> = {
 };
 
 function SkeletonCard() {
-  return <div className="animate-pulse overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"><div className="h-36 bg-slate-100" /><div className="space-y-3 p-4"><div className="h-4 w-3/4 rounded bg-slate-100" /><div className="h-3 w-1/3 rounded bg-slate-100" /><div className="h-7 w-1/2 rounded bg-slate-100" /><div className="h-2 rounded bg-slate-100" /></div></div>;
+  return <Skeleton className="h-72 w-full" />;
 }
 
 export default function CatalogListClient() {
@@ -74,26 +75,53 @@ export default function CatalogListClient() {
 
   return (
     <div className="space-y-6">
-      <section className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">Katalog Saya</h1>
-          <p className="mt-1 text-sm text-slate-500">Kelola seluruh penawaran bahan baku Anda.</p>
+      <header className="flex flex-col gap-5 border-b border-wesup-ink/15 pb-7 sm:flex-row sm:items-end sm:justify-between">
+        <div className="min-w-0">
+          <p className="mb-5 flex items-center gap-3 font-mono text-[0.6875rem] uppercase tracking-[0.24em] text-wesup-ink-sub">
+            <span aria-hidden="true" className="h-px w-6 bg-wesup-red" />
+            Wesup / Katalog
+          </p>
+          <h1 className="font-landing-display text-3xl font-normal uppercase leading-[1.05] tracking-[0.06em] text-wesup-ink text-balance sm:text-4xl md:text-5xl">
+            Katalog Saya
+          </h1>
+          <p className="mt-3 max-w-xl text-sm leading-6 text-wesup-ink-sub">Kelola seluruh penawaran bahan baku Anda.</p>
         </div>
-        <Link href="/supplier/catalog/new" className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2">
-          <Plus aria-hidden="true" size={18} /> Buat Penawaran
+        <Link
+          href="/supplier/catalog/new"
+          className="group inline-flex min-h-12 shrink-0 items-center justify-center gap-3 border border-wesup-ink bg-wesup-ink px-7 py-3 text-[0.9375rem] font-semibold tracking-[-0.01em] text-wesup-paper transition-all duration-500 wesup-ease hover:border-wesup-red hover:bg-wesup-red hover:translate-x-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wesup-red"
+        >
+          <Plus aria-hidden="true" size={18} strokeWidth={1.5} /> Buat Penawaran
+          <ArrowDisc />
         </Link>
-      </section>
+      </header>
 
       <section className="space-y-3">
         <div className="relative">
-          <Search aria-hidden="true" size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input type="search" placeholder="Cari katalog berdasarkan nama, kode, atau kategori..." value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-blue-400 focus:ring-2 focus:ring-blue-100" aria-label="Cari katalog" />
+          <Search aria-hidden="true" size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-wesup-ink-sub" />
+          <input
+            type="search"
+            placeholder="Cari katalog berdasarkan nama, kode, atau kategori..."
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+            className="w-full border border-wesup-ink/20 bg-wesup-paper px-11 py-2.5 text-sm text-wesup-ink outline-none placeholder:text-wesup-ink-sub focus:border-wesup-red"
+            aria-label="Cari katalog"
+          />
         </div>
-        <div className="flex flex-wrap items-center gap-1 rounded-xl border border-slate-200 bg-white p-1">
-          <SlidersHorizontal aria-hidden="true" size={14} className="ml-2 shrink-0 text-slate-400" />
+        <div className="flex flex-wrap items-center gap-px border border-wesup-ink/15 bg-wesup-ink/10 p-0">
           {FILTER_TABS.map((tab) => (
-            <button key={tab.value} type="button" onClick={() => setActiveTab(tab.value)} className={activeTab === tab.value ? "flex-1 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm sm:flex-none sm:px-4" : "flex-1 rounded-lg px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-slate-100 sm:flex-none sm:px-4"} aria-pressed={activeTab === tab.value}>
-              {tab.label}<span className="ml-1 text-[10px] opacity-70">({counts[tab.value] ?? 0})</span>
+            <button
+              key={tab.value}
+              type="button"
+              onClick={() => setActiveTab(tab.value)}
+              className={
+                activeTab === tab.value
+                  ? "flex-1 bg-wesup-ink px-4 py-2 text-[0.6875rem] font-semibold uppercase tracking-[0.14em] text-wesup-paper sm:flex-none"
+                  : "flex-1 bg-wesup-paper px-4 py-2 text-[0.6875rem] uppercase tracking-[0.14em] text-wesup-ink transition-colors duration-300 hover:bg-wesup-paper-sub sm:flex-none"
+              }
+              aria-pressed={activeTab === tab.value}
+            >
+              {tab.label}
+              <span className="ml-2 tabular-nums">({counts[tab.value] ?? 0})</span>
             </button>
           ))}
         </div>
@@ -101,24 +129,60 @@ export default function CatalogListClient() {
 
       <section aria-label="Daftar katalog" aria-busy={phase === "loading"}>
         {phase === "loading" ? (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">{[1, 2, 3].map((key) => <SkeletonCard key={key} />)}</div>
+          <div className="grid grid-cols-1 gap-px bg-wesup-ink/10 sm:grid-cols-2 lg:grid-cols-3">
+            {[1, 2, 3].map((key) => (
+              <SkeletonCard key={key} />
+            ))}
+          </div>
         ) : phase === "error" ? (
-          <div className="rounded-xl border border-red-200 bg-white p-10 text-center shadow-sm" role="alert">
-            <AlertCircle aria-hidden="true" size={40} className="mx-auto text-red-400" />
-            <p className="mt-3 text-sm font-semibold text-slate-800">Katalog belum bisa dimuat</p>
-            <p className="mt-1 text-xs text-red-600">{error ?? "Terjadi kesalahan pada server."}</p>
-            <button type="button" onClick={() => setRetry((value) => value + 1)} className="mt-4 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">Coba lagi</button>
-          </div>
+          <ErrorState
+            title="Katalog belum bisa dimuat"
+            description={error ?? "Terjadi kesalahan pada server."}
+            action={
+              <AsyncButton
+                onClick={() => {
+                  setPhase("loading");
+                  setError(null);
+                  setRetry((value) => value + 1);
+                }}
+              >
+                Coba lagi
+              </AsyncButton>
+            }
+          />
         ) : filteredBatches.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-slate-300 bg-white p-10 text-center shadow-sm">
-            <Package aria-hidden="true" size={40} className="mx-auto text-slate-300" />
-            <p className="mt-3 text-sm font-medium text-slate-500">{searchQuery.trim() ? `Tidak ada katalog yang cocok dengan "${searchQuery}".` : EMPTY_MESSAGES[activeTab]}</p>
-            {!searchQuery.trim() && activeTab === "ALL" && <Link href="/supplier/catalog/new" className="mt-4 inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"><Plus aria-hidden="true" size={16} /> Buat Penawaran</Link>}
-          </div>
+          <section className="border border-wesup-ink/15 bg-wesup-paper px-5 py-10 text-center">
+            <span aria-hidden="true" className="mx-auto mb-5 block h-px w-10 bg-wesup-ink/25" />
+            <span aria-hidden="true" className="mx-auto mb-4 flex size-10 items-center justify-center border border-wesup-ink/20 text-wesup-ink-sub">
+              <Package aria-hidden="true" size={18} strokeWidth={1.5} />
+            </span>
+            <p className="text-sm leading-6 text-wesup-ink-sub">
+              {searchQuery.trim() ? `Tidak ada katalog yang cocok dengan "${searchQuery}".` : EMPTY_MESSAGES[activeTab]}
+            </p>
+            {!searchQuery.trim() && activeTab === "ALL" && (
+              <div className="mt-5 flex justify-center">
+                <Link
+                  href="/supplier/catalog/new"
+                  className="group inline-flex min-h-12 items-center justify-center gap-3 border border-wesup-ink bg-wesup-ink px-7 py-3 text-[0.9375rem] font-semibold tracking-[-0.01em] text-wesup-paper transition-all duration-500 wesup-ease hover:border-wesup-red hover:bg-wesup-red hover:translate-x-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wesup-red"
+                >
+                  Buat Penawaran
+                  <Plus aria-hidden="true" size={18} strokeWidth={1.5} />
+                </Link>
+              </div>
+            )}
+          </section>
         ) : (
           <>
-            <p className="mb-3 text-xs text-slate-500">Menampilkan {filteredBatches.length} katalog{searchQuery.trim() && ` untuk "${searchQuery}"`}{activeTab !== "ALL" && ` · ${activeCount} pada tab ini`}</p>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">{filteredBatches.map((batch) => <CatalogCard key={batch.id} batch={batch} />)}</div>
+            <p className="font-mono text-[0.6875rem] uppercase tracking-[0.18em] text-wesup-ink-sub">
+              Menampilkan <span className="tabular-nums">{filteredBatches.length}</span> katalog
+              {searchQuery.trim() && <> · &quot;<span className="normal-case tracking-normal">{searchQuery}</span>&quot;</>}
+              {activeTab !== "ALL" && <> · <span className="tabular-nums">{activeCount}</span> pada tab ini</>}
+            </p>
+            <div className="grid grid-cols-1 gap-px bg-wesup-ink/10 sm:grid-cols-2 lg:grid-cols-3">
+              {filteredBatches.map((batch) => (
+                <CatalogCard key={batch.id} batch={batch} />
+              ))}
+            </div>
           </>
         )}
       </section>

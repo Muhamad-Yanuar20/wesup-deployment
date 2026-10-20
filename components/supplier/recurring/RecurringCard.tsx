@@ -41,10 +41,10 @@ export default function RecurringCard({ config, onToggle }: RecurringCardProps) 
 
   return (
     <div
-      className={`group block rounded-xl border bg-white shadow-sm transition ${
+      className={`group block  border bg-wesup-paper  transition ${
         isActive
-          ? "border-emerald-200 hover:border-emerald-300 hover:shadow-md"
-          : "border-slate-200 hover:border-slate-300 hover:shadow-md"
+          ? "border-wesup-ink/20 hover:border-wesup-ink/20 hover:"
+          : "border-wesup-ink/15 hover:border-wesup-ink/15 hover:"
       }`}
     >
       <div className="p-5">
@@ -55,8 +55,8 @@ export default function RecurringCard({ config, onToggle }: RecurringCardProps) 
               <span
                 className={
                   isActive
-                    ? "inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700"
-                    : "inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600"
+                    ? "inline-flex items-center gap-1  bg-wesup-paper-sub px-2 py-0.5 text-xs font-semibold text-wesup-ink"
+                    : "inline-flex items-center gap-1  bg-wesup-paper-sub px-2 py-0.5 text-xs font-semibold text-wesup-ink-sub"
                 }
               >
                 {isActive ? (
@@ -66,21 +66,21 @@ export default function RecurringCard({ config, onToggle }: RecurringCardProps) 
                 )}
                 {isActive ? "Aktif" : "Nonaktif"}
               </span>
-              <span className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-600">
+              <span className=" bg-wesup-paper-sub px-2 py-0.5 text-xs font-medium text-wesup-red">
                 {config.templateBatch.category}
               </span>
             </div>
-            <h3 className="truncate text-base font-bold text-slate-900">
+            <h3 className="truncate text-base font-bold text-wesup-ink">
               {config.name}
             </h3>
           </div>
           <button
             type="button"
             onClick={() => onToggle(config.id)}
-            className={`flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
+            className={`flex shrink-0 items-center gap-1.5  px-3 py-1.5 text-xs font-semibold transition ${
               isActive
-                ? "border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
-                : "border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100"
+                ? "border border-wesup-ink/20 bg-wesup-paper-sub text-wesup-ink hover:bg-wesup-paper-sub"
+                : "border border-wesup-ink/15 bg-wesup-paper text-wesup-ink-sub hover:bg-wesup-paper-sub"
             }`}
             aria-label={isActive ? "Nonaktifkan jadwal" : "Aktifkan jadwal"}
           >
@@ -91,28 +91,28 @@ export default function RecurringCard({ config, onToggle }: RecurringCardProps) 
 
         {/* Schedule Info */}
         <div className="mb-3 space-y-2 text-sm">
-          <div className="flex items-center gap-2 text-slate-600">
-            <Clock aria-hidden="true" size={14} className="shrink-0 text-indigo-500" />
+          <div className="flex items-center gap-2 text-wesup-ink-sub">
+            <Clock aria-hidden="true" size={14} className="shrink-0 text-wesup-ink-sub" />
             <span>{formatInterval(config.intervalDays)}</span>
             {dayLabels && (
-              <span className="text-slate-400">&middot;</span>
+              <span className="text-wesup-ink-sub">&middot;</span>
             )}
             {dayLabels && <span>{dayLabels}</span>}
           </div>
           {config.nextGenerationAt && (
-            <div className="flex items-center gap-2 text-slate-600">
-              <CalendarClock aria-hidden="true" size={14} className="shrink-0 text-blue-500" />
+            <div className="flex items-center gap-2 text-wesup-ink-sub">
+              <CalendarClock aria-hidden="true" size={14} className="shrink-0 text-wesup-red" />
               <span>
                 Batch berikutnya:{" "}
-                <strong className="text-slate-900">
+                <strong className="text-wesup-ink">
                   {dates.format(new Date(config.nextGenerationAt))}
                 </strong>
               </span>
             </div>
           )}
           {config.lastGeneratedAt && (
-            <div className="flex items-center gap-2 text-slate-500">
-              <Package aria-hidden="true" size={14} className="shrink-0 text-slate-400" />
+            <div className="flex items-center gap-2 text-wesup-ink-sub">
+              <Package aria-hidden="true" size={14} className="shrink-0 text-wesup-ink-sub" />
               <span>
                 Terakhir generate:{" "}
                 {dates.format(new Date(config.lastGeneratedAt))}
@@ -122,29 +122,29 @@ export default function RecurringCard({ config, onToggle }: RecurringCardProps) 
         </div>
 
         {/* Template Batch Preview */}
-        <div className="rounded-lg border border-slate-100 bg-slate-50 p-3">
-          <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-slate-700">
+        <div className=" border border-wesup-ink/10 bg-wesup-paper p-3">
+          <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-wesup-ink">
             <Package aria-hidden="true" size={12} />
             Template: {config.templateBatch.title}
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-lg font-bold text-blue-700">
+            <span className="text-lg font-bold text-wesup-ink">
               {money.format(lowestPrice)}
             </span>
             {lowestPrice < highestPrice && (
-              <span className="text-xs text-slate-400 line-through">
+              <span className="text-xs text-wesup-ink-sub line-through">
                 {money.format(highestPrice)}
               </span>
             )}
           </div>
-          <ul className="mt-1.5 space-y-0.5 text-xs text-slate-600">
+          <ul className="mt-1.5 space-y-0.5 text-xs text-wesup-ink-sub">
             {config.templateBatch.tiers.map((tier) => (
               <li key={tier.tierNumber} className="flex justify-between">
                 <span>
                   Tier {tier.tierNumber}: {tier.minimumQuantity}–
                   {tier.maximumQuantity ?? "+"} pcs
                 </span>
-                <strong className="text-slate-800">
+                <strong className="text-wesup-ink-sub 800">
                   {money.format(tier.pricePerUnit)}
                 </strong>
               </li>
@@ -154,10 +154,10 @@ export default function RecurringCard({ config, onToggle }: RecurringCardProps) 
       </div>
 
       {/* Footer */}
-      <div className="border-t border-slate-100 px-5 py-3">
+      <div className="border-t border-wesup-ink/10 px-5 py-3">
         <Link
           href={`/supplier/recurring/${config.id}`}
-          className="text-xs font-semibold text-blue-600 hover:text-blue-800"
+          className="text-xs font-semibold text-wesup-red hover:text-wesup-ink-sub"
         >
           Lihat Detail &rarr;
         </Link>

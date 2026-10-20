@@ -238,8 +238,8 @@ export default function CreateCatalogForm({
   return (
     <>
       <CatalogStepper currentStep={currentStep} />
-      <form onSubmit={handleSubmit} noValidate className="mt-6 rounded-3xl border border-slate-200 bg-white p-5 shadow-xl shadow-blue-950/5 sm:p-8 lg:p-10">
-        {globalError && <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700" role="alert">{globalError}</div>}
+      <form onSubmit={handleSubmit} noValidate className="mt-6  border border-wesup-ink/15 bg-wesup-paper p-5 -xl -blue-950/5 sm:p-8 lg:p-10">
+        {globalError && <div className="mb-6  border border-wesup-red/40 bg-wesup-paper px-4 py-3 text-sm font-medium text-wesup-red" role="alert">{globalError}</div>}
 
         {currentStep === 1 && (
           <ProductDetailStep
@@ -290,38 +290,38 @@ export default function CreateCatalogForm({
         {currentStep === 5 && (
           <div className="space-y-6">
             <CatalogReviewStep draft={draft} headingRef={headingRef} />
-            <section className="rounded-xl border border-slate-200 bg-slate-50 p-5">
+            <section className=" border border-wesup-ink/15 bg-wesup-paper p-5">
               <div className="flex items-start gap-3">
-                <span className="mt-0.5 flex h-5 w-5 items-center justify-center rounded border border-slate-300 bg-slate-200" aria-hidden="true" />
+                <span className="mt-0.5 flex h-5 w-5 items-center justify-center  border border-wesup-ink/15 bg-wesup-paper-sub" aria-hidden="true" />
                 <div>
-                  <h3 className="text-sm font-bold text-slate-700">Postingan berulang</h3>
-                  <p className="mt-1 text-xs text-slate-500">Fitur lifecycle recurring segera tersedia. Pengaturan ini dinonaktifkan agar tidak memberi status sukses palsu.</p>
+                  <h3 className="text-sm font-bold text-wesup-ink">Postingan berulang</h3>
+                  <p className="mt-1 text-xs text-wesup-ink-sub">Fitur lifecycle recurring segera tersedia. Pengaturan ini dinonaktifkan agar tidak memberi status sukses palsu.</p>
                 </div>
-                <span className="ml-auto rounded-full bg-slate-200 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-500">Segera tersedia</span>
+                <span className="ml-auto  bg-wesup-paper-sub px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-wesup-ink-sub">Segera tersedia</span>
               </div>
             </section>
           </div>
         )}
 
-        <div className="mt-8 flex flex-col-reverse gap-3 border-t border-slate-100 pt-6 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-8 flex flex-col-reverse gap-3 border-t border-wesup-ink/10 pt-6 sm:flex-row sm:items-center sm:justify-between">
           {currentStep > 1 ? (
-            <button type="button" onClick={goBack} disabled={submitting} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50">
+            <button type="button" onClick={goBack} disabled={submitting} className="inline-flex min-h-11 items-center justify-center gap-2  border border-wesup-ink/15 px-5 py-3 text-sm font-semibold text-wesup-ink transition hover:border-wesup-red hover:bg-wesup-paper-sub hover:text-wesup-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:outline-wesup-red disabled:cursor-not-allowed disabled:opacity-50">
               <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Kembali
             </button>
           ) : <span aria-hidden="true" />}
           <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center">
             {currentStep === 5 && (
-              <button type="button" onClick={handleSaveDraft} disabled={submitting} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50">
+              <button type="button" onClick={handleSaveDraft} disabled={submitting} className="inline-flex min-h-11 items-center justify-center gap-2  border border-wesup-ink/15 px-5 py-3 text-sm font-semibold text-wesup-ink transition hover:border-wesup-red hover:bg-wesup-paper-sub hover:text-wesup-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:outline-wesup-red disabled:cursor-not-allowed disabled:opacity-50">
                 <Save className="h-4 w-4" aria-hidden="true" /> Simpan Draft
               </button>
             )}
-            <button type="submit" disabled={submitting} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-60 sm:min-w-56">
+            <button type="submit" disabled={submitting} className="inline-flex min-h-11 items-center justify-center gap-2  bg-wesup-ink px-6 py-3 text-sm font-semibold text-wesup-paper  transition hover:bg-wesup-red focus-visible:outline-none focus-visible:ring-2 focus-visible:outline-wesup-red disabled:cursor-not-allowed disabled:opacity-60 sm:min-w-56">
               {submitPhase === "saving" ? <LoaderCircle className="h-5 w-5 animate-spin" aria-hidden="true" /> : submitPhase === "saved" ? <CheckCircle2 className="h-5 w-5" aria-hidden="true" /> : currentStep === 5 ? <CheckCircle2 className="h-5 w-5" aria-hidden="true" /> : <ArrowRight className="h-5 w-5" aria-hidden="true" />}
               {submitPhase === "saving" ? (activeAction === "publish" ? "Menerbitkan..." : "Menyimpan...") : submitPhase === "saved" ? "Berhasil Disimpan!" : currentStep === 5 ? (submitLabel ?? (submitAction === "publish" ? "Terbitkan Penawaran" : "Simpan Perubahan")) : "Lanjut"}
             </button>
           </div>
         </div>
-        {currentStep === 5 && <p className="mt-4 text-center text-xs leading-5 text-slate-500">Dengan menerbitkan, Anda menyetujui bahwa data penawaran akan tayang di marketplace Wesup. Draft tetap tersimpan privat sampai diterbitkan.</p>}
+        {currentStep === 5 && <p className="mt-4 text-center text-xs leading-5 text-wesup-ink-sub">Dengan menerbitkan, Anda menyetujui bahwa data penawaran akan tayang di marketplace Wesup. Draft tetap tersimpan privat sampai diterbitkan.</p>}
       </form>
 
       <CatalogSuccessDialog

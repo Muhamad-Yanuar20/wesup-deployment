@@ -16,21 +16,20 @@ export default async function EditCatalogPage({
   const { id } = await params;
 
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
-      <div className="mx-auto w-full max-w-6xl">
-        <header className="mb-8 text-center sm:mb-10">
-          <span className="inline-flex rounded-full border border-amber-200 bg-white/80 px-3 py-1 text-xs font-bold uppercase tracking-[0.2em] text-amber-700 shadow-sm">
-            Edit
-          </span>
-          <h1 className="mt-4 text-3xl font-extrabold tracking-tight text-slate-950 sm:text-4xl">
-            Edit Penawaran
-          </h1>
-          <p className="mx-auto mt-3 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
-            Ubah detail penawaran Anda yang sedang aktif.
-          </p>
-        </header>
-        <EditCatalogForm key={id} />
-      </div>
-    </main>
+    <div className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
+      <header className="mb-7 border-b border-wesup-ink/15 pb-7">
+        <p className="mb-5 flex items-center gap-3 font-mono text-[0.6875rem] uppercase tracking-[0.24em] text-wesup-ink-sub">
+          <span aria-hidden="true" className="h-px w-6 bg-wesup-red" />
+          Wesup / Katalog / Edit
+        </p>
+        <h1 className="font-landing-display text-3xl font-normal uppercase leading-[1.05] tracking-[0.06em] text-wesup-ink text-balance sm:text-4xl md:text-5xl">
+          Edit Penawaran
+        </h1>
+        <p className="mt-3 max-w-xl text-sm leading-6 text-wesup-ink-sub">
+          Ubah detail penawaran Anda yang sedang aktif.
+        </p>
+      </header>
+      <EditCatalogForm key={id} />
+    </div>
   );
 }
