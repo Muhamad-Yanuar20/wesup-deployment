@@ -269,11 +269,11 @@ export default function RecurringForm() {
       <form
         onSubmit={handleSubmit}
         noValidate
-        className="mt-6 rounded-3xl border border-slate-200 bg-white p-5 shadow-xl shadow-blue-950/5 sm:p-8 lg:p-10"
+        className="mt-6  border border-wesup-ink/15 bg-wesup-paper p-5   sm:p-8 lg:p-10"
       >
         {globalError && (
           <div
-            className="mb-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700"
+            className="mb-6  border border-wesup-red/40 bg-wesup-paper px-4 py-3 text-sm font-medium text-wesup-red"
             role="alert"
           >
             {globalError}
@@ -286,33 +286,33 @@ export default function RecurringForm() {
             <h2
               ref={headingRef}
               tabIndex={-1}
-              className="text-xl font-bold text-slate-900 outline-none"
+              className="text-xl font-bold text-wesup-ink outline-none"
             >
               Jadwal & Interval
             </h2>
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-wesup-ink-sub">
               Atur seberapa sering penawaran akan tayang secara otomatis.
             </p>
 
             {errors.name && (
-              <div className="rounded-xl border border-amber-200 bg-amber-50 p-4" role="alert">
+              <div className=" border border-wesup-ink/20 bg-wesup-paper-sub p-4" role="alert">
                 <div className="flex items-start gap-2">
-                  <AlertCircle size={18} className="mt-0.5 shrink-0 text-amber-600" />
-                  <p className="text-sm text-amber-800">{errors.name}</p>
+                  <AlertCircle size={18} className="mt-0.5 shrink-0 text-wesup-ink-sub" />
+                  <p className="text-sm text-wesup-ink">{errors.name}</p>
                 </div>
               </div>
             )}
 
             {/* Nama Jadwal */}
-            <div className="flex items-start gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="flex items-start gap-4  border border-wesup-ink/15 bg-wesup-paper p-4 ">
               <span className="mt-1 shrink-0">
-                <Sparkles size={20} className="text-blue-600" />
+                <Sparkles size={20} className="text-wesup-red" />
               </span>
               <div className="min-w-0 flex-1">
-                <label htmlFor="recurring-name" className="text-sm font-semibold text-slate-800">
-                  Nama Jadwal <span className="text-red-500">*</span>
+                <label htmlFor="recurring-name" className="text-sm font-semibold text-wesup-ink">
+                  Nama Jadwal <span className="text-wesup-red">*</span>
                 </label>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-wesup-ink-sub">
                   Contoh: &quot;Beras Rojolele Mingguan&quot;
                 </p>
                 <input
@@ -323,21 +323,21 @@ export default function RecurringForm() {
                   onChange={(e) => updateField("name", e.target.value)}
                   disabled={submitting}
                   placeholder="Masukkan nama jadwal..."
-                  className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-50"
+                  className="mt-2 w-full  border border-wesup-ink/15 px-3 py-2 text-sm text-wesup-ink outline-none focus:border-wesup-red focus:ring-2  disabled:cursor-not-allowed disabled:bg-wesup-paper"
                 />
               </div>
             </div>
 
             {/* Interval */}
-            <div className="flex items-start gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="flex items-start gap-4  border border-wesup-ink/15 bg-wesup-paper p-4 ">
               <span className="mt-1 shrink-0">
-                <Clock size={20} className="text-indigo-600" />
+                <Clock size={20} className="text-wesup-ink-sub" />
               </span>
               <div className="min-w-0 flex-1">
-                <label htmlFor="recurring-interval" className="text-sm font-semibold text-slate-800">
-                  Interval Pengulangan <span className="text-red-500">*</span>
+                <label htmlFor="recurring-interval" className="text-sm font-semibold text-wesup-ink">
+                  Interval Pengulangan <span className="text-wesup-red">*</span>
                 </label>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-wesup-ink-sub">
                   Berapa hari antara setiap batch yang di-generate.
                 </p>
                 <div className="mt-2 flex items-center gap-3">
@@ -350,27 +350,27 @@ export default function RecurringForm() {
                     value={draft.intervalDays}
                     onChange={(e) => updateField("intervalDays", Number(e.target.value) || 1)}
                     disabled={submitting}
-                    className="w-24 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-50"
+                    className="w-24  border border-wesup-ink/15 px-3 py-2 text-sm text-wesup-ink outline-none focus:border-wesup-red focus:ring-2  disabled:cursor-not-allowed disabled:bg-wesup-paper"
                   />
-                  <span className="text-sm text-slate-600">hari</span>
+                  <span className="text-sm text-wesup-ink-sub">hari</span>
                 </div>
                 {errors.intervalDays && (
-                  <p className="mt-1 text-xs text-red-600">{errors.intervalDays}</p>
+                  <p className="mt-1 text-xs text-wesup-red">{errors.intervalDays}</p>
                 )}
               </div>
             </div>
 
             {/* Days of Week */}
             {draft.intervalDays > 1 && (
-              <div className="flex items-start gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+              <div className="flex items-start gap-4  border border-wesup-ink/15 bg-wesup-paper p-4 ">
                 <span className="mt-1 shrink-0">
-                  <Calendar size={20} className="text-emerald-600" />
+                  <Calendar size={20} className="text-wesup-ink-sub" />
                 </span>
                 <div className="min-w-0 flex-1">
-                  <label className="text-sm font-semibold text-slate-800">
+                  <label className="text-sm font-semibold text-wesup-ink">
                     Hari Tayang
                   </label>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-wesup-ink-sub">
                     Pilih hari dalam seminggu untuk batch tayang (opsional jika interval harian).
                   </p>
                   <div className="mt-2 flex flex-wrap gap-2">
@@ -382,10 +382,10 @@ export default function RecurringForm() {
                           type="button"
                           onClick={() => toggleDay(day)}
                           disabled={submitting}
-                          className={`inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
+                          className={`inline-flex items-center gap-1  px-3 py-1.5 text-xs font-semibold transition ${
                             selected
-                              ? "border border-blue-300 bg-blue-100 text-blue-700"
-                              : "border border-slate-200 bg-white text-slate-600 hover:border-blue-200 hover:bg-blue-50"
+                              ? "border border-wesup-red bg-wesup-paper-sub text-wesup-ink"
+                              : "border border-wesup-ink/15 bg-wesup-paper text-wesup-ink-sub hover:border-wesup-ink/20 hover:bg-wesup-paper-sub"
                           } disabled:cursor-not-allowed disabled:opacity-50`}
                           aria-pressed={selected}
                         >
@@ -396,20 +396,20 @@ export default function RecurringForm() {
                     })}
                   </div>
                   {errors.daysOfWeek && (
-                    <p className="mt-1 text-xs text-red-600">{errors.daysOfWeek}</p>
+                    <p className="mt-1 text-xs text-wesup-red">{errors.daysOfWeek}</p>
                   )}
                 </div>
               </div>
             )}
 
             {/* Status */}
-            <div className="flex items-start gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="flex items-start gap-4  border border-wesup-ink/15 bg-wesup-paper p-4 ">
               <span className="mt-1 shrink-0">
-                <Info size={20} className="text-blue-600" />
+                <Info size={20} className="text-wesup-red" />
               </span>
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold text-slate-800">Status Jadwal</p>
-                <p className="text-xs text-slate-500">
+                <p className="text-sm font-semibold text-wesup-ink">Status Jadwal</p>
+                <p className="text-xs text-wesup-ink-sub">
                   Aktif: batch akan di-generate otomatis. Nonaktif: jadwal ditunda.
                 </p>
                 <div className="mt-2 flex gap-2">
@@ -417,10 +417,10 @@ export default function RecurringForm() {
                     type="button"
                     onClick={() => updateField("isActive", true)}
                     disabled={submitting}
-                    className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
+                    className={` px-3 py-1.5 text-xs font-semibold transition ${
                       draft.isActive
-                        ? "border border-emerald-300 bg-emerald-100 text-emerald-700"
-                        : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                        ? "border border-wesup-ink/20 bg-wesup-paper-sub text-wesup-ink"
+                        : "border border-wesup-ink/15 bg-wesup-paper text-wesup-ink-sub hover:bg-wesup-paper"
                     }`}
                   >
                     Aktif
@@ -429,10 +429,10 @@ export default function RecurringForm() {
                     type="button"
                     onClick={() => updateField("isActive", false)}
                     disabled={submitting}
-                    className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
+                    className={` px-3 py-1.5 text-xs font-semibold transition ${
                       !draft.isActive
-                        ? "border border-slate-400 bg-slate-200 text-slate-800"
-                        : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                        ? "border border-wesup-ink/10 400 bg-wesup-paper-sub text-wesup-ink"
+                        : "border border-wesup-ink/15 bg-wesup-paper text-wesup-ink-sub hover:bg-wesup-paper"
                     }`}
                   >
                     Nonaktif
@@ -441,7 +441,7 @@ export default function RecurringForm() {
               </div>
             </div>
 
-            <div className="flex items-start gap-2 rounded-xl bg-blue-50 p-4 text-xs text-blue-800">
+            <div className="flex items-start gap-2  bg-wesup-paper-sub p-4 text-xs text-wesup-ink-sub">
               <AlertCircle size={16} className="mt-0.5 shrink-0" />
               <div>
                 <p className="font-semibold">Cara kerja:</p>
@@ -461,27 +461,27 @@ export default function RecurringForm() {
             <h2
               ref={headingRef}
               tabIndex={-1}
-              className="text-xl font-bold text-slate-900 outline-none"
+              className="text-xl font-bold text-wesup-ink outline-none"
             >
               Template Batch
             </h2>
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-wesup-ink-sub">
               Isi detail produk yang akan digunakan sebagai template untuk setiap batch yang di-generate.
             </p>
 
             {/* Product Details */}
             <div className="space-y-4">
-              <div className="flex items-start gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+              <div className="flex items-start gap-4  border border-wesup-ink/15 bg-wesup-paper p-4 ">
                 <span className="mt-1 shrink-0">
-                  <Package size={20} className="text-blue-600" />
+                  <Package size={20} className="text-wesup-red" />
                 </span>
                 <div className="min-w-0 flex-1 space-y-3">
                   <div>
-                    <label htmlFor="tpl-title" className="text-sm font-semibold text-slate-800">
-                      Nama Produk <span className="text-red-500">*</span>
+                    <label htmlFor="tpl-title" className="text-sm font-semibold text-wesup-ink">
+                      Nama Produk <span className="text-wesup-red">*</span>
                     </label>
                     {errors.templateTitle && (
-                      <p className="mt-0.5 text-xs text-red-600">{errors.templateTitle}</p>
+                      <p className="mt-0.5 text-xs text-wesup-red">{errors.templateTitle}</p>
                     )}
                     <input
                       id="tpl-title"
@@ -491,16 +491,16 @@ export default function RecurringForm() {
                       onChange={(e) => updateField("templateTitle", e.target.value)}
                       disabled={submitting}
                       placeholder="Contoh: Beras Rojolele 5 kg"
-                      className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 disabled:bg-slate-50"
+                      className="mt-1 w-full  border border-wesup-ink/15 px-3 py-2 text-sm text-wesup-ink outline-none focus:border-wesup-red focus:ring-2  disabled:bg-wesup-paper"
                     />
                   </div>
 
                   <div>
-                    <label htmlFor="tpl-category" className="text-sm font-semibold text-slate-800">
-                      Kategori <span className="text-red-500">*</span>
+                    <label htmlFor="tpl-category" className="text-sm font-semibold text-wesup-ink">
+                      Kategori <span className="text-wesup-red">*</span>
                     </label>
                     {errors.templateCategory && (
-                      <p className="mt-0.5 text-xs text-red-600">{errors.templateCategory}</p>
+                      <p className="mt-0.5 text-xs text-wesup-red">{errors.templateCategory}</p>
                     )}
                     <select
                       id="tpl-category"
@@ -508,7 +508,7 @@ export default function RecurringForm() {
                       value={draft.templateCategory}
                       onChange={(e) => updateField("templateCategory", e.target.value)}
                       disabled={submitting}
-                      className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 disabled:bg-slate-50"
+                      className="mt-1 w-full  border border-wesup-ink/15 px-3 py-2 text-sm text-wesup-ink outline-none focus:border-wesup-red focus:ring-2  disabled:bg-wesup-paper"
                     >
                       <option value="">Pilih kategori...</option>
                       <option value="Makanan Siap Saji">Makanan Siap Saji</option>
@@ -520,11 +520,11 @@ export default function RecurringForm() {
                   </div>
 
                   <div>
-                    <label htmlFor="tpl-desc" className="text-sm font-semibold text-slate-800">
-                      Deskripsi <span className="text-red-500">*</span>
+                    <label htmlFor="tpl-desc" className="text-sm font-semibold text-wesup-ink">
+                      Deskripsi <span className="text-wesup-red">*</span>
                     </label>
                     {errors.templateDescription && (
-                      <p className="mt-0.5 text-xs text-red-600">{errors.templateDescription}</p>
+                      <p className="mt-0.5 text-xs text-wesup-red">{errors.templateDescription}</p>
                     )}
                     <textarea
                       id="tpl-desc"
@@ -534,7 +534,7 @@ export default function RecurringForm() {
                       onChange={(e) => updateField("templateDescription", e.target.value)}
                       disabled={submitting}
                       placeholder="Deskripsi singkat produk..."
-                      className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 disabled:bg-slate-50"
+                      className="mt-1 w-full  border border-wesup-ink/15 px-3 py-2 text-sm text-wesup-ink outline-none focus:border-wesup-red focus:ring-2  disabled:bg-wesup-paper"
                     />
                   </div>
                 </div>
@@ -542,17 +542,17 @@ export default function RecurringForm() {
             </div>
 
             {/* Tier Pricing */}
-            <div id="tpl-tiers" className="flex items-start gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div id="tpl-tiers" className="flex items-start gap-4  border border-wesup-ink/15 bg-wesup-paper p-4 ">
               <span className="mt-1 shrink-0">
-                <TrendingDown size={20} className="text-blue-600" />
+                <TrendingDown size={20} className="text-wesup-red" />
               </span>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between">
                   <div>
-                    <label className="text-sm font-semibold text-slate-800">
-                      Skema Harga Tier <span className="text-red-500">*</span>
+                    <label className="text-sm font-semibold text-wesup-ink">
+                      Skema Harga Tier <span className="text-wesup-red">*</span>
                     </label>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-wesup-ink-sub">
                       Harga tier besar harus lebih murah dari tier kecil.
                     </p>
                   </div>
@@ -560,7 +560,7 @@ export default function RecurringForm() {
                     type="button"
                     onClick={addTier}
                     disabled={submitting}
-                    className="inline-flex items-center gap-1 rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 transition hover:bg-blue-100"
+                    className="inline-flex items-center gap-1  border border-wesup-ink/20 bg-wesup-paper-sub px-3 py-1.5 text-xs font-semibold text-wesup-ink transition hover:bg-wesup-paper-sub"
                   >
                     <Plus size={14} />
                     Tambah Tier
@@ -568,8 +568,8 @@ export default function RecurringForm() {
                 </div>
 
                 {(errors.templateTiers || errors.templateTierInversion || errors.templateTierOverlap) && (
-                  <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50 p-2">
-                    <p className="text-xs text-amber-800">
+                  <div className="mt-2  border border-wesup-ink/20 bg-wesup-paper-sub p-2">
+                    <p className="text-xs text-wesup-ink">
                       {errors.templateTiers || errors.templateTierInversion || errors.templateTierOverlap}
                     </p>
                   </div>
@@ -579,25 +579,25 @@ export default function RecurringForm() {
                   {draft.templateTiers.map((tier, index) => (
                     <div
                       key={tier.tierNumber}
-                      className="flex flex-col gap-2 rounded-lg border border-slate-100 bg-slate-50 p-3 sm:flex-row sm:items-center"
+                      className="flex flex-col gap-2  border border-wesup-ink/10 bg-wesup-paper p-3 sm:flex-row sm:items-center"
                     >
-                      <span className="text-xs font-bold text-slate-700 sm:w-16">
+                      <span className="text-xs font-bold text-wesup-ink sm:w-16">
                         Tier {tier.tierNumber}
                       </span>
                       <div className="flex flex-1 gap-2">
                         <div className="flex-1">
-                          <label className="text-[10px] text-slate-500">Min Qty</label>
+                          <label className="text-[10px] text-wesup-ink-sub">Min Qty</label>
                           <input
                             type="number"
                             min={1}
                             value={tier.minimumQuantity}
                             onChange={(e) => updateTier(index, "minimumQuantity", Number(e.target.value) || 1)}
                             disabled={submitting}
-                            className="w-full rounded border border-slate-200 px-2 py-1.5 text-xs text-slate-900 outline-none focus:border-blue-400 disabled:bg-white"
+                            className="w-full  border border-wesup-ink/15 px-2 py-1.5 text-xs text-wesup-ink outline-none focus:border-wesup-red disabled:bg-wesup-paper"
                           />
                         </div>
                         <div className="flex-1">
-                          <label className="text-[10px] text-slate-500">Max Qty</label>
+                          <label className="text-[10px] text-wesup-ink-sub">Max Qty</label>
                           <input
                             type="number"
                             min={tier.minimumQuantity}
@@ -605,11 +605,11 @@ export default function RecurringForm() {
                             onChange={(e) => updateTier(index, "maximumQuantity", e.target.value ? Number(e.target.value) : null)}
                             disabled={submitting || index === draft.templateTiers.length - 1}
                             placeholder={index === draft.templateTiers.length - 1 ? "∞" : ""}
-                            className="w-full rounded border border-slate-200 px-2 py-1.5 text-xs text-slate-900 outline-none focus:border-blue-400 disabled:bg-white disabled:text-slate-400"
+                            className="w-full  border border-wesup-ink/15 px-2 py-1.5 text-xs text-wesup-ink outline-none focus:border-wesup-red disabled:bg-wesup-paper disabled:text-wesup-ink-sub"
                           />
                         </div>
                         <div className="w-28">
-                          <label className="text-[10px] text-slate-500">Harga/Unit</label>
+                          <label className="text-[10px] text-wesup-ink-sub">Harga/Unit</label>
                           <input
                             type="number"
                             min={0}
@@ -617,7 +617,7 @@ export default function RecurringForm() {
                             onChange={(e) => updateTier(index, "pricePerUnit", Number(e.target.value) || 0)}
                             disabled={submitting}
                             placeholder="Rp"
-                            className="w-full rounded border border-slate-200 px-2 py-1.5 text-xs text-slate-900 outline-none focus:border-blue-400 disabled:bg-white"
+                            className="w-full  border border-wesup-ink/15 px-2 py-1.5 text-xs text-wesup-ink outline-none focus:border-wesup-red disabled:bg-wesup-paper"
                           />
                         </div>
                       </div>
@@ -626,7 +626,7 @@ export default function RecurringForm() {
                           type="button"
                           onClick={() => removeTier(index)}
                           disabled={submitting}
-                          className="self-end rounded p-1 text-red-400 transition hover:bg-red-50 hover:text-red-600 sm:self-center"
+                          className="self-end  p-1 text-wesup-red/70 transition hover:bg-wesup-paper hover:text-wesup-red sm:self-center"
                           aria-label={`Hapus Tier ${tier.tierNumber}`}
                         >
                           <Minus size={14} />
@@ -639,17 +639,17 @@ export default function RecurringForm() {
             </div>
 
             {/* Pickup Location */}
-            <div className="flex items-start gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="flex items-start gap-4  border border-wesup-ink/15 bg-wesup-paper p-4 ">
               <span className="mt-1 shrink-0">
-                <MapPin size={20} className="text-orange-600" />
+                <MapPin size={20} className="text-wesup-ink-sub" />
               </span>
               <div className="min-w-0 flex-1 space-y-3">
                 <div>
-                  <label htmlFor="tpl-pickup-name" className="text-sm font-semibold text-slate-800">
-                    Nama Lokasi <span className="text-red-500">*</span>
+                  <label htmlFor="tpl-pickup-name" className="text-sm font-semibold text-wesup-ink">
+                    Nama Lokasi <span className="text-wesup-red">*</span>
                   </label>
                   {errors.templatePickupName && (
-                    <p className="mt-0.5 text-xs text-red-600">{errors.templatePickupName}</p>
+                    <p className="mt-0.5 text-xs text-wesup-red">{errors.templatePickupName}</p>
                   )}
                   <input
                     id="tpl-pickup-name"
@@ -659,16 +659,16 @@ export default function RecurringForm() {
                     onChange={(e) => updateField("templatePickupName", e.target.value)}
                     disabled={submitting}
                     placeholder="Contoh: Gudang Wesup Bandung"
-                    className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 disabled:bg-slate-50"
+                    className="mt-1 w-full  border border-wesup-ink/15 px-3 py-2 text-sm text-wesup-ink outline-none focus:border-wesup-red focus:ring-2  disabled:bg-wesup-paper"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="tpl-pickup-address" className="text-sm font-semibold text-slate-800">
-                    Alamat <span className="text-red-500">*</span>
+                  <label htmlFor="tpl-pickup-address" className="text-sm font-semibold text-wesup-ink">
+                    Alamat <span className="text-wesup-red">*</span>
                   </label>
                   {errors.templatePickupAddress && (
-                    <p className="mt-0.5 text-xs text-red-600">{errors.templatePickupAddress}</p>
+                    <p className="mt-0.5 text-xs text-wesup-red">{errors.templatePickupAddress}</p>
                   )}
                   <input
                     id="tpl-pickup-address"
@@ -678,18 +678,18 @@ export default function RecurringForm() {
                     onChange={(e) => updateField("templatePickupAddress", e.target.value)}
                     disabled={submitting}
                     placeholder="Alamat lengkap lokasi pengambilan..."
-                    className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 disabled:bg-slate-50"
+                    className="mt-1 w-full  border border-wesup-ink/15 px-3 py-2 text-sm text-wesup-ink outline-none focus:border-wesup-red focus:ring-2  disabled:bg-wesup-paper"
                   />
                 </div>
 
                 <div>
-                  <label className="text-sm font-semibold text-slate-800">
-                    Koordinat Pin Peta <span className="text-red-500">*</span>
+                  <label className="text-sm font-semibold text-wesup-ink">
+                    Koordinat Pin Peta <span className="text-wesup-red">*</span>
                   </label>
                   {errors.templateCoordinate && (
-                    <p className="mt-0.5 text-xs text-red-600">{errors.templateCoordinate}</p>
+                    <p className="mt-0.5 text-xs text-wesup-red">{errors.templateCoordinate}</p>
                   )}
-                  <div id="tpl-coordinate" className="relative mt-1 flex h-32 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-slate-100">
+                  <div id="tpl-coordinate" className="relative mt-1 flex h-32 items-center justify-center overflow-hidden  border border-wesup-ink/15 bg-wesup-paper-sub">
                     <div className="absolute inset-0 opacity-40 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCI+CjxyZWN0IHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCIgZmlsbD0ibm9uZSI+PC9yZWN0Pgo8cGF0aCBkPSJNMCAwdjIwSDIwVjBIMHptMTkgMTlIMVYxSDE5djE4eiIgZmlsbD0iI2QxZDVkYiI+PC9wYXRoPgo8L3N2Zz4=')]" />
                     <button
                       type="button"
@@ -699,7 +699,7 @@ export default function RecurringForm() {
                         setErrors((e) => ({ ...e, templateCoordinate: undefined }));
                       }}
                       disabled={submitting}
-                      className="relative rounded-full bg-white px-3 py-1.5 text-xs font-bold text-blue-600 shadow-sm transition hover:bg-blue-50 disabled:opacity-50"
+                      className="relative  bg-wesup-paper px-3 py-1.5 text-xs font-bold text-wesup-red  transition hover:bg-wesup-paper-sub disabled:opacity-50"
                     >
                       {draft.templatePickupLatitude !== null
                         ? `Koordinat: ${draft.templatePickupLatitude.toFixed(5)}, ${draft.templatePickupLongitude?.toFixed(5)}`
@@ -718,19 +718,19 @@ export default function RecurringForm() {
             <h2
               ref={headingRef}
               tabIndex={-1}
-              className="text-xl font-bold text-slate-900 outline-none"
+              className="text-xl font-bold text-wesup-ink outline-none"
             >
               Tinjauan Jadwal
             </h2>
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-wesup-ink-sub">
               Pastikan semua informasi sudah benar sebelum menyimpan jadwal.
             </p>
 
             {/* Status */}
-            <div className="rounded-xl border border-blue-200 bg-blue-50 p-4">
+            <div className=" border border-wesup-ink/20 bg-wesup-paper-sub p-4">
               <div className="flex items-center gap-2">
-                <AlertCircle size={16} className="text-blue-600" />
-                <p className="text-sm font-medium text-blue-800">
+                <AlertCircle size={16} className="text-wesup-red" />
+                <p className="text-sm font-medium text-wesup-ink-sub">
                   Batch akan di-generate otomatis sesuai jadwal. Anda akan menerima
                   notifikasi H-1 untuk review sebelum tayang.
                 </p>
@@ -738,26 +738,26 @@ export default function RecurringForm() {
             </div>
 
             {/* Schedule Summary */}
-            <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-              <h3 className="mb-3 flex items-center gap-2 text-sm font-bold text-slate-900">
-                <Calendar size={16} className="text-blue-500" />
+            <section className=" border border-wesup-ink/15 bg-wesup-paper p-5 ">
+              <h3 className="mb-3 flex items-center gap-2 text-sm font-bold text-wesup-ink">
+                <Calendar size={16} className="text-wesup-red" />
                 Jadwal
               </h3>
               <dl className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <dt className="text-slate-500">Nama Jadwal</dt>
-                  <dd className="font-semibold text-slate-900">{draft.name}</dd>
+                  <dt className="text-wesup-ink-sub">Nama Jadwal</dt>
+                  <dd className="font-semibold text-wesup-ink">{draft.name}</dd>
                 </div>
                 <div className="flex justify-between">
-                  <dt className="text-slate-500">Interval</dt>
-                  <dd className="font-semibold text-slate-900">
+                  <dt className="text-wesup-ink-sub">Interval</dt>
+                  <dd className="font-semibold text-wesup-ink">
                     Setiap {draft.intervalDays} hari
                   </dd>
                 </div>
                 {draft.daysOfWeek.length > 0 && (
                   <div className="flex justify-between">
-                    <dt className="text-slate-500">Hari Tayang</dt>
-                    <dd className="font-semibold text-slate-900">
+                    <dt className="text-wesup-ink-sub">Hari Tayang</dt>
+                    <dd className="font-semibold text-wesup-ink">
                       {draft.daysOfWeek
                         .sort((a, b) => a - b)
                         .map((d) => DAY_LABELS[d as DayOfWeek])
@@ -766,13 +766,13 @@ export default function RecurringForm() {
                   </div>
                 )}
                 <div className="flex justify-between">
-                  <dt className="text-slate-500">Status</dt>
+                  <dt className="text-wesup-ink-sub">Status</dt>
                   <dd>
                     <span
                       className={
                         draft.isActive
-                          ? "inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700"
-                          : "inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600"
+                          ? "inline-flex items-center gap-1  bg-wesup-paper-sub px-2 py-0.5 text-xs font-semibold text-wesup-ink"
+                          : "inline-flex items-center gap-1  bg-wesup-paper-sub px-2 py-0.5 text-xs font-semibold text-wesup-ink-sub"
                       }
                     >
                       {draft.isActive ? "Aktif" : "Nonaktif"}
@@ -783,27 +783,27 @@ export default function RecurringForm() {
             </section>
 
             {/* Product Summary */}
-            <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-              <h3 className="mb-3 flex items-center gap-2 text-sm font-bold text-slate-900">
-                <Package size={16} className="text-blue-500" />
+            <section className=" border border-wesup-ink/15 bg-wesup-paper p-5 ">
+              <h3 className="mb-3 flex items-center gap-2 text-sm font-bold text-wesup-ink">
+                <Package size={16} className="text-wesup-red" />
                 Template Produk
               </h3>
               <dl className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <dt className="text-slate-500">Nama Produk</dt>
-                  <dd className="font-semibold text-slate-900">{draft.templateTitle}</dd>
+                  <dt className="text-wesup-ink-sub">Nama Produk</dt>
+                  <dd className="font-semibold text-wesup-ink">{draft.templateTitle}</dd>
                 </div>
                 <div className="flex justify-between">
-                  <dt className="text-slate-500">Kategori</dt>
+                  <dt className="text-wesup-ink-sub">Kategori</dt>
                   <dd>
-                    <span className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-600">
+                    <span className=" bg-wesup-paper-sub px-2 py-0.5 text-xs font-medium text-wesup-red">
                       {draft.templateCategory}
                     </span>
                   </dd>
                 </div>
                 <div className="flex justify-between">
-                  <dt className="text-slate-500">Deskripsi</dt>
-                  <dd className="max-w-xs text-right text-slate-900">
+                  <dt className="text-wesup-ink-sub">Deskripsi</dt>
+                  <dd className="max-w-xs text-right text-wesup-ink">
                     {draft.templateDescription}
                   </dd>
                 </div>
@@ -811,13 +811,13 @@ export default function RecurringForm() {
             </section>
 
             {/* Tier Summary */}
-            <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-              <h3 className="mb-3 flex items-center gap-2 text-sm font-bold text-slate-900">
-                <TrendingDown size={16} className="text-blue-500" />
+            <section className=" border border-wesup-ink/15 bg-wesup-paper p-5 ">
+              <h3 className="mb-3 flex items-center gap-2 text-sm font-bold text-wesup-ink">
+                <TrendingDown size={16} className="text-wesup-red" />
                 Skema Harga Tier
               </h3>
               <div className="mb-3 flex items-baseline gap-3">
-                <span className="text-xl font-bold text-blue-700">
+                <span className="text-xl font-bold text-wesup-ink">
                   {new Intl.NumberFormat("id-ID", {
                     style: "currency",
                     currency: "IDR",
@@ -825,7 +825,7 @@ export default function RecurringForm() {
                   }).format(lowestPrice)}
                 </span>
                 {lowestPrice < highestPrice && (
-                  <span className="text-sm text-slate-400 line-through">
+                  <span className="text-sm text-wesup-ink-sub line-through">
                     {new Intl.NumberFormat("id-ID", {
                       style: "currency",
                       currency: "IDR",
@@ -837,10 +837,10 @@ export default function RecurringForm() {
               <ul className="space-y-1 text-sm">
                 {draft.templateTiers.map((tier) => (
                   <li key={tier.tierNumber} className="flex justify-between">
-                    <span className="text-slate-600">
+                    <span className="text-wesup-ink-sub">
                       Tier {tier.tierNumber}: {tier.minimumQuantity}–{tier.maximumQuantity ?? "+"} pcs
                     </span>
-                    <strong className="text-slate-900">
+                    <strong className="text-wesup-ink">
                       {new Intl.NumberFormat("id-ID", {
                         style: "currency",
                         currency: "IDR",
@@ -853,16 +853,16 @@ export default function RecurringForm() {
             </section>
 
             {/* Pickup Summary */}
-            <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-              <h3 className="mb-3 flex items-center gap-2 text-sm font-bold text-slate-900">
-                <MapPin size={16} className="text-orange-500" />
+            <section className=" border border-wesup-ink/15 bg-wesup-paper p-5 ">
+              <h3 className="mb-3 flex items-center gap-2 text-sm font-bold text-wesup-ink">
+                <MapPin size={16} className="text-wesup-ink-sub" />
                 Lokasi Pengambilan
               </h3>
               <div className="space-y-1 text-sm">
-                <p className="font-semibold text-slate-900">{draft.templatePickupName}</p>
-                <p className="text-slate-600">{draft.templatePickupAddress}</p>
+                <p className="font-semibold text-wesup-ink">{draft.templatePickupName}</p>
+                <p className="text-wesup-ink-sub">{draft.templatePickupAddress}</p>
                 {draft.templatePickupLatitude !== null && draft.templatePickupLongitude !== null && (
-                  <p className="font-mono text-xs text-slate-500">
+                  <p className="font-mono text-xs text-wesup-ink-sub">
                     Koordinat: {draft.templatePickupLatitude.toFixed(5)},{" "}
                     {draft.templatePickupLongitude.toFixed(5)}
                   </p>
@@ -876,13 +876,13 @@ export default function RecurringForm() {
         )}
 
         {/* Navigation */}
-        <div className="mt-8 flex flex-col-reverse gap-3 border-t border-slate-100 pt-6 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-8 flex flex-col-reverse gap-3 border-t border-wesup-ink/10 pt-6 sm:flex-row sm:items-center sm:justify-between">
           {currentStep > 1 ? (
             <button
               type="button"
               onClick={goBack}
               disabled={submitting}
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex min-h-11 items-center justify-center gap-2  border border-wesup-ink/15 px-5 py-3 text-sm font-semibold text-wesup-ink transition hover:border-wesup-red hover:bg-wesup-paper-sub hover:text-wesup-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:outline-wesup-red disabled:cursor-not-allowed disabled:opacity-50"
             >
               <ArrowLeft className="h-4 w-4" aria-hidden="true" />
               Kembali
@@ -897,7 +897,7 @@ export default function RecurringForm() {
                 type="button"
                 onClick={handleSaveDraft}
                 disabled={submitting}
-                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex min-h-11 items-center justify-center gap-2  border border-wesup-ink/15 px-5 py-3 text-sm font-semibold text-wesup-ink transition hover:border-wesup-red hover:bg-wesup-paper-sub hover:text-wesup-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:outline-wesup-red disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <Save className="h-4 w-4" />
                 Simpan Draft
@@ -906,7 +906,7 @@ export default function RecurringForm() {
             <button
               type="submit"
               disabled={submitting}
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-60 sm:min-w-56"
+              className="inline-flex min-h-11 items-center justify-center gap-2  bg-wesup-ink px-6 py-3 text-sm font-semibold text-wesup-paper  transition hover:bg-wesup-red focus-visible:outline-none focus-visible:ring-2 focus-visible:outline-wesup-red disabled:cursor-not-allowed disabled:opacity-60 sm:min-w-56"
             >
               {formState.submitPhase === "publishing" ? (
                 <LoaderCircle className="h-5 w-5 animate-spin" aria-hidden="true" />
@@ -929,7 +929,7 @@ export default function RecurringForm() {
         </div>
 
         {currentStep === 3 && (
-          <p className="mt-4 text-center text-xs leading-5 text-slate-500">
+          <p className="mt-4 text-center text-xs leading-5 text-wesup-ink-sub">
             Dengan menyimpan, Anda menyetujui jadwal ini akan menghasilkan batch
             otomatis sesuai interval yang diatur.
           </p>
@@ -938,18 +938,18 @@ export default function RecurringForm() {
 
       {/* Success state */}
       {formState.submitPhase === "saved" && (
-        <div className="mt-6 rounded-xl border border-emerald-200 bg-emerald-50 p-6 text-center">
-          <CheckCircle2 size={40} className="mx-auto text-emerald-500" />
-          <h3 className="mt-3 text-lg font-bold text-emerald-900">
+        <div className="mt-6  border border-wesup-ink/20 bg-wesup-paper-sub p-6 text-center">
+          <CheckCircle2 size={40} className="mx-auto text-wesup-ink-sub" />
+          <h3 className="mt-3 text-lg font-bold text-wesup-ink-sub">
             Jadwal berhasil disimpan!
           </h3>
-          <p className="mt-1 text-sm text-emerald-700">
+          <p className="mt-1 text-sm text-wesup-ink">
             Batch akan di-generate otomatis sesuai jadwal yang diatur.
           </p>
           <button
             type="button"
             onClick={() => router.push("/supplier/recurring")}
-            className="mt-4 inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700"
+            className="mt-4 inline-flex items-center gap-2  bg-wesup-red px-5 py-2.5 text-sm font-semibold text-wesup-paper hover:bg-wesup-paper"
           >
             Lihat Semua Jadwal
           </button>

@@ -54,19 +54,19 @@ export default function RecurringConfirmDialog({
       aria-modal="true"
       aria-labelledby="confirm-dialog-title"
     >
-      <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-xl">
+      <div className="w-full max-w-md  border border-wesup-ink/15 bg-wesup-paper p-6 ">
         <div className="mb-4 flex items-center justify-between">
           <h2
             id="confirm-dialog-title"
-            className="flex items-center gap-2 text-lg font-bold text-slate-900"
+            className="flex items-center gap-2 text-lg font-bold text-wesup-ink"
           >
-            <CalendarClock size={20} className="text-blue-600" />
+            <CalendarClock size={20} className="text-wesup-red" />
             Konfirmasi Jadwal
           </h2>
           <button
             type="button"
             onClick={onCancel}
-            className="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+            className=" p-1.5 text-wesup-ink-sub transition hover:bg-wesup-paper-sub hover:text-wesup-ink-sub"
             aria-label="Tutup"
           >
             <X size={18} />
@@ -74,10 +74,10 @@ export default function RecurringConfirmDialog({
         </div>
 
         <div className="mb-6 space-y-3">
-          <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
+          <div className=" border border-wesup-ink/20 bg-wesup-paper-sub p-3">
             <div className="flex items-start gap-2">
-              <AlertCircle size={16} className="mt-0.5 shrink-0 text-amber-600" />
-              <p className="text-sm text-amber-800">
+              <AlertCircle size={16} className="mt-0.5 shrink-0 text-wesup-ink-sub" />
+              <p className="text-sm text-wesup-ink">
                 Anda wajib mengkonfirmasi setiap batch yang akan tayang.
                 Jika tidak dikonfirmasi dalam batas waktu, batch akan
                 <strong> dibatalkan otomatis</strong> oleh sistem.
@@ -85,11 +85,11 @@ export default function RecurringConfirmDialog({
             </div>
           </div>
 
-          <div className="rounded-lg bg-slate-50 p-3 text-sm">
-            <p className="text-slate-600">Jadwal:</p>
-            <p className="font-semibold text-slate-900">{configName}</p>
+          <div className=" bg-wesup-paper p-3 text-sm">
+            <p className="text-wesup-ink-sub">Jadwal:</p>
+            <p className="font-semibold text-wesup-ink">{configName}</p>
             {formattedDate && (
-              <p className="mt-1 text-xs text-slate-500">
+              <p className="mt-1 text-xs text-wesup-ink-sub">
                 Batch berikutnya tayang: <strong>{formattedDate}</strong>
               </p>
             )}
@@ -100,7 +100,7 @@ export default function RecurringConfirmDialog({
           <button
             type="button"
             onClick={onCancel}
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700"
+            className="inline-flex items-center justify-center gap-2  border border-wesup-ink/15 px-4 py-2.5 text-sm font-semibold text-wesup-ink transition hover:border-wesup-red hover:bg-wesup-paper-sub hover:text-wesup-ink"
           >
             Batal
           </button>
@@ -108,7 +108,7 @@ export default function RecurringConfirmDialog({
             ref={confirmRef}
             type="button"
             onClick={onConfirm}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
+            className="inline-flex items-center justify-center gap-2  bg-wesup-ink px-5 py-2.5 text-sm font-semibold text-wesup-paper  transition hover:bg-wesup-red"
           >
             <CheckCircle2 size={16} />
             Konfirmasi Tayang

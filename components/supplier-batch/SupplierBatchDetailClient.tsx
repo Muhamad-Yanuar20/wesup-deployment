@@ -60,8 +60,8 @@ export function SupplierBatchHeader({ batch, deleteButtonRef, onDelete }: Suppli
   const canEdit = batch.status === "DRAFT" || batch.status === "PUBLISHED";
   const StatusIcon = canEdit ? (batch.status === "DRAFT" ? Clock : CheckCircle2) : AlertCircle;
   const statusClassName = !canEdit
-    ? "inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700"
-    : "inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700";
+    ? "inline-flex items-center gap-1.5  bg-wesup-paper-sub px-2.5 py-1 text-xs font-semibold text-wesup-ink"
+    : "inline-flex items-center gap-1.5  bg-wesup-paper-sub px-2.5 py-1 text-xs font-semibold text-wesup-ink";
 
   return (
     <>
@@ -71,7 +71,7 @@ export function SupplierBatchHeader({ batch, deleteButtonRef, onDelete }: Suppli
           type="button"
           disabled={!canEdit}
           onClick={onDelete}
-          className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm font-medium text-red-600 disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex items-center gap-2  border border-wesup-red/40 bg-wesup-paper px-4 py-2 text-sm font-medium wesup-red disabled:cursor-not-allowed disabled:opacity-50"
         >
           <Trash2 aria-hidden="true" size={16} />
           Hapus Katalog
@@ -83,12 +83,12 @@ export function SupplierBatchHeader({ batch, deleteButtonRef, onDelete }: Suppli
           role="status"
           aria-live="polite"
           tabIndex={-1}
-          className="rounded-lg border border-gray-200 bg-gray-100 px-4 py-3 text-sm font-semibold"
+          className=" border border-wesup-ink/20 bg-wesup-paper-sub px-4 py-3 text-sm font-semibold"
         >
           {statusLabel[batch.status]} — {terminalStatusMessage[batch.status]}
         </p>
       ) : null}
-      <section className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+      <section className=" border border-wesup-ink/10 bg-wesup-paper p-6 ">
         <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
           <div>
             <div className="mb-2 flex items-center gap-3">
@@ -96,24 +96,24 @@ export function SupplierBatchHeader({ batch, deleteButtonRef, onDelete }: Suppli
                 <StatusIcon aria-hidden="true" size={14} />
                 {statusLabel[batch.status]}
               </span>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-600">
+              <span className="inline-flex items-center gap-1.5  bg-wesup-paper-sub px-2.5 py-1 text-xs font-medium text-wesup-red">
                 <Package aria-hidden="true" size={14} />
                 {batch.category}
               </span>
             </div>
-            <h1 className="text-2xl font-bold text-gray-900 md:text-3xl">{batch.title}</h1>
-            <p className="mt-1 text-sm text-gray-500">ID: {batch.displayCode}</p>
+            <h1 className="text-2xl font-bold text-wesup-ink-sub md:text-3xl">{batch.title}</h1>
+            <p className="mt-1 text-sm text-wesup-ink-sub">ID: {batch.displayCode}</p>
           </div>
           <div className="w-full md:w-auto">
             {!canEdit && terminalStatusMessage[batch.status] ? (
-              <span className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-gray-300 px-5 py-2.5 text-sm font-medium text-gray-400 md:w-auto">
+              <span className="flex w-full items-center justify-center gap-2  border-2 border-wesup-ink/20 px-5 py-2.5 text-sm font-medium text-wesup-ink-sub md:w-auto">
                 <Pencil aria-hidden="true" size={18} />
                 Edit Penawaran
               </span>
             ) : (
               <Link
                 href={`/supplier/catalog/${batch.id}/edit`}
-                className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-blue-600 px-5 py-2.5 text-sm font-medium text-blue-600 transition hover:bg-blue-50 md:w-auto"
+                className="flex w-full items-center justify-center gap-2  border-2 border-wesup-ink/20 px-5 py-2.5 text-sm font-medium text-wesup-red transition hover:bg-wesup-paper-sub md:w-auto"
               >
                 <Pencil aria-hidden="true" size={18} />
                 Edit Penawaran
@@ -128,21 +128,21 @@ export function SupplierBatchHeader({ batch, deleteButtonRef, onDelete }: Suppli
         <section className="flex flex-col gap-3 sm:flex-row">
           <Link
             href={`/supplier/batches/${batch.id}/transaksi`}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+            className="inline-flex items-center justify-center gap-2  bg-wesup-paper px-5 py-3 text-sm font-semibold text-wesup-paper  transition hover:bg-wesup-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:wesup-ink focus-visible:ring-offset-2"
           >
             <CreditCard aria-hidden="true" size={18} />
             Pusat Transaksi
           </Link>
           <Link
             href={`/supplier/batch/${batch.id}/orders`}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+            className="inline-flex items-center justify-center gap-2  bg-wesup-ink px-5 py-3 text-sm font-semibold text-wesup-paper  transition hover:bg-wesup-red focus-visible:outline-none focus-visible:ring-2 focus-visible:outline-wesup-red focus-visible:ring-offset-2"
           >
             <Package aria-hidden="true" size={18} />
             Manajemen Pesanan
           </Link>
           <Link
             href={`/supplier/batch/${batch.id}/pickup`}
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-blue-600 bg-white px-5 py-3 text-sm font-semibold text-blue-600 transition hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+            className="inline-flex items-center justify-center gap-2  border border-wesup-ink/20 bg-wesup-paper px-5 py-3 text-sm font-semibold text-wesup-red transition hover:bg-wesup-paper-sub focus-visible:outline-none focus-visible:ring-2 focus-visible:outline-wesup-red focus-visible:ring-offset-2"
           >
             <Truck aria-hidden="true" size={18} />
             Serah Terima (QR / PIN)
@@ -177,15 +177,15 @@ export default function SupplierBatchDetailClient({ batchId }: SupplierBatchDeta
   }, [batchId, retry]);
 
   const batch = state.batch;
-  if (state.loadPhase === "idle" || state.loadPhase === "loading") return <main className="min-h-screen bg-slate-50 p-6 text-slate-900 md:p-8"><p role="status" className="mx-auto max-w-5xl text-sm text-slate-700">Memuat detail katalog…</p></main>;
-  if (state.notFound) return <main className="min-h-screen bg-slate-50 p-6 text-slate-900 md:p-8"><section className="mx-auto max-w-5xl rounded-xl border border-slate-200 bg-white p-6 shadow-sm"><h1 className="text-xl font-bold text-slate-900">Katalog tidak ditemukan</h1><p className="mt-2 text-sm text-slate-700">ID katalog yang diminta: {batchId}</p><Link href="/marketplace" className="mt-4 inline-flex text-sm font-semibold text-blue-700">Kembali ke marketplace</Link></section></main>;
-  if (state.loadPhase === "error" || !batch) return <main className="min-h-screen bg-slate-50 p-6 text-slate-900 md:p-8"><section className="mx-auto max-w-5xl rounded-xl border border-red-200 bg-white p-6 shadow-sm"><h1 className="text-xl font-bold text-slate-900">Detail katalog belum dapat dimuat</h1><p className="mt-2 text-sm text-red-700">{state.loadError ?? "Gagal memuat katalog."}</p><button type="button" onClick={() => setRetry((value) => value + 1)} className="mt-4 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white">Coba lagi</button></section></main>;
+  if (state.loadPhase === "idle" || state.loadPhase === "loading") return <main className="min-h-screen bg-wesup-paper p-6 text-wesup-ink md:p-8"><p role="status" className="mx-auto max-w-5xl text-sm text-wesup-ink">Memuat detail katalog…</p></main>;
+  if (state.notFound) return <main className="min-h-screen bg-wesup-paper p-6 text-wesup-ink md:p-8"><section className="mx-auto max-w-5xl  border border-wesup-ink/15 bg-wesup-paper p-6 "><h1 className="text-xl font-bold text-wesup-ink">Katalog tidak ditemukan</h1><p className="mt-2 text-sm text-wesup-ink">ID katalog yang diminta: {batchId}</p><Link href="/marketplace" className="mt-4 inline-flex text-sm font-semibold text-wesup-ink">Kembali ke marketplace</Link></section></main>;
+  if (state.loadPhase === "error" || !batch) return <main className="min-h-screen bg-wesup-paper p-6 text-wesup-ink md:p-8"><section className="mx-auto max-w-5xl  border border-wesup-red/40 bg-wesup-paper p-6 "><h1 className="text-xl font-bold text-wesup-ink">Detail katalog belum dapat dimuat</h1><p className="mt-2 text-sm text-wesup-red">{state.loadError ?? "Gagal memuat katalog."}</p><button type="button" onClick={() => setRetry((value) => value + 1)} className="mt-4  bg-wesup-ink px-4 py-2 text-sm font-semibold text-wesup-paper">Coba lagi</button></section></main>;
 
   const capacityTarget = batch.capacityQuantity ?? batch.targetQuantity;
   const progress = progressFor(batch.registeredQuantity, capacityTarget);
   const lowest = batch.tiers.at(-1)?.pricePerUnit ?? batch.basePrice;
   const remaining = Math.max(0, capacityTarget - batch.registeredQuantity);
-  const timeline = [["Pendaftaran dibuka", batch.timeline.registrationOpensAt, Calendar, "text-indigo-600"], ["Pendaftaran ditutup", batch.timeline.registrationClosesAt, Clock, "text-indigo-600"], ["Pembayaran dibuka", batch.timeline.paymentOpensAt, CreditCard, "text-rose-600"], ["Batas pembayaran", batch.timeline.paymentClosesAt, CreditCard, "text-rose-600"], ["Estimasi ready", batch.timeline.estimatedReadyAt, Truck, "text-emerald-600"]] as const;
+  const timeline = [["Pendaftaran dibuka", batch.timeline.registrationOpensAt, Calendar, "text-wesup-ink-sub"], ["Pendaftaran ditutup", batch.timeline.registrationClosesAt, Clock, "text-wesup-ink-sub"], ["Pembayaran dibuka", batch.timeline.paymentOpensAt, CreditCard, "text-wesup-ink-sub"], ["Batas pembayaran", batch.timeline.paymentClosesAt, CreditCard, "text-wesup-ink-sub"], ["Estimasi ready", batch.timeline.estimatedReadyAt, Truck, "text-wesup-ink-sub"]] as const;
 
   const cancelBatch = () => {
     if (state.cancelPhase === "loading" || !state.cancellationReason.trim()) return;
@@ -210,10 +210,10 @@ export default function SupplierBatchDetailClient({ batchId }: SupplierBatchDeta
       });
   };
 
-  return <main className="min-h-screen bg-slate-50 p-6 text-slate-900 md:p-8"><div className="mx-auto max-w-5xl space-y-6"><SupplierBatchHeader batch={batch} deleteButtonRef={deleteRef} onDelete={() => dispatch({ type: "deleteOpened" })} />
-  <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3"><section className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm"><h2 className="mb-4 flex items-center gap-2 border-b pb-3 font-semibold"><TrendingDown size={18} className="text-blue-500" />Skema Tier Diskon</h2><div className="mb-4 flex justify-between"><div><span className="text-xs text-gray-500">Harga Dasar</span><p className="text-lg text-gray-400 line-through">{money.format(batch.basePrice)}</p></div><div className="text-right"><span className="text-xs font-bold text-blue-600">Target Diskon</span><p className="text-2xl font-bold">{money.format(lowest)}</p></div></div><ul className="space-y-2 border-t pt-3 text-sm">{batch.tiers.map((tier) => <li key={tier.tierNumber} className="flex justify-between gap-3"><span>Tier {tier.tierNumber}: {tierRange(tier.minimumQuantity, tier.maximumQuantity)}</span><strong>{money.format(tier.pricePerUnit)}</strong></li>)}</ul><div className="pt-4"><div className="mb-2 flex justify-between text-xs"><span className="flex items-center gap-1"><Package size={12} />{batch.registeredQuantity} / {capacityTarget} {batch.unit ?? "pcs"}</span><span>{Math.round(progress)}%</span></div><div className="h-2.5 overflow-hidden rounded-full bg-gray-100"><div className="h-full rounded-full bg-blue-500" style={{ width: `${progress}%` }} /></div><p className="mt-2 text-xs text-gray-500">{batch.participantCount} peserta, {batch.paidParticipantCount} sudah membayar</p></div><p className="mt-4 flex items-center gap-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-700"><AlertCircle size={14} />Butuh {remaining} {batch.unit ?? "pcs"} lagi untuk tutup kuota</p></section>
-  <section className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm"><h2 className="mb-4 flex items-center gap-2 border-b pb-3 font-semibold"><Clock size={18} className="text-indigo-500" />Timeline Batch</h2><dl className="space-y-4 text-sm">{timeline.map(([label, value, Icon, color]) => <div key={label} className="flex items-start gap-3"><Icon size={16} className={`mt-1 ${color}`} /><div><dt className="text-xs text-gray-500">{label}</dt><dd className="font-semibold">{dates.format(new Date(value))}</dd></div></div>)}</dl></section>
-  <section className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm md:col-span-2 lg:col-span-1"><h2 className="mb-4 flex items-center gap-2 border-b pb-3 font-semibold"><MapPin size={18} className="text-orange-500" />Lokasi Pengambilan</h2><div className="flex items-start gap-3"><MapPin size={16} className="mt-1 shrink-0 text-orange-600" /><div className="text-sm"><strong className="block text-base">{batch.pickup.name}</strong><p>{batch.pickup.address}</p><p className="mt-2 text-xs text-gray-500">Koordinat: {batch.pickup.latitude}, {batch.pickup.longitude}</p></div></div><div className="relative mt-4 flex h-32 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-slate-100"><div className="absolute inset-0 opacity-40 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCI+CjxyZWN0IHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCIgZmlsbD0ibm9uZSI+PC9yZWN0Pgo8cGF0aCBkPSJNMCAwdjIwSDIwVjBIMHptMTkgMTlIMVYxSDE5djE4eiIgZmlsbD0iI2QxZDVkYiI+PC9wYXRoPgo8L3N2Zz4=')]" /><span className="relative rounded-full bg-white px-3 py-1.5 text-xs font-bold">Lokasi pengambilan Bandung</span></div></section></div></div>
+  return <main className="min-h-screen bg-wesup-paper p-6 text-wesup-ink md:p-8"><div className="mx-auto max-w-5xl space-y-6"><SupplierBatchHeader batch={batch} deleteButtonRef={deleteRef} onDelete={() => dispatch({ type: "deleteOpened" })} />
+  <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3"><section className=" border border-wesup-ink/10 bg-wesup-paper p-6 "><h2 className="mb-4 flex items-center gap-2 border-b pb-3 font-semibold"><TrendingDown size={18} className="text-wesup-red" />Skema Tier Diskon</h2><div className="mb-4 flex justify-between"><div><span className="text-xs text-wesup-ink-sub">Harga Dasar</span><p className="text-lg text-wesup-ink-sub line-through">{money.format(batch.basePrice)}</p></div><div className="text-right"><span className="text-xs font-bold text-wesup-red">Target Diskon</span><p className="text-2xl font-bold">{money.format(lowest)}</p></div></div><ul className="space-y-2 border-t pt-3 text-sm">{batch.tiers.map((tier) => <li key={tier.tierNumber} className="flex justify-between gap-3"><span>Tier {tier.tierNumber}: {tierRange(tier.minimumQuantity, tier.maximumQuantity)}</span><strong>{money.format(tier.pricePerUnit)}</strong></li>)}</ul><div className="pt-4"><div className="mb-2 flex justify-between text-xs"><span className="flex items-center gap-1"><Package size={12} />{batch.registeredQuantity} / {capacityTarget} {batch.unit ?? "pcs"}</span><span>{Math.round(progress)}%</span></div><div className="h-2.5 overflow-hidden  bg-wesup-paper-sub"><div className="h-full  bg-wesup-red" style={{ width: `${progress}%` }} /></div><p className="mt-2 text-xs text-wesup-ink-sub">{batch.participantCount} peserta, {batch.paidParticipantCount} sudah membayar</p></div><p className="mt-4 flex items-center gap-2  bg-wesup-paper-sub px-3 py-2 text-xs text-wesup-ink"><AlertCircle size={14} />Butuh {remaining} {batch.unit ?? "pcs"} lagi untuk tutup kuota</p></section>
+  <section className=" border border-wesup-ink/10 bg-wesup-paper p-6 "><h2 className="mb-4 flex items-center gap-2 border-b pb-3 font-semibold"><Clock size={18} className="text-wesup-ink-sub" />Timeline Batch</h2><dl className="space-y-4 text-sm">{timeline.map(([label, value, Icon, color]) => <div key={label} className="flex items-start gap-3"><Icon size={16} className={`mt-1 ${color}`} /><div><dt className="text-xs text-wesup-ink-sub">{label}</dt><dd className="font-semibold">{dates.format(new Date(value))}</dd></div></div>)}</dl></section>
+  <section className=" border border-wesup-ink/10 bg-wesup-paper p-6  md:col-span-2 lg:col-span-1"><h2 className="mb-4 flex items-center gap-2 border-b pb-3 font-semibold"><MapPin size={18} className="text-wesup-ink-sub" />Lokasi Pengambilan</h2><div className="flex items-start gap-3"><MapPin size={16} className="mt-1 shrink-0 text-wesup-ink-sub" /><div className="text-sm"><strong className="block text-base">{batch.pickup.name}</strong><p>{batch.pickup.address}</p><p className="mt-2 text-xs text-wesup-ink-sub">Koordinat: {batch.pickup.latitude}, {batch.pickup.longitude}</p></div></div><div className="relative mt-4 flex h-32 items-center justify-center overflow-hidden  border border-wesup-ink/15 bg-wesup-paper-sub"><div className="absolute inset-0 opacity-40 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCI+CjxyZWN0IHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCIgZmlsbD0ibm9uZSI+PC9yZWN0Pgo8cGF0aCBkPSJNMCAwdjIwSDIwVjBIMHptMTkgMTlIMVYxSDE5djE4eiIgZmlsbD0iI2QxZDVkYiI+PC9wYXRoPgo8L3N2Zz4=')]" /><span className="relative  bg-wesup-paper px-3 py-1.5 text-xs font-bold">Lokasi pengambilan Bandung</span></div></section></div></div>
   <DeleteCatalogDialog mode={batch.status === "DRAFT" ? "delete" : "cancel"} open={state.dialogOpen} batch={batch} reason={state.cancellationReason} warnings={getCancellationWarnings(batch)} phase={state.cancelPhase} error={state.cancelError} onReasonChange={(value) => dispatch({ type: "reasonChanged", value })} onCancel={() => dispatch({ type: "deleteClosed" })} onConfirm={cancelBatch} returnFocusRef={deleteRef} />
   </main>;
 }

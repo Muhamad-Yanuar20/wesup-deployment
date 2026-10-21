@@ -34,27 +34,27 @@ export default function RecurringBatchPreviewCard({
   const highestPrice = preview.tiers.at(0)?.pricePerUnit ?? 0;
 
   return (
-    <div className="rounded-xl border border-blue-200 bg-blue-50/50 p-5">
-      <h3 className="mb-3 flex items-center gap-2 text-sm font-bold text-blue-900">
-        <Package size={16} className="text-blue-600" />
+    <div className=" border border-wesup-ink/20 bg-wesup-paper-sub/50 p-5">
+      <h3 className="mb-3 flex items-center gap-2 text-sm font-bold text-wesup-ink">
+        <Package size={16} className="text-wesup-red" />
         Preview Batch yang Akan Di-generate
       </h3>
 
       {/* Product Info */}
-      <section className="mb-3 rounded-lg border border-white bg-white p-4 shadow-sm">
-        <h4 className="mb-2 flex items-center gap-2 text-xs font-bold text-slate-900">
-          <Package size={14} className="text-blue-500" />
+      <section className="mb-3  border border-wesup-paper bg-wesup-paper p-4 ">
+        <h4 className="mb-2 flex items-center gap-2 text-xs font-bold text-wesup-ink">
+          <Package size={14} className="text-wesup-red" />
           Detail Produk
         </h4>
         <dl className="space-y-1.5 text-sm">
           <div className="flex justify-between">
-            <dt className="text-slate-500">Nama Produk</dt>
-            <dd className="font-semibold text-slate-900">{preview.templateTitle}</dd>
+            <dt className="text-wesup-ink-sub">Nama Produk</dt>
+            <dd className="font-semibold text-wesup-ink">{preview.templateTitle}</dd>
           </div>
           <div className="flex justify-between">
-            <dt className="text-slate-500">Kategori</dt>
+            <dt className="text-wesup-ink-sub">Kategori</dt>
             <dd>
-              <span className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-600">
+              <span className=" bg-wesup-paper-sub px-2 py-0.5 text-xs font-medium text-wesup-red">
                 {preview.category}
               </span>
             </dd>
@@ -63,17 +63,17 @@ export default function RecurringBatchPreviewCard({
       </section>
 
       {/* Tier Pricing */}
-      <section className="mb-3 rounded-lg border border-white bg-white p-4 shadow-sm">
-        <h4 className="mb-2 flex items-center gap-2 text-xs font-bold text-slate-900">
-          <TrendingDown size={14} className="text-blue-500" />
+      <section className="mb-3  border border-wesup-paper bg-wesup-paper p-4 ">
+        <h4 className="mb-2 flex items-center gap-2 text-xs font-bold text-wesup-ink">
+          <TrendingDown size={14} className="text-wesup-red" />
           Skema Harga Tier
         </h4>
         <div className="mb-2 flex items-baseline gap-3">
-          <span className="text-lg font-bold text-blue-700">
+          <span className="text-lg font-bold text-wesup-ink">
             {money.format(lowestPrice)}
           </span>
           {lowestPrice < highestPrice && (
-            <span className="text-xs text-slate-400 line-through">
+            <span className="text-xs text-wesup-ink-sub line-through">
               {money.format(highestPrice)}
             </span>
           )}
@@ -81,11 +81,11 @@ export default function RecurringBatchPreviewCard({
         <ul className="space-y-1 text-sm">
           {preview.tiers.map((tier) => (
             <li key={tier.tierNumber} className="flex justify-between">
-              <span className="text-slate-600">
+              <span className="text-wesup-ink-sub">
                 Tier {tier.tierNumber}: {tier.minimumQuantity}–
                 {tier.maximumQuantity ?? "+"} pcs
               </span>
-              <strong className="text-slate-900">
+              <strong className="text-wesup-ink">
                 {money.format(tier.pricePerUnit)}
               </strong>
             </li>
@@ -94,25 +94,25 @@ export default function RecurringBatchPreviewCard({
       </section>
 
       {/* Timeline */}
-      <section className="mb-3 rounded-lg border border-white bg-white p-4 shadow-sm">
-        <h4 className="mb-2 flex items-center gap-2 text-xs font-bold text-slate-900">
-          <Calendar size={14} className="text-indigo-500" />
+      <section className="mb-3  border border-wesup-paper bg-wesup-paper p-4 ">
+        <h4 className="mb-2 flex items-center gap-2 text-xs font-bold text-wesup-ink">
+          <Calendar size={14} className="text-wesup-ink-sub" />
           Timeline (Estimasi)
         </h4>
         <dl className="space-y-1.5 text-sm">
           {(
             [
-              ["Buka Pendaftaran", preview.estimatedRegistrationOpensAt, Calendar, "text-indigo-600"],
-              ["Tutup Pendaftaran", preview.estimatedRegistrationClosesAt, Calendar, "text-indigo-600"],
-              ["Mulai Payment", preview.estimatedPaymentOpensAt, CreditCard, "text-rose-600"],
-              ["Batas Payment", preview.estimatedPaymentClosesAt, CreditCard, "text-rose-600"],
-              ["Estimasi Ready", preview.estimatedReadyAt, Truck, "text-emerald-600"],
+              ["Buka Pendaftaran", preview.estimatedRegistrationOpensAt, Calendar, "text-wesup-ink-sub"],
+              ["Tutup Pendaftaran", preview.estimatedRegistrationClosesAt, Calendar, "text-wesup-ink-sub"],
+              ["Mulai Payment", preview.estimatedPaymentOpensAt, CreditCard, "text-wesup-ink-sub"],
+              ["Batas Payment", preview.estimatedPaymentClosesAt, CreditCard, "text-wesup-ink-sub"],
+              ["Estimasi Ready", preview.estimatedReadyAt, Truck, "text-wesup-ink-sub"],
             ] as const
           ).map(([label, value, Icon, color]) => (
             <div key={label} className="flex items-center gap-2">
               <Icon size={12} className={color} />
-              <dt className="w-32 text-xs text-slate-500">{label}</dt>
-              <dd className="text-xs font-semibold text-slate-900">
+              <dt className="w-32 text-xs text-wesup-ink-sub">{label}</dt>
+              <dd className="text-xs font-semibold text-wesup-ink">
                 {dates.format(new Date(value))}
               </dd>
             </div>
@@ -121,18 +121,18 @@ export default function RecurringBatchPreviewCard({
       </section>
 
       {/* Pickup Location */}
-      <section className="rounded-lg border border-white bg-white p-4 shadow-sm">
-        <h4 className="mb-2 flex items-center gap-2 text-xs font-bold text-slate-900">
-          <MapPin size={14} className="text-orange-500" />
+      <section className=" border border-wesup-paper bg-wesup-paper p-4 ">
+        <h4 className="mb-2 flex items-center gap-2 text-xs font-bold text-wesup-ink">
+          <MapPin size={14} className="text-wesup-ink-sub" />
           Lokasi Pengambilan
         </h4>
         <div className="space-y-1 text-sm">
-          <p className="font-semibold text-slate-900">{preview.pickupName}</p>
-          <p className="text-slate-600">{preview.pickupAddress}</p>
+          <p className="font-semibold text-wesup-ink">{preview.pickupName}</p>
+          <p className="text-wesup-ink-sub">{preview.pickupAddress}</p>
         </div>
       </section>
 
-      <div className="mt-3 flex items-start gap-2 rounded-lg bg-blue-100/50 p-3 text-xs text-blue-800">
+      <div className="mt-3 flex items-start gap-2  bg-wesup-paper-sub/50 p-3 text-xs text-wesup-ink-sub">
         <AlertCircle size={14} className="mt-0.5 shrink-0" />
         <p>
           Batch ini akan diterbitkan otomatis sesuai jadwal. Anda akan menerima

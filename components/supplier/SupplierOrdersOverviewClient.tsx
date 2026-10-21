@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ArrowRight, ClipboardList, Package } from "lucide-react";
-import { Skeleton } from "@/components/ui/SkeletonLoading";
+import { ArrowRight, ClipboardList } from "lucide-react";
+import { ArrowDisc, ErrorState, Skeleton } from "@/components/feedback";
 import type { SupplierDashboardResponse } from "@/lib/supplier-catalog/dashboard-repository";
 
 export default function SupplierOrdersOverviewClient() {
@@ -30,10 +30,77 @@ export default function SupplierOrdersOverviewClient() {
     };
   }, []);
 
-  if (loading) return <div className="space-y-3" role="status" aria-live="polite"><Skeleton className="h-24 w-full rounded-xl" /><Skeleton className="h-24 w-full rounded-xl" /></div>;
-  if (error) return <p role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</p>;
-  const batches = dashboard?.recentBatches ?? [];
-  if (batches.length === 0) return <section className="rounded-xl border border-dashed border-slate-300 bg-white p-10 text-center"><Package aria-hidden="true" className="mx-auto h-10 w-10 text-slate-300" /><h2 className="mt-3 text-lg font-bold text-slate-900">Belum ada batch Supplier</h2><p className="mt-1 text-sm text-slate-600">Buat katalog terlebih dahulu untuk melihat pesanan dan pengambilan.</p><Link href="/supplier/catalog/new" className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700">Buat Penawaran<ArrowRight className="h-4 w-4" aria-hidden="true" /></Link></section>;
+  if (loading)
+    return (
+      <div className="space-y-3" role="status" aria-live="polite">
+        <span className="sr-only">Memuat pesanan supplier</span>
+        <Skeleton className="h-28 w-full" />
+        <Skeleton className="h-28 w-full" />
+      </div>
+    );
+  if (error) return <ErrorState title="Pesanan Supplier belum dapat dimuat." description={error} />;
 
-  return <section aria-label="Batch dengan pesanan Supplier" className="space-y-3">{batches.map((batch) => <article key={batch.id} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"><div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center"><div><h2 className="font-bold text-slate-900">{batch.title}</h2><p className="mt-1 text-sm text-slate-500">{batch.participantCount} peserta · {batch.registeredQuantity} unit terdaftar</p></div><div className="flex flex-wrap gap-2"><Link href={`/supplier/batch/${batch.id}/orders`} className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-xs font-semibold text-white hover:bg-blue-700"><ClipboardList className="h-4 w-4" aria-hidden="true" />Pesanan</Link><Link href={`/supplier/batch/${batch.id}/pickup`} className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-blue-200 px-4 py-2.5 text-xs font-semibold text-blue-700 hover:bg-blue-50">Pengambilan<ArrowRight className="h-4 w-4" aria-hidden="true" /></Link></div></div></article>)}</section>;
+  const batches = dashboard?.recentBatches ?? [];
+  if (batches.length === 0)
+    return (
+      <section className="border border-wesup-ink/15 bg-wesup-paper px-5 py-10 text-center">
+        <span aria-hidden="true" className="mx-auto mb-5 block h-px w-10 bg-wesup-ink/25" />
+        <span aria-hidden="true" className="mx-auto mb-4 flex size-10 items-center justify-center border border-wesup-ink/20 text-wesup-ink-sub">
+          <span className="font-mono text-lg leading-none">0</span>
+        </span>
+        <h2 className="wesup-state-title text-2xl leading-[0.98] tracking-[0.06em] text-wesup-ink sm:text-3xl">
+          Belum ada batch Supplier
+        </h2>
+        <p className="mx-auto mt-3 max-w-prose text-sm leading-6 text-wesup-ink-sub">
+          Buat katalog terlebih dahulu untuk melihat pesanan dan pengambilan.
+        </p>
+        <div className="mt-5 flex justify-center">
+          <Link
+            href="/supplier/catalog/new"
+            className="group inline-flex min-h-12 items-center justify-center gap-3 border border-wesup-ink bg-wesup-ink px-7 py-3 text-[0.9375rem] font-semibold tracking-[-0.01em] text-wesup-paper transition-all duration-500 wesup-ease hover:border-wesup-red hover:bg-wesup-red hover:translate-x-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wesup-red"
+          >
+            Buat Penawaran
+            <ArrowDisc />
+          </Link>
+        </div>
+      </section>
+    );
+
+  return (
+    <section aria-label="Batch dengan pesanan Supplier" className="space-y-3">
+      {batches.map((batch) => (
+        <article key={batch.id} className="border border-wesup-ink/15 bg-wesup-paper p-4 sm:p-5">
+          <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+            <div className="min-w-0">
+              <p className="mb-2 font-mono text-[0.6875rem] uppercase tracking-[0.18em] text-wesup-ink-sub">
+                <span className="tabular-nums">{batch.displayCode}</span>
+              </p>
+              <h2 className="truncate text-base font-semibold text-wesup-ink">{batch.title}</h2>
+              <p className="mt-1 font-mono text-[0.6875rem] uppercase tracking-[0.18em] text-wesup-ink-sub">
+                <span className="tabular-nums">{batch.participantCount}</span> peserta ·{" "}
+                <span className="tabular-nums">{batch.registeredQuantity}</span> unit terdaftar ·{" "}
+                <span className="tabular-nums">{batch.paidParticipantCount}</span> bayar
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Link
+                href={`/supplier/batch/${batch.id}/orders`}
+                className="group inline-flex min-h-11 items-center justify-center gap-2 border border-wesup-ink bg-wesup-ink px-5 py-2.5 text-sm font-semibold text-wesup-paper transition-all duration-500 wesup-ease hover:border-wesup-red hover:bg-wesup-red hover:translate-x-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wesup-red"
+              >
+                <ClipboardList className="size-4" aria-hidden="true" strokeWidth={1.5} />
+                Pesanan
+              </Link>
+              <Link
+                href={`/supplier/batch/${batch.id}/pickup`}
+                className="inline-flex min-h-11 items-center justify-center gap-2 border border-wesup-ink bg-transparent px-5 py-2.5 text-sm font-semibold text-wesup-ink transition-colors duration-300 wesup-ease hover:bg-wesup-ink hover:text-wesup-paper focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wesup-red"
+              >
+                Pengambilan
+                <ArrowRight className="size-4" aria-hidden="true" strokeWidth={1.5} />
+              </Link>
+            </div>
+          </div>
+        </article>
+      ))}
+    </section>
+  );
 }

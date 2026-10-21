@@ -37,19 +37,19 @@ export default function PickupLocationStep({
       <h2
         ref={headingRef}
         tabIndex={-1}
-        className="text-xl font-bold text-slate-900 outline-none"
+        className="text-xl font-bold text-wesup-ink outline-none"
       >
         Lokasi Pengambilan
       </h2>
-      <p className="text-sm text-slate-500">
+      <p className="text-sm text-wesup-ink-sub">
         Tentukan titik kumpul tempat UMKM akan mengambil barang. Koordinat harus berada dalam wilayah Bandung.
       </p>
 
       {/* Location lock notice */}
       {locationLocked && (
-        <div className="flex items-start gap-3 rounded-xl border border-orange-200 bg-orange-50 p-4" role="alert">
-          <MapPin size={18} className="mt-0.5 shrink-0 text-orange-600" />
-          <div className="text-sm text-orange-800">
+        <div className="flex items-start gap-3  border border-wesup-ink/20 bg-wesup-paper-sub p-4" role="alert">
+          <MapPin size={18} className="mt-0.5 shrink-0 text-wesup-ink-sub" />
+          <div className="text-sm text-wesup-ink-sub">
             <p className="font-semibold">Lokasi dikunci permanen</p>
             <p className="mt-1">
               Sudah ada peserta terdaftar pada penawaran ini, sehingga lokasi pengambilan tidak dapat diubah. Buat penawaran baru jika ingin pindah lokasi.
@@ -62,9 +62,9 @@ export default function PickupLocationStep({
       <div>
         <label
           htmlFor="pickup-name"
-          className="block text-sm font-semibold text-slate-800"
+          className="block text-sm font-semibold text-wesup-ink"
         >
-          Nama Lokasi <span className="text-red-500">*</span>
+          Nama Lokasi <span className="text-wesup-red">*</span>
         </label>
         <input
           id="pickup-name"
@@ -74,10 +74,10 @@ export default function PickupLocationStep({
           onChange={(e) => onFieldChange("pickupName", e.target.value)}
           disabled={inputsDisabled}
           placeholder="Contoh: Gudang Bandung Pusat"
-          className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100"
+          className="mt-2 w-full  border border-wesup-ink/15 bg-wesup-paper px-4 py-2.5 text-sm text-wesup-ink outline-none placeholder:text-wesup-ink-sub focus:border-wesup-red focus:ring-2  disabled:cursor-not-allowed disabled:bg-wesup-paper-sub"
         />
         {errors.pickupName && (
-          <p className="mt-1 text-xs font-medium text-red-600" role="alert">
+          <p className="mt-1 text-xs font-medium text-wesup-red" role="alert">
             {errors.pickupName}
           </p>
         )}
@@ -87,9 +87,9 @@ export default function PickupLocationStep({
       <div>
         <label
           htmlFor="pickup-address"
-          className="block text-sm font-semibold text-slate-800"
+          className="block text-sm font-semibold text-wesup-ink"
         >
-          Alamat Lengkap <span className="text-red-500">*</span>
+          Alamat Lengkap <span className="text-wesup-red">*</span>
         </label>
         <textarea
           id="pickup-address"
@@ -99,10 +99,10 @@ export default function PickupLocationStep({
           disabled={inputsDisabled}
           rows={3}
           placeholder="Alamat lengkap lokasi pengambilan di Bandung"
-          className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100"
+          className="mt-2 w-full  border border-wesup-ink/15 bg-wesup-paper px-4 py-2.5 text-sm text-wesup-ink outline-none placeholder:text-wesup-ink-sub focus:border-wesup-red focus:ring-2  disabled:cursor-not-allowed disabled:bg-wesup-paper-sub"
         />
         {errors.pickupAddress && (
-          <p className="mt-1 text-xs font-medium text-red-600" role="alert">
+          <p className="mt-1 text-xs font-medium text-wesup-red" role="alert">
             {errors.pickupAddress}
           </p>
         )}
@@ -110,10 +110,10 @@ export default function PickupLocationStep({
 
       {/* Pin Peta */}
       <div>
-        <label className="block text-sm font-semibold text-slate-800">
-          Pin Peta Presisi <span className="text-red-500">*</span>
+        <label className="block text-sm font-semibold text-wesup-ink">
+          Pin Peta Presisi <span className="text-wesup-red">*</span>
         </label>
-        <p className="mt-1 text-xs text-slate-500">
+        <p className="mt-1 text-xs text-wesup-ink-sub">
           Klik pada peta untuk menandai lokasi pengambilan yang tepat.
         </p>
         <div className="mt-2">
@@ -125,8 +125,8 @@ export default function PickupLocationStep({
           />
         </div>
         {coordinate && (
-          <div className="mt-2 flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-600">
-            <MapPin size={14} className="shrink-0 text-blue-600" />
+          <div className="mt-2 flex items-center gap-2  bg-wesup-paper px-3 py-2 text-xs text-wesup-ink-sub">
+            <MapPin size={14} className="shrink-0 text-wesup-red" />
             <span>
               Koordinat terpilih: <strong className="font-mono">{formatCoordinate(coordinate)}</strong>
             </span>
@@ -135,7 +135,7 @@ export default function PickupLocationStep({
       </div>
 
       {/* Info */}
-      <div className="flex items-start gap-2 rounded-xl bg-amber-50 p-4 text-xs text-amber-800">
+      <div className="flex items-start gap-2   p-4 text-xs ">
         <MapPin size={16} className="mt-0.5 shrink-0" />
         <div>
           <p className="font-semibold">Penting:</p>

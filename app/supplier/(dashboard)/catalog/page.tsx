@@ -11,10 +11,9 @@ export const metadata: Metadata = {
 
 export default function SupplierCatalogPage() {
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
-      <div className="mx-auto w-full max-w-6xl">
-        <OfferDraftList /><CatalogListClient />
-      </div>
-    </main>
+    <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
+      <OfferDraftList />
+      <CatalogListClient />
+    </div>
   );
 }

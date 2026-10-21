@@ -34,6 +34,31 @@ const ROLE_A_COMPONENTS = [
   "app/supplier/(dashboard)/layout.tsx", "app/umkm/layout.tsx", "app/pesanan/layout.tsx",
 ];
 
+const ROLE_C_COMPONENTS = [
+  ...filesIn("components/supplier/dashboard"),
+  ...filesIn("components/supplier/catalog"),
+  ...filesIn("components/supplier/fulfillment"),
+  ...filesIn("components/supplier/recurring"),
+  ...filesIn("components/supplier-batch"),
+  "components/supplier/SupplierOrdersOverviewClient.tsx",
+  "app/supplier/(dashboard)/page.tsx",
+  "app/supplier/(dashboard)/catalog/page.tsx",
+  "app/supplier/(dashboard)/catalog/new/page.tsx",
+  "app/supplier/(dashboard)/catalog/[id]/edit/page.tsx",
+  "app/supplier/(dashboard)/batch/[id]/page.tsx",
+  "app/supplier/(dashboard)/batch/[id]/orders/page.tsx",
+  "app/supplier/(dashboard)/batch/[id]/pickup/page.tsx",
+  "app/supplier/(dashboard)/batches/[batchId]/transaksi/page.tsx",
+  "app/supplier/pesanan/page.tsx",
+  "app/supplier/(dashboard)/error.tsx",
+  "app/supplier/(dashboard)/loading.tsx",
+  "app/supplier/(dashboard)/recurring/page.tsx",
+  "app/supplier/(dashboard)/recurring/new/page.tsx",
+  "app/supplier/(dashboard)/recurring/[id]/page.tsx",
+  "app/supplier/(dashboard)/akun/laporan/page.tsx",
+  "app/supplier/(dashboard)/akun/laporan/riwayat/page.tsx",
+];
+
 const LANDING_COMPONENTS = [
   ...ROLE_A_COMPONENTS,
   // Landing surface
@@ -82,10 +107,19 @@ const LANDING_COMPONENTS = [
   "components/feedback/ConfirmDialog.tsx",
   "components/ui/EmptyState.tsx",
   "components/ui/SkeletonLoading.tsx",
+  ...ROLE_C_COMPONENTS,
 ];
 
 describe("landing brutalist design contract", () => {
   it.each(ROLE_A_COMPONENTS)("keeps role A on paper, ink and red without legacy decoration: %s", file => {
+    const src = read(file);
+    expect(src).not.toMatch(/\b(?:rounded(?:-[\w\[\].%-]+)?|shadow(?:-[^\s"'`]+)?|backdrop-blur(?:-[^\s"'`]+)?)\b/);
+    expect(src).not.toMatch(/\b(?:bg|text|border|ring|outline|divide|decoration|accent|placeholder:text|caret)-(?:slate|blue|gray|zinc|emerald|amber|green|yellow|teal|indigo|purple|orange|rose|cyan|sky|lime|violet|fuchsia|pink|stone|neutral|red)-\d+/);
+    expect(src).not.toMatch(/\b(?:bg|text|border)-white\b|radial-gradient|linear-gradient|bg-gradient-to-/);
+    expect(src).not.toMatch(/#(?:2563eb|ffffff|dbeafe)\b/i);
+  });
+
+  it.each(ROLE_C_COMPONENTS)("keeps role C on paper, ink and red without legacy decoration: %s", file => {
     const src = read(file);
     expect(src).not.toMatch(/\b(?:rounded(?:-[\w\[\].%-]+)?|shadow(?:-[^\s"'`]+)?|backdrop-blur(?:-[^\s"'`]+)?)\b/);
     expect(src).not.toMatch(/\b(?:bg|text|border|ring|outline|divide|decoration|accent|placeholder:text|caret)-(?:slate|blue|gray|zinc|emerald|amber|green|yellow|teal|indigo|purple|orange|rose|cyan|sky|lime|violet|fuchsia|pink|stone|neutral|red)-\d+/);
