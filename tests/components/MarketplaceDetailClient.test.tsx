@@ -40,6 +40,12 @@ function renderDetail(itemOverrides: Partial<MarketplaceItem> = {}, viewerRole: 
 }
 
 describe("MarketplaceDetailClient", () => {
+  it("places the purchase decision before the detailed route in reading order", () => {
+    renderDetail();
+    const consent = screen.getByRole("checkbox");
+    const route = screen.getByText("Lokasi Titik Kumpul");
+    expect(consent.compareDocumentPosition(route) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
   describe("navigation", () => {
     it("does not render its own back link (handled by the page-level breadcrumb)", () => {
       renderDetail();

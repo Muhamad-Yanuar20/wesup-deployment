@@ -3,7 +3,7 @@
 import { useCallback, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { LogIn, MapPin, Clock, Tag, Share2 } from "lucide-react";
+import { LogIn, MapPin, Clock, Share2 } from "lucide-react";
 import type { UserRole } from "@/types/database";
 import type {
   MarketplaceItem,
@@ -19,6 +19,8 @@ import TierProgressBar from "./TierProgressBar";
 import JoinIntentQuantity from "./JoinIntentQuantity";
 import JoinBatchForm from "./JoinBatchForm";
 import { useTierProgress } from "@/hooks/use-tier-progress";
+import { AppPanel } from "@/components/layout/AppPanel";
+import { Eyebrow } from "@/components/landing/Eyebrow";
 
 const rupiahFormatter = new Intl.NumberFormat("id-ID", {
   style: "currency",
@@ -117,156 +119,55 @@ export default function MarketplaceDetailClient({
         : "Jarak perkiraan";
 
   return (
-    <article className="overflow-hidden border border-wesup-ink/15 bg-wesup-paper">
-      <div className="relative aspect-[16/8] w-full overflow-hidden bg-wesup-paper-sub sm:aspect-[16/7] lg:aspect-[16/6]">
-        <Image
-          src={item.imageUrl}
-          alt={`Foto produk ${item.title}`}
-          fill
-          sizes="(min-width: 1024px) 768px, 100vw"
-          className="object-cover"
-        />
-        <div className="absolute top-4 left-4 bg-wesup-paper px-3 py-1.5 text-xs font-semibold text-wesup-ink-sub border border-wesup-ink/15">
-          {item.category}
-        </div>
+    <article className="grid min-w-0 items-start gap-6 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)]">
+      <div className="min-w-0 space-y-6">
+        <header className="app-enter">
+          <Eyebrow>{item.category}</Eyebrow>
+          <h1 className="mt-5 break-words font-landing-display text-3xl font-normal uppercase leading-[1.05] tracking-[0.04em] text-wesup-ink md:text-5xl">{item.title}</h1>
+          <p className="mt-4 text-base text-wesup-ink-sub">{item.supplierName}</p>
+          <div className="mt-2"><SupplierRatingBadge rating={item.supplierRating ?? null} /></div>
+        </header>
+        <AppPanel panelClassName="!p-0">
+          <div className="relative aspect-[4/3] overflow-hidden bg-wesup-paper-sub sm:aspect-[16/10]">
+            <Image src={item.imageUrl} alt={`Foto produk ${item.title}`} fill sizes="(min-width: 1024px) 55vw, 100vw" className="object-cover" />
+          </div>
+        </AppPanel>
       </div>
 
-      <div className="flex flex-col gap-6 p-4 sm:p-6 lg:p-8 tabular-nums">
-        {isUmkm && needsProfileLocation ? (
-          <div className="flex flex-col gap-3 border border-wesup-ink/15 bg-wesup-paper p-4 text-sm text-wesup-ink sm:flex-row sm:items-center sm:justify-between tabular-nums" role="status" aria-live="polite">
-            <p><strong>Lokasi usaha belum tersimpan.</strong> Jarak sementara dihitung dari pusat Bandung.</p>
-            <Link href={`/umkm/onboarding?returnTo=/marketplace/${encodeURIComponent(item.id)}`} className="inline-flex min-h-11 shrink-0 items-center justify-center bg-wesup-ink px-4 py-2.5 text-sm font-bold text-wesup-paper hover:bg-wesup-red focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wesup-red">Simpan lokasi</Link>
-          </div>
-        ) : null}
-        <div>
-          <h1 className="text-2xl md:text-3xl text-wesup-ink leading-tight font-landing-display font-normal uppercase tracking-[0.04em]">
-            {item.title}
-          </h1>
-          <p className="mt-2 text-base font-medium text-wesup-ink-sub">{item.supplierName}</p>
-          <div className="mt-1.5">
-            <SupplierRatingBadge rating={item.supplierRating ?? null} />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
-          <div className="flex items-start gap-3 p-4 bg-wesup-paper border border-wesup-ink/10 tabular-nums">
-            <MapPin aria-hidden="true" className="w-5 h-5 text-wesup-ink-sub mt-0.5" />
+      <div className="min-w-0 lg:sticky lg:top-[var(--app-header-offset)] lg:row-span-2">
+        <AppPanel>
+          <div className="space-y-6 tabular-nums">
             <div>
-              <p className="text-sm font-semibold text-wesup-ink">Titik kumpul Supplier</p>
-              <p className="text-sm text-wesup-ink-sub">{item.pickupAddress}</p>
+              <p className="font-mono text-[0.6875rem] uppercase tracking-[0.2em] text-wesup-ink-sub">Tier Diskon</p>
+              <div className="mt-3 flex flex-wrap items-baseline gap-3">
+                <span className="font-landing-display text-3xl tracking-tight text-wesup-ink">{rupiahFormatter.format(currentPrice)}</span>
+                <span className="text-sm text-wesup-ink-sub line-through">{rupiahFormatter.format(item.basePrice)}</span>
+              </div>
             </div>
-          </div>
-          <div className="flex items-start gap-3 p-4 bg-wesup-paper border border-wesup-ink/10 tabular-nums">
-            <Clock aria-hidden="true" className="w-5 h-5 text-wesup-ink-sub mt-0.5" />
-            <div>
-              <p className="text-sm font-semibold text-wesup-ink">Estimasi & Jarak</p>
-              <p className="text-sm text-wesup-ink-sub">
-                {displayDistanceKm === null
-                  ? "Jarak belum tersedia"
-                  : routeSummary
-                    ? `${distanceSourceLabel}: ${displayDistanceKm.toLocaleString("id-ID", { maximumFractionDigits: 1 })} km`
-                    : `${displayDistanceKm.toLocaleString("id-ID", { maximumFractionDigits: 1 })} km`}
-                {" • "}
-                {displayDurationMinutes === null
-                  ? "Estimasi belum tersedia"
-                  : `${displayDurationMinutes} mnt (${routeSummary?.source === "osrm" ? "Berkendara" : "Pickup"})`}
-              </p>
+            <TierProgressBar registeredQuantity={liveProgress.registeredQuantity} tiers={liveTiers} tierProgress={liveProgress.tierProgress} targetQuantity={item.targetQuantity} showPrice={false} />
+            <p className="font-mono text-xs leading-6 text-wesup-ink-sub">Tutup pendaftaran: {formatClosingTime(liveProgress.registrationClosesAt)}{isRefreshing ? " • Memperbarui…" : ""}</p>
+            {progressError && <p className="border-l-2 border-wesup-red pl-3 text-xs leading-6 text-wesup-ink-sub" role="status" aria-live="polite">Progress terakhir ditampilkan. Pembaruan berikutnya akan dicoba otomatis.</p>}
+            <dl className="divide-y divide-wesup-ink/15 border-y border-wesup-ink/15 text-sm">
+              <div className="py-4"><dt className="flex items-center gap-2 font-mono text-[0.6875rem] uppercase tracking-[0.16em]"><MapPin aria-hidden="true" className="size-4" />Titik kumpul Supplier</dt><dd className="mt-2 leading-7 text-wesup-ink-sub">{item.pickupAddress}</dd></div>
+              <div className="py-4"><dt className="flex items-center gap-2 font-mono text-[0.6875rem] uppercase tracking-[0.16em]"><Clock aria-hidden="true" className="size-4" />Estimasi &amp; Jarak</dt><dd className="mt-2 leading-7 text-wesup-ink-sub">{displayDistanceKm === null ? "Jarak belum tersedia" : `${routeSummary ? distanceSourceLabel + ": " : ""}${displayDistanceKm.toLocaleString("id-ID", { maximumFractionDigits: 1 })} km`}{" • "}{displayDurationMinutes === null ? "Estimasi belum tersedia" : `${displayDurationMinutes} mnt (${routeSummary?.source === "osrm" ? "Berkendara" : "Pickup"})`}</dd></div>
+            </dl>
+            {isUmkm && needsProfileLocation && <div className="border-l-2 border-wesup-red pl-4 text-sm leading-7" role="status" aria-live="polite"><p><strong>Lokasi usaha belum tersimpan.</strong> Jarak sementara dihitung dari pusat Bandung.</p><Link href={`/umkm/onboarding?returnTo=/marketplace/${encodeURIComponent(item.id)}`} className="inline-flex min-h-11 items-center font-semibold underline underline-offset-4">Simpan lokasi</Link></div>}
+            {canJoinBatch && <LocationConsentCheckbox onChange={checked => setConsentGiven(checked)} />}
+            <div className="app-purchase-dock sticky z-10 -mx-5 border-t border-wesup-ink/15 bg-wesup-paper px-5 py-4 sm:static sm:mx-0 sm:border-0 sm:p-0">
+              {!canJoinBatch && item.policyVersion === 2 && <JoinIntentQuantity item={item} />}
+              {canJoinBatch ? <JoinBatchForm item={item} consentGiven={consentGiven} onSuccess={({ count }) => applyRegistration(count)} /> : isUmkm ? <Link href={`/umkm/onboarding?returnTo=/marketplace/${encodeURIComponent(item.id)}`} className="inline-flex min-h-12 w-full items-center justify-center bg-wesup-ink px-4 py-3 text-sm font-semibold text-wesup-paper transition-colors duration-500 wesup-ease hover:bg-wesup-red">Lengkapi profil untuk Mendaftar</Link> : viewerRole === null ? <Link href={`/login?role=umkm&returnTo=/marketplace/${encodeURIComponent(item.id)}`} className="inline-flex min-h-12 w-full items-center justify-center gap-2 bg-wesup-ink px-4 py-3 text-sm font-semibold text-wesup-paper transition-colors duration-500 wesup-ease hover:bg-wesup-red"><LogIn aria-hidden="true" className="size-4" />Masuk sebagai UMKM untuk Mendaftar</Link> : <p className="border border-wesup-ink/15 p-4 text-center text-sm leading-6">Pendaftaran hanya untuk akun UMKM.</p>}
             </div>
+            <a href={shareUrl} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-12 w-full items-center justify-center gap-2 border border-wesup-ink/20 px-4 py-3 text-sm font-semibold transition-colors duration-500 wesup-ease hover:bg-wesup-paper-sub"><Share2 aria-hidden="true" className="size-4" />Bagikan via WhatsApp</a>
           </div>
-        </div>
-
-        <div className="flex flex-col gap-3 tabular-nums">
-          <div className="flex items-center gap-2 font-mono text-[0.6875rem] uppercase tracking-wider text-wesup-ink-sub tabular-nums">
-            <MapPin aria-hidden="true" className="w-4 h-4" />
-            <span>Lokasi Titik Kumpul</span>
-          </div>
-          <MarketplaceRouteSection
-            batchId={item.id}
-            viewerCanRoute={viewerCanRoute}
-            pickupLatitude={item.pickupLatitude}
-            pickupLongitude={item.pickupLongitude}
-            pickupAddress={item.pickupAddress}
-            onRouteLoaded={handleRouteLoaded}
-          />
-        </div>
-
-        <div className="flex flex-col gap-2 p-4 bg-wesup-paper border border-wesup-ink/10 tabular-nums">
-          <div className="flex items-center gap-2 font-mono text-[0.6875rem] uppercase tracking-wider text-wesup-ink-sub tabular-nums">
-            <Tag aria-hidden="true" className="w-4 h-4" />
-            <span>Tier Diskon</span>
-          </div>
-          <div className="flex items-end gap-3 tabular-nums">
-            <span className="text-3xl font-black text-wesup-ink tracking-tight">
-              {rupiahFormatter.format(currentPrice)}
-            </span>
-            <span className="text-sm font-medium text-wesup-ink-sub line-through mb-1">
-              {rupiahFormatter.format(item.basePrice)}
-            </span>
-          </div>
-        </div>
-
-        <TierProgressBar
-          registeredQuantity={liveProgress.registeredQuantity}
-          tiers={liveTiers}
-          tierProgress={liveProgress.tierProgress}
-          targetQuantity={item.targetQuantity}
-          showPrice={false}
-        />
-        <p className="-mt-4 text-xs font-medium text-wesup-ink-sub">
-          Tutup pendaftaran: {formatClosingTime(liveProgress.registrationClosesAt)}
-          {isRefreshing ? " • Memperbarui…" : ""}
-        </p>
-        {progressError ? (
-          <p className="-mt-3 text-xs font-medium text-wesup-ink-sub" role="status" aria-live="polite">
-            Progress terakhir ditampilkan. Pembaruan berikutnya akan dicoba otomatis.
-          </p>
-        ) : null}
-
-        {canJoinBatch ? (
-          <LocationConsentCheckbox onChange={(checked) => setConsentGiven(checked)} />
-        ) : null}
-
-        <div className="sticky bottom-[4.75rem] z-10 -mx-4 flex flex-col items-stretch gap-3 border-t border-wesup-ink/15 bg-wesup-paper px-4 py-3 sm:static sm:mx-0 sm:flex-row sm:items-center sm:border-0 sm:bg-transparent sm:px-0 sm:py-2">
-          {!canJoinBatch&&item.policyVersion===2&&<JoinIntentQuantity item={item}/>}
-          {canJoinBatch ? (
-            <div className="flex-1 tabular-nums">
-              <JoinBatchForm
-                item={item}
-                consentGiven={consentGiven}
-                onSuccess={({ count }) => applyRegistration(count)}
-              />
-            </div>
-          ) : isUmkm ? (
-            <Link
-              href={`/umkm/onboarding?returnTo=/marketplace/${encodeURIComponent(item.id)}`}
-              className="flex-1 inline-flex items-center justify-center gap-2 bg-wesup-ink px-4 py-3 text-sm font-bold text-wesup-paper transition-colors duration-500 wesup-ease hover:bg-wesup-red active:scale-[0.98] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wesup-red tabular-nums"
-            >
-              Lengkapi profil untuk Mendaftar
-            </Link>
-          ) : viewerRole === null ? (
-            <Link
-              href={`/login?role=umkm&returnTo=/marketplace/${encodeURIComponent(item.id)}`}
-              className="flex-1 inline-flex items-center justify-center gap-2 bg-wesup-ink px-4 py-3 text-sm font-bold text-wesup-paper transition-colors duration-500 wesup-ease hover:bg-wesup-red active:scale-[0.98] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wesup-red tabular-nums"
-            >
-              <LogIn aria-hidden="true" className="w-4 h-4" />
-              Masuk sebagai UMKM untuk Mendaftar
-            </Link>
-          ) : (
-            <div className="flex-1 inline-flex items-center justify-center gap-2 border border-wesup-ink/15 bg-wesup-paper px-4 py-3 text-sm font-semibold text-wesup-ink-sub tabular-nums">
-              Pendaftaran hanya untuk akun UMKM.
-            </div>
-          )}
-          <a
-            href={shareUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center justify-center gap-2 border border-wesup-ink/15 bg-wesup-paper px-4 py-3 text-sm font-semibold text-wesup-ink-sub hover:bg-wesup-paper transition-colors"
-          >
-            <Share2 aria-hidden="true" className="w-4 h-4" />
-            Bagikan via WhatsApp
-          </a>
-        </div>
+        </AppPanel>
       </div>
+
+      <section className="min-w-0 lg:col-start-1" aria-label="Detail lokasi pickup">
+        <AppPanel>
+          <h2 className="mb-5 font-mono text-[0.6875rem] uppercase tracking-[0.2em]">Lokasi Titik Kumpul</h2>
+          <MarketplaceRouteSection batchId={item.id} viewerCanRoute={viewerCanRoute} pickupLatitude={item.pickupLatitude} pickupLongitude={item.pickupLongitude} pickupAddress={item.pickupAddress} onRouteLoaded={handleRouteLoaded} />
+        </AppPanel>
+      </section>
     </article>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { AppPanel } from "@/components/layout/AppPanel";
 import { useState } from "react";
 import { Bell, Check, CheckCheck } from "lucide-react";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -44,11 +45,11 @@ export default function SupplierNotificationsClient() {
   if (error && !data) return <ErrorState title="Notifikasi belum dapat dimuat." description={error} action={<AsyncButton onClick={() => void reload()}>Coba lagi</AsyncButton>} />;
   return (
     <div className="space-y-5 tabular-nums">{mutationError && <Alert tone="error">{mutationError}</Alert>}{error && <Alert tone="warning" action={<button onClick={() => void reload()} className="underline">Coba perbarui</button>}>Data terakhir ditampilkan; pembaruan belum berhasil.</Alert>}
-      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-        <p className="text-sm text-wesup-ink-sub"><strong className="text-wesup-ink">{notifications.length}</strong> notifikasi · <strong className="text-wesup-ink">{unread}</strong> belum dibaca</p>
-        {unread > 0 ? <AsyncButton type="button" pending={pending} pendingLabel="Menandai dibaca…" onClick={() => void markAllRead()} className="inline-flex min-h-11 items-center justify-center gap-1.5 border border-wesup-ink/15 bg-wesup-paper px-4 py-2.5 text-xs font-semibold text-wesup-ink-sub hover:bg-wesup-paper focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wesup-red"><CheckCheck className="h-4 w-4" aria-hidden="true" />Tandai semua dibaca</AsyncButton> : <span className="inline-flex min-h-11 items-center justify-center gap-1.5 bg-wesup-paper px-3 py-2 text-xs font-semibold text-wesup-ink-sub"><Check className="h-4 w-4" aria-hidden="true" />Semua sudah dibaca</span>}
+      <div className="flex flex-col justify-between gap-4 border-b border-wesup-ink/15 pb-6 sm:flex-row sm:items-end">
+        <dl className="flex gap-8"><div><dt className="font-mono text-[0.6875rem] uppercase tracking-[0.14em]">Total notifikasi</dt><dd className="mt-2 font-landing-display text-3xl">{notifications.length}</dd></div><div className="border-l border-wesup-ink/15 pl-8"><dt className="font-mono text-[0.6875rem] uppercase tracking-[0.14em]">Belum dibaca</dt><dd className="mt-2 font-landing-display text-3xl">{unread}</dd></div></dl>
+        {unread > 0 ? <AsyncButton type="button" pending={pending} pendingLabel="Menandai dibaca…" onClick={() => void markAllRead()} className="shrink-0"><CheckCheck className="h-4 w-4" aria-hidden="true" />Tandai semua dibaca</AsyncButton> : <span className="inline-flex min-h-11 items-center justify-center gap-1.5 bg-wesup-paper px-3 py-2 text-xs font-semibold text-wesup-ink-sub"><Check className="h-4 w-4" aria-hidden="true" />Semua sudah dibaca</span>}
       </div>
-      {notifications.length === 0 ? <section className="border border-dashed border-wesup-ink/20 bg-wesup-paper"><EmptyState heading="Belum ada notifikasi" description="Pembaruan katalog dan pesanan Supplier akan muncul di sini." /></section> : <section aria-label="Notifikasi Supplier" className="divide-y divide-wesup-ink/10 border border-wesup-ink/15 bg-wesup-paper">{notifications.map((notification) => <NotificationRow key={notification.id} notification={notification} />)}</section>}
+      {notifications.length === 0 ? <section className="border border-dashed border-wesup-ink/20 bg-wesup-paper"><EmptyState heading="Belum ada notifikasi" description="Pembaruan katalog dan pesanan Supplier akan muncul di sini." /></section> : <AppPanel panelClassName="!p-0"><section aria-label="Notifikasi Supplier" className="divide-y divide-wesup-ink/10">{notifications.map((notification) => <NotificationRow key={notification.id} notification={notification} />)}</section></AppPanel>}
     </div>
   );
 }
@@ -63,5 +64,5 @@ function NotificationRow({ notification }: { notification: AppNotification }) {
       <time dateTime={notification.createdAt} className="mt-3 block font-mono text-[0.6875rem] uppercase tracking-[0.1em] text-wesup-ink-sub">{dates.format(new Date(notification.createdAt))}</time>
     </div>
   </div>;
-  return notification.href ? <Link href={notification.href} className="block p-5 transition-colors duration-300 wesup-ease hover:bg-wesup-paper-sub focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wesup-red">{content}</Link> : <div className="p-5">{content}</div>;
+  return notification.href ? <Link href={notification.href} className="group block p-5 sm:p-7 transition-colors duration-300 wesup-ease hover:bg-wesup-paper-sub focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wesup-red">{content}</Link> : <div className="p-5 sm:p-7">{content}</div>;
 }

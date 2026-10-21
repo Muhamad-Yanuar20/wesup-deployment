@@ -27,8 +27,22 @@ async function inspect(page: Page, name: string, width: number, outputPath: stri
     const offenders = await page.locator("body *").evaluateAll(elements => elements.filter(el => el.getBoundingClientRect().right > innerWidth + 1).slice(0, 8).map(el => ({ tag: el.tagName, className: el.getAttribute("class"), right: el.getBoundingClientRect().right })));
     expect(offenders, `${name} overflows at ${width}px`).toEqual([]);
   }
+  const legacyBlue = await page.locator(".wesup-app *").evaluateAll(elements => elements.flatMap(element => {
+    if (element.closest(".leaflet-container")) return [];
+    const bounds = element.getBoundingClientRect();
+    if (!bounds.width || !bounds.height) return [];
+    const style = getComputedStyle(element);
+    const colors = [style.color, style.backgroundColor, style.borderTopColor];
+    const blue = colors.find(color => {
+      const channels = color.match(/[\d.]+/g)?.map(Number);
+      return channels && channels.length >= 3 && (channels.length < 4 || channels[3] > 0) && channels[2] > channels[0] + 20 && channels[2] > channels[1] + 10;
+    });
+    return blue ? [{ tag: element.tagName, color: blue, text: element.textContent?.trim().slice(0, 45) }] : [];
+  }).slice(0, 8));
+  expect(legacyBlue, `${name} retains legacy blue chrome at ${width}px`).toEqual([]);
   await page.screenshot({ path: outputPath, fullPage: true, animations: "disabled" });
-  if (["login", "marketplace", "finance"].includes(name) && [390, 1440].includes(width)) await page.screenshot({ path: `docs/testing/role-a/${name}-${width}.png`, fullPage: true, animations: "disabled" });
+  // Historical/approved evidence is never silently overwritten by a test run.
+  if (process.env.ROLE_A_CAPTURE_EVIDENCE === "1") await page.screenshot({ path: `node_modules/.cache/role-a/refinement-${name}-${width}.png`, fullPage: true, animations: "disabled" });
 }
 
 test("shared login form keeps admin login readable", async ({ page }) => {
@@ -110,6 +124,7 @@ test.describe("Role A responsive redesign with disposable fixtures", () => {
         if (name === "marketplace") await expect(page.getByRole("heading", { name: item.title })).toBeVisible();
         if (name === "detail") await expect(page.getByRole("heading", { level: 1, name: item.title })).toBeVisible();
         if (name === "docs") await expect(page.locator(".swagger-ui .opblock").first()).toBeVisible();
+        if (name === "marketplace" && width < 1024) await page.getByRole("button", { name: "Lihat area pickup" }).click();
         if (["marketplace", "detail", "map"].includes(name)) await expect(page.locator(".leaflet-container").first()).toBeVisible();
         if (name === "marketplace") {
           const markers = page.getByTestId("marketplace-radius-map").locator("path.leaflet-interactive");
@@ -138,6 +153,7 @@ test.describe("Role A responsive redesign with disposable fixtures", () => {
       for (const [url, name, heading] of [["/supplier/keuangan", "finance", "Keuangan Supplier"], ["/supplier/akun/escrow", "escrow", "Monitoring Escrow"], ["/supplier/akun/rekening", "bank", "Rekening Supplier"], ["/supplier/notifikasi", "notifications", "Notifikasi"]]) {
         await page.goto(url);
         await expect(page.getByRole("heading", { level: 1, name: heading })).toBeVisible();
+        await expect(page.getByRole("button", { name: "Keluar", exact: true })).toBeVisible();
         await inspect(page, name, width, testInfo.outputPath(`${name}.png`));
       }
       await page.getByRole("button", { name: "Tandai semua dibaca" }).click();
@@ -160,6 +176,23 @@ test.describe("Role A responsive redesign with disposable fixtures", () => {
       await page.goto("/bantuan");
       await expect(page.getByText(/Pesanan [a-f0-9]{8}/).first()).toBeVisible();
       await inspect(page, "help", width, testInfo.outputPath("help.png"));
+      // Shared-shell consumers B/C keep their navigation and content readable.
+      for (const url of ["/umkm", "/umkm/pesanan"]) {
+        await page.goto(url);
+        await expect(page.getByRole("navigation", { name: width < 1024 ? "Navigasi bawah (mobile)" : "Navigasi utama", exact: true })).toBeVisible();
+        await expect(page.locator("main#main-content")).toBeVisible();
+        expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBeTruthy();
+        await inspect(page, url === "/umkm" ? "umkm-dashboard" : "umkm-orders", width, testInfo.outputPath(`b-${url.split("/").pop()}.png`));
+      }
+      await asRole(page, "supplier");
+      for (const url of ["/supplier", "/supplier/catalog"]) {
+        await page.goto(url);
+        await expect(page.getByRole("button", { name: "Keluar", exact: true })).toBeVisible();
+        await expect(page.locator("main#main-content")).toBeVisible();
+        expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBeTruthy();
+        if (url === "/supplier") await expect(page.getByRole("heading", { level: 1, name: /Selamat datang/ })).toBeVisible();
+        await inspect(page, url === "/supplier" ? "supplier-dashboard" : "supplier-catalog", width, testInfo.outputPath(`c-${url.split("/").pop()}.png`));
+      }
       await asRole(page);
       await page.goto("/admin/login");
       await expect(page.getByRole("heading", { level: 1, name: "Login Admin" })).toBeVisible();

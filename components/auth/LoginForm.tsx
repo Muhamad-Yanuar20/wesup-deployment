@@ -130,7 +130,7 @@ export default function LoginForm({
   }
 
   const inputClass = (field: keyof LoginFieldErrors) =>
-    `mt-2 block font-sans normal-case tracking-normal w-full  border px-4 py-3 text-sm text-wesup-ink outline-none transition-colors duration-500 wesup-ease placeholder:text-wesup-ink-sub focus:border-wesup-ink/20   ${
+    `mt-2 block font-sans normal-case tracking-normal w-full  border px-4 py-3 text-base text-wesup-ink outline-none transition-colors duration-500 wesup-ease placeholder:text-wesup-ink-sub/50 focus:border-wesup-ink/20   ${
       fieldErrors[field]
         ? "border-wesup-red bg-wesup-paper"
         : "border-wesup-ink/15 bg-wesup-paper"
@@ -145,7 +145,7 @@ export default function LoginForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} noValidate className="space-y-6 sm:space-y-7">
+    <form onSubmit={handleSubmit} noValidate className="space-y-6 sm:space-y-8">
       {globalError ? (
         <div
           className="border border-wesup-red bg-wesup-paper px-4 py-3 text-sm font-medium leading-6 text-wesup-ink"

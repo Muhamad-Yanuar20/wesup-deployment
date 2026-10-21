@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { Eyebrow } from "@/components/landing/Eyebrow";
 
 interface PageHeaderProps {
   title: string;
@@ -10,9 +11,9 @@ interface PageHeaderProps {
 
 export function PageHeader({ title, description, icon, eyebrow, actions }: PageHeaderProps) {
   return (
-    <header className="mb-8 flex flex-col gap-5 border-b border-wesup-ink/15 pb-7 sm:mb-10 sm:flex-row sm:items-end sm:justify-between">
+    <header className="app-enter mb-8 flex flex-col gap-5 border-b border-wesup-ink/15 pb-7 sm:mb-12 sm:flex-row sm:items-end sm:justify-between">
       <div className="min-w-0">
-        <p className="mb-5 flex items-center gap-3 font-mono text-[0.6875rem] uppercase tracking-[0.24em] text-wesup-ink-sub"><span aria-hidden="true" className="h-px w-6 bg-wesup-red" />{eyebrow ?? "Wesup / Bandung"}</p>
+        <Eyebrow className="mb-5">{eyebrow ?? "Wesup / Bandung"}</Eyebrow>
         <h1 className="flex items-center gap-3 font-landing-display text-3xl font-normal uppercase leading-[1.05] tracking-[0.06em] text-wesup-ink text-balance sm:text-4xl md:text-5xl">
           {icon ? <span className="hidden h-10 w-10 shrink-0 items-center justify-center border border-wesup-ink/20 text-wesup-red sm:flex" aria-hidden="true">{icon}</span> : null}
           <span className="min-w-0 break-words">{title}</span>

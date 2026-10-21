@@ -1,3 +1,4 @@
+import { AppPanel } from "@/components/layout/AppPanel";
 import SwaggerUiClient from "./SwaggerUiClient";
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -19,7 +20,7 @@ export default function DocsPage() {
       <div className="mx-auto max-w-7xl">
         <Link href="/" className="mb-6 inline-flex min-h-11 items-center text-sm font-semibold underline decoration-wesup-ink/30 underline-offset-4">← Wesup</Link>
         <PageHeader title="Dokumentasi API" eyebrow="Referensi / Wesup" description="Referensi endpoint, parameter, dan bentuk respons API Wesup." />
-        <SwaggerUiClient specUrl="/docs/openapi.json" />
+        <AppPanel panelClassName="!p-4 sm:!p-8"><SwaggerUiClient specUrl="/docs/openapi.json" /></AppPanel>
       </div>
     </main>
   );

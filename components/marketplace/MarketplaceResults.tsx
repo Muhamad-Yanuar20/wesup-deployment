@@ -23,13 +23,13 @@ export default function MarketplaceResults({ items, total, loading, error, hasAc
   const liveMessage = loading ? "Memuat penawaran..." : error !== null ? `Gagal memuat penawaran: ${error}` : items.length === 0 ? "Tidak ada penawaran yang ditemukan." : `${total} penawaran ditemukan.`;
   let content: ReactNode;
   if (loading) {
-    content = <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6" aria-hidden="true">{Array.from({ length: 12 }, (_, index) => <ProductSkeleton key={index} />)}</div>;
+    content = <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,18rem),1fr))] gap-6" aria-hidden="true">{Array.from({ length: 6 }, (_, index) => <ProductSkeleton key={index} />)}</div>;
   } else if (error !== null) {
     content = <div role="alert" className="flex flex-col items-center justify-center min-h-[400px] w-full bg-wesup-paper border border-wesup-red p-8 text-center tabular-nums"><AlertCircle aria-hidden="true" className="w-14 h-14 text-wesup-ink mb-5" /><h3 className="text-xl text-wesup-ink mb-2 font-landing-display font-normal uppercase tracking-[0.04em]">Penawaran belum bisa dimuat</h3><p className="text-sm font-medium text-wesup-ink-sub max-w-sm">{error}</p><button type="button" onClick={onRetry} className="flex items-center gap-2 mt-6 px-4 py-2 text-sm font-semibold text-wesup-paper bg-wesup-ink hover:bg-wesup-red transition-colors tabular-nums"><RefreshCw aria-hidden="true" className="w-4 h-4 flex-shrink-0" /><span>Coba lagi</span></button></div>;
   } else if (items.length === 0) {
     content = <MarketplaceEmptyState hasActiveFilters={hasActiveFilters} onReset={onReset} />;
   } else {
-    content = <><div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">{items.map((item) => <ProductCard key={item.id} item={item} />)}</div>{totalPages > 1 && <MarketplacePagination currentPage={currentPage} totalPages={totalPages} disabled={loading} onPageChange={onPageChange} />}</>;
+    content = <><div className={`grid gap-6 ${items.length === 1 ? "grid-cols-1" : "grid-cols-[repeat(auto-fill,minmax(min(100%,18rem),1fr))]"}`}>{items.map((item) => <ProductCard key={item.id} item={item} featured={items.length === 1} />)}</div>{totalPages > 1 && <MarketplacePagination currentPage={currentPage} totalPages={totalPages} disabled={loading} onPageChange={onPageChange} />}</>;
   }
   return <section aria-label="Hasil Penawaran Marketplace" aria-busy={loading} aria-describedby="marketplace-results-status"><p id="marketplace-results-status" className="sr-only" aria-live={error ? "off" : "polite"}>{liveMessage}</p>{content}</section>;
 }

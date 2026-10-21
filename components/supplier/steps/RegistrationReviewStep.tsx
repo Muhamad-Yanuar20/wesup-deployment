@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, type ReactNode, type RefObject } from "react";
+import { type ReactNode, type RefObject } from "react";
+import { useObjectUrl } from "@/hooks/use-object-url";
 import { Camera, CheckCircle2, Pencil } from "lucide-react";
 import { formatCoordinate } from "@/lib/maps/leaflet-demo";
 import type { SupplierRegistrationReview } from "@/lib/supplier-registration/review";
@@ -20,9 +21,7 @@ export default function RegistrationReviewStep({
   headingRef,
   onEdit,
 }: RegistrationReviewStepProps) {
-  const previewUrl = useMemo(() => URL.createObjectURL(photo), [photo]);
-
-  useEffect(() => () => URL.revokeObjectURL(previewUrl), [previewUrl]);
+  const previewUrl = useObjectUrl(photo);
 
   return (
     <section aria-labelledby="supplier-registration-review-title">
@@ -62,7 +61,7 @@ export default function RegistrationReviewStep({
             </div>
             <div className="mt-3 flex items-center gap-4">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={previewUrl} alt="Pratinjau foto tempat usaha" className="h-20 w-24 object-cover" />
+              <img src={previewUrl ?? undefined} alt="Pratinjau foto tempat usaha" className="h-20 w-24 object-cover" />
               <div className="min-w-0">
                 <p className="truncate text-sm font-semibold text-wesup-ink">{review.photo.name}</p>
                 <p className="mt-1 text-xs text-wesup-ink-sub">
@@ -97,7 +96,7 @@ function ReviewSection({
   children: ReactNode;
 }) {
   return (
-    <section className="border border-wesup-ink/15 bg-wesup-paper p-4 sm:p-5">
+    <section className="border-t border-wesup-ink/15 py-5">
       <div className="flex items-center justify-between gap-3">
         <h3 className="text-sm text-wesup-ink font-landing-display font-normal uppercase tracking-[0.04em]">{title}</h3>
         <button
@@ -125,8 +124,8 @@ function ReviewItem({
   className?: string;
 }) {
   return (
-    <div className={` border border-wesup-ink/15 bg-wesup-paper p-3.5 ${className}`}>
-      <p className="text-[11px] font-semibold uppercase tracking-wide text-wesup-ink-sub">{label}</p>
+    <div className={`border-b border-wesup-ink/10 py-3.5 ${className}`}>
+      <p className="font-mono text-[0.6875rem] uppercase tracking-[0.18em] text-wesup-ink-sub">{label}</p>
       <p className="mt-1 break-words text-sm font-semibold text-wesup-ink">{value || "-"}</p>
     </div>
   );

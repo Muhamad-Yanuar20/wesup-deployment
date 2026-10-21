@@ -13,7 +13,7 @@ export function Layout({ children }: LayoutProps) {
         Lewati ke konten utama
       </a>
       <NavigationBar />
-      <main id="main-content" className="min-w-0 flex-1 bg-wesup-paper pb-24 lg:pb-0">
+      <main id="main-content" className="app-main min-w-0 flex-1 bg-wesup-paper">
         {children}
       </main>
       <Footer />

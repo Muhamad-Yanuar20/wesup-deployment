@@ -1,0 +1,36 @@
+
+> wesup@0.1.0 lint
+> eslint
+
+
+C:\Users\hpyan\Project\wesup\.codex\transaction-recovery\seed-users.mjs
+  4:34  warning  'readFileSync' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\hpyan\Project\wesup\app\api\registrations\route.ts
+  4:10  warning  'isUuid' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\hpyan\Project\wesup\components\admin\SupplierQueueTable.tsx
+  94:7  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+C:\Users\hpyan\Project\wesup\components\payments\UmkmPaymentPanel.tsx
+  213:81  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+C:\Users\hpyan\Project\wesup\tests\setup-components.ts
+  13:19   warning  '_fill' is assigned a value but never used      @typescript-eslint/no-unused-vars
+  13:36   warning  '_priority' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  13:66   warning  '_olc' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  13:85   warning  '_bd' is assigned a value but never used        @typescript-eslint/no-unused-vars
+  13:103  warning  '_ph' is assigned a value but never used        @typescript-eslint/no-unused-vars
+
+C:\Users\hpyan\Project\wesup\tests\unit\api-admin-refunds.test.ts
+  29:30  warning  '_from' is defined but never used  @typescript-eslint/no-unused-vars
+  29:45  warning  '_to' is defined but never used    @typescript-eslint/no-unused-vars
+
+C:\Users\hpyan\Project\wesup\tests\unit\api-marketplace-search.test.ts
+  58:28  warning  '_method' is defined but never used  @typescript-eslint/no-unused-vars
+  58:45  warning  '_params' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\hpyan\Project\wesup\tests\unit\api-registrations-csrf.test.ts
+  68:9  warning  'upsert' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+✖ 14 problems (0 errors, 14 warnings)

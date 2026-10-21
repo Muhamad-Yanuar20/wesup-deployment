@@ -89,7 +89,7 @@ export default function UmkmSignupForm({ returnTo = null }: UmkmSignupFormProps)
 
   const loginHref = returnTo ? `/login?role=umkm&returnTo=${encodeURIComponent(returnTo)}` : "/login?role=umkm";
   const inputClass = (field: keyof SignupFieldErrors) =>
-    `mt-2 block font-sans normal-case tracking-normal min-h-11 w-full  border px-4 py-3 text-sm text-wesup-ink outline-none transition-colors duration-500 wesup-ease placeholder:text-wesup-ink-sub focus:border-wesup-ink/20   ${fieldErrors[field] ? "border-wesup-red bg-wesup-paper" : "border-wesup-ink/15 bg-wesup-paper"}`;
+    `mt-2 block font-sans normal-case tracking-normal min-h-11 w-full  border px-4 py-3 text-base text-wesup-ink outline-none transition-colors duration-500 wesup-ease placeholder:text-wesup-ink-sub/50 focus:border-wesup-ink/20   ${fieldErrors[field] ? "border-wesup-red bg-wesup-paper" : "border-wesup-ink/15 bg-wesup-paper"}`;
 
   function fieldError(field: keyof SignupFieldErrors) {
     return fieldErrors[field] ? <p id={`${field}-error`} className="mt-1.5 text-xs font-medium text-wesup-ink" role="alert">{fieldErrors[field]}</p> : null;

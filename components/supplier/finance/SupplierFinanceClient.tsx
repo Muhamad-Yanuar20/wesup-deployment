@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { AppPanel } from "@/components/layout/AppPanel";
 import { Alert, AsyncButton, ContentSkeleton, ErrorState, EmptyState } from "@/components/feedback";
 import { ConfirmDialog } from "@/components/feedback/ConfirmDialog";
 import { useFeedbackResource } from "@/lib/feedback/use-resource";
@@ -17,7 +18,6 @@ const money = new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR
 const dates = new Intl.DateTimeFormat("id-ID", { dateStyle: "medium", timeZone: "Asia/Jakarta" });
 const inputClass = "mt-2 min-h-11 w-full border border-wesup-ink/20 bg-wesup-paper px-4 py-3 font-sans text-sm normal-case tracking-normal text-wesup-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wesup-red";
 const labelClass = "block font-mono text-[0.6875rem] uppercase tracking-[0.2em] text-wesup-ink-sub";
-const panelClass = "min-w-0 border border-wesup-ink/15 bg-wesup-paper p-5 sm:p-7";
 const headings = { overview: "Keuangan Supplier", escrow: "Monitoring Escrow", "bank-account": "Rekening Supplier" };
 const navigation = [
   { view: "overview", href: "/supplier/keuangan", label: "Ringkasan" },
@@ -83,12 +83,12 @@ export default function SupplierFinanceClient({ view = "overview" }: { view?: Su
     <div className="space-y-7">
       {readError && <Alert tone="warning" action={<button onClick={() => void reload()} className="font-semibold underline">Coba perbarui</button>}>Data terakhir ditampilkan; pembaruan belum berhasil.</Alert>}
       {error && !confirm && <Alert tone="error">{error}</Alert>}
-      {view !== "bank-account" && <dl className={`grid gap-px border border-wesup-ink/15 bg-wesup-ink/15 sm:grid-cols-2 ${view === "overview" ? "xl:grid-cols-4" : ""}`}>
+      {view !== "bank-account" && <AppPanel panelClassName="!p-0"><dl className={`grid grid-cols-2 gap-px border border-wesup-ink/15 bg-wesup-ink/15 ${view === "overview" ? "xl:grid-cols-4" : ""}`}>
         <Balance label="Dana ditahan" value={data.balances?.escrow} />
         <Balance label="Dibekukan" value={data.balances?.frozen} />
         {view === "overview" && <><Balance label="Siap Dicairkan" value={data.balances?.available} /><Balance label="Sudah Ditransfer" value={data.balances?.paidOut} /></>}
-      </dl>}
-      {view === "escrow" && <section className={panelClass}>
+      </dl></AppPanel>}
+      {view === "escrow" && <AppPanel>
         <h2 className="font-landing-display text-2xl font-normal uppercase tracking-[0.04em]">Tahap dana Anda</h2>
         <dl className="mt-5 divide-y divide-wesup-ink/15 border-y border-wesup-ink/15">
           <FinanceStage label="01 / Dana ditahan">Dana berada dalam escrow selama pemeriksaan setelah pengambilan. Dana yang masih ditahan belum dapat diajukan untuk transfer.</FinanceStage>
@@ -97,12 +97,13 @@ export default function SupplierFinanceClient({ view = "overview" }: { view?: Su
           <FinanceStage label="04 / Transfer">Admin memproses pengajuan secara manual. Status sudah ditransfer menunjukkan proses transfer telah selesai.</FinanceStage>
         </dl>
         <Link href="/supplier/keuangan" className="mt-6 inline-flex min-h-12 items-center border border-wesup-ink bg-wesup-ink px-6 text-sm font-semibold text-wesup-paper transition-colors duration-500 wesup-ease hover:bg-wesup-red">Lihat ringkasan keuangan →</Link>
-      </section>}
-      {view === "bank-account" && <section className={`${panelClass} max-w-3xl`}>
+      </AppPanel>}
+      {view === "bank-account" && <div className="grid items-start gap-6 lg:grid-cols-2"><AppPanel>
         <h2 className="font-landing-display text-2xl font-normal uppercase tracking-[0.04em]">Rekening pencairan</h2>
         <div className="mt-5 divide-y divide-wesup-ink/15 border-y border-wesup-ink/15">
           {data.accounts?.length ? data.accounts.map(item => <AccountReadout key={item.id} account={item} />) : <EmptyState embedded title="Belum ada rekening." description="Tambahkan rekening untuk menerima pencairan dana." />}
         </div>
+        </AppPanel><AppPanel><h2 className="font-landing-display text-2xl font-normal uppercase tracking-[0.04em]">Tambah rekening</h2><p className="mt-3 text-sm leading-7 text-wesup-ink-sub">Pastikan tujuan pencairan sesuai dengan data rekening Anda.</p>
         <form onSubmit={saveAccount} className="mt-7 space-y-5">
           <label className={labelClass}>Nama bank<input required value={account.bankName} onChange={e => setAccount({ ...account, bankName: e.target.value })} className={inputClass} /></label>
           <label className={labelClass}>Nomor rekening<input required inputMode="numeric" value={account.accountNumber} onChange={e => setAccount({ ...account, accountNumber: e.target.value })} className={inputClass} /></label>
@@ -110,9 +111,9 @@ export default function SupplierFinanceClient({ view = "overview" }: { view?: Su
           <label className="flex min-h-11 items-center gap-3 text-sm"><input type="checkbox" checked={account.isPrimary} onChange={e => setAccount({ ...account, isPrimary: e.target.checked })} className="size-4 accent-wesup-ink" />Jadikan rekening utama</label>
           <AsyncButton pending={saving.account} pendingLabel="Menyimpan rekening…">Simpan rekening</AsyncButton>
         </form>
-      </section>}
+      </AppPanel></div>}
       {view === "overview" && <div className="grid items-start gap-6 lg:grid-cols-[1.3fr_1fr]">
-        <section className={panelClass}>
+        <AppPanel>
           <h2 className="font-landing-display text-2xl font-normal uppercase tracking-[0.04em]">Ajukan pencairan</h2>
           <p className="mt-3 text-sm leading-7 text-wesup-ink-sub">Transfer diproses Admin secara manual setelah saldo tersedia.</p>
           <form onSubmit={requestPayout} className="mt-6 space-y-5">
@@ -120,21 +121,21 @@ export default function SupplierFinanceClient({ view = "overview" }: { view?: Su
             {!primary && <p className="border-l-2 border-wesup-red pl-3 text-sm leading-6">Tetapkan rekening utama terlebih dahulu di halaman rekening.</p>}
             <AsyncButton pending={saving.payout} disabled={!primary} pendingLabel="Mengajukan transfer…">Ajukan transfer</AsyncButton>
           </form>
-          <PayoutHistory payouts={data.payouts} />
-        </section>
-        <section className={panelClass}>
+        </AppPanel>
+        <AppPanel>
           <h2 className="font-landing-display text-2xl font-normal uppercase tracking-[0.04em]">Rekening utama</h2>
           {primary ? <AccountReadout account={primary} /> : <p className="mt-4 text-sm leading-7 text-wesup-ink-sub">Rekening utama belum tersedia.</p>}
           <Link href="/supplier/akun/rekening" className="mt-4 inline-flex min-h-11 items-center text-sm font-semibold underline decoration-wesup-ink/30 underline-offset-4 transition-colors duration-300 hover:decoration-wesup-red">Kelola rekening →</Link>
-        </section>
+        </AppPanel>
       </div>}
+      {view === "overview" && <AppPanel><PayoutHistory payouts={data.payouts} /></AppPanel>}
     </div>
     <ConfirmDialog open={Boolean(confirm)} title={confirm === "account" ? "Ganti rekening utama?" : "Ajukan transfer?"} description={confirm === "account" ? `${account.bankName} · ${account.accountNumber} · ${account.accountHolderName}. Rekening ini akan menjadi tujuan transfer berikutnya.` : `${money.format(Number(amount))} ke ${primary?.bank_name} · ${primary?.account_number} · ${primary?.account_holder_name}. Pengajuan akan diperiksa Admin; dana belum ditransfer.`} pending={confirm ? saving[confirm] : false} error={error} confirmLabel={confirm === "account" ? "Simpan rekening utama" : "Ajukan transfer"} onConfirm={() => confirm && void mutate(confirm)} onCancel={() => setConfirm(null)} />
   </PageContainer>;
 }
 
 function Balance({ label, value }: { label: string; value?: number }) {
-  return <div className="flex min-w-0 flex-col bg-wesup-paper px-5 py-7"><dt className="order-2 mt-3 font-mono text-[0.6875rem] uppercase tracking-[0.18em] text-wesup-ink-sub">{label}</dt><dd className="font-landing-display text-2xl font-normal tracking-tight text-wesup-ink"><span aria-hidden="true" className="mb-5 block h-px w-8 bg-wesup-red" />{value === undefined ? "Belum tersedia" : money.format(value)}</dd></div>;
+  return <div className="flex min-w-0 flex-col bg-wesup-paper px-3 py-6 sm:px-5"><dt className="order-2 mt-3 font-mono text-[0.625rem] uppercase leading-5 tracking-[0.14em] text-wesup-ink-sub sm:text-[0.6875rem] sm:tracking-[0.18em]">{label}</dt><dd className="break-words font-landing-display text-xl font-normal tracking-tight text-wesup-ink sm:text-2xl xl:text-3xl"><span aria-hidden="true" className="mb-5 block h-px w-8 bg-wesup-red" />{value === undefined ? "Belum tersedia" : money.format(value)}</dd></div>;
 }
 function FinanceStage({ label, children }: { label: string; children: React.ReactNode }) {
   return <div className="grid gap-3 py-5 sm:grid-cols-[12rem_1fr] sm:gap-6"><dt className="font-mono text-[0.6875rem] uppercase leading-6 tracking-[0.18em]">{label}</dt><dd className="text-sm leading-7 text-wesup-ink-sub">{children}</dd></div>;
@@ -144,5 +145,5 @@ function AccountReadout({ account }: { account: Account }) {
 }
 function PayoutHistory({ payouts }: { payouts: Finance["payouts"] }) {
   const labels: Record<string, string> = { pending: "Pengajuan transfer", approved: "Transfer disetujui", paid: "Sudah ditransfer", completed: "Sudah ditransfer", rejected: "Pengajuan ditolak" };
-  return <div className="mt-8 border-t border-wesup-ink/15 pt-6"><h3 className="font-mono text-[0.6875rem] uppercase tracking-[0.18em]">Riwayat pengajuan transfer</h3>{!payouts?.length ? <EmptyState embedded title="Belum ada pengajuan transfer." /> : <ul className="mt-4 divide-y divide-wesup-ink/15">{payouts.map(item => <li key={item.id} className="grid gap-2 py-4 sm:grid-cols-[1fr_auto]"><div><p className="font-semibold">{money.format(item.amount)}</p><time dateTime={item.requested_at} className="mt-1 block font-mono text-xs text-wesup-ink-sub">{dates.format(new Date(item.requested_at))}</time></div><span className={`self-start font-mono text-[0.6875rem] uppercase leading-6 tracking-[0.1em] ${item.status === "rejected" ? "border-l-2 border-wesup-red pl-3" : ""}`}>{labels[item.status] ?? item.status}</span></li>)}</ul>}</div>;
+  return <div><h3 className="font-mono text-[0.6875rem] uppercase tracking-[0.18em]">Riwayat pengajuan transfer</h3>{!payouts?.length ? <EmptyState embedded title="Belum ada pengajuan transfer." /> : <ul className="mt-4 divide-y divide-wesup-ink/15">{payouts.map(item => <li key={item.id} className="grid gap-2 py-4 sm:grid-cols-[1fr_auto]"><div><p className="font-semibold">{money.format(item.amount)}</p><time dateTime={item.requested_at} className="mt-1 block font-mono text-xs text-wesup-ink-sub">{dates.format(new Date(item.requested_at))}</time></div><span className={`self-start font-mono text-[0.6875rem] uppercase leading-6 tracking-[0.1em] ${item.status === "rejected" ? "border-l-2 border-wesup-red pl-3" : ""}`}>{labels[item.status] ?? item.status}</span></li>)}</ul>}</div>;
 }

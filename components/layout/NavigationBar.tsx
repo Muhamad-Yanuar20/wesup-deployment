@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { getActiveNavigationIndex, getRoleNavigationItems, type RoleNavigationItem } from "@/lib/auth/role-navigation";
 import { useNavigationSession } from "@/components/auth/NavigationSessionProvider";
+import { ShoppingBag } from "lucide-react";
 
 function IconHome() {
     return <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M3 12l9-9 9 9M4 10v10a1 1 0 001 1h5V14h4v7h5a1 1 0 001-1V10" /></svg>;
@@ -42,22 +43,21 @@ export function NavigationBar() {
     const activeIndex = getActiveNavigationIndex(navItems, pathname);
 
     return (
-        <header className="sticky top-0 z-40 w-full border-b border-wesup-ink/15 bg-wesup-paper">
-            <div className="mx-auto flex min-h-16 w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+        <header className="pointer-events-none fixed inset-x-4 top-4 z-40 sm:inset-x-6 lg:inset-x-8">
+            <div className="pointer-events-auto mx-auto flex min-h-16 w-full max-w-7xl items-center justify-between gap-3 border border-wesup-ink/20 bg-wesup-paper px-3 sm:px-4">
                 <Link href="/" className="flex items-center gap-2 text-wesup-ink transition-opacity hover:opacity-80" aria-label="Wesup - Kembali ke Beranda">
-                    <span className="flex h-9 w-9 items-center justify-center border border-wesup-ink/20 bg-wesup-paper text-sm font-bold text-wesup-red" aria-hidden="true">W</span>
+                    <span className="flex h-9 w-9 items-center justify-center border border-wesup-ink/20 bg-wesup-paper text-wesup-red" aria-hidden="true"><ShoppingBag className="size-4" strokeWidth={1.5} /></span>
                     <span className="font-landing-display text-xl tracking-[-0.02em]">Wesup</span>
                 </Link>
 
                 <nav aria-label="Navigasi utama" className="hidden items-center gap-1 lg:flex">
                     {navItems.map((item, index) => <NavLink key={`${item.href}-${item.label}`} item={item} isActive={index === activeIndex} />)}
-                    {authenticated && <LogoutAction />}
                 </nav>
 
-                <div className="flex items-center gap-2 lg:hidden" aria-label="Navigasi cepat"><span className="font-mono text-[0.6875rem] uppercase tracking-[0.2em] text-wesup-ink-sub">Bandung</span></div>
+                {authenticated ? <LogoutAction className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 border border-wesup-ink/15 px-3 text-xs font-semibold text-wesup-ink transition-colors duration-300 wesup-ease hover:bg-wesup-paper-sub" /> : <span className="font-mono text-[0.625rem] uppercase tracking-[0.18em] text-wesup-ink-sub lg:hidden">Bandung</span>}
             </div>
 
-            <nav aria-label="Navigasi bawah (mobile)" className="fixed inset-x-0 bottom-0 z-40 flex items-stretch justify-around gap-1 border-t border-wesup-ink/15 bg-wesup-paper px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 lg:hidden">
+            <nav aria-label="Navigasi bawah (mobile)" className="pointer-events-auto fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-40 flex min-h-17 items-stretch justify-around gap-1 border border-wesup-ink/20 bg-wesup-paper p-1.5 lg:hidden">
                 {navItems.slice(0, 5).map((item, index) => <NavLink key={`${item.href}-${item.label}`} item={item} isActive={index === activeIndex} mobile />)}
             </nav>
         </header>
@@ -73,7 +73,7 @@ function NavLink({ item, isActive, mobile = false }: { item: RoleNavigationItem;
             isActive ? "border-wesup-red bg-wesup-paper-sub text-wesup-ink" : "border-transparent text-wesup-ink-sub hover:bg-wesup-paper-sub hover:text-wesup-ink",
         )}>
             <span className={cn("flex items-center gap-1", isActive && "text-wesup-ink-sub")}>{iconForItem(item)}</span>
-            <span>{item.label}</span>
+            <span className="max-w-full text-center leading-4">{mobile && item.label === "Pesanan & Pengambilan" ? <><span aria-hidden="true">Pesanan</span><span className="sr-only">{item.label}</span></> : item.label}</span>
         </Link>
     );
 }

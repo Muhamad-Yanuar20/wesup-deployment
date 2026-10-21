@@ -3,6 +3,7 @@ import Link from "next/link";
 import { sanitizeReturnTo } from "@/lib/auth/access-state";
 import LoginForm from "@/components/auth/LoginForm";
 import { AuthHeader } from "@/components/auth/AuthHeader";
+import { AppPanel } from "@/components/layout/AppPanel";
 
 export const dynamic = "force-dynamic";
 
@@ -27,9 +28,9 @@ export default async function LoginPage({
       <div className="mx-auto w-full max-w-2xl">
         <AuthHeader title="Masuk ke akun Anda" eyebrow="Akses / Wesup" description="Pilih role akun UMKM atau Supplier untuk melanjutkan aktivitas di Wesup." />
 
-        <div className="border border-wesup-ink/15 bg-wesup-paper-sub p-1.5"><div className="border border-wesup-ink/10 bg-wesup-paper p-5 sm:p-9">
+        <AppPanel panelClassName="sm:!p-9">
           <LoginForm initialRole={initialRole} returnTo={returnTo} />
-        </div></div>
+        </AppPanel>
 
         <p className="mt-6 text-center text-sm text-wesup-ink-sub">
           <Link href="/" className="font-semibold text-wesup-ink-sub underline-offset-4 hover:underline">Kembali ke beranda</Link>

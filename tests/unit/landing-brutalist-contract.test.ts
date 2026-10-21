@@ -32,6 +32,7 @@ const ROLE_A_COMPONENTS = [
   "app/bantuan/page.tsx", "app/docs/page.tsx", "app/docs/SwaggerUiClient.tsx", "app/docs/loading.tsx", "app/docs/error.tsx", "app/demo/leaflet/page.tsx",
   "app/supplier/(dashboard)/keuangan/page.tsx", "app/supplier/(dashboard)/akun/escrow/page.tsx", "app/supplier/(dashboard)/akun/rekening/page.tsx", "app/supplier/notifikasi/page.tsx",
   "app/supplier/(dashboard)/layout.tsx", "app/umkm/layout.tsx", "app/pesanan/layout.tsx",
+  "app/umkm/error.tsx", "app/pesanan/error.tsx",
 ];
 
 const ROLE_C_COMPONENTS = [

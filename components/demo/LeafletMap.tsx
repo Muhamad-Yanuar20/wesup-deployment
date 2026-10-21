@@ -109,7 +109,7 @@ export default function LeafletMap() {
           <p className="font-mono text-[0.6875rem] uppercase tracking-[0.2em] text-wesup-ink-sub">
             Titik terpilih
           </p>
-          <p className="mt-1 font-mono text-lg font-semibold text-wesup-ink">
+          <p className="mt-1 font-mono text-lg font-semibold tabular-nums text-wesup-ink">
             {formatCoordinate(coordinate)}
           </p>
           <p className="mt-1 text-sm text-wesup-ink-sub" aria-live="polite">
@@ -138,7 +138,7 @@ export default function LeafletMap() {
         </div>
       </div>
 
-      <div className="relative h-[520px] w-full">
+      <div className="relative h-[360px] w-full lg:h-[520px]">
         <MapContainer
           center={[BANDUNG_CENTER.lat, BANDUNG_CENTER.lng]}
           zoom={13}
