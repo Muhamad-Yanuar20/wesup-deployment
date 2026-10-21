@@ -7,7 +7,6 @@ import { ArrowRight, Menu, ShoppingBag, X } from "lucide-react";
 const NAV_LINKS = [
   { href: "#cara-kerja", label: "Cara kerja" },
   { href: "#features", label: "Keunggulan" },
-  { href: "/beranda-umkm", label: "Panduan UMKM" },
 ] as const;
 
 /**

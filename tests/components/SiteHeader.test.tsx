@@ -65,7 +65,8 @@ describe("SiteHeader nav bar", () => {
 
     const menu = document.getElementById(menuId) as HTMLElement;
     expect(within(menu).getByRole("link", { name: /cara kerja/i })).toBeInTheDocument();
-    expect(within(menu).getByRole("link", { name: /panduan umkm/i })).toBeInTheDocument();
+    expect(within(menu).getByRole("link", { name: /keunggulan/i })).toBeInTheDocument();
+    expect(within(menu).queryByRole("link", { name: /panduan umkm/i })).toBeNull();
 
     await user.click(toggle);
     expect(toggle.getAttribute("aria-expanded")).toBe("false");
