@@ -60,3 +60,5 @@ next-env.d.ts
 
 # local agent config (machine-specific paths)
 .claude/
+# Playwright CLI output (may contain credentials)
+.playwright-cli/
