@@ -17,4 +17,24 @@ describe("payment API client errors", () => {
     });
     expect(parsePaymentApiError({}, "Pembayaran gagal.")).toEqual({ message: "Pembayaran gagal." });
   });
+
+  it("shows the provider rejection reason to the UMKM", () => {
+    expect(parsePaymentApiError({
+      error: "Pembayaran ditolak provider pembayaran.",
+      code: "PAYMENT_PROVIDER_REJECTED",
+      requestId: "req-1",
+      details: { providerMessage: "Transaction amount is not equal to the expected total." },
+    }, "Pembayaran gagal.")).toEqual({
+      message: "Pembayaran ditolak provider pembayaran. Alasan provider: Transaction amount is not equal to the expected total.",
+      code: "PAYMENT_PROVIDER_REJECTED",
+      requestId: "req-1",
+    });
+  });
+
+  it("falls back to a readable rejection message when the provider reason is missing", () => {
+    expect(parsePaymentApiError({ error: "Pembayaran ditolak provider pembayaran.", code: "PAYMENT_PROVIDER_REJECTED" }, "Pembayaran gagal.")).toEqual({
+      message: "Pembayaran ditolak provider pembayaran.",
+      code: "PAYMENT_PROVIDER_REJECTED",
+    });
+  });
 });

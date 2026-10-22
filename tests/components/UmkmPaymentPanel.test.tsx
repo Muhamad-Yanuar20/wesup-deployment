@@ -118,4 +118,29 @@ describe("UmkmPaymentPanel", () => {
     }
   });
 
+  it("shows the provider rejection reason and stops offering a retry", async () => {
+    const fetcher = vi.fn(async () => ({
+      ok: false,
+      json: async () => ({
+        error: "Pembayaran ditolak provider pembayaran.",
+        code: "PAYMENT_PROVIDER_REJECTED",
+        requestId: "req-9",
+        details: { providerMessage: "Transaction amount is not equal to the expected total." },
+      }),
+    }));
+    vi.stubGlobal("fetch", fetcher);
+    try {
+      render(<UmkmPaymentPanel order={{ ...baseOrder, paymentAttempt: null }} onReload={vi.fn()} />);
+      await act(async () => {
+        fireEvent.click(screen.getByRole("button", { name: /bayar sekarang/i }));
+      });
+      const alert = await screen.findByRole("alert");
+      expect(alert).toHaveTextContent(/transaction amount is not equal to the expected total/i);
+      expect(alert).toHaveTextContent(/req-9/);
+      expect(screen.queryByRole("button", { name: /coba lagi/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: /bayar sekarang/i })).not.toBeInTheDocument();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
 });

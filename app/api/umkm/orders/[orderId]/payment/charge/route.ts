@@ -92,15 +92,54 @@ function attemptResponse(attempt: Record<string, unknown>, session: Record<strin
   },{status});
 }
 
-function providerCode(error: unknown): { code: string; status: number; message: string } {
+function providerCode(error: unknown): { code: string; status: number; message: string; details?: Record<string, unknown> } {
   if (error instanceof MidtransProviderError) {
-    return {
-      code: error.status === 403 ? "PAYMENT_CHECKOUT_CUTOFF" : error.retryable ? "PAYMENT_PROVIDER_UNAVAILABLE" : "PAYMENT_PROVIDER_REJECTED",
-      status: error.status,
-      message: error.status === 403 ? "Checkout tidak dapat dibuat karena jendela pembayaran hampir berakhir." : error.message,
-    };
+    if (error.status === 403) {
+      return { code: "PAYMENT_CHECKOUT_CUTOFF", status: 403, message: "Checkout tidak dapat dibuat karena jendela pembayaran hampir berakhir." };
+    }
+    if (!error.retryable) {
+      return {
+        code: "PAYMENT_PROVIDER_REJECTED",
+        status: error.fromProvider ? 502 : error.status,
+        message: "Pembayaran ditolak provider pembayaran.",
+        details: {
+          ...(error.providerMessage ? { providerMessage: error.providerMessage } : {}),
+          ...(error.errorMessages.length > 0 ? { errorMessages: error.errorMessages } : {}),
+          ...(error.requestId ? { providerRequestId: error.requestId } : {}),
+        },
+      };
+    }
+    return { code: "PAYMENT_PROVIDER_UNAVAILABLE", status: error.status, message: error.message };
   }
   return { code: "PAYMENT_PROVIDER_UNAVAILABLE", status: 502, message: "Provider pembayaran gagal dihubungi." };
+}
+
+/** Bukti penolakan provider disimpan pada attempt supaya alasan yang sama
+ * bisa ditunjukkan kembali tanpa memanggil provider lagi. */
+function providerRejectionPayload(error: unknown, grossAmount: number): Record<string, unknown> {
+  if (!(error instanceof MidtransProviderError)) return { grossAmount };
+  return {
+    grossAmount,
+    statusCode: error.status,
+    providerMessage: error.providerMessage,
+    errorMessages: error.errorMessages,
+    requestId: error.requestId,
+  };
+}
+
+/** Penolakan provider bersifat terminal: attempt yang sama tidak boleh
+ * dicoba ulang karena akan menghasilkan penolakan identik. */
+function readStoredRejection(attempt: Record<string, unknown> | null): Record<string, unknown> | null {
+  if (!attempt) return null;
+  if (String(attempt.status) !== "failed" || String(attempt.provider_status) !== "rejected") return null;
+  const payload = (attempt.provider_payload ?? {}) as Record<string, unknown>;
+  const providerMessage = typeof payload.providerMessage === "string" && payload.providerMessage.length > 0 ? payload.providerMessage : null;
+  const providerRequestId = typeof payload.requestId === "string" && payload.requestId.length > 0 ? payload.requestId : null;
+  return {
+    ...(providerMessage ? { providerMessage } : {}),
+    ...(providerRequestId ? { providerRequestId } : {}),
+    attemptId: String(attempt.id ?? ""),
+  };
 }
 
 function safeProviderPayload(raw: Record<string, unknown>): Record<string, unknown> {
@@ -179,7 +218,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ ord
     }
     if (!paymentRow?.id) return fail("Invoice pembayaran tidak ditemukan", "PAYMENT_INVOICE_FAILED", 503);
 
-    const attemptResult = await admin.from("payment_attempts").select("id,provider_order_id,status,integration_type,provider_status,provider_checked_at,payment_type,qr_code_url,expires_at,created_at,payment_checkout_sessions(snap_token,redirect_url,expires_at,cancelled_at)").eq("payment_id", String(paymentRow.id)).order("created_at", {ascending:false}).limit(1).maybeSingle();
+    const attemptResult = await admin.from("payment_attempts").select("id,provider_order_id,status,integration_type,provider_status,provider_checked_at,payment_type,qr_code_url,expires_at,created_at,provider_payload,payment_checkout_sessions(snap_token,redirect_url,expires_at,cancelled_at)").eq("payment_id", String(paymentRow.id)).order("created_at", {ascending:false}).limit(1).maybeSingle();
     if (attemptResult.error) return fail("Percobaan pembayaran sebelumnya belum dapat dimuat. Coba periksa lagi sebelum membayar.", "PAYMENT_ATTEMPT_READ_FAILED", 503);
     const active = attemptResult.data as Record<string, unknown> | null;
     const activeSession = firstObject(active?.payment_checkout_sessions ?? active?.payment_checkout_session);
@@ -195,6 +234,12 @@ export async function POST(request: Request, { params }: { params: Promise<{ ord
       const createdAt = Date.parse(String(active.created_at ?? ""));
       if (!Number.isFinite(createdAt) || Date.now() - createdAt < 2 * 60 * 1000) return fail("Permintaan checkout sedang diproses", "PAYMENT_IN_PROGRESS", 409);
       return fail("Hasil pembuatan tagihan belum pasti. Periksa status atau minta bantuan Admin.", "PAYMENT_IN_PROGRESS", 409);
+    }
+
+    const storedRejection = readStoredRejection(active);
+    if (storedRejection) {
+      console.error("[umkm-payment] provider rejection reused", { requestId: requestIdValue, attemptId: storedRejection.attemptId, code: "PAYMENT_PROVIDER_REJECTED", providerMessage: storedRejection.providerMessage ?? null });
+      return fail("Pembayaran ditolak provider pembayaran.", "PAYMENT_PROVIDER_REJECTED", 502, storedRejection);
     }
 
     const closesAt = timeline.effective_payment_closes_at ?? timeline.payment_closes_at;
@@ -213,8 +258,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ ord
     } catch (error) {
       const mapped = providerCode(error);
       const uncertain=!(error instanceof MidtransProviderError)||error.retryable;
-      await Promise.resolve(admin.from("payment_attempts").update({ status: uncertain?"pending":"failed", provider_status: uncertain?"creation_unknown":"failed", updated_at: new Date().toISOString() }).eq("id", attemptId)).catch(() => undefined);
-      return fail(mapped.message, mapped.code, mapped.status);
+      await Promise.resolve(admin.from("payment_attempts").update({ status: uncertain?"pending":"failed", provider_status: uncertain?"creation_unknown":"rejected", provider_payload: uncertain?{}:providerRejectionPayload(error, grossAmount), updated_at: new Date().toISOString() }).eq("id", attemptId)).catch(() => undefined);
+      if (!uncertain) console.error("[umkm-payment] provider rejected checkout", { requestId: requestIdValue, attemptId, code: mapped.code, providerMessage: mapped.details?.providerMessage ?? null, providerRequestId: mapped.details?.providerRequestId ?? null });
+      return fail(mapped.message, mapped.code, mapped.status, mapped.details);
     }
     if (checkout.orderId !== localProviderOrderId) {
       await Promise.resolve(admin.from("payment_attempts").update({ status: "pending", provider_status: "order_id_mismatch", updated_at: new Date().toISOString() }).eq("id", attemptId)).catch(() => undefined);

@@ -1,0 +1,52 @@
+# Browser verification — provider rejection visibility (Fix 4)
+
+Date: 2026-10-22. App: http://localhost:3000 (dev, local Supabase + Midtrans
+sandbox). Account: ryan@gmail.com (test-only).
+
+Order: b8a50434-a2b8-42d9-b604-14e048b7a6b6 — batch 80480336-3607-4489-9209-84cf0efc907d
+(Kangkung, 10 ikat, Tier 2, Rp 800, payment window open until 22 Okt 2026 18.07 WIB).
+
+## Real charge attempt (unmocked)
+
+POST /api/umkm/orders/b8a50434-.../payment/charge → 201 Created (Snap session created)
+POST /api/umkm/orders/b8a50434-.../payment/reconcile → 502 PAYMENT_PROVIDER_MISMATCH
+
+The sandbox accepted the Rp 800 transaction this time, so the provider-rejection
+branch could not be produced by a live charge. The reconcile mismatch
+("Hasil pemeriksaan tidak sesuai tagihan. Hubungi bantuan transaksi.") is the
+pre-existing sandbox amount behaviour and is outside the four fixes.
+
+## Terminal rejection state (responses intercepted with the exact route body)
+
+Intercepted POST .../payment/charge and POST .../payment/reconcile with:
+
+HTTP 502
+{
+  "error": "Pembayaran ditolak provider pembayaran.",
+  "code": "PAYMENT_PROVIDER_REJECTED",
+  "details": {
+    "providerMessage": "Transaction amount is not equal to the expected total.",
+    "errorMessages": ["Transaction amount is not equal to the expected total."],
+    "providerRequestId": "req-abc-123"
+  },
+  "requestId": "2BCB8D5A-A333-482D-92F2-705A8699EFF5"
+}
+
+Rendered alert after clicking the pay button:
+
+Pembayaran ditolak provider pembayaran. Alasan provider: Transaction amount is not
+equal to the expected total.
+Kode rujukan: 2BCB8D5A-A333-482D-92F2-705A8699EFF5
+Percobaan baru dengan data yang sama akan ditolak provider. Hubungi bantuan dengan
+kode rujukan di atas bila pesanan perlu diperiksa.
+
+Buttons in the payment panel after the rejection: "Cek status pembayaran" only.
+No "Coba lagi", no "Lanjutkan pembayaran"/"Coba bayar lagi"/"Bayar sekarang", and
+no "Buka checkout langsung" fallback (canOpen is false for a terminal rejection).
+
+Screenshot: provider-rejection.png
+
+## TDD logs
+
+- red-unit.log — 5 failed (adapter, client-errors, charge route, panel).
+- green-unit.log — 28 passed (4 files).

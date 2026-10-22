@@ -19,4 +19,22 @@ describe("Midtrans QRIS adapter", () => {
     await expireTransaction("WESUP-1", { MIDTRANS_SERVER_KEY: "key", MIDTRANS_IS_PRODUCTION: "false" } as unknown as NodeJS.ProcessEnv);
     expect(fetchMock.mock.calls[0]?.[0]).toContain("/v2/WESUP-1/expire");
   });
+
+  it("keeps the provider rejection reason so the UMKM can be told what failed", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify({
+      status_code: "400",
+      status_message: "Transaction amount is not equal to the expected total.",
+      error_messages: ["Transaction amount is not equal to the expected total.", "Invalid gross amount."],
+      request_id: "req-abc-123",
+    }), { status: 400 }));
+
+    const error = await chargeQris({ orderId: "WESUP-1", grossAmount: 12000, idempotencyKey: "idem" }, { MIDTRANS_SERVER_KEY: "key", MIDTRANS_IS_PRODUCTION: "false" } as unknown as NodeJS.ProcessEnv).catch((reason: unknown) => reason);
+
+    expect(error).toBeInstanceOf(MidtransProviderError);
+    const providerError = error as MidtransProviderError;
+    expect(providerError.providerMessage).toBe("Transaction amount is not equal to the expected total.");
+    expect(providerError.errorMessages).toEqual(["Transaction amount is not equal to the expected total.", "Invalid gross amount."]);
+    expect(providerError.requestId).toBe("req-abc-123");
+    expect(providerError.retryable).toBe(false);
+  });
 });

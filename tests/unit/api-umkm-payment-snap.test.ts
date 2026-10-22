@@ -25,7 +25,7 @@ vi.mock("@/lib/payments/midtrans", async () => {
 
 import { resolveActiveUmkm } from "@/lib/umkm/workspace-auth";
 import { getAdminClient, SupabaseAdminConfigurationError } from "@/lib/supabase/admin";
-import { createSnapTransaction } from "@/lib/payments/midtrans";
+import { createSnapTransaction, MidtransProviderError } from "@/lib/payments/midtrans";
 import { POST } from "@/app/api/umkm/orders/[orderId]/payment/charge/route";
 
 const ORDER_ID = "11111111-1111-4111-8111-111111111111";
@@ -168,6 +168,64 @@ describe("checkout continuation safeguards", () => {
     const result=await (registration.maybeSingle as () => Promise<{data:{payment:{status:string}}}>)();result.data.payment.status="paid";
     const response=await POST(new NextRequest("http://localhost",{method:"POST"}),{params:Promise.resolve({orderId:ORDER_ID})});
     expect(response.status).toBe(409);expect(await response.json()).toMatchObject({code:"PAYMENT_ALREADY_RECORDED"});expect(createSnapTransaction).not.toHaveBeenCalled();
+  });
+});
+
+describe("provider rejection visibility", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(createSnapTransaction).mockImplementation(async (input) => ({ orderId: input.orderId, token: "snap-token", redirectUrl: "https://app.sandbox.midtrans.com/snap/v2/vtweb/snap-token", expiresAt: input.expiresAt, raw: {} }));
+  });
+
+  it("records the provider reason on the attempt and hands it to the UMKM", async () => {
+    const { attempt } = setup();
+    vi.mocked(createSnapTransaction).mockRejectedValue(new MidtransProviderError("Transaction amount is not equal to the expected total.", 400, false, {
+      fromProvider: true,
+      providerMessage: "Transaction amount is not equal to the expected total.",
+      errorMessages: ["Transaction amount is not equal to the expected total."],
+      requestId: "req-abc-123",
+    }));
+
+    const response = await POST(new NextRequest("http://localhost/api/umkm/orders/" + ORDER_ID + "/payment/charge", { method: "POST" }), { params: Promise.resolve({ orderId: ORDER_ID }) });
+
+    expect(response.status).toBe(502);
+    const body = await response.json();
+    expect(body).toMatchObject({
+      code: "PAYMENT_PROVIDER_REJECTED",
+      details: { providerMessage: "Transaction amount is not equal to the expected total.", providerRequestId: "req-abc-123" },
+    });
+    expect(attempt.update).toHaveBeenCalledWith(expect.objectContaining({
+      status: "failed",
+      provider_status: "rejected",
+      provider_payload: expect.objectContaining({
+        statusCode: 400,
+        providerMessage: "Transaction amount is not equal to the expected total.",
+        requestId: "req-abc-123",
+        grossAmount: 120000,
+      }),
+    }));
+  });
+
+  it("does not open a second attempt after a terminal provider rejection", async () => {
+    setup({ activeAttempt: {
+      id: "attempt-rejected",
+      provider_order_id: "WESUP-rejected",
+      status: "failed",
+      provider_status: "rejected",
+      integration_type: "snap",
+      expires_at: "2099-09-15T00:00:00.000Z",
+      created_at: "2026-09-01T00:00:00.000Z",
+      provider_payload: { statusCode: 400, providerMessage: "Transaction amount is not equal to the expected total.", requestId: "req-abc-123" },
+    } });
+
+    const response = await POST(new NextRequest("http://localhost/api/umkm/orders/" + ORDER_ID + "/payment/charge", { method: "POST" }), { params: Promise.resolve({ orderId: ORDER_ID }) });
+
+    expect(response.status).toBe(502);
+    expect(await response.json()).toMatchObject({
+      code: "PAYMENT_PROVIDER_REJECTED",
+      details: { providerMessage: "Transaction amount is not equal to the expected total.", providerRequestId: "req-abc-123", attemptId: "attempt-rejected" },
+    });
+    expect(createSnapTransaction).not.toHaveBeenCalled();
   });
 });
 

@@ -1,0 +1,54 @@
+[33m(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.[39m
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.11 [39m[90mC:/Codes/Projects/wesup[39m
+
+ [32m✓[39m tests/unit/payment-client-errors.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+ [32m✓[39m tests/unit/midtrans.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 65[2mms[22m[39m
+[90mstderr[2m | tests/unit/api-umkm-payment-snap.test.ts[2m > [22m[2mUMKM Snap payment charge[2m > [22m[2mmaps missing Supabase admin configuration separately from Midtrans failures
+[22m[39m[umkm-payment] admin client initialization failed {
+  requestId: [32m'cede2de5-44c7-409f-bc4e-ea33df823366'[39m,
+  operation: [32m'charge.getAdminClient'[39m,
+  errorName: [32m'SupabaseAdminConfigurationError'[39m,
+  code: [32m'PAYMENT_ADMIN_CONFIG_MISSING'[39m
+}
+
+[90mstderr[2m | tests/unit/api-umkm-payment-snap.test.ts[2m > [22m[2mUMKM Snap payment charge[2m > [22m[2mmaps unexpected Supabase admin initialization failures separately
+[22m[39m[umkm-payment] admin client initialization failed {
+  requestId: [32m'dc860f68-9cb5-4710-aad9-0cc828907067'[39m,
+  operation: [32m'charge.getAdminClient'[39m,
+  errorName: [32m'Error'[39m,
+  code: [32m'PAYMENT_ADMIN_INIT_FAILED'[39m
+}
+ [32m✓[39m tests/unit/api-umkm-payment-snap.test.ts [2m([22m[2m13 tests[22m[2m)[22m[32m 62[2mms[22m[39m
+
+[90mstderr[2m | tests/unit/api-umkm-payment-snap.test.ts[2m > [22m[2mprovider rejection visibility[2m > [22m[2mrecords the provider reason on the attempt and hands it to the UMKM
+[22m[39m[umkm-payment] provider rejected checkout {
+  requestId: [32m'a22e3110-b6ac-48e5-953a-1671f1f2c050'[39m,
+  attemptId: [32m'f1f1bcb3-eac8-4b2d-9414-5488085c78ad'[39m,
+  code: [32m'PAYMENT_PROVIDER_REJECTED'[39m,
+  providerMessage: [32m'Transaction amount is not equal to the expected total.'[39m,
+  providerRequestId: [32m'req-abc-123'[39m
+}
+
+[90mstderr[2m | tests/unit/api-umkm-payment-snap.test.ts[2m > [22m[2mprovider rejection visibility[2m > [22m[2mdoes not open a second attempt after a terminal provider rejection
+[22m[39m[umkm-payment] provider rejection reused {
+  requestId: [32m'd6001202-d2e2-4de3-952e-ec74441e547d'[39m,
+  attemptId: [32m'attempt-rejected'[39m,
+  code: [32m'PAYMENT_PROVIDER_REJECTED'[39m,
+  providerMessage: [32m'Transaction amount is not equal to the expected total.'[39m
+}
+
+[90mstderr[2m | tests/components/UmkmPaymentPanel.test.tsx[2m > [22m[2mUmkmPaymentPanel[2m > [22m[2mexplains that a created checkout still needs a method
+[22m[39mCannot update a component (`UmkmPaymentPanel`) while rendering a different component (`default`). To locate the bad setState() call inside `default`, follow the stack trace as described in https://react.dev/link/setstate-in-render
+
+ [32m✓[39m tests/components/UmkmPaymentPanel.test.tsx [2m([22m[2m8 tests[22m[2m)[22m[33m 1630[2mms[22m[39m
+     [33m[2m✓[22m[39m shows the real payment closing date while counting down to opening [33m 393[2mms[22m[39m
+     [33m[2m✓[22m[39m keeps the four-check budget across refreshed props, then permits a manual check [33m 789[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m4 passed[39m[22m[90m (4)[39m
+[2m      Tests [22m [1m[32m28 passed[39m[22m[90m (28)[39m
+[2m   Start at [22m 15:54:59
+[2m   Duration [22m 4.69s[2m (transform 677ms, setup 1.42s, import 1.03s, tests 1.77s, environment 1.76s)[22m
+
