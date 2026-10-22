@@ -91,7 +91,6 @@ export function NavigationBar({ brandHref = "/" }: { brandHref?: string | null }
             <nav aria-label="Navigasi bawah (mobile)" className="pointer-events-auto fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-40 flex min-h-17 items-stretch justify-around gap-1 border border-wesup-ink/20 bg-wesup-paper p-1.5 lg:hidden">
                 {navItems.slice(0, 5).map((item, index) => <NavLink key={`${item.href}-${item.label}`} item={item} isActive={index === activeIndex} mobile />)}
             </nav>
-            </nav>
         </header>
     );
 }
