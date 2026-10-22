@@ -1,0 +1,19 @@
+
+Running 12 tests using 1 worker
+
+(node:17464) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok  1 [Supplier Flow] › tests\e2e\navigation-drafts.spec.ts:55:9 › navigation and fresh drafts at 1440px › aligns capacity and unit controls while keeping the capacity hint accessible (865ms)
+  ok  2 [Supplier Flow] › tests\e2e\navigation-drafts.spec.ts:76:9 › navigation and fresh drafts at 1440px › retains the complete menu while checking a slow session and after navigation (1.7s)
+  ok  3 [Supplier Flow] › tests\e2e\navigation-drafts.spec.ts:106:9 › navigation and fresh drafts at 1440px › navigates after login without waiting for another session request (1.6s)
+  ok  4 [Supplier Flow] › tests\e2e\navigation-drafts.spec.ts:120:9 › navigation and fresh drafts at 1440px › lists and resumes local drafts, then shows a confirmed save in the catalog (4.9s)
+  ok  5 [Supplier Flow] › tests\e2e\navigation-drafts.spec.ts:146:9 › navigation and fresh drafts at 1440px › returns from a directly opened batch and the legacy transaction URL to catalog (4.8s)
+  ok  6 [Supplier Flow] › tests\e2e\navigation-drafts.spec.ts:163:9 › navigation and fresh drafts at 1440px › starts a new offer empty and resumes the previous draft only on request (3.2s)
+  ok  7 [Supplier Flow] › tests\e2e\navigation-drafts.spec.ts:55:9 › navigation and fresh drafts at 390px › aligns capacity and unit controls while keeping the capacity hint accessible (712ms)
+  ok  8 [Supplier Flow] › tests\e2e\navigation-drafts.spec.ts:76:9 › navigation and fresh drafts at 390px › retains the complete menu while checking a slow session and after navigation (1.6s)
+  ok  9 [Supplier Flow] › tests\e2e\navigation-drafts.spec.ts:106:9 › navigation and fresh drafts at 390px › navigates after login without waiting for another session request (1.6s)
+  ok 10 [Supplier Flow] › tests\e2e\navigation-drafts.spec.ts:120:9 › navigation and fresh drafts at 390px › lists and resumes local drafts, then shows a confirmed save in the catalog (5.3s)
+  ok 11 [Supplier Flow] › tests\e2e\navigation-drafts.spec.ts:146:9 › navigation and fresh drafts at 390px › returns from a directly opened batch and the legacy transaction URL to catalog (4.9s)
+  ok 12 [Supplier Flow] › tests\e2e\navigation-drafts.spec.ts:163:9 › navigation and fresh drafts at 390px › starts a new offer empty and resumes the previous draft only on request (2.0s)
+
+  12 passed (38.5s)

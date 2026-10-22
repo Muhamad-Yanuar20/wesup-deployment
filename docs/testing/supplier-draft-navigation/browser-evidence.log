@@ -1,0 +1,9 @@
+
+Running 2 tests using 1 worker
+
+(node:23732) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 1 [Supplier Flow] › tests\e2e\navigation-drafts.spec.ts:120:9 › navigation and fresh drafts at 1440px › lists and resumes local drafts, then shows a confirmed save in the catalog (6.3s)
+  ok 2 [Supplier Flow] › tests\e2e\navigation-drafts.spec.ts:120:9 › navigation and fresh drafts at 390px › lists and resumes local drafts, then shows a confirmed save in the catalog (6.9s)
+
+  2 passed (20.4s)
