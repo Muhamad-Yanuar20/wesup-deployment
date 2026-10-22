@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { ShoppingBag } from "lucide-react";
 
-export function Footer() {
+export function Footer({ variant = "default" }: { variant?: "default" | "brand-only" } = {}) {
     const year = new Date().getFullYear();
 
+    if (variant === "brand-only") return <footer className="mt-auto border-t border-wesup-ink bg-wesup-ink text-wesup-paper"><div className="mx-auto max-w-7xl px-4 py-8 pb-[var(--app-bottom-offset)] sm:px-6 lg:px-8 lg:pb-8"><div className="flex items-center gap-2"><ShoppingBag aria-hidden="true" className="size-5 text-wesup-red-bright" strokeWidth={1.5} /><span className="font-landing-display text-xl">Wesup</span></div><p className="mt-3 max-w-xl text-sm leading-7 text-wesup-paper/80">Platform pembelian kolektif bahan baku untuk UMKM Bandung dengan sistem escrow &amp; tier diskon otomatis.</p></div></footer>;
     return (
         <footer className="mt-auto border-t border-wesup-ink bg-wesup-ink text-wesup-paper">
             <div className="mx-auto w-full max-w-7xl px-4 py-12 pb-28 sm:px-6 lg:pb-12 lg:px-8">

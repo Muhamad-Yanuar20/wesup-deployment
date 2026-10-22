@@ -4,9 +4,10 @@ import { ReactNode } from "react";
 
 interface LayoutProps {
   children: ReactNode;
+  footerVariant?: "default" | "brand-only";
 }
 
-export function Layout({ children }: LayoutProps) {
+export function Layout({ children, footerVariant }: LayoutProps) {
   return (
     <div className="wesup-app flex min-h-dvh flex-col bg-wesup-paper text-wesup-ink">
       <a href="#main-content" className="sr-only z-50 bg-wesup-ink px-4 py-3 text-sm font-semibold text-wesup-paper focus:not-sr-only focus:fixed focus:left-4 focus:top-4">
@@ -16,7 +17,7 @@ export function Layout({ children }: LayoutProps) {
       <main id="main-content" className="app-main min-w-0 flex-1 bg-wesup-paper">
         {children}
       </main>
-      <Footer />
+      <Footer variant={footerVariant} />
     </div>
   );
 }

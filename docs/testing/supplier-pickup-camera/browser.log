@@ -1,0 +1,10 @@
+
+Running 3 tests using 1 worker
+
+(node:28120) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 1 [Supplier Flow] › tests\e2e\supplier-pickup-camera.spec.ts:54:7 › Supplier pickup camera and account › renders owned account and brand-only footer at all target widths (3.4s)
+  ok 2 [Supplier Flow] › tests\e2e\supplier-pickup-camera.spec.ts:65:7 › Supplier pickup camera and account › preserves the orders-to-pickup return chain including direct access fallback (5.0s)
+  ok 3 [Supplier Flow] › tests\e2e\supplier-pickup-camera.spec.ts:79:7 › Supplier pickup camera and account › decodes the actual buyer QR through a virtual video camera and confirms once (11.7s)
+
+  3 passed (25.2s)

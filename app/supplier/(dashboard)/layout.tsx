@@ -38,5 +38,5 @@ export default async function SupplierDashboardLayout({
     redirect(accessState ? resolveHomePath(accessState) : "/login?role=supplier");
   }
 
-  return <div className="wesup-app flex min-h-dvh flex-col bg-wesup-paper text-wesup-ink"><a href="#main-content" className="sr-only z-50 bg-wesup-ink px-4 py-3 text-wesup-paper focus:not-sr-only focus:fixed focus:left-4 focus:top-4">Lewati ke konten utama</a><NavigationBar /><main id="main-content" className="app-main min-w-0 flex-1">{children}</main><Footer /></div>;
+  return <div className="wesup-app flex min-h-dvh flex-col bg-wesup-paper text-wesup-ink"><a href="#main-content" className="sr-only z-50 bg-wesup-ink px-4 py-3 text-wesup-paper focus:not-sr-only focus:fixed focus:left-4 focus:top-4">Lewati ke konten utama</a><NavigationBar /><main id="main-content" className="app-main min-w-0 flex-1">{children}</main><Footer variant="brand-only" /></div>;
 }

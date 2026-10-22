@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/supplier/fulfillment/FulfillmentLink";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AlertCircle, CheckCircle2, Package, ScanLine, Truck } from "lucide-react";
 import { supplierCatalogApiRepository } from "@/lib/supplier-catalog/api-repository";

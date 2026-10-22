@@ -1,0 +1,15 @@
+
+> wesup@0.1.0 test
+> vitest run
+
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v4.1.11 C:/Users/hpyan/Project/wesup
+
+
+ Test Files  234 passed (234)
+      Tests  2152 passed (2152)
+   Start at  11:03:52
+   Duration  67.23s (transform 15.91s, setup 168.85s, import 55.34s, tests 128.76s, environment 215.91s)
