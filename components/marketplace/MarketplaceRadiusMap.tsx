@@ -35,7 +35,7 @@ export default function MarketplaceRadiusMap({
 
   return (
     <section
-      className={`relative overflow-hidden  border border-wesup-ink/15 bg-wesup-paper  ${className}`}
+      className={`relative isolate overflow-hidden  border border-wesup-ink/15 bg-wesup-paper  ${className}`}
       data-testid="marketplace-radius-map"
       aria-label={`Peta penawaran dalam radius ${safeRadiusKm} kilometer`}
     >

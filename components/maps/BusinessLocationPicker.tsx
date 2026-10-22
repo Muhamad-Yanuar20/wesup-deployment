@@ -77,7 +77,7 @@ export default function BusinessLocationPicker({ value, onChange, error, disable
           <button type="button" onClick={() => selectCoordinate(mapCenter)} disabled={disabled} className="inline-flex min-h-11 items-center justify-center border border-wesup-ink/15 bg-wesup-paper px-4 py-2.5 text-sm font-semibold text-wesup-ink-sub transition-colors duration-500 wesup-ease hover:bg-wesup-paper focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wesup-red disabled:cursor-not-allowed disabled:opacity-60">Pilih titik tengah peta</button>
         </div>
       </div>
-      <div className="relative h-72 overflow-hidden border border-wesup-ink/15 sm:h-80" role="region" aria-label={`${label} pada peta`}>
+      <div className="relative isolate h-72 overflow-hidden border border-wesup-ink/15 sm:h-80" role="region" aria-label={`${label} pada peta`}>
         <MapContainer center={[BANDUNG_SERVICE_CENTER.lat, BANDUNG_SERVICE_CENTER.lng]} zoom={13} scrollWheelZoom={!disabled} dragging={!disabled} keyboard={!disabled} className="h-full w-full">
           <TileLayer attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
           <MapInteraction disabled={disabled} onSelect={selectCoordinate} onCenterChange={setMapCenter} />

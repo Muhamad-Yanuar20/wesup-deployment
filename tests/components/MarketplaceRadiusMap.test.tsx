@@ -69,4 +69,17 @@ describe("MarketplaceRadiusMap", () => {
     expect(screen.getByTestId("radius-circle")).toHaveAttribute("data-radius", "1000");
     expect(screen.getByText("Radius 1 km")).toBeInTheDocument();
   });
+
+  it("keeps the map in its own stacking context so it cannot cover the navigation", () => {
+    render(
+      <MarketplaceRadiusMap
+        origin={{ latitude: -6.91, longitude: 107.61, source: "request", needsProfileLocation: false }}
+        radiusKm={5}
+        items={[ITEM()]}
+      />,
+    );
+
+    const wrapper = screen.getByTestId("marketplace-radius-map");
+    expect(wrapper.className).toContain("isolate");
+  });
 });

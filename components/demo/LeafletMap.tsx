@@ -103,7 +103,7 @@ export default function LeafletMap() {
   }
 
   return (
-    <section className="overflow-hidden border border-wesup-ink/15 bg-wesup-paper">
+    <section className="isolate overflow-hidden border border-wesup-ink/15 bg-wesup-paper">
       <div className="grid gap-4 border-b border-wesup-ink/10 p-5 lg:grid-cols-[1fr_auto] lg:items-center">
         <div>
           <p className="font-mono text-[0.6875rem] uppercase tracking-[0.2em] text-wesup-ink-sub">

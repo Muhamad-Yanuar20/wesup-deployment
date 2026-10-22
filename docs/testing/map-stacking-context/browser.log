@@ -1,0 +1,21 @@
+# Browser verification — map stacking context (Fix 2)
+
+Date: 2026-10-22. App: http://localhost:3000 (dev). Batch detail page
+/marketplace/1fd8e6b0-529a-425a-b1fd-29504bd33243 (Leaflet route map).
+
+## Computed style (live DOM)
+
+wrapperClass: "relative isolate h-[320px] w-full overflow-hidden border border-wesup-ink/15"
+computed isolation: "isolate"
+
+The wrapper is the element directly above `.leaflet-container`; the map now
+creates its own stacking context, so the 1000+ z-index Leaflet panes cannot
+paint over the sticky navigation.
+
+Screenshot: map-wrapper.png
+
+## TDD logs
+
+- red-unit.log — 6 failed (5 static wrapper checks + 1 component render check).
+- green-unit.log — 13 passed (2 files), including the e2e-style stacking test
+  tests/unit/map-stacking-context.test.ts.
