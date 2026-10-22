@@ -16,5 +16,9 @@ export default async function UmkmLayout({ children }: { children: ReactNode }) 
     redirect(resolveHomePath(accessState));
   }
 
-  return <UmkmWorkspaceShell suspended={accessState.status !== "active"}>{children}</UmkmWorkspaceShell>;
+  return (
+    <UmkmWorkspaceShell suspended={accessState.status !== "active"} brandHref={null}>
+      {children}
+    </UmkmWorkspaceShell>
+  );
 }

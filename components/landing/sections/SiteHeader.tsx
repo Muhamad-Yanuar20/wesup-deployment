@@ -3,6 +3,8 @@
 import { useEffect, useId, useState, type CSSProperties } from "react";
 import Link from "next/link";
 import { ArrowRight, Menu, ShoppingBag, X } from "lucide-react";
+import { useNavigationSession } from "@/components/auth/NavigationSessionProvider";
+import { getDashboardPath } from "@/lib/auth/role-navigation";
 
 const NAV_LINKS = [
   { href: "#cara-kerja", label: "Cara kerja" },
@@ -16,6 +18,8 @@ const NAV_LINKS = [
 export function SiteHeader() {
   const menuId = useId();
   const [open, setOpen] = useState(false);
+  const { accessState } = useNavigationSession();
+  const dashboardPath = accessState?.status === "active" ? getDashboardPath(accessState) : null;
 
   // Escape and viewport-sized desktop both resolve back to the closed state;
   // the desktop nav takes over at md+, so a menu left open while resizing
@@ -74,24 +78,41 @@ export function SiteHeader() {
           </nav>
 
           <div className="flex items-center gap-1.5 sm:gap-2">
-            <Link
-              href="/login"
-              className="hidden min-h-10 items-center px-4 text-sm font-medium text-wesup-ink-sub transition-colors duration-500 hover:text-wesup-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wesup-red sm:inline-flex"
-            >
-              Masuk
-            </Link>
-            <Link
-              href="/register?role=umkm"
-              className="group inline-flex min-h-10 items-center border border-wesup-ink bg-wesup-ink py-1.5 pl-4 pr-2 text-sm font-semibold text-wesup-paper transition-all duration-500 wesup-ease hover:translate-x-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wesup-red"
-            >
-              Mulai Bergabung
-              <span
-                aria-hidden="true"
-                className="ml-2.5 inline-flex h-7 w-7 items-center justify-center text-wesup-paper transition-all duration-500 wesup-ease group-hover:translate-x-0.5"
+            {dashboardPath ? (
+              <Link
+                href={dashboardPath}
+                className="group inline-flex min-h-10 items-center border border-wesup-ink bg-wesup-ink py-1.5 pl-4 pr-2 text-sm font-semibold text-wesup-paper transition-all duration-500 wesup-ease hover:translate-x-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wesup-red"
               >
-                <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.5} />
-              </span>
-            </Link>
+                Dashboard
+                <span
+                  aria-hidden="true"
+                  className="ml-2.5 inline-flex h-7 w-7 items-center justify-center text-wesup-paper transition-all duration-500 wesup-ease group-hover:translate-x-0.5"
+                >
+                  <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.5} />
+                </span>
+              </Link>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className="hidden min-h-10 items-center px-4 text-sm font-medium text-wesup-ink-sub transition-colors duration-500 hover:text-wesup-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wesup-red sm:inline-flex"
+                >
+                  Masuk
+                </Link>
+                <Link
+                  href="/register?role=umkm"
+                  className="group inline-flex min-h-10 items-center border border-wesup-ink bg-wesup-ink py-1.5 pl-4 pr-2 text-sm font-semibold text-wesup-paper transition-all duration-500 wesup-ease hover:translate-x-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wesup-red"
+                >
+                  Mulai Bergabung
+                  <span
+                    aria-hidden="true"
+                    className="ml-2.5 inline-flex h-7 w-7 items-center justify-center text-wesup-paper transition-all duration-500 wesup-ease group-hover:translate-x-0.5"
+                  >
+                    <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.5} />
+                  </span>
+                </Link>
+              </>
+            )}
 
             <button
               type="button"
@@ -133,14 +154,25 @@ export function SiteHeader() {
               {item.label}
             </Link>
           ))}
-          <Link
-            href="/login"
-            onClick={() => setOpen(false)}
-            className="wesup-menu-item mt-4 border border-wesup-ink bg-wesup-ink px-6 py-4 text-center text-base font-semibold text-wesup-paper transition-colors duration-500 hover:bg-wesup-ink-sub focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wesup-red"
-            style={{ "--i": NAV_LINKS.length } as CSSProperties}
-          >
-            Masuk
-          </Link>
+          {dashboardPath ? (
+            <Link
+              href={dashboardPath}
+              onClick={() => setOpen(false)}
+              className="wesup-menu-item mt-4 border border-wesup-ink bg-wesup-ink px-6 py-4 text-center text-base font-semibold text-wesup-paper transition-colors duration-500 hover:bg-wesup-ink-sub focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wesup-red"
+              style={{ "--i": NAV_LINKS.length } as CSSProperties}
+            >
+              Dashboard
+            </Link>
+          ) : (
+            <Link
+              href="/login"
+              onClick={() => setOpen(false)}
+              className="wesup-menu-item mt-4 border border-wesup-ink bg-wesup-ink px-6 py-4 text-center text-base font-semibold text-wesup-paper transition-colors duration-500 hover:bg-wesup-ink-sub focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wesup-red"
+              style={{ "--i": NAV_LINKS.length } as CSSProperties}
+            >
+              Masuk
+            </Link>
+          )}
         </div>
       </div>
     </header>

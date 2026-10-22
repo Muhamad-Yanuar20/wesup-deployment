@@ -15,7 +15,7 @@ export default async function SupplierAccountPage() {
   if (!state) redirect("/login?role=supplier");
   if (state.role !== "supplier" || state.status !== "active" || state.verificationStatus !== "approved") redirect(resolveHomePath(state));
   return (
-    <Layout>
+    <Layout brandHref={null}>
       <PageContainer>
         <PageHeader title="Akun Supplier" description="Profil dan akses operasional Supplier Anda." icon={<UserRound aria-hidden="true" className="h-6 w-6" />} />
         <section className="border border-wesup-ink/15 bg-wesup-paper">

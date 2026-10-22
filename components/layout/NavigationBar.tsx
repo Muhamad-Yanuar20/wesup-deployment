@@ -3,8 +3,9 @@
 import { LogoutAction } from "@/components/auth/LogoutAction";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getActiveNavigationIndex, getRoleNavigationItems, type RoleNavigationItem } from "@/lib/auth/role-navigation";
+import { getActiveNavigationIndex, getDashboardPath, getRoleNavigationItems, type RoleNavigationItem } from "@/lib/auth/role-navigation";
 import { useNavigationSession } from "@/components/auth/NavigationSessionProvider";
 
 function IconHome() {
@@ -33,7 +34,7 @@ function iconForItem(item: RoleNavigationItem) {
     return item.label === "Status" ? <IconSupplier /> : <IconUser />;
 }
 
-export function NavigationBar() {
+export function NavigationBar({ brandHref = "/" }: { brandHref?: string | null } = {}) {
     const pathname = usePathname();
     const { accessState } = useNavigationSession();
     const authenticated = Boolean(accessState);
@@ -41,24 +42,67 @@ export function NavigationBar() {
     const navItems = getRoleNavigationItems(accessState);
     const activeIndex = getActiveNavigationIndex(navItems, pathname);
 
+    const dashboardPath = accessState?.status === "active" ? getDashboardPath(accessState) : null;
+    const isDashboardRoute =
+        pathname.startsWith("/umkm") ||
+        pathname.startsWith("/supplier") ||
+        pathname.startsWith("/admin");
+    const showDashboardCta = Boolean(dashboardPath && !isDashboardRoute);
+
+    const brandContent = (
+        <>
+            <span className="flex h-9 w-9 items-center justify-center border border-wesup-ink/20 bg-wesup-paper text-sm font-bold text-wesup-red" aria-hidden="true">
+                W
+            </span>
+            <span className="font-landing-display text-xl tracking-[-0.02em]">Wesup</span>
+        </>
+    );
+
     return (
         <header className="sticky top-0 z-40 w-full border-b border-wesup-ink/15 bg-wesup-paper">
             <div className="mx-auto flex min-h-16 w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-                <Link href="/" className="flex items-center gap-2 text-wesup-ink transition-opacity hover:opacity-80" aria-label="Wesup - Kembali ke Beranda">
-                    <span className="flex h-9 w-9 items-center justify-center border border-wesup-ink/20 bg-wesup-paper text-sm font-bold text-wesup-red" aria-hidden="true">W</span>
-                    <span className="font-landing-display text-xl tracking-[-0.02em]">Wesup</span>
-                </Link>
+                {brandHref ? (
+                    <Link
+                        href={brandHref}
+                        className="flex items-center gap-2 text-wesup-ink transition-opacity hover:opacity-80"
+                        aria-label="Wesup - Kembali ke Beranda"
+                    >
+                        {brandContent}
+                    </Link>
+                ) : (
+                    <div className="flex items-center gap-2 text-wesup-ink">{brandContent}</div>
+                )}
 
                 <nav aria-label="Navigasi utama" className="hidden items-center gap-1 lg:flex">
-                    {navItems.map((item, index) => <NavLink key={`${item.href}-${item.label}`} item={item} isActive={index === activeIndex} />)}
+                    {navItems.map((item, index) => (
+                        <NavLink key={`${item.href}-${item.label}`} item={item} isActive={index === activeIndex} />
+                    ))}
+                    {showDashboardCta && dashboardPath ? (
+                        <Link
+                            href={dashboardPath}
+                            className="group ml-1 inline-flex min-h-10 items-center border border-wesup-ink bg-wesup-ink py-1.5 pl-4 pr-2 text-sm font-semibold text-wesup-paper transition-all duration-500 wesup-ease hover:translate-x-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wesup-red"
+                        >
+                            Dashboard
+                            <span
+                                aria-hidden="true"
+                                className="ml-2.5 inline-flex h-7 w-7 items-center justify-center text-wesup-paper transition-all duration-500 wesup-ease group-hover:translate-x-0.5"
+                            >
+                                <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.5} />
+                            </span>
+                        </Link>
+                    ) : null}
                     {authenticated && <LogoutAction />}
                 </nav>
 
-                <div className="flex items-center gap-2 lg:hidden" aria-label="Navigasi cepat"><span className="font-mono text-[0.6875rem] uppercase tracking-[0.2em] text-wesup-ink-sub">Bandung</span></div>
+                <div className="flex items-center gap-2 lg:hidden" aria-label="Navigasi cepat">
+                    <span className="font-mono text-[0.6875rem] uppercase tracking-[0.2em] text-wesup-ink-sub">Bandung</span>
+                </div>
             </div>
 
             <nav aria-label="Navigasi bawah (mobile)" className="fixed inset-x-0 bottom-0 z-40 flex items-stretch justify-around gap-1 border-t border-wesup-ink/15 bg-wesup-paper px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 lg:hidden">
-                {navItems.slice(0, 5).map((item, index) => <NavLink key={`${item.href}-${item.label}`} item={item} isActive={index === activeIndex} mobile />)}
+                {navItems.slice(0, 5).map((item, index) => (
+                    <NavLink key={`${item.href}-${item.label}`} item={item} isActive={index === activeIndex} mobile />
+                ))}
             </nav>
         </header>
     );

@@ -7,6 +7,7 @@ import { cache } from "react";
 import { withinReadBudget } from "@/lib/performance/read-budget";
 import { getCurrentUser, AuthUnavailableError, type AuthClient, type AuthContext, AuthError } from "@/lib/supabase/auth";
 import { isCompleteUmkmProfile } from "@/lib/umkm/profile-completion";
+import { getDashboardPath } from "@/lib/auth/role-navigation";
 
 export { AuthError };
 
@@ -83,14 +84,7 @@ export async function getAccessStateForUser(client: AccessStateClient, context: 
 
 export function resolveHomePath(accessState: UserAccessState): string {
   if (accessState.status !== "active") return "/login";
-
-  if (accessState.role === "admin") return "/admin";
-  if (accessState.role === "supplier") {
-    return accessState.verificationStatus === "approved"
-      ? "/supplier"
-      : "/supplier/status";
-  }
-  return "/umkm";
+  return getDashboardPath(accessState);
 }
 
 const PUBLIC_RETURN_PATHS = ["/", "/marketplace", "/bantuan"];

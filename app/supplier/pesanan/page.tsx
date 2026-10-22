@@ -15,5 +15,5 @@ export default async function SupplierOrdersPage() {
   const state = await getViewerAccessState((await getServerClient()) as unknown as AccessStateClient);
   if (!state) redirect("/login?role=supplier&returnTo=/supplier/pesanan");
   if (state.role !== "supplier" || state.status !== "active" || state.verificationStatus !== "approved") redirect(resolveHomePath(state));
-  return <Layout><PageContainer><PageHeader title="Pesanan & Pengambilan" description="Pilih batch untuk melihat pesanan UMKM dan memproses serah terima." icon={<ClipboardList aria-hidden="true" className="h-6 w-6" />} /><SupplierOrdersOverviewClient /></PageContainer></Layout>;
+  return <Layout brandHref={null}><PageContainer><PageHeader title="Pesanan & Pengambilan" description="Pilih batch untuk melihat pesanan UMKM dan memproses serah terima." icon={<ClipboardList aria-hidden="true" className="h-6 w-6" />} /><SupplierOrdersOverviewClient /></PageContainer></Layout>;
 }
