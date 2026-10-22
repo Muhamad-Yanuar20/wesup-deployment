@@ -44,6 +44,12 @@ interface RegistrationBody {
   consentLng?: unknown;
 }
 
+/** The join RPC reports the withdraw capability inside a capabilities object. */
+function readCanWithdraw(capabilities: unknown): boolean {
+  if (typeof capabilities !== "object" || capabilities === null) return false;
+  return (capabilities as { canWithdraw?: unknown }).canWithdraw === true;
+}
+
 export async function POST(req: Request) {
   const client = await getServerClient();
 
@@ -131,6 +137,20 @@ export async function POST(req: Request) {
     if (body?.consentAccepted !== true) return NextResponse.json({ error: "Setujui lokasi, harga maksimum, dan jadwal sebelum ikut pesanan." }, { status: 400 });
     try {
       const joined = await joinVersionedBatch(client as unknown as TransactionRpcClient, { batchId, quantity, capacity: batch.capacity_quantity ?? 0, consentLat, consentLng, consentSnapshot });
+      // join_batch_v2 flags a repeated join with idempotent=true and returns the
+      // quantity that was actually registered. Answering 201 here would tell the
+      // UMKM that a new quantity was accepted while the old one stays in force.
+      if (joined.idempotent === true) {
+        return NextResponse.json({
+          error: "Anda sudah terdaftar pada batch ini.",
+          code: "REGISTRATION_ALREADY_EXISTS",
+          details: {
+            registrationId: typeof joined.registrationId === "string" ? joined.registrationId : null,
+            quantity: typeof joined.quantity === "number" ? joined.quantity : null,
+            canWithdraw: readCanWithdraw(joined.capabilities),
+          },
+        }, { status: 409 });
+      }
       return NextResponse.json({ ok: true, ...joined,serverTime:new Date().toISOString(),phase:joined.phase??"waiting_payment_window",deadlineAt:joined.deadlineAt??timeline.registration_closes_at,capabilities:joined.capabilities??{canWithdraw:!joined.batchClosed,canPay:!!joined.batchClosed},blockedReason:joined.blockedReason??(joined.batchClosed?null:"Pembayaran belum dibuka.") }, { status: 201 });
     } catch (error) {
       if (isBatchCapacityError(error)) return NextResponse.json({ error: "Kapasitas penawaran tidak mencukupi.", code: "BATCH_CAPACITY_EXCEEDED" }, { status: 409 });
@@ -227,7 +247,7 @@ export async function POST(req: Request) {
   if (insertErr && isDuplicateKeyError(insertErr)) {
     await registrationCounter.adjustVolumeCounter(batchId, -quantity).catch(() => undefined);
     return NextResponse.json(
-      { error: "Anda sudah terdaftar pada penawaran ini" },
+      { error: "Anda sudah terdaftar pada penawaran ini", code: "REGISTRATION_ALREADY_EXISTS" },
       { status: 409 },
     );
   }

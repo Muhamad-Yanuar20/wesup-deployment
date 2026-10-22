@@ -1,0 +1,57 @@
+[33m(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.[39m
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.11 [39m[90mC:/Codes/Projects/wesup[39m
+
+ [31m❯[39m tests/components/JoinBatchForm.test.tsx [2m([22m[2m9 tests[22m[2m | [22m[31m2 failed[39m[2m | [22m[33m7 skipped[39m[2m)[22m[33m 583[2mms[22m[39m
+     [2m[90m↓[39m[22m requires location consent before enabling submission
+     [2m[90m↓[39m[22m posts quantity and optional consent coordinates, then shows success state
+     [2m[90m↓[39m[22m keeps the form usable and exposes duplicate/closed API errors
+     [2m[90m↓[39m[22m shows a retryable network error
+     [2m[90m↓[39m[22m reports the existing registration instead of a false success
+     [2m[90m↓[39m[22m withdraws the existing registration and joins again with the new quantity
+     [2m[90m↓[39m[22m keeps a locked registration as an error without a withdraw action
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 2 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[31m     [31m×[31m renders the submit button as visibly disabled until the terms are accepted[39m[32m 210[2mms[22m[39m
+[41m[1m FAIL [22m[49m tests/components/JoinBatchForm.test.tsx[2m > [22mJoinBatchForm terms gate[2m > [22mrenders the submit button as visibly disabled until the terms are accepted
+[31m     [31m×[31m re-disables the button when the quantity changes and resets the terms[39m[33m 370[2mms[22m[39m
+[31m[1mAssertionError[22m: expected 'inline-flex w-full items-center justi…' to contain 'cursor-not-allowed'[39m
+
+Expected: [32m"[7mcursor-not-allow[27med"[39m
+Received: [31m"[7minline-flex w-full items-center justify-center  px-4 py-3 text-sm font-bold transition-colors bg-wesup-ink text-wesup-paper hover:bg-wesup-r[27med"[39m
+
+[36m [2m❯[22m tests/components/JoinBatchForm.test.tsx:[2m250:30[22m[39m
+    [90m248|[39m     const button = screen.getByRole("button", { name: /konfirmasi ikut…
+    [90m249|[39m     [34mexpect[39m(button)[33m.[39m[34mtoBeDisabled[39m()[33m;[39m
+    [90m250|[39m     [34mexpect[39m(button[33m.[39mclassName)[33m.[39m[34mtoContain[39m([32m"cursor-not-allowed"[39m)[33m;[39m
+    [90m   |[39m                              [31m^[39m
+    [90m251|[39m     [34mexpect[39m(button[33m.[39mclassName)[33m.[39m[34mtoContain[39m([32m"bg-wesup-paper-sub"[39m)[33m;[39m
+    [90m252|[39m     [34mexpect[39m(button[33m.[39mclassName)[33m.[39mnot[33m.[39m[34mtoContain[39m([32m"bg-wesup-ink"[39m)[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯[22m[39m
+
+
+[41m[1m FAIL [22m[49m tests/components/JoinBatchForm.test.tsx[2m > [22mJoinBatchForm terms gate[2m > [22mre-disables the button when the quantity changes and resets the terms
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[31m[1mAssertionError[22m: expected 'inline-flex w-full items-center justi…' to contain 'cursor-not-allowed'[39m
+[2m      Tests [22m [1m[31m2 failed[39m[22m[2m | [22m[33m7 skipped[39m[90m (9)[39m
+
+Expected: [32m"[7mcursor-not-allow[27med"[39m
+Received: [31m"[7minline-flex w-full items-center justify-center  px-4 py-3 text-sm font-bold transition-colors bg-wesup-ink text-wesup-paper hover:bg-wesup-r[27med"[39m
+
+[2m   Start at [22m 15:53:45
+[36m [2m❯[22m tests/components/JoinBatchForm.test.tsx:[2m277:30[22m[39m
+[2m   Duration [22m 2.90s[2m (transform 154ms, setup 265ms, import 297ms, tests 583ms, environment 1.35s)[22m
+    [90m275|[39m
+    [90m276|[39m     [34mexpect[39m(button)[33m.[39m[34mtoBeDisabled[39m()[33m;[39m
+    [90m277|[39m     [34mexpect[39m(button[33m.[39mclassName)[33m.[39m[34mtoContain[39m([32m"cursor-not-allowed"[39m)[33m;[39m
+    [90m   |[39m                              [31m^[39m
+    [90m278|[39m     [34mexpect[39m(screen[33m.[39m[34mgetByRole[39m([32m"checkbox"[39m))[33m.[39mnot[33m.[39m[34mtoBeChecked[39m()[33m;[39m
+    [90m279|[39m   })[33m;[39m
+
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯[22m[39m
+

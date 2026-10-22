@@ -1,0 +1,397 @@
+[33m(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.[39m
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.11 [39m[90mC:/Codes/Projects/wesup[39m
+
+ [31m❯[39m tests/unit/api-registrations.test.ts [2m([22m[2m26 tests[22m[2m | [22m[31m2 failed[39m[2m | [22m[33m23 skipped[39m[2m)[22m[32m 44[2mms[22m[39m
+     [2m[90m↓[39m[22m reads the batch, its timeline and its tiers in one query
+     [2m[90m↓[39m[22m selects the window columns explicitly instead of every timeline column
+     [2m[90m↓[39m[22m atomically increments the Redis counter and records the registration within the window
+     [2m[90m↓[39m[22m rejects when called before registration opens
+     [2m[90m↓[39m[22m rejects at cutoff (capacity locked)
+     [2m[90m↓[39m[22m rejects after cutoff (capacity locked)
+     [2m[90m↓[39m[22m rejects a batch that is not published
+     [2m[90m↓[39m[22m rejects when the batch does not exist
+     [2m[90m↓[39m[22m fails closed with 500 when the batch has no timeline
+     [2m[90m↓[39m[22m fails closed with 500 when the batch has no tiers
+     [2m[90m↓[39m[22m rejects quantity above the tier maximum
+     [2m[90m↓[39m[22m rejects a non-safe-integer quantity before touching Redis
+     [2m[90m↓[39m[22m rejects invalid input
+     [2m[90m↓[39m[22m returns 503 (fail closed) when Redis is unavailable
+     [2m[90m↓[39m[22m decrements the Redis counter when the insert fails with a duplicate code 23505 (rolls back the INCR)
+     [2m[90m↓[39m[22m decrements the Redis counter when the insert fails with a duplicate message and no code (legacy fallback)
+     [2m[90m↓[39m[22m decrements the Redis counter when the insert fails for an unknown reason
+     [2m[90m↓[39m[22m returns 429 when the UMKM is rate limited
+       [2m[90m↓[39m[22m accepts request without consent fields (backward compatible)
+       [2m[90m↓[39m[22m accepts explicit consentAccepted true
+       [2m[90m↓[39m[22m accepts explicit policyVersion v2
+       [2m[90m↓[39m[22m rejects explicit consentAccepted false
+       [2m[90m↓[39m[22m rejects wrong policyVersion
+     [32m✓[39m registers a new participant and returns the batch volume[32m 22[2mms[22m[39m
+[31m     [31m×[31m rejects a repeated join with the existing registration instead of a false success[39m[32m 15[2mms[22m[39m
+[31m     [31m×[31m reports a locked registration that can no longer be withdrawn[39m[32m 5[2mms[22m[39m
+ [2m[90m↓[39m[22m tests/components/JoinBatchForm.test.tsx [2m([22m[2m9 tests[22m[2m | [22m[33m9 skipped[39m[2m)[22m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 2 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m tests/unit/api-registrations.test.ts[2m > [22mPOST /api/registrations (policy v2 join)[2m > [22mrejects a repeated join with the existing registration instead of a false success
+[31m[1mAssertionError[22m: expected 201 to be 409 // Object.is equality[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 409[39m
+[31m+ 201[39m
+
+[36m [2m❯[22m tests/unit/api-registrations.test.ts:[2m532:24[22m[39m
+    [90m530|[39m     const res = await register(postJson(policyV2Body) as unknown as Re…
+    [90m531|[39m
+    [90m532|[39m     [34mexpect[39m(res[33m.[39mstatus)[33m.[39m[34mtoBe[39m([34m409[39m)[33m;[39m
+    [90m   |[39m                        [31m^[39m
+    [90m533|[39m     [35mconst[39m body [33m=[39m [35mawait[39m res[33m.[39m[34mjson[39m()[33m;[39m
+    [90m534|[39m     [34mexpect[39m(body[33m.[39mcode)[33m.[39m[34mtoBe[39m([32m"REGISTRATION_ALREADY_EXISTS"[39m)[33m;[39m
+
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯[22m[39m
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[2m | [22m[33m1 skipped[39m[90m (2)[39m
+[41m[1m FAIL [22m[49m tests/unit/api-registrations.test.ts[2m > [22mPOST /api/registrations (policy v2 join)[2m > [22mreports a locked registration that can no longer be withdrawn
+[2m      Tests [22m [1m[31m2 failed[39m[22m[2m | [22m[1m[32m1 passed[39m[22m[2m | [22m[33m32 skipped[39m[90m (35)[39m
+[31m[1mAssertionError[22m: expected 201 to be 409 // Object.is equality[39m
+[2m   Start at [22m 15:49:39
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 409[39m
+[31m+ 201[39m
+
+[2m   Duration [22m 8.76s[2m (transform 916ms, setup 2.06s, import 1.94s, tests 44ms, environment 5.05s)[22m
+[36m [2m❯[22m tests/unit/api-registrations.test.ts:[2m577:24[22m[39m
+
+    [90m575|[39m     const res = await register(postJson(policyV2Body) as unknown as Re…
+    [90m576|[39m
+    [90m577|[39m     [34mexpect[39m(res[33m.[39mstatus)[33m.[39m[34mtoBe[39m([34m409[39m)[33m;[39m
+    [90m   |[39m                        [31m^[39m
+    [90m578|[39m     [35mconst[39m body [33m=[39m [35mawait[39m res[33m.[39m[34mjson[39m()[33m;[39m
+    [90m579|[39m     [34mexpect[39m(body[33m.[39mcode)[33m.[39m[34mtoBe[39m([32m"REGISTRATION_ALREADY_EXISTS"[39m)[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯[22m[39m
+
+[33m(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.[39m
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.11 [39m[90mC:/Codes/Projects/wesup[39m
+
+ [31m❯[39m tests/components/JoinBatchForm.test.tsx [2m([22m[2m9 tests[22m[2m | [22m[31m3 failed[39m[2m | [22m[33m6 skipped[39m[2m)[22m[33m 1696[2mms[22m[39m
+     [2m[90m↓[39m[22m requires location consent before enabling submission
+     [2m[90m↓[39m[22m posts quantity and optional consent coordinates, then shows success state
+     [2m[90m↓[39m[22m keeps the form usable and exposes duplicate/closed API errors
+     [2m[90m↓[39m[22m shows a retryable network error
+[31m     [31m×[31m reports the existing registration instead of a false success[39m[33m 1261[2mms[22m[39m
+[31m     [31m×[31m withdraws the existing registration and joins again with the new quantity[39m[32m 280[2mms[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 3 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[31m     [31m×[31m keeps a locked registration as an error without a withdraw action[39m[32m 142[2mms[22m[39m
+[41m[1m FAIL [22m[49m tests/components/JoinBatchForm.test.tsx[2m > [22mJoinBatchForm duplicate registration[2m > [22mreports the existing registration instead of a false success
+     [2m[90m↓[39m[22m renders the submit button as visibly disabled until the terms are accepted
+[31m[1mTestingLibraryElementError[22m: Unable to find an accessible element with the role "link" and name `/buka pesanan saya/i`
+
+Here are the accessible roles:
+
+  spinbutton:
+
+  Name "Jumlah porsi":
+  [36m<input[31m
+    [33mclass[31m=[32m"w-full border border-wesup-ink/15 bg-wesup-paper px-3 py-2 text-sm text-wesup-ink focus:border-wesup-ink/20 focus:outline-none"[31m
+    [33mid[31m=[32m"join-batch-quantity"[31m
+    [33mmin[31m=[32m"1"[31m
+    [33mname[31m=[32m"quantity"[31m
+    [33mstep[31m=[32m"1"[31m
+    [33mtype[31m=[32m"number"[31m
+    [33mvalue[31m=[32m"1"[31m
+  [36m/>[31m
+
+  --------------------------------------------------
+  alert:
+
+  Name "":
+  [36m<p[31m
+    [33mclass[31m=[32m"border border-wesup-red bg-wesup-paper px-3 py-2 text-sm font-medium text-wesup-ink"[31m
+    [33mrole[31m=[32m"alert"[31m
+  [36m/>[31m
+
+  --------------------------------------------------
+  button:
+
+  Name "Daftar Sekarang":
+  [36m<button[31m
+    [33mclass[31m=[32m"inline-flex w-full items-center justify-center  px-4 py-3 text-sm font-bold transition-colors bg-wesup-ink text-wesup-paper hover:bg-wesup-red"[31m
+    [33mtype[31m=[32m"submit"[31m
+  [36m/>[31m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[31m
+  [36m<div>[31m
+    [36m<form[31m
+      [33mclass[31m=[32m"flex flex-col gap-3 tabular-nums"[31m
+      [33mnovalidate[31m=[32m""[31m
+    [36m>[31m
+      [36m<div[31m
+        [33mclass[31m=[32m"flex flex-col gap-1.5 tabular-nums"[31m
+      [36m>[31m
+        [36m<label[31m
+          [33mclass[31m=[32m"text-wesup-ink-sub font-mono text-[0.6875rem] uppercase tracking-[0.18em]"[31m
+          [33mfor[31m=[32m"join-batch-quantity"[31m
+        [36m>[31m
+          [0mJumlah porsi[0m
+        [36m</label>[31m
+        [36m<input[31m
+          [33mclass[31m=[32m"w-full border border-wesup-ink/15 bg-wesup-paper px-3 py-2 text-sm text-wesup-ink focus:border-wesup-ink/20 focus:outline-none"[31m
+          [33mid[31m=[32m"join-batch-quantity"[31m
+          [33mmin[31m=[32m"1"[31m
+          [33mname[31m=[32m"quantity"[31m
+          [33mstep[31m=[32m"1"[31m
+          [33mtype[31m=[32m"number"[31m
+          [33mvalue[31m=[32m"1"[31m
+        [36m/>[31m
+      [36m</div>[31m
+      [36m<p[31m
+        [33mclass[31m=[32m"border border-wesup-red bg-wesup-paper px-3 py-2 text-sm font-medium text-wesup-ink"[31m
+        [33mrole[31m=[32m"alert"[31m
+      [36m>[31m
+        [0mAnda sudah terdaftar pada batch ini.[0m
+      [36m</p>[31m
+      [36m<button[31m
+        [33mclass[31m=[32m"inline-flex w-full items-center justify-center  px-4 py-3 text-sm font-bold transition-colors bg-wesup-ink text-wesup-paper hover:bg-wesup-red"[31m
+        [33mtype[31m=[32m"submit"[31m
+      [36m>[31m
+        [0mDaftar Sekarang[0m
+      [36m</button>[31m
+    [36m</form>[31m
+    [36m<div[31m
+      [33maria-label[31m=[32m"Umpan balik aktivitas"[31m
+      [33mclass[31m=[32m"wesup-toast-region"[31m
+    [36m/>[31m
+  [36m</div>[31m
+[36m</body>[31m[39m
+     [2m[90m↓[39m[22m re-disables the button when the quantity changes and resets the terms
+[90m [2m❯[22m Object.getElementError node_modules/@testing-library/dom/dist/config.js:[2m37:19[22m[39m
+[90m [2m❯[22m node_modules/@testing-library/dom/dist/query-helpers.js:[2m76:38[22m[39m
+[90m [2m❯[22m node_modules/@testing-library/dom/dist/query-helpers.js:[2m52:17[22m[39m
+[90m [2m❯[22m node_modules/@testing-library/dom/dist/query-helpers.js:[2m95:19[22m[39m
+[36m [2m❯[22m tests/components/JoinBatchForm.test.tsx:[2m139:19[22m[39m
+
+    [90m137|[39m     expect(await screen.findByText(/sudah terdaftar/i)).toBeInTheDocum…
+    [90m138|[39m     expect(screen.queryByText(/pendaftaran berhasil/i)).not.toBeInTheD…
+    [90m139|[39m     expect(screen.getByRole("link", { name: /buka pesanan saya/i })).t…
+    [90m   |[39m                   [31m^[39m
+    [90m140|[39m       [32m"href"[39m[33m,[39m
+    [90m141|[39m       [32m"/umkm/pesanan/reg-existing"[39m[33m,[39m
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+
+[2m      Tests [22m [1m[31m3 failed[39m[22m[2m | [22m[33m6 skipped[39m[90m (9)[39m
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯[22m[39m
+
+[2m   Start at [22m 15:49:50
+[41m[1m FAIL [22m[49m tests/components/JoinBatchForm.test.tsx[2m > [22mJoinBatchForm duplicate registration[2m > [22mwithdraws the existing registration and joins again with the new quantity
+[2m   Duration [22m 4.68s[2m (transform 536ms, setup 374ms, import 927ms, tests 1.70s, environment 1.39s)[22m
+[31m[1mTestingLibraryElementError[22m: Unable to find an accessible element with the role "button" and name `/batalkan & daftar ulang/i`
+
+Here are the accessible roles:
+
+  spinbutton:
+
+  Name "Jumlah porsi":
+  [36m<input[31m
+    [33mclass[31m=[32m"w-full border border-wesup-ink/15 bg-wesup-paper px-3 py-2 text-sm text-wesup-ink focus:border-wesup-ink/20 focus:outline-none"[31m
+    [33mid[31m=[32m"join-batch-quantity"[31m
+    [33mmin[31m=[32m"1"[31m
+    [33mname[31m=[32m"quantity"[31m
+    [33mstep[31m=[32m"1"[31m
+    [33mtype[31m=[32m"number"[31m
+    [33mvalue[31m=[32m"1"[31m
+  [36m/>[31m
+
+  --------------------------------------------------
+  alert:
+
+  Name "":
+  [36m<p[31m
+    [33mclass[31m=[32m"border border-wesup-red bg-wesup-paper px-3 py-2 text-sm font-medium text-wesup-ink"[31m
+    [33mrole[31m=[32m"alert"[31m
+  [36m/>[31m
+
+  --------------------------------------------------
+  button:
+
+  Name "Daftar Sekarang":
+  [36m<button[31m
+    [33mclass[31m=[32m"inline-flex w-full items-center justify-center  px-4 py-3 text-sm font-bold transition-colors bg-wesup-ink text-wesup-paper hover:bg-wesup-red"[31m
+    [33mtype[31m=[32m"submit"[31m
+  [36m/>[31m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[31m
+  [36m<div>[31m
+    [36m<form[31m
+      [33mclass[31m=[32m"flex flex-col gap-3 tabular-nums"[31m
+      [33mnovalidate[31m=[32m""[31m
+    [36m>[31m
+      [36m<div[31m
+        [33mclass[31m=[32m"flex flex-col gap-1.5 tabular-nums"[31m
+      [36m>[31m
+        [36m<label[31m
+          [33mclass[31m=[32m"text-wesup-ink-sub font-mono text-[0.6875rem] uppercase tracking-[0.18em]"[31m
+          [33mfor[31m=[32m"join-batch-quantity"[31m
+        [36m>[31m
+          [0mJumlah porsi[0m
+        [36m</label>[31m
+        [36m<input[31m
+          [33mclass[31m=[32m"w-full border border-wesup-ink/15 bg-wesup-paper px-3 py-2 text-sm text-wesup-ink focus:border-wesup-ink/20 focus:outline-none"[31m
+          [33mid[31m=[32m"join-batch-quantity"[31m
+          [33mmin[31m=[32m"1"[31m
+          [33mname[31m=[32m"quantity"[31m
+          [33mstep[31m=[32m"1"[31m
+          [33mtype[31m=[32m"number"[31m
+          [33mvalue[31m=[32m"1"[31m
+        [36m/>[31m
+      [36m</div>[31m
+      [36m<p[31m
+        [33mclass[31m=[32m"border border-wesup-red bg-wesup-paper px-3 py-2 text-sm font-medium text-wesup-ink"[31m
+        [33mrole[31m=[32m"alert"[31m
+      [36m>[31m
+        [0mAnda sudah terdaftar pada batch ini.[0m
+      [36m</p>[31m
+      [36m<button[31m
+        [33mclass[31m=[32m"inline-flex w-full items-center justify-center  px-4 py-3 text-sm font-bold transition-colors bg-wesup-ink text-wesup-paper hover:bg-wesup-red"[31m
+        [33mtype[31m=[32m"submit"[31m
+      [36m>[31m
+        [0mDaftar Sekarang[0m
+      [36m</button>[31m
+    [36m</form>[31m
+    [36m<div[31m
+      [33maria-label[31m=[32m"Umpan balik aktivitas"[31m
+      [33mclass[31m=[32m"wesup-toast-region"[31m
+    [36m/>[31m
+  [36m</div>[31m
+[36m</body>[31m[39m
+
+[90m [2m❯[22m Object.getElementError node_modules/@testing-library/dom/dist/config.js:[2m37:19[22m[39m
+[90m [2m❯[22m node_modules/@testing-library/dom/dist/query-helpers.js:[2m76:38[22m[39m
+[90m [2m❯[22m node_modules/@testing-library/dom/dist/query-helpers.js:[2m52:17[22m[39m
+[90m [2m❯[22m node_modules/@testing-library/dom/dist/query-helpers.js:[2m95:19[22m[39m
+[36m [2m❯[22m tests/components/JoinBatchForm.test.tsx:[2m181:14[22m[39m
+    [90m179|[39m     [35mawait[39m user[33m.[39m[34mtype[39m(quantity[33m,[39m [32m"7"[39m)[33m;[39m
+    [90m180|[39m     [35mawait[39m user[33m.[39m[34mclick[39m(
+    [90m181|[39m       screen[33m.[39m[34mgetByRole[39m([32m"button"[39m[33m,[39m { name[33m:[39m [36m/batalkan & daftar ulang/i[39m })[33m,[39m
+    [90m   |[39m              [31m^[39m
+    [90m182|[39m     )[33m;[39m
+    [90m183|[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/components/JoinBatchForm.test.tsx[2m > [22mJoinBatchForm duplicate registration[2m > [22mkeeps a locked registration as an error without a withdraw action
+[31m[1mTestingLibraryElementError[22m: Unable to find an accessible element with the role "link" and name `/buka pesanan saya/i`
+
+Here are the accessible roles:
+
+  spinbutton:
+
+  Name "Jumlah porsi":
+  [36m<input[31m
+    [33mclass[31m=[32m"w-full border border-wesup-ink/15 bg-wesup-paper px-3 py-2 text-sm text-wesup-ink focus:border-wesup-ink/20 focus:outline-none"[31m
+    [33mid[31m=[32m"join-batch-quantity"[31m
+    [33mmin[31m=[32m"1"[31m
+    [33mname[31m=[32m"quantity"[31m
+    [33mstep[31m=[32m"1"[31m
+    [33mtype[31m=[32m"number"[31m
+    [33mvalue[31m=[32m"7"[31m
+  [36m/>[31m
+
+  --------------------------------------------------
+  alert:
+
+  Name "":
+  [36m<p[31m
+    [33mclass[31m=[32m"border border-wesup-red bg-wesup-paper px-3 py-2 text-sm font-medium text-wesup-ink"[31m
+    [33mrole[31m=[32m"alert"[31m
+  [36m/>[31m
+
+  --------------------------------------------------
+  button:
+
+  Name "Daftar Sekarang":
+  [36m<button[31m
+    [33mclass[31m=[32m"inline-flex w-full items-center justify-center  px-4 py-3 text-sm font-bold transition-colors bg-wesup-ink text-wesup-paper hover:bg-wesup-red"[31m
+    [33mtype[31m=[32m"submit"[31m
+  [36m/>[31m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[31m
+  [36m<div>[31m
+    [36m<form[31m
+      [33mclass[31m=[32m"flex flex-col gap-3 tabular-nums"[31m
+      [33mnovalidate[31m=[32m""[31m
+    [36m>[31m
+      [36m<div[31m
+        [33mclass[31m=[32m"flex flex-col gap-1.5 tabular-nums"[31m
+      [36m>[31m
+        [36m<label[31m
+          [33mclass[31m=[32m"text-wesup-ink-sub font-mono text-[0.6875rem] uppercase tracking-[0.18em]"[31m
+          [33mfor[31m=[32m"join-batch-quantity"[31m
+        [36m>[31m
+          [0mJumlah porsi[0m
+        [36m</label>[31m
+        [36m<input[31m
+          [33mclass[31m=[32m"w-full border border-wesup-ink/15 bg-wesup-paper px-3 py-2 text-sm text-wesup-ink focus:border-wesup-ink/20 focus:outline-none"[31m
+          [33mid[31m=[32m"join-batch-quantity"[31m
+          [33mmin[31m=[32m"1"[31m
+          [33mname[31m=[32m"quantity"[31m
+          [33mstep[31m=[32m"1"[31m
+          [33mtype[31m=[32m"number"[31m
+          [33mvalue[31m=[32m"7"[31m
+        [36m/>[31m
+      [36m</div>[31m
+      [36m<p[31m
+        [33mclass[31m=[32m"border border-wesup-red bg-wesup-paper px-3 py-2 text-sm font-medium text-wesup-ink"[31m
+        [33mrole[31m=[32m"alert"[31m
+      [36m>[31m
+        [0mAnda sudah terdaftar pada batch ini.[0m
+      [36m</p>[31m
+      [36m<button[31m
+        [33mclass[31m=[32m"inline-flex w-full items-center justify-center  px-4 py-3 text-sm font-bold transition-colors bg-wesup-ink text-wesup-paper hover:bg-wesup-red"[31m
+        [33mtype[31m=[32m"submit"[31m
+      [36m>[31m
+        [0mDaftar Sekarang[0m
+      [36m</button>[31m
+    [36m</form>[31m
+    [36m<div[31m
+      [33maria-label[31m=[32m"Umpan balik aktivitas"[31m
+      [33mclass[31m=[32m"wesup-toast-region"[31m
+    [36m/>[31m
+  [36m</div>[31m
+[36m</body>[31m[39m
+[90m [2m❯[22m Object.getElementError node_modules/@testing-library/dom/dist/config.js:[2m37:19[22m[39m
+[90m [2m❯[22m node_modules/@testing-library/dom/dist/query-helpers.js:[2m76:38[22m[39m
+[90m [2m❯[22m node_modules/@testing-library/dom/dist/query-helpers.js:[2m52:17[22m[39m
+[90m [2m❯[22m node_modules/@testing-library/dom/dist/query-helpers.js:[2m95:19[22m[39m
+[36m [2m❯[22m tests/components/JoinBatchForm.test.tsx:[2m217:19[22m[39m
+    [90m215|[39m       screen.queryByRole("button", { name: /batalkan & daftar ulang/i …
+    [90m216|[39m     )[33m.[39mnot[33m.[39m[34mtoBeInTheDocument[39m()[33m;[39m
+    [90m217|[39m     expect(screen.getByRole("link", { name: /buka pesanan saya/i })).t…
+    [90m   |[39m                   [31m^[39m
+    [90m218|[39m   })[33m;[39m
+    [90m219|[39m })[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯[22m[39m
+

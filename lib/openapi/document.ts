@@ -189,6 +189,24 @@ const paths: OpenAPIV3.PathsObject = {
   "/api/webhook/midtrans": { post: operation({ tag: "Integrations", summary: "Terima notifikasi Midtrans", auth: "webhook", requestBody: jsonBody({ order_id: string, transaction_id: string, transaction_status: string, status_code: string, gross_amount: string, signature_key: string, merchant_id: string, fraud_status: string, payment_type: string }, ["order_id", "transaction_status", "status_code", "gross_amount", "signature_key"]), successSchema: json({ ok: boolean, processed: boolean, ignored: boolean, deduplicated: boolean }), errors: [400, 401, 503], description: "Signature SHA-512 Midtrans diverifikasi menggunakan server key; endpoint tidak menggunakan sesi pengguna." }) },
 };
 
+/** Pendaftaran ganda dijawab 409 dengan registration yang masih berlaku agar
+ * UMKM dapat membatalkan lalu mendaftar ulang, bukan menganggap join kedua
+ * sebagai pendaftaran baru. */
+const registrationConflictSchema = json({
+  error: string,
+  code: { type: "string", enum: ["REGISTRATION_ALREADY_EXISTS", "BATCH_CAPACITY_EXCEEDED"] },
+  details: json({
+    registrationId: { type: "string", nullable: true },
+    quantity: { type: "integer", nullable: true },
+    canWithdraw: boolean,
+  }, []),
+}, ["error", "code", "details"]);
+
+const registrationPost = paths["/api/registrations"]?.post;
+if (registrationPost?.responses) {
+  registrationPost.responses["409"] = response("Konflik pendaftaran: UMKM sudah terdaftar pada batch ini.", registrationConflictSchema);
+}
+
 export const openApiDocument: OpenAPIV3.Document = {
   openapi: "3.0.3",
   info: {

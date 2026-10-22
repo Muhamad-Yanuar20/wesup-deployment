@@ -1,0 +1,46 @@
+# Browser verification — duplicate join conflict (Fix 1)
+
+Date: 2026-10-22. App: http://localhost:3000 (dev, local Supabase + Midtrans sandbox).
+Account: umkm3@gmail.com (test-only).
+
+## 1. Real API contract (no mock)
+
+POST /api/registrations  body: {"batchId":"e04707c7-0f6b-4f4c-bdc8-538bacc82c1d","quantity":1,"consentAccepted":true,"consentSnapshot":{"accepted":true}}
+→ HTTP 409
+
+{
+  "error": "Anda sudah terdaftar pada batch ini.",
+  "code": "REGISTRATION_ALREADY_EXISTS",
+  "details": {
+    "registrationId": "5c90d7bd-76c3-4dd6-ae55-e46b72304362",
+    "quantity": 1,
+    "canWithdraw": true
+  }
+}
+
+Note: quantity 1 came from the request; the stored registration quantity is 30
+(see the panel text below). `canWithdraw` is computed live by join_batch_v2.
+
+## 2. Conflict panel (409 intercepted to reach the panel for an open batch)
+
+Batch 1fd8e6b0-529a-425a-b1fd-29504bd33243, mocked 409 with quantity 2:
+
+Anda sudah terdaftar pada batch ini.
+Pendaftaran aktif tercatat dengan jumlah 2 pcs. Batalkan pendaftaran ini lebih dulu untuk memakai jumlah baru.
+[link] Buka pesanan saya → /umkm/pesanan/5c90d7bd-76c3-4dd6-ae55-e46b72304362
+Primary button: "Batalkan & daftar ulang" (enabled=true, bg-wesup-ink)
+
+Screenshot: conflict-panel.png
+
+## 3. Withdraw-and-rejoin (real API, mock removed before the click)
+
+POST /api/umkm/orders/5c90d7bd-76c3-4dd6-ae55-e46b72304362/withdraw → 200 OK
+POST /api/registrations → real request (route handler unregistered first); the
+client navigated to the newly created order, so the re-join succeeded.
+Result: /umkm/pesanan/f3c215d1-5535-4f08-ae23-aae90337f730 — order for batch
+1fd8e6b0, quantity 1 — rendered with the payment countdown.
+
+## Screenshots/logs
+
+- conflict-panel.png — the alert with the existing registration and the order link.
+- red-unit.log / green-unit.log — TDD evidence.
