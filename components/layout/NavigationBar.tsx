@@ -4,9 +4,9 @@ import { LogoutAction } from "@/components/auth/LogoutAction";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { getActiveNavigationIndex, getDashboardPath, getRoleNavigationItems, type RoleNavigationItem } from "@/lib/auth/role-navigation";
+import { getActiveNavigationIndex, getRoleNavigationItems, type RoleNavigationItem } from "@/lib/auth/role-navigation";
 import { useNavigationSession } from "@/components/auth/NavigationSessionProvider";
-import { ArrowRight, ShoppingBag } from "lucide-react";
+import { ShoppingBag } from "lucide-react";
 
 function IconHome() {
     return <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M3 12l9-9 9 9M4 10v10a1 1 0 001 1h5V14h4v7h5a1 1 0 001-1V10" /></svg>;
@@ -42,12 +42,10 @@ export function NavigationBar({ brandHref = "/" }: { brandHref?: string | null }
     const navItems = getRoleNavigationItems(accessState);
     const activeIndex = getActiveNavigationIndex(navItems, pathname);
 
-    const dashboardPath = accessState?.status === "active" ? getDashboardPath(accessState) : null;
     const isDashboardRoute =
         pathname.startsWith("/umkm") ||
         pathname.startsWith("/supplier") ||
         pathname.startsWith("/admin");
-    const showDashboardCta = Boolean(dashboardPath && !isDashboardRoute);
 
     const brandContent = (
         <>
@@ -69,20 +67,6 @@ export function NavigationBar({ brandHref = "/" }: { brandHref?: string | null }
 
                 <nav aria-label="Navigasi utama" className="hidden items-center gap-1 lg:flex">
                     {navItems.map((item, index) => <NavLink key={`${item.href}-${item.label}`} item={item} isActive={index === activeIndex} />)}
-                    {showDashboardCta && dashboardPath ? (
-                        <Link
-                            href={dashboardPath}
-                            className="group ml-1 inline-flex min-h-11 items-center border border-wesup-ink bg-wesup-ink py-1.5 pl-4 pr-2 text-xs font-semibold text-wesup-paper transition-all duration-300 wesup-ease hover:translate-x-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wesup-red"
-                        >
-                            Dashboard
-                            <span
-                                aria-hidden="true"
-                                className="ml-2.5 inline-flex h-7 w-7 items-center justify-center text-wesup-paper transition-all duration-300 wesup-ease group-hover:translate-x-0.5"
-                            >
-                                <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.5} />
-                            </span>
-                        </Link>
-                    ) : null}
                 </nav>
 
                 {authenticated ? <LogoutAction className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 border border-wesup-ink/15 px-3 text-xs font-semibold text-wesup-ink transition-colors duration-300 wesup-ease hover:bg-wesup-paper-sub" /> : <span className="font-mono text-[0.625rem] uppercase tracking-[0.18em] text-wesup-ink-sub lg:hidden">Bandung</span>}
