@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 export default async function NewCatalogPage({
   searchParams,
 }: {
-  searchParams: Promise<{ draft?: string; copy?: string }>;
+  searchParams: Promise<{ draft?: string; copy?: string; recovery?: string }>;
 }) {
   const client = await getServerClient();
   const owner = await requireRole(client as unknown as AuthClient, ["supplier"]);
@@ -91,11 +91,12 @@ export default async function NewCatalogPage({
         </p>
       </header>
       <OfferWizard
-        key={`${owner.userId}:${savedDraft?.id ?? search.copy ?? "new"}`}
+        key={`${owner.userId}:${savedDraft?.id ?? search.copy ?? "new"}:${search.recovery ?? ""}`}
         ownerId={owner.userId}
         initialDraft={initialDraft}
         savedDraft={savedDraft}
         copySourceId={search.copy}
+        recoveryKey={typeof search.recovery === "string" ? search.recovery : undefined}
       />
     </div>
   );

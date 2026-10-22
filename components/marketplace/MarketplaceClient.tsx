@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { ListFilter, Search } from "lucide-react";
 import { SEARCH_DEFAULT_RADIUS_KM } from "@/lib/catalog/categories";
@@ -13,8 +13,14 @@ import MarketplaceFilters from "./MarketplaceFilters";
 import MarketplaceMobileFilterDrawer from "./MarketplaceMobileFilterDrawer";
 import MarketplaceResults from "./MarketplaceResults";
 import MarketplaceRadiusMapClient from "./MarketplaceRadiusMapClient";
+import { AppPanel } from "@/components/layout/AppPanel";
 
 const PAGE_SIZE = 12 as const;
+function subscribeDesktop(callback: () => void) {
+  const media = window.matchMedia?.("(min-width: 1024px)");
+  media?.addEventListener("change", callback);
+  return () => media?.removeEventListener("change", callback);
+}
 
 export default function MarketplaceClient() {
   return (
@@ -25,6 +31,8 @@ export default function MarketplaceClient() {
 }
 
 function MarketplaceController() {
+  const [mapOpen, setMapOpen] = useState(false);
+  const desktop = useSyncExternalStore(subscribeDesktop, () => window.matchMedia?.("(min-width: 1024px)").matches ?? false, () => false);
   const draftQuery = useMarketplaceStore((state) => state.draftQuery);
   const debouncedQuery = useMarketplaceStore((state) => state.debouncedQuery);
   const selectedCategories = useMarketplaceStore((state) => state.selectedCategories);
@@ -157,7 +165,7 @@ function MarketplaceController() {
   return (
     <div className="space-y-1 font-sans">
       <div className="flex flex-col gap-5 tabular-nums">
-        <div className="sticky top-[4.5rem] z-20 -mx-1 flex items-stretch gap-2 bg-wesup-paper p-1 sm:static sm:mx-0 sm:bg-transparent sm:p-0">
+        <div className="flex items-stretch gap-3 border border-wesup-ink/15 bg-wesup-paper-sub p-1.5">
           <div className="flex-1 relative group tabular-nums">
             <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
               <Search
@@ -196,21 +204,25 @@ function MarketplaceController() {
           </div>
         ) : null}
 
-        {origin ? (
-          <MarketplaceRadiusMapClient origin={origin} items={items} radiusKm={radiusKm} />
-        ) : null}
-
-        <div className="flex flex-col items-stretch gap-5 lg:flex-row lg:items-start lg:gap-6 tabular-nums">
-          <aside className="hidden w-[280px] shrink-0 flex-col border border-wesup-ink/15 bg-wesup-paper lg:sticky lg:top-24 lg:flex">
+        <div className="grid gap-6 tabular-nums lg:grid-cols-[17.5rem_minmax(0,1fr)] lg:items-start">
+          <aside className="min-w-0 space-y-5">
+          <AppPanel className="hidden lg:block" panelClassName="!p-0">
             <MarketplaceFilters
               idPrefix="desktop"
               value={filters}
               errors={appliedErrors}
               onChange={updateAppliedFilters}
             />
+          </AppPanel>
+          {origin && <section className="border border-wesup-ink/15 bg-wesup-paper-sub p-1.5">
+            <button type="button" aria-expanded={mapOpen} aria-controls="marketplace-area-map" onClick={() => setMapOpen(open => !open)} className="flex min-h-12 w-full items-center justify-between gap-3 bg-wesup-paper px-4 text-sm font-semibold lg:hidden">Lihat area pickup<span aria-hidden="true">{mapOpen ? "−" : "+"}</span></button>
+            <div id="marketplace-area-map" hidden={!desktop && !mapOpen}>
+              {(desktop || mapOpen) && <MarketplaceRadiusMapClient origin={origin} items={items} radiusKm={radiusKm} compact />}
+            </div>
+          </section>}
           </aside>
           <div className="flex-1 w-full min-w-0 tabular-nums">
-            <div className="w-full border border-wesup-ink/15 bg-wesup-paper p-4 sm:p-6 lg:p-8">
+            <div className="w-full min-w-0">
               <div className="mb-5 flex flex-wrap items-start justify-between gap-3 border-b border-wesup-ink/10 pb-5">
                 <div>
                   <h2
@@ -221,7 +233,7 @@ function MarketplaceController() {
                     Penawaran marketplace
                   </h2>
                   <p className="mt-1 text-sm font-medium text-wesup-ink-sub">
-                    {total} penawaran ditemukan
+                    {loading ? "Sedang menyiapkan penawaran…" : `${total} penawaran ditemukan`}
                   </p>
                 </div>
                 {hasActiveFilters ? (

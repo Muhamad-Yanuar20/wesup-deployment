@@ -8,6 +8,7 @@ export interface MarketplaceRadiusMapProps {
   items: readonly MarketplaceItem[];
   radiusKm: number;
   className?: string;
+  compact?: boolean;
 }
 
 function isValidCoordinate(latitude: number, longitude: number): boolean {
@@ -26,6 +27,7 @@ export default function MarketplaceRadiusMap({
   items,
   radiusKm,
   className = "",
+  compact = false,
 }: MarketplaceRadiusMapProps) {
   const center: [number, number] = [origin.latitude, origin.longitude];
   const safeRadiusKm = Number.isFinite(radiusKm) && radiusKm > 0 ? radiusKm : 1;
@@ -39,7 +41,7 @@ export default function MarketplaceRadiusMap({
       data-testid="marketplace-radius-map"
       aria-label={`Peta penawaran dalam radius ${safeRadiusKm} kilometer`}
     >
-      <div className="relative h-[320px] w-full md:h-[380px]">
+      <div className={`relative w-full ${compact ? "h-64" : "h-[320px] md:h-[380px]"}`}>
         <MapContainer
           center={center}
           zoom={12}

@@ -1,17 +1,19 @@
 import Link from "next/link";
+import { ShoppingBag } from "lucide-react";
 
-export function Footer() {
+export function Footer({ variant = "default" }: { variant?: "default" | "brand-only" } = {}) {
     const year = new Date().getFullYear();
 
+    if (variant === "brand-only") return <footer className="mt-auto border-t border-wesup-ink bg-wesup-ink text-wesup-paper"><div className="mx-auto max-w-7xl px-4 py-8 pb-[var(--app-bottom-offset)] sm:px-6 lg:px-8 lg:pb-8"><div className="flex items-center gap-2"><ShoppingBag aria-hidden="true" className="size-5 text-wesup-red-bright" strokeWidth={1.5} /><span className="font-landing-display text-xl">Wesup</span></div><p className="mt-3 max-w-xl text-sm leading-7 text-wesup-paper/80">Platform pembelian kolektif bahan baku untuk UMKM Bandung dengan sistem escrow &amp; tier diskon otomatis.</p></div></footer>;
     return (
         <footer className="mt-auto border-t border-wesup-ink bg-wesup-ink text-wesup-paper">
             <div className="mx-auto w-full max-w-7xl px-4 py-12 pb-28 sm:px-6 lg:pb-12 lg:px-8">
-                <div className="grid grid-cols-1 gap-6 sm:grid-cols-3 sm:gap-8">
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-[1.5fr_1fr_1fr] sm:gap-12">
                     {/* Brand column */}
                     <div className="space-y-2">
                         <div className="flex items-center gap-2">
                             <span className="flex h-8 w-8 items-center justify-center border border-wesup-paper/30 text-xs font-bold text-wesup-red-bright">
-                                W
+                                <ShoppingBag className="size-4" strokeWidth={1.5} aria-hidden="true" />
                             </span>
                             <span className="font-landing-display text-xl text-wesup-paper">Wesup</span>
                         </div>

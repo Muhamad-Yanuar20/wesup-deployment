@@ -61,6 +61,7 @@ const nextConfig: NextConfig = {
         source: "/:path*",
         headers: SECURITY_HEADERS,
       },
+      { source: "/supplier/batch/:id/pickup", headers: [{ key: "Permissions-Policy", value: "camera=(self), microphone=(), geolocation=(self)" }] },
     ];
   },
 };

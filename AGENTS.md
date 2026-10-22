@@ -6,12 +6,12 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 # Design System
 
-The product uses **Swiss Industrial Print (brutalist)**, codified in `DESIGN.md` at
-the repo root. **Read `DESIGN.md` before writing or editing any UI**. It is the
-source of truth — tokens, type recipes, component recipes, layout, motion, and the
-rollout rules for every page (landing, auth, marketplace, UMKM, supplier, admin).
-If a rule in `DESIGN.md` contradicts existing markup, redesign to match the system
-(verified by `tests/unit/landing-brutalist-contract.test.ts` for landing scope).
+Use the **current landing implementation** (`components/landing/**`, `app/page.tsx`)
+and the local **high-end-visual-design** skill as the visual reference. Follow the
+approved task plan when adapting its composition, nested frames, spacing and
+motion to operational pages. Preserve the landing's paper–ink–red palette,
+Archivo Black / Geist / JetBrains Mono typography and precise square frames.
+`DESIGN.md` is historical reference, not a mandatory design specification.
 
 # Product Requirements (PRD)
 
@@ -19,7 +19,11 @@ Product requirements live in `prd/` as Markdown files (e.g. `prd/feature-name.md
 
 # UI Design Rules
 
-`DESIGN.md` (repo root) is the source of truth for UI/visual design. Before creating or changing any UI (pages, components, styles, layout, colors, typography), read `DESIGN.md` and follow its rules. If a change would contradict it, follow `DESIGN.md` — or ask the user instead of improvising.
+Review the current landing components before changing UI. Apply the quality and
+interaction guidance from high-end-visual-design using the agreed visual
+direction; do not mechanically introduce its glass, rounded or shadow recipes
+when the task follows the current landing. Shared shells serve all roles: keep
+their props, role navigation, accessibility and access guards compatible.
 
 # Project Context
 

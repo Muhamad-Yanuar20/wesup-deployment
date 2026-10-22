@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/supplier/fulfillment/FulfillmentLink";
 import { useEffect, useState } from "react";
 import { ArrowRight, ClipboardList } from "lucide-react";
 import { ArrowDisc, ErrorState, Skeleton } from "@/components/feedback";

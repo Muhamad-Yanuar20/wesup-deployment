@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { AppPanel } from "@/components/layout/AppPanel";
 import { useEffect, useState } from "react";
 import { ChevronRight, Plus } from "lucide-react";
 import { ArrowDisc, ErrorState, AsyncButton, Skeleton } from "@/components/feedback";
@@ -138,13 +139,13 @@ export default function SupplierDashboard() {
 
   return (
     <div className="space-y-6 sm:space-y-8" aria-busy={false}>
-      <header className="flex flex-col gap-5 border-b border-wesup-ink/15 pb-7 sm:flex-row sm:items-end sm:justify-between">
+      <header className="app-enter flex flex-col gap-5 border-b border-wesup-ink/15 pb-7 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
           <p className="mb-5 flex items-center gap-3 font-mono text-[0.6875rem] uppercase tracking-[0.24em] text-wesup-ink-sub">
             <span aria-hidden="true" className="h-px w-6 bg-wesup-red" />
             Wesup / Pemasok
           </p>
-          <h1 className="font-landing-display text-3xl font-normal uppercase leading-[1.05] tracking-[0.06em] text-wesup-ink text-balance sm:text-4xl md:text-5xl">
+          <h1 className="break-words font-landing-display text-3xl font-normal uppercase leading-[1.05] tracking-[0.06em] text-wesup-ink text-balance sm:text-4xl md:text-5xl">
             Selamat datang, {supplier.displayName}
           </h1>
           <div className="mt-4">
@@ -168,7 +169,7 @@ export default function SupplierDashboard() {
         </Link>
       </header>
 
-      <section aria-label="Ringkasan aktivitas">
+      <section aria-label="Ringkasan aktivitas"><AppPanel panelClassName="!p-0">
         <dl className="grid grid-cols-1 gap-px border border-wesup-ink/10 bg-wesup-ink/10 sm:grid-cols-2 lg:grid-cols-4">
           <div className="flex flex-col bg-wesup-paper p-5 sm:p-6">
             <dt className="order-2 mt-1.5 font-mono text-[0.6875rem] uppercase tracking-[0.18em] text-wesup-ink-sub">
@@ -207,9 +208,9 @@ export default function SupplierDashboard() {
             </dd>
           </div>
         </dl>
-      </section>
+      </AppPanel></section>
 
-      <section aria-label="Reputasi Supplier" className="border border-wesup-ink/15 bg-wesup-paper p-4 sm:p-5">
+      <section aria-label="Reputasi Supplier"><AppPanel>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h2 className="font-landing-display text-xl font-normal uppercase tracking-[0.04em] text-wesup-ink">
@@ -229,9 +230,9 @@ export default function SupplierDashboard() {
             </p>
           </div>
         </div>
-      </section>
+      </AppPanel></section>
 
-      <section>
+      <section><AppPanel>
         <div className="mb-4 flex items-end justify-between gap-4 border-b border-wesup-ink/15 pb-4">
           <h2 className="font-landing-display text-xl font-normal uppercase tracking-[0.04em] text-wesup-ink">
             Katalog terbaru
@@ -292,9 +293,9 @@ export default function SupplierDashboard() {
             })}
           </ul>
         )}
-      </section>
+      </AppPanel></section>
 
-      <section className="border border-wesup-ink/15 bg-wesup-paper-sub p-5">
+      <section><AppPanel>
         <h2 className="font-landing-display text-xl font-normal uppercase tracking-[0.04em] text-wesup-ink">
           Informasi penting
         </h2>
@@ -311,7 +312,7 @@ export default function SupplierDashboard() {
             </li>
           ))}
         </ul>
-      </section>
+      </AppPanel></section>
     </div>
   );
 }

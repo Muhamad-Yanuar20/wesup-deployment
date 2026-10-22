@@ -5,6 +5,8 @@ import { parseUmkmProfilePayload } from "@/lib/umkm/profile-contract";
 
 export const dynamic = "force-dynamic";
 
+const PROFILE_COLUMNS = "user_id,business_name,address,latitude,longitude,strike_count,suspended_until,created_at,updated_at";
+
 interface ProfileRow {
   user_id: string;
   business_name: string | null;
@@ -26,10 +28,14 @@ interface ProfileQuery {
 }
 
 interface ProfileMutationQuery {
-  upsert: (
-    values: Record<string, unknown>,
-    options: { onConflict: string },
-  ) => {
+  update: (values: Record<string, unknown>) => {
+    eq: (column: string, value: string) => {
+      select: (columns: string) => {
+        maybeSingle: () => PromiseLike<{ data: ProfileRow | null; error: unknown | null }>;
+      };
+    };
+  };
+  insert: (values: Record<string, unknown>) => {
     select: (columns: string) => {
       single: () => PromiseLike<{ data: ProfileRow | null; error: unknown | null }>;
     };
@@ -96,7 +102,7 @@ export async function GET() {
 
   const { data, error } = await resolved.client
     .from("umkm_profiles")
-    .select("user_id,business_name,address,latitude,longitude,strike_count,suspended_until,created_at,updated_at")
+    .select(PROFILE_COLUMNS)
     .eq("user_id", resolved.context.userId)
     .maybeSingle();
 
@@ -130,21 +136,35 @@ export async function PUT(request: Request) {
     );
   }
 
-  const { data, error } = await resolved.client
-    .from("umkm_profiles")
-    .upsert(
-      {
-        user_id: resolved.context.userId,
-        business_name: parsed.value.businessName,
-        address: parsed.value.address,
-        latitude: parsed.value.latitude,
-        longitude: parsed.value.longitude,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "user_id" },
-    )
-    .select("user_id,business_name,address,latitude,longitude,strike_count,suspended_until,created_at,updated_at")
-    .single();
+  const values = {
+    business_name: parsed.value.businessName,
+    address: parsed.value.address,
+    latitude: parsed.value.latitude,
+    longitude: parsed.value.longitude,
+    updated_at: new Date().toISOString(),
+  };
+  const profiles = resolved.client.from("umkm_profiles");
+  // A merge upsert also assigns user_id, which column grants protect from
+  // UPDATE. Keep identity in the filter and only insert it for missing rows.
+  const updateProfile = () => profiles
+    .update(values)
+    .eq("user_id", resolved.context.userId)
+    .select(PROFILE_COLUMNS)
+    .maybeSingle();
+
+  let result = await updateProfile();
+  if (!result.error && !result.data) {
+    result = await profiles
+      .insert({ user_id: resolved.context.userId, ...values })
+      .select(PROFILE_COLUMNS)
+      .single();
+    // Another request can create the row after our empty UPDATE. Retry once
+    // using the same owner filter and allowed business columns.
+    if (errorDetails(result.error).code === "23505") {
+      result = await updateProfile();
+    }
+  }
+  const { data, error } = result;
 
   if (error || !data) {
     console.error("[umkm-profile] write failed", {

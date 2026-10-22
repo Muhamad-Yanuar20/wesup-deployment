@@ -1,11 +1,10 @@
 "use client";
 
-import Link from "next/link";
+import Link, { FulfillmentBackLink } from "./FulfillmentLink";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import {
   AlertCircle,
-  ArrowLeft,
   CheckCircle2,
   ClipboardList,
   KeyRound,
@@ -20,6 +19,8 @@ import { supplierFulfillmentApiRepository } from "@/lib/supplier-fulfillment/api
 import { supplierBatchApiRepository } from "@/lib/supplier-catalog/api-repository";
 import { pickupViewReducer, initialPickupViewState } from "@/lib/supplier-fulfillment/pickup-state";
 import { feedbackError } from "@/lib/feedback/errors";
+import PickupCamera from "./PickupCamera";
+import { decodePickupQr } from "@/lib/supplier-fulfillment/qr-payload";
 import ForceMajeureDialog from "@/components/supplier/fulfillment/ForceMajeureDialog";
 import { Skeleton } from "@/components/ui/SkeletonLoading";
 
@@ -39,6 +40,8 @@ export default function PickupScannerClient({ batchId }: { batchId: string }) {
   const [state, dispatch] = useReducer(pickupViewReducer, initialPickupViewState);
   const [retry, setRetry] = useState(0);
   const [batchTitle, setBatchTitle] = useState<string>("batch ini");
+  const confirming = useRef(false);
+  const [uncertain, setUncertain] = useState(false);
   const forceMajeureRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -97,23 +100,41 @@ export default function PickupScannerClient({ batchId }: { batchId: string }) {
     [state.orders],
   );
 
-  const confirmPickup = () => {
-    if (!selectedOrder || selectedOrder.canConfirmPickup === false || state.confirmPhase === "loading") return;
-    if (!state.code.trim()) {
-      dispatch({ type: "confirmFailed", error: { code: "invalid_code", message: "Mohon masukkan kode terlebih dahulu." } });
-      return;
+  const acceptQr = (raw: string) => {
+    try {
+      const decoded = decodePickupQr(raw);
+      const id = decoded.registrationId ?? state.selectedRegistrationId;
+      if (!id) throw new Error("QR lama: pilih pesanan UMKM terlebih dahulu.");
+      const order = state.orders.find(order => order.registrationId === id);
+      if (!order) throw new Error("QR ini bukan pesanan pada batch yang sedang dibuka.");
+      if (order.status !== "paid" || order.canConfirmPickup === false) throw new Error("Pesanan ini belum dapat diserahkan atau sudah diambil.");
+      dispatch({ type: "selectOrder", registrationId: id });
+      dispatch({ type: "codeChanged", code: decoded.token });
+    } catch (reason) { dispatch({ type: "codeChanged", code: "" }); dispatch({ type: "confirmFailed", error: { code: "invalid_code", message: message(reason, "QR tidak valid.") } }); }
+  };
+  const checkStatus = async (id: string, method: "qr" | "pin") => {
+    const list = await supplierFulfillmentApiRepository.listOrders(batchId);
+    const order = list.orders.find(order => order.registrationId === id);
+    dispatch({ type: "loadSucceeded", orders: [...list.orders] });
+    if (order && ["picked_up", "completed"].includes(order.status)) {
+      setUncertain(false); dispatch({ type: "confirmSucceeded", order: { ...order, pickedUpByMethod: method } }); return true;
     }
-    dispatch({ type: "confirmStarted" });
-    void supplierFulfillmentApiRepository
-      .confirmPickup(selectedOrder.registrationId, {
-        method: state.method,
-        code: state.code,
-      })
-      .then(result => dispatch({ type: "confirmSucceeded", order: result.order }))
-      .catch((error: unknown) => {
-        if (abort(error)) return;
-        dispatch({ type: "confirmFailed", error: { code: "not_eligible", message: feedbackError(error, "Hasil serah terima belum terkonfirmasi. Muat ulang pesanan sebelum memeriksa kode kembali.") } });
-      });
+    setUncertain(false); return false;
+  };
+  const confirmPickup = async () => {
+    if (!selectedOrder || selectedOrder.status !== "paid" || selectedOrder.canConfirmPickup === false || confirming.current || uncertain) return;
+    if (!state.code.trim() || (state.method === "pin" && !/^\d{4}$/.test(state.code))) {
+      dispatch({ type: "confirmFailed", error: { code: "invalid_code", message: "Masukkan QR atau PIN 4 digit yang benar." } }); return;
+    }
+    confirming.current = true; dispatch({ type: "confirmStarted" });
+    try {
+      await supplierFulfillmentApiRepository.confirmPickup(selectedOrder.registrationId, { method: state.method, code: state.code });
+      if (!await checkStatus(selectedOrder.registrationId, state.method)) throw new Error("Status server belum mengonfirmasi pengambilan.");
+    } catch (reason) {
+      setUncertain(true);
+      dispatch({ type: "confirmFailed", error: { code: "not_eligible", message: feedbackError(reason, "Hasil serah terima belum terkonfirmasi. Periksa status pesanan sebelum mengirim ulang.") } });
+      try { await checkStatus(selectedOrder.registrationId, state.method); } catch { /* Explicit read retry remains available; never retry the mutation. */ }
+    } finally { confirming.current = false; }
   };
   const confirmForceMajeure = () => {
     if (state.forceMajeurePhase === "loading") return;
@@ -173,6 +194,7 @@ export default function PickupScannerClient({ batchId }: { batchId: string }) {
             <ScanLine aria-hidden="true" size={26} className="text-wesup-red" />
             Serah Terima
           </h1>
+          <p className="mt-2 text-sm font-semibold text-wesup-ink">{batchTitle}</p>
           <p className="mt-1 text-sm text-wesup-ink-sub">
             Validasi pengambilan barang oleh UMKM (pindai QR atau masukkan PIN).
           </p>
@@ -254,13 +276,14 @@ export default function PickupScannerClient({ batchId }: { batchId: string }) {
               <select
                 id="pickup-order"
                 value={selectedOrder?.registrationId ?? ""}
+                disabled={state.confirmPhase === "loading" || uncertain}
                 onChange={(e) =>
                   dispatch({
                     type: "selectOrder",
                     registrationId: e.target.value || null,
                   })
                 }
-                className="w-full  border border-wesup-ink/15 bg-wesup-paper px-3 py-2 text-sm outline-none focus:border-wesup-red focus:ring-2 "
+                className="min-h-11 w-full border border-wesup-ink/15 bg-wesup-paper px-3 py-2 text-sm outline-none focus:border-wesup-red focus:ring-2 "
               >
                 <option value="">— Pilih pesanan —</option>
                 {state.orders.map((order) => (
@@ -327,8 +350,9 @@ export default function PickupScannerClient({ batchId }: { batchId: string }) {
             <button
               type="button"
               onClick={() => dispatch({ type: "methodChanged", method: "qr" })}
+              disabled={state.confirmPhase === "loading" || uncertain}
               aria-pressed={state.method === "qr"}
-              className={`inline-flex items-center justify-center gap-1.5  px-3 py-2 text-sm font-semibold transition ${
+              className={`inline-flex min-h-11 items-center justify-center gap-1.5  px-3 py-2 text-sm font-semibold transition ${
                 state.method === "qr"
                   ? "bg-wesup-paper text-wesup-ink "
                   : "text-wesup-ink-sub hover:bg-wesup-paper-sub"
@@ -340,8 +364,9 @@ export default function PickupScannerClient({ batchId }: { batchId: string }) {
             <button
               type="button"
               onClick={() => dispatch({ type: "methodChanged", method: "pin" })}
+              disabled={state.confirmPhase === "loading" || uncertain}
               aria-pressed={state.method === "pin"}
-              className={`inline-flex items-center justify-center gap-1.5  px-3 py-2 text-sm font-semibold transition ${
+              className={`inline-flex min-h-11 items-center justify-center gap-1.5  px-3 py-2 text-sm font-semibold transition ${
                 state.method === "pin"
                   ? "bg-wesup-paper text-wesup-ink "
                   : "text-wesup-ink-sub hover:bg-wesup-paper-sub"
@@ -354,22 +379,7 @@ export default function PickupScannerClient({ batchId }: { batchId: string }) {
 
           {state.method === "qr" ? (
             <div className="mt-4">
-              <div
-                role="img"
-                aria-label="Area pemindaian QR"
-                className="relative mx-auto flex aspect-square max-w-[220px] items-center justify-center overflow-hidden  border-2 border-dashed border-wesup-ink/15 bg-wesup-paper"
-              >
-                <div className="absolute left-3 top-3 h-7 w-7  border-l-2 border-t-2 border-wesup-red" />
-                <div className="absolute right-3 top-3 h-7 w-7  border-r-2 border-t-2 border-wesup-red" />
-                <div className="absolute bottom-3 left-3 h-7 w-7  border-b-2 border-l-2 border-wesup-red" />
-                <div className="absolute bottom-3 right-3 h-7 w-7  border-b-2 border-r-2 border-wesup-red" />
-                <div className="px-6 text-center">
-                  <ScanLine aria-hidden="true" size={32} className="mx-auto text-wesup-red/70" />
-                  <p className="mt-2 text-xs text-wesup-ink-sub">
-                    Simulasi pemindai — kamera diaktifkan pada iterasi berikutnya.
-                  </p>
-                </div>
-              </div>
+              <PickupCamera onRead={acceptQr} resetKey={`${batchId}:${state.selectedRegistrationId}:${state.method}:${state.confirmPhase}`} disabled={state.confirmPhase === "loading" || uncertain} />
               <label htmlFor="qr-code" className="mt-4 block text-sm font-semibold ">
                 Kode QR / hasil pindai
               </label>
@@ -378,9 +388,10 @@ export default function PickupScannerClient({ batchId }: { batchId: string }) {
                 type="text"
                 value={state.code}
                 onChange={(e) => dispatch({ type: "codeChanged", code: e.target.value })}
+                onBlur={(e) => { if (e.target.value.trim()) acceptQr(e.target.value); }}
                 placeholder="Tempel atau ketik kode QR"
                 autoComplete="off"
-                className="mt-2 w-full  border border-wesup-ink/15 px-3 py-2 font-mono text-sm outline-none focus:border-wesup-red focus:ring-2 "
+                className="mt-2 min-h-11 w-full border border-wesup-ink/15 px-3 py-2 font-mono text-sm outline-none focus:border-wesup-red focus:ring-2 "
               />
             </div>
           ) : (
@@ -400,7 +411,7 @@ export default function PickupScannerClient({ batchId }: { batchId: string }) {
                 }
                 placeholder="••••"
                 autoComplete="off"
-                className="mt-2 w-full  border border-wesup-ink/15 px-3 py-2 text-center font-mono text-2xl tracking-[0.5em] outline-none focus:border-wesup-red focus:ring-2 "
+                className="mt-2 min-h-11 w-full border border-wesup-ink/15 px-3 py-2 text-center font-mono text-2xl tracking-[0.5em] outline-none focus:border-wesup-red focus:ring-2 "
               />
               <p className="mt-2 text-xs text-wesup-ink-sub">
                 Cadangan operasional jika kamera tidak dapat digunakan.
@@ -408,6 +419,7 @@ export default function PickupScannerClient({ batchId }: { batchId: string }) {
             </div>
           )}
 
+          {uncertain && selectedOrder && <button type="button" className="mt-3 min-h-11 border border-wesup-ink px-3 text-sm font-semibold" onClick={() => void checkStatus(selectedOrder.registrationId, state.method).catch(() => {})}>Periksa status pengambilan</button>}
           {state.confirmError ? (
             <p role="alert" aria-live="assertive" className="mt-3  border border-wesup-red/40 bg-wesup-paper px-3 py-2 text-sm text-wesup-red">
               {state.confirmError.message}
@@ -416,8 +428,8 @@ export default function PickupScannerClient({ batchId }: { batchId: string }) {
 
           <button
             type="button"
-            disabled={!selectedOrder || selectedOrder.canConfirmPickup === false || state.confirmPhase === "loading" || selectedOrder.status !== "paid"}
-            onClick={confirmPickup}
+            disabled={uncertain || !selectedOrder || selectedOrder.canConfirmPickup === false || state.confirmPhase === "loading" || selectedOrder.status !== "paid"}
+            onClick={() => void confirmPickup()}
             className="mt-4 inline-flex w-full items-center justify-center gap-2  bg-wesup-ink px-5 py-3 text-sm font-semibold text-wesup-paper  transition hover:bg-wesup-red disabled:cursor-not-allowed disabled:opacity-50"
           >
             {state.confirmPhase === "loading" ? (
@@ -559,17 +571,7 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-function BackLink({ batchId }: { batchId: string }) {
-  return (
-    <Link
-      href={`/supplier/batch/${batchId}`}
-      className="inline-flex items-center gap-1.5 text-sm font-semibold text-wesup-ink-sub transition hover:text-wesup-ink"
-    >
-      <ArrowLeft aria-hidden="true" size={16} />
-      Kembali ke detail batch
-    </Link>
-  );
-}
+function BackLink({ batchId }: { batchId: string }) { return <FulfillmentBackLink batchId={batchId} page="pickup" />; }
 
 function SummaryCard({
   icon,

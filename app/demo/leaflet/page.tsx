@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { AppPanel } from "@/components/layout/AppPanel";
+import { PageHeader } from "@/components/layout/PageHeader";
 import Link from "next/link";
 import "leaflet/dist/leaflet.css";
 import { LeafletDemoClient } from "@/components/demo/LeafletDemoClient";
@@ -23,19 +25,8 @@ export default function LeafletDemoPage() {
           Kembali ke beranda
         </Link>
 
-        <header className="mb-8 mt-8 max-w-3xl">
-          <span className="inline-flex border border-wesup-ink/15 bg-wesup-paper px-3 py-1 font-mono text-[0.6875rem] uppercase tracking-[0.2em] text-wesup-ink-sub">
-            Test Map
-          </span>
-          <h1 className="mt-4 text-4xl tracking-tight text-wesup-ink sm:text-5xl font-landing-display font-normal uppercase tracking-[0.04em]">
-            Pilih koordinat lokasi 
-          </h1>
-          <p className="mt-4 text-base leading-7 text-wesup-ink-sub sm:text-lg">
-            Klik peta untuk memindahkan titik, bisa pake lokasi user
-          </p>
-        </header>
-
-        <LeafletDemoClient />
+        <div className="mt-8"><PageHeader title="Pilih koordinat lokasi" eyebrow="Laboratorium / Peta" description="Pilih titik langsung pada peta, atau gunakan lokasi perangkat Anda. Koordinat terpilih ditampilkan untuk membantu pemeriksaan lokasi." /></div>
+        <AppPanel panelClassName="!p-0"><LeafletDemoClient /></AppPanel>
       </div>
     </main>
   );

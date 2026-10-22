@@ -1,10 +1,9 @@
 "use client";
 
-import Link from "next/link";
+import Link, { FulfillmentBackLink } from "./FulfillmentLink";
 import { useEffect, useMemo, useReducer, useState } from "react";
 import {
   AlertCircle,
-  ArrowLeft,
   ClipboardList,
   Package,
   QrCode,
@@ -325,17 +324,7 @@ export default function OrderListClient({ batchId }: { batchId: string }) {
   );
 }
 
-function BackLink({ batchId }: { batchId: string }) {
-  return (
-    <Link
-      href={`/supplier/batch/${batchId}`}
-      className="inline-flex items-center gap-1.5 text-sm font-semibold text-wesup-ink-sub transition hover:text-wesup-ink"
-    >
-      <ArrowLeft aria-hidden="true" size={16} />
-      Kembali ke detail batch
-    </Link>
-  );
-}
+function BackLink({ batchId }: { batchId: string }) { return <FulfillmentBackLink batchId={batchId} page="orders" />; }
 
 function StatusBadge({ status }: { status: string }) {
   const meta =

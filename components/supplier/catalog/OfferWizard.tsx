@@ -1,12 +1,12 @@
 "use client";
 
 import { validateEarlyPaymentTarget } from "@/lib/transactions/early-payment";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import ProductDetailStep from "./steps/ProductDetailStep";
 import PickupLocationStep from "./steps/PickupLocationStep";
 import { INITIAL_CATALOG_DRAFT, type CatalogDraft, type FieldErrors } from "@/lib/supplier-catalog/types";
-import { listOfferRecoveries, offerRecoveryScope, removeOfferRecoveries, type LocalOfferRecovery } from "@/lib/supplier-catalog/local-recovery";
+import { findOwnerOfferRecovery, listOfferRecoveries, offerRecoveryScope, removeOfferRecoveries, type LocalOfferRecovery } from "@/lib/supplier-catalog/local-recovery";
 import { buildOfferSchedule, formatTransactionDate, fromWibInput, normalizePriceTiers, toWibInput, type OfferScheduleInput } from "@/lib/transactions/schedule";
 
 import { useToast } from "@/components/ui/GlobalToast";
@@ -19,7 +19,7 @@ const button = "min-h-11  border border-wesup-ink/15 px-4 py-2 font-semibold dis
 function defaultMinimum(draft: CatalogDraft): CatalogDraft { return { ...draft, earlyPaymentMinimumQuantity: draft.earlyPaymentMinimumQuantity ?? draft.capacityQuantity }; }
 const money = (n: number) => new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(n);
 
-export default function OfferWizard({ ownerId, initialDraft, savedDraft,copySourceId }: { ownerId: string; initialDraft?: Partial<CatalogDraft>; savedDraft?: SavedOfferDraft | null;copySourceId?:string }) {
+export default function OfferWizard({ ownerId, initialDraft, savedDraft,copySourceId, recoveryKey }: { ownerId: string; initialDraft?: Partial<CatalogDraft>; savedDraft?: SavedOfferDraft | null;copySourceId?:string; recoveryKey?: string }) {
   const router = useRouter();
   const { toast } = useToast();
   const heading = useRef<HTMLHeadingElement>(null);
@@ -43,16 +43,35 @@ export default function OfferWizard({ ownerId, initialDraft, savedDraft,copySour
   const published = useRef(false);
   const scope = offerRecoveryScope(ownerId, copySourceId);
   const key = recoveryId ? `${scope}:draft:${recoveryId}` : "";
+  const resume = useCallback((local: LocalOfferRecovery) => {
+    setDraft(defaultMinimum({ ...INITIAL_CATALOG_DRAFT, ...initialDraft, ...local.draft, earlyPaymentMinimumQuantity: local.draft.earlyPaymentMinimumQuantity ?? local.draft.capacityQuantity ?? initialDraft?.earlyPaymentMinimumQuantity ?? initialDraft?.capacityQuantity ?? INITIAL_CATALOG_DRAFT.capacityQuantity, productPhoto: null }));
+    setSchedule(local.schedule);
+    setStep(local.step);
+    const matchesSaved = savedDraft && (savedDraft.id === local.id || local.key.endsWith(`:draft:${savedDraft.id}`));
+    setId(matchesSaved ? savedDraft.id : local.id);
+    setRevision(matchesSaved ? savedDraft.revision : local.revision);
+    setRecoveryId(local.key.startsWith(`${scope}:draft:`) ? local.key.slice(`${scope}:draft:`.length) : local.id || crypto.randomUUID());
+    migratedKey.current = local.key;
+    setRecoveries(current => current.filter(candidate => candidate.key !== local.key));
+    setEdited(true);
+    setReviewed(false);
+    setError("");
+    setMessage("Draft dipulihkan. Foto yang belum tersimpan perlu dipilih kembali.");
+  }, [initialDraft, savedDraft, scope]);
   useEffect(() => {
     const timer = setTimeout(() => {
       try {
-        setRecoveries(listOfferRecoveries(localStorage, scope).filter(local => !savedDraft || local.id === savedDraft.id));
+        const selected = recoveryKey ? findOwnerOfferRecovery(localStorage, ownerId, recoveryKey) : null;
+        const compatible = selected && (selected.copySourceId ?? "") === (copySourceId ?? "") && (!savedDraft || selected.id === savedDraft.id || selected.key.endsWith(`:draft:${savedDraft.id}`));
+        setRecoveries(listOfferRecoveries(localStorage, scope).filter(local => (!savedDraft || local.id === savedDraft.id) && (!compatible || local.key !== selected.key)));
+        if (compatible) resume(selected);
+        else if (recoveryKey) setError("Draft perangkat tidak tersedia untuk akun atau penawaran ini. Pilih draft lain dari katalog.");
       } catch { setStorageError(true); }
       setRecoveryId(current => current || crypto.randomUUID());
       setInitialized(true);
     }, 0);
     return () => clearTimeout(timer);
-  }, [scope, savedDraft]);
+  }, [scope, savedDraft, recoveryKey, ownerId, copySourceId, resume]);
   useEffect(() => {
     if (!initialized || !edited || !key || published.current) return;
     try {
@@ -62,20 +81,6 @@ export default function OfferWizard({ ownerId, initialDraft, savedDraft,copySour
       queueMicrotask(() => setStorageError(false));
     } catch { queueMicrotask(() => setStorageError(true)); }
   }, [draft, schedule, step, id, revision, key, initialized, edited]);
-  function resume(local: LocalOfferRecovery) {
-    setDraft(defaultMinimum({ ...INITIAL_CATALOG_DRAFT, ...initialDraft, ...local.draft, earlyPaymentMinimumQuantity: local.draft.earlyPaymentMinimumQuantity ?? local.draft.capacityQuantity ?? initialDraft?.earlyPaymentMinimumQuantity ?? initialDraft?.capacityQuantity ?? INITIAL_CATALOG_DRAFT.capacityQuantity, productPhoto: null }));
-    setSchedule(local.schedule);
-    setStep(local.step);
-    setId(local.id);
-    setRevision(savedDraft?.id === local.id ? savedDraft.revision : local.revision);
-    setRecoveryId(local.key.startsWith(`${scope}:draft:`) ? local.key.slice(`${scope}:draft:`.length) : local.id || crypto.randomUUID());
-    migratedKey.current = local.key;
-    setRecoveries(current => current.filter(candidate => candidate.key !== local.key));
-    setEdited(true);
-    setReviewed(false);
-    setError("");
-    setMessage("Draft dipulihkan. Foto yang belum tersimpan perlu dipilih kembali.");
-  }
   const change = (patch: Partial<CatalogDraft>) => { setDraft(d => ({ ...d, ...patch, ...(patch.capacityQuantity !== undefined && d.earlyPaymentMinimumQuantity === d.capacityQuantity && patch.earlyPaymentMinimumQuantity === undefined ? { earlyPaymentMinimumQuantity: patch.capacityQuantity } : {}) })); setEdited(true); setReviewed(false); };
   const changeSchedule = (update: (current: OfferScheduleInput) => OfferScheduleInput) => {
     setSchedule(update); setEdited(true); setReviewed(false);

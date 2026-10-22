@@ -3,10 +3,10 @@
 import { LogoutAction } from "@/components/auth/LogoutAction";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getActiveNavigationIndex, getDashboardPath, getRoleNavigationItems, type RoleNavigationItem } from "@/lib/auth/role-navigation";
 import { useNavigationSession } from "@/components/auth/NavigationSessionProvider";
+import { ArrowRight, ShoppingBag } from "lucide-react";
 
 function IconHome() {
     return <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M3 12l9-9 9 9M4 10v10a1 1 0 001 1h5V14h4v7h5a1 1 0 001-1V10" /></svg>;
@@ -51,22 +51,16 @@ export function NavigationBar({ brandHref = "/" }: { brandHref?: string | null }
 
     const brandContent = (
         <>
-            <span className="flex h-9 w-9 items-center justify-center border border-wesup-ink/20 bg-wesup-paper text-sm font-bold text-wesup-red" aria-hidden="true">
-                W
-            </span>
+            <span className="flex h-9 w-9 items-center justify-center border border-wesup-ink/20 bg-wesup-paper text-wesup-red" aria-hidden="true"><ShoppingBag className="size-4" strokeWidth={1.5} /></span>
             <span className="font-landing-display text-xl tracking-[-0.02em]">Wesup</span>
         </>
     );
 
     return (
-        <header className="sticky top-0 z-40 w-full border-b border-wesup-ink/15 bg-wesup-paper">
-            <div className="mx-auto flex min-h-16 w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+        <header className="pointer-events-none fixed inset-x-4 top-4 z-40 sm:inset-x-6 lg:inset-x-8">
+            <div className="pointer-events-auto mx-auto flex min-h-16 w-full max-w-7xl items-center justify-between gap-3 border border-wesup-ink/20 bg-wesup-paper px-3 sm:px-4">
                 {brandHref ? (
-                    <Link
-                        href={brandHref}
-                        className="flex items-center gap-2 text-wesup-ink transition-opacity hover:opacity-80"
-                        aria-label="Wesup - Kembali ke Beranda"
-                    >
+                    <Link href={brandHref} className="flex items-center gap-2 text-wesup-ink transition-opacity hover:opacity-80" aria-label="Wesup - Kembali ke Beranda">
                         {brandContent}
                     </Link>
                 ) : (
@@ -74,35 +68,29 @@ export function NavigationBar({ brandHref = "/" }: { brandHref?: string | null }
                 )}
 
                 <nav aria-label="Navigasi utama" className="hidden items-center gap-1 lg:flex">
-                    {navItems.map((item, index) => (
-                        <NavLink key={`${item.href}-${item.label}`} item={item} isActive={index === activeIndex} />
-                    ))}
+                    {navItems.map((item, index) => <NavLink key={`${item.href}-${item.label}`} item={item} isActive={index === activeIndex} />)}
                     {showDashboardCta && dashboardPath ? (
                         <Link
                             href={dashboardPath}
-                            className="group ml-1 inline-flex min-h-10 items-center border border-wesup-ink bg-wesup-ink py-1.5 pl-4 pr-2 text-sm font-semibold text-wesup-paper transition-all duration-500 wesup-ease hover:translate-x-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wesup-red"
+                            className="group ml-1 inline-flex min-h-11 items-center border border-wesup-ink bg-wesup-ink py-1.5 pl-4 pr-2 text-xs font-semibold text-wesup-paper transition-all duration-300 wesup-ease hover:translate-x-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wesup-red"
                         >
                             Dashboard
                             <span
                                 aria-hidden="true"
-                                className="ml-2.5 inline-flex h-7 w-7 items-center justify-center text-wesup-paper transition-all duration-500 wesup-ease group-hover:translate-x-0.5"
+                                className="ml-2.5 inline-flex h-7 w-7 items-center justify-center text-wesup-paper transition-all duration-300 wesup-ease group-hover:translate-x-0.5"
                             >
                                 <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.5} />
                             </span>
                         </Link>
                     ) : null}
-                    {authenticated && <LogoutAction />}
                 </nav>
 
-                <div className="flex items-center gap-2 lg:hidden" aria-label="Navigasi cepat">
-                    <span className="font-mono text-[0.6875rem] uppercase tracking-[0.2em] text-wesup-ink-sub">Bandung</span>
-                </div>
+                {authenticated ? <LogoutAction className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 border border-wesup-ink/15 px-3 text-xs font-semibold text-wesup-ink transition-colors duration-300 wesup-ease hover:bg-wesup-paper-sub" /> : <span className="font-mono text-[0.625rem] uppercase tracking-[0.18em] text-wesup-ink-sub lg:hidden">Bandung</span>}
             </div>
 
-            <nav aria-label="Navigasi bawah (mobile)" className="fixed inset-x-0 bottom-0 z-40 flex items-stretch justify-around gap-1 border-t border-wesup-ink/15 bg-wesup-paper px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 lg:hidden">
-                {navItems.slice(0, 5).map((item, index) => (
-                    <NavLink key={`${item.href}-${item.label}`} item={item} isActive={index === activeIndex} mobile />
-                ))}
+            <nav aria-label="Navigasi bawah (mobile)" className="pointer-events-auto fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-40 flex min-h-17 items-stretch justify-around gap-1 border border-wesup-ink/20 bg-wesup-paper p-1.5 lg:hidden">
+                {navItems.slice(0, 5).map((item, index) => <NavLink key={`${item.href}-${item.label}`} item={item} isActive={index === activeIndex} mobile />)}
+            </nav>
             </nav>
         </header>
     );
@@ -117,7 +105,7 @@ function NavLink({ item, isActive, mobile = false }: { item: RoleNavigationItem;
             isActive ? "border-wesup-red bg-wesup-paper-sub text-wesup-ink" : "border-transparent text-wesup-ink-sub hover:bg-wesup-paper-sub hover:text-wesup-ink",
         )}>
             <span className={cn("flex items-center gap-1", isActive && "text-wesup-ink-sub")}>{iconForItem(item)}</span>
-            <span>{item.label}</span>
+            <span className="max-w-full text-center leading-4">{mobile && item.label === "Pesanan & Pengambilan" ? <><span aria-hidden="true">Pesanan</span><span className="sr-only">{item.label}</span></> : item.label}</span>
         </Link>
     );
 }

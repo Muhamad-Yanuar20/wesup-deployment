@@ -22,6 +22,7 @@ import {
 } from "@/lib/supplier-registration/review";
 import Link from "next/link";
 import { SuccessState } from "@/components/feedback";
+import { AppPanel } from "@/components/layout/AppPanel";
 import SupplierRegistrationStepper from "@/components/supplier/SupplierRegistrationStepper";
 import AccountStep from "@/components/supplier/steps/AccountStep";
 import BusinessStep from "@/components/supplier/steps/BusinessStep";
@@ -211,7 +212,7 @@ export default function SupplierRegistrationForm() {
     <>
       <SupplierRegistrationStepper currentStep={currentStep} />
 
-      <form onSubmit={handleSubmit} noValidate className="mt-6 border border-wesup-ink/15 bg-wesup-paper p-5 sm:p-8 lg:p-10">
+      <AppPanel className="mt-7" panelClassName="lg:!p-10"><form onSubmit={handleSubmit} noValidate>
         {globalError && (
           <div className="mb-6 border border-wesup-red bg-wesup-paper px-4 py-3 text-sm font-medium text-wesup-ink" role="alert">
             {globalError}
@@ -300,7 +301,7 @@ export default function SupplierRegistrationForm() {
         {currentStep === 4 && (
           <p className="mt-4 text-center text-xs leading-5 text-wesup-ink-sub">Dengan mengirim pendaftaran, Anda menyetujui Syarat & Ketentuan serta Kebijakan Privasi Wesup.</p>
         )}
-      </form>
+      </form></AppPanel>
 
     </>
   );
