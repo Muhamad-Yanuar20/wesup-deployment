@@ -44,7 +44,7 @@ export default function MarketplaceRouteMap({ route }: { route: MarketplaceRoute
   const isFallback = route.route.source === "straight_line_fallback";
 
   return (
-    <div className="relative h-[320px] w-full overflow-hidden border border-wesup-ink/15">
+    <div className="relative isolate h-[320px] w-full overflow-hidden border border-wesup-ink/15">
       <MapContainer
         center={origin}
         zoom={13}

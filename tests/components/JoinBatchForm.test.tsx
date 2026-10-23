@@ -103,3 +103,178 @@ describe("JoinBatchForm", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(/network down/i);
   });
 });
+
+describe("JoinBatchForm duplicate registration", () => {
+  const fetchMock = vi.fn();
+
+  beforeEach(() => {
+    vi.stubGlobal("fetch", fetchMock);
+    fetchMock.mockReset();
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  const conflictBody = {
+    error: "Anda sudah terdaftar pada batch ini.",
+    code: "REGISTRATION_ALREADY_EXISTS",
+    details: { registrationId: "reg-existing", quantity: 5, canWithdraw: true },
+  };
+
+  it("reports the existing registration instead of a false success", async () => {
+    const user = userEvent.setup();
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify(conflictBody), {
+        status: 409,
+        headers: { "content-type": "application/json" },
+      }),
+    );
+    render(<JoinBatchForm item={ITEM} consentGiven onSuccess={vi.fn()} />);
+
+    await user.click(screen.getByRole("button", { name: /daftar sekarang/i }));
+
+    expect(await screen.findByText(/sudah terdaftar/i)).toBeInTheDocument();
+    expect(screen.queryByText(/pendaftaran berhasil/i)).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /buka pesanan saya/i })).toHaveAttribute(
+      "href",
+      "/umkm/pesanan/reg-existing",
+    );
+    expect(
+      screen.getByRole("button", { name: /batalkan & daftar ulang/i }),
+    ).toBeEnabled();
+  });
+
+  it("withdraws the existing registration and joins again with the new quantity", async () => {
+    const user = userEvent.setup();
+    const onSuccess = vi.fn();
+    fetchMock.mockImplementation(async (url: string) => {
+      if (String(url).includes("/withdraw")) {
+        return new Response(JSON.stringify({ item: { id: "reg-existing" } }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        });
+      }
+      const calls = fetchMock.mock.calls.filter(
+        (call) => String(call[0]) === "/api/registrations",
+      ).length;
+      if (calls === 1) {
+        return new Response(JSON.stringify(conflictBody), {
+          status: 409,
+          headers: { "content-type": "application/json" },
+        });
+      }
+      return new Response(
+        JSON.stringify({ ok: true, count: 12, registrationId: "reg-new" }),
+        { status: 201, headers: { "content-type": "application/json" } },
+      );
+    });
+    render(<JoinBatchForm item={ITEM} consentGiven onSuccess={onSuccess} />);
+
+    await user.click(screen.getByRole("button", { name: /daftar sekarang/i }));
+    await screen.findByText(/sudah terdaftar/i);
+
+    const quantity = screen.getByRole("spinbutton", { name: /jumlah porsi/i });
+    await user.clear(quantity);
+    await user.type(quantity, "7");
+    await user.click(
+      screen.getByRole("button", { name: /batalkan & daftar ulang/i }),
+    );
+
+    await waitFor(() => expect(onSuccess).toHaveBeenCalled());
+    expect(onSuccess).toHaveBeenCalledWith({ count: 12, registrationId: "reg-new" });
+    expect(await screen.findByText(/pendaftaran berhasil/i)).toBeInTheDocument();
+
+    const registrationCalls = fetchMock.mock.calls.filter(
+      (call) => String(call[0]) === "/api/registrations",
+    );
+    expect(registrationCalls).toHaveLength(2);
+    expect(String(registrationCalls[1]?.[1]?.body)).toContain('"quantity":7');
+    expect(
+      fetchMock.mock.calls.some((call) => String(call[0]).includes("/withdraw")),
+    ).toBe(true);
+  });
+
+  it("keeps a locked registration as an error without a withdraw action", async () => {
+    const user = userEvent.setup();
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          ...conflictBody,
+          details: { registrationId: "reg-locked", quantity: 5, canWithdraw: false },
+        }),
+        { status: 409, headers: { "content-type": "application/json" } },
+      ),
+    );
+    render(<JoinBatchForm item={ITEM} consentGiven onSuccess={vi.fn()} />);
+
+    await user.click(screen.getByRole("button", { name: /daftar sekarang/i }));
+
+    expect(await screen.findByText(/Anda sudah terdaftar pada batch ini/i)).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /batalkan & daftar ulang/i }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /buka pesanan saya/i })).toBeInTheDocument();
+  });
+});
+
+const POLICY_V2_ITEM: MarketplaceItem = {
+  ...ITEM,
+  policyVersion: 2,
+  unit: "pcs",
+  paymentOpeningPolicy: "fixed_cutoff",
+  paymentOpensAt: "2026-09-16T10:00:00.000Z",
+  paymentClosesAt: "2026-09-17T10:00:00.000Z",
+  pickupStartsAt: "2026-09-18T10:00:00.000Z",
+  pickupEndsAt: "2026-09-19T10:00:00.000Z",
+};
+
+describe("JoinBatchForm terms gate", () => {
+  const fetchMock = vi.fn();
+
+  beforeEach(() => {
+    vi.stubGlobal("fetch", fetchMock);
+    fetchMock.mockReset();
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("renders the submit button as visibly disabled until the terms are accepted", async () => {
+    const user = userEvent.setup();
+    render(<JoinBatchForm item={POLICY_V2_ITEM} consentGiven onSuccess={vi.fn()} />);
+
+    const button = screen.getByRole("button", { name: /konfirmasi ikut pesanan/i });
+    expect(button).toBeDisabled();
+    expect(button.className).toContain("cursor-not-allowed");
+    expect(button.className).toContain("bg-wesup-paper-sub");
+    expect(button.className).not.toContain("bg-wesup-ink");
+    expect(
+      screen.getByText(/centang persetujuan syarat di atas/i),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole("checkbox"));
+
+    expect(button).toBeEnabled();
+    expect(button.className).toContain("bg-wesup-ink");
+    expect(button.className).not.toContain("cursor-not-allowed");
+  });
+
+  it("re-disables the button when the quantity changes and resets the terms", async () => {
+    const user = userEvent.setup();
+    render(<JoinBatchForm item={POLICY_V2_ITEM} consentGiven onSuccess={vi.fn()} />);
+
+    await user.click(screen.getByRole("checkbox"));
+    const button = screen.getByRole("button", { name: /konfirmasi ikut pesanan/i });
+    expect(button).toBeEnabled();
+
+    const quantity = screen.getByRole("spinbutton", { name: /jumlah/i });
+    await user.clear(quantity);
+    await user.type(quantity, "7");
+
+    expect(button).toBeDisabled();
+    expect(button.className).toContain("cursor-not-allowed");
+    expect(screen.getByRole("checkbox")).not.toBeChecked();
+  });
+});

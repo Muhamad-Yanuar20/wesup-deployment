@@ -1,0 +1,102 @@
+[WebServer] (node:36384) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:33832) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] ⚠ Warning: Next.js inferred your workspace root, but it may not be correct.
+[WebServer]  We detected multiple lockfiles and selected the directory of C:\Users\hpyan\package-lock.json as the root directory.
+[WebServer]  To silence this warning, set `turbopack.root` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
+[WebServer]    See https://nextjs.org/docs/app/api-reference/config/next-config-js/turbopack#root-directory for more information.
+[WebServer]  Detected additional lockfiles:
+[WebServer]    * C:\Users\hpyan\Project\wesup\package-lock.json
+[WebServer]
+[WebServer] (node:28384) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 16 tests using 1 worker
+
+(node:10428) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] [browser] Using UNSAFE_componentWillReceiveProps in strict mode is not recommended and may indicate bugs in your code. See https://react.dev/link/unsafe-component-lifecycles for details.
+[WebServer]
+[WebServer] * Move data fetching code or side effects to componentDidUpdate.
+[WebServer] * If you're updating state whenever props change, refactor your code to use memoization techniques or move it to static getDerivedStateFromProps. Learn more at: https://react.dev/link/derived-state
+[WebServer]
+[WebServer] Please update the following components: ModelCollapse
+  ok  1 [Supplier Flow] › tests\e2e\docs.spec.ts:6:7 › protected API documentation › opens Swagger UI with configured Basic Auth and disables Try it out (2.1s)
+  ok  2 [Supplier Flow] › tests\e2e\role-a-redesign.spec.ts:48:5 › shared login form keeps admin login readable (466ms)
+[WebServer] [browser] Image with src "/file.svg" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+[WebServer] Read more: https://nextjs.org/docs/app/api-reference/components/image#loading
+[WebServer] (node:38692) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] [browser] Image with src "/file.svg" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+[WebServer] Read more: https://nextjs.org/docs/app/api-reference/components/image#loading
+[WebServer] [browser] Using UNSAFE_componentWillReceiveProps in strict mode is not recommended and may indicate bugs in your code. See https://react.dev/link/unsafe-component-lifecycles for details.
+[WebServer]
+[WebServer] * Move data fetching code or side effects to componentDidUpdate.
+[WebServer] * If you're updating state whenever props change, refactor your code to use memoization techniques or move it to static getDerivedStateFromProps. Learn more at: https://react.dev/link/derived-state
+[WebServer]
+[WebServer] Please update the following components: ModelCollapse
+  ok  3 [Supplier Flow] › tests\e2e\role-a-redesign.spec.ts:106:9 › Role A responsive redesign with disposable fixtures › all fourteen routes, recovery and keyboard at 320px (27.7s)
+[WebServer] (node:23364) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] [browser] Using UNSAFE_componentWillReceiveProps in strict mode is not recommended and may indicate bugs in your code. See https://react.dev/link/unsafe-component-lifecycles for details.
+[WebServer]
+[WebServer] * Move data fetching code or side effects to componentDidUpdate.
+[WebServer] * If you're updating state whenever props change, refactor your code to use memoization techniques or move it to static getDerivedStateFromProps. Learn more at: https://react.dev/link/derived-state
+[WebServer]
+[WebServer] Please update the following components: ModelCollapse
+  ok  4 [Supplier Flow] › tests\e2e\role-a-redesign.spec.ts:106:9 › Role A responsive redesign with disposable fixtures › all fourteen routes, recovery and keyboard at 390px (30.6s)
+[WebServer] (node:39848) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] [browser] Using UNSAFE_componentWillReceiveProps in strict mode is not recommended and may indicate bugs in your code. See https://react.dev/link/unsafe-component-lifecycles for details.
+[WebServer]
+[WebServer] * Move data fetching code or side effects to componentDidUpdate.
+[WebServer] * If you're updating state whenever props change, refactor your code to use memoization techniques or move it to static getDerivedStateFromProps. Learn more at: https://react.dev/link/derived-state
+[WebServer]
+[WebServer] Please update the following components: ModelCollapse
+[WebServer] [slow-request] {
+[WebServer]   route: 'umkm/dashboard',
+[WebServer]   requestId: 'a29259af-d7c1-47f2-a560-a942a1f0c898',
+[WebServer]   totalMs: 1321,
+[WebServer]   phases: [
+[WebServer]     { name: 'auth', ms: 271 },
+[WebServer]     { name: 'notifications', ms: 174 },
+[WebServer]     { name: 'orders', ms: 300 },
+[WebServer]     { name: 'profile', ms: 1050 }
+[WebServer]   ]
+[WebServer] }
+  ok  5 [Supplier Flow] › tests\e2e\role-a-redesign.spec.ts:106:9 › Role A responsive redesign with disposable fixtures › all fourteen routes, recovery and keyboard at 768px (26.2s)
+[WebServer] (node:37968) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] [browser] Using UNSAFE_componentWillReceiveProps in strict mode is not recommended and may indicate bugs in your code. See https://react.dev/link/unsafe-component-lifecycles for details.
+[WebServer]
+[WebServer] * Move data fetching code or side effects to componentDidUpdate.
+[WebServer] * If you're updating state whenever props change, refactor your code to use memoization techniques or move it to static getDerivedStateFromProps. Learn more at: https://react.dev/link/derived-state
+[WebServer]
+[WebServer] Please update the following components: ModelCollapse
+  ok  6 [Supplier Flow] › tests\e2e\role-a-redesign.spec.ts:106:9 › Role A responsive redesign with disposable fixtures › all fourteen routes, recovery and keyboard at 1440px (26.4s)
+  ok  7 [Supplier Flow] › tests\e2e\role-a-refinement.spec.ts:3:5 › page headings retain their responsive scale instead of feedback CSS defaults (877ms)
+  ok  8 [Supplier Flow] › tests\e2e\role-a-refinement.spec.ts:13:5 › application navigation floats clear of the viewport edges and content (580ms)
+  ok  9 [Supplier Flow] › tests\e2e\role-a-refinement.spec.ts:26:5 › mobile search exposes the map on demand without displacing offers (1.1s)
+  ok 10 [Supplier Flow] › tests\e2e\role-a-refinement.spec.ts:43:5 › mobile form controls remain large enough to avoid focus zoom (780ms)
+  ok 11 [Supplier Flow] › tests\e2e\role-a-refinement.spec.ts:52:7 › marketplace gives 1 offers usable space without narrow empty tracks (666ms)
+[WebServer] [browser] Image with src "/file.svg" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+[WebServer] Read more: https://nextjs.org/docs/app/api-reference/components/image#loading
+  ok 12 [Supplier Flow] › tests\e2e\role-a-refinement.spec.ts:52:7 › marketplace gives 6 offers usable space without narrow empty tracks (713ms)
+[WebServer] [slow-request] {
+[WebServer]   route: 'marketplace/search',
+[WebServer]   requestId: 'f6ffb829-868f-4f5d-a65b-e2df3ff4be0b',
+[WebServer]   totalMs: 3704,
+[WebServer]   phases: [
+[WebServer]     { name: 'auth', ms: 1 },
+[WebServer]     { name: 'origin', ms: 0 },
+[WebServer]     { name: 'search', ms: 205 },
+[WebServer]     { name: 'enrichment', ms: 3493 }
+[WebServer]   ]
+[WebServer] }
+  ok 13 [Supplier Flow] › tests\e2e\role-a-refinement.spec.ts:75:7 › supplier wizard keeps all steps and editable values at 320px (1.3s)
+  ok 14 [Supplier Flow] › tests\e2e\role-a-refinement.spec.ts:75:7 › supplier wizard keeps all steps and editable values at 390px (1.3s)
+  ok 15 [Supplier Flow] › tests\e2e\role-a-refinement.spec.ts:75:7 › supplier wizard keeps all steps and editable values at 768px (1.4s)
+  ok 16 [Supplier Flow] › tests\e2e\role-a-refinement.spec.ts:75:7 › supplier wizard keeps all steps and editable values at 1440px (1.5s)
+
+  16 passed (2.3m)

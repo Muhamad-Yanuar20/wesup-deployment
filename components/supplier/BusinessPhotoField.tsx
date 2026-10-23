@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useObjectUrl } from "@/hooks/use-object-url";
 import { Image as ImageIcon, LoaderCircle, Trash2, UploadCloud } from "lucide-react";
 import { compressImage, CompressionError } from "@/lib/image-compression";
 import { validateRawImageInput } from "@/lib/supplier-registration/contracts";
@@ -51,13 +52,7 @@ export default function BusinessPhotoField({
   const previewAlt = isProduct ? "Pratinjau foto produk" : "Pratinjau foto tempat usaha";
   const errorId = isProduct ? "product-photo-error" : "business-photo-error";
 
-  const previewUrl = useMemo(() => (value ? URL.createObjectURL(value) : null), [value]);
-
-  useEffect(() => {
-    return () => {
-      if (previewUrl) URL.revokeObjectURL(previewUrl);
-    };
-  }, [previewUrl]);
+  const previewUrl = useObjectUrl(value);
 
   useEffect(() => {
     return () => abortRef.current?.abort();

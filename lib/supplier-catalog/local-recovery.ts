@@ -9,6 +9,7 @@ export interface LocalOfferRecovery {
   draft: Partial<CatalogDraft>;
   schedule: OfferScheduleInput;
   updatedAt: number;
+  copySourceId?: string;
 }
 
 export function offerRecoveryScope(ownerId: string, copySourceId?: string) {
@@ -105,4 +106,24 @@ export function removeOfferRecoveries(storage: Storage, ownerId: string, draftId
     if (key.endsWith(`:draft:${draftId}`) || (raw && parseRecovery(key, raw)?.id === draftId)) keys.push(key);
   }
   keys.forEach(key => storage.removeItem(key));
+}
+
+/** Read all ordinary/copy/legacy offers within this exact owner's namespace. */
+export function listOwnerOfferRecoveries(storage: Storage, ownerId: string): LocalOfferRecovery[] {
+  const scope = offerRecoveryScope(ownerId);
+  const recoveries: LocalOfferRecovery[] = [];
+  for (let index = 0; index < storage.length; index++) {
+    const key = storage.key(index);
+    if (!key || (key !== scope && !key.startsWith(`${scope}:`))) continue;
+    const match = /^(?::copy:([^:]+))?(?::draft:([^:]+))?$/.exec(key.slice(scope.length));
+    if (!match) continue;
+    const raw = storage.getItem(key);
+    const recovery = raw ? parseRecovery(key, raw) : null;
+    if (recovery) recoveries.push({ ...recovery, ...(match[1] ? { copySourceId: match[1] } : {}) });
+  }
+  return recoveries.sort((a, b) => b.updatedAt - a.updatedAt || a.key.localeCompare(b.key));
+}
+
+export function findOwnerOfferRecovery(storage: Storage, ownerId: string, key: string) {
+  return listOwnerOfferRecoveries(storage, ownerId).find(recovery => recovery.key === key) ?? null;
 }

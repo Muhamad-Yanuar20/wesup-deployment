@@ -404,10 +404,15 @@ describe.skipIf(noDbUrl)("live batch cancellation & search (pg)", () => {
     expect(rows.map((r) => r.title)).toEqual(["Gula Pasir Premium"]);
   });
 
-  it("filters by category allow-list overlap", async () => {
+  it("filters fixture batches by category allow-list overlap in a populated marketplace", async () => {
     const rows = await sql<{ title: string }>(
-      `select title from public.search_batches(
-         p_categories => array['Daging & Ikan']::text[])`,
+      // Other suppliers' published offers are legitimate shared-environment data.
+      // Check the category filter against this suite's mixed-category fixtures.
+      `select result.title from public.search_batches(
+         p_categories => array['Daging & Ikan']::text[]) result
+       join public.batches fixture on fixture.id = result.id
+       where fixture.supplier_id = $1`,
+      [supplierId],
     );
     expect(rows.map((r) => r.title)).toEqual(["Ikan Segar Nusantara"]);
   });

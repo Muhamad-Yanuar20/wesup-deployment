@@ -70,6 +70,12 @@ interface ClientOpts {
   tiers?: TierLike[] | null;
   tiersOverride?: TierLike[];
   insertError?: { code?: string; message?: string } | null;
+  policyVersion?: number;
+  capacityQuantity?: number | null;
+  rpcResponses?: Record<
+    string,
+    { data: unknown; error: unknown } | Array<{ data: unknown; error: unknown }>
+  >;
 }
 
 function buildClient(opts: ClientOpts) {
@@ -95,6 +101,10 @@ function buildClient(opts: ClientOpts) {
       data: {
         id: BATCH_ID,
         status: batchStatus,
+        transaction_policy_version: opts.policyVersion ?? 1,
+        ...(opts.capacityQuantity != null
+          ? { capacity_quantity: opts.capacityQuantity }
+          : {}),
         batch_timeline: timeline,
         batch_tiers: tiers,
       },
@@ -110,7 +120,15 @@ function buildClient(opts: ClientOpts) {
   const selectInserted = vi.fn(() => ({ single: insertSingle }));
   const insert = vi.fn(() => ({ select: selectInserted }));
 
-  const rpc = vi.fn(async () => ({ data: null, error: null }));
+  const rpcCalls = new Map<string, number>();
+  const rpc = vi.fn(async (fn: string) => {
+    const index = rpcCalls.get(fn) ?? 0;
+    rpcCalls.set(fn, index + 1);
+    const entry = opts.rpcResponses?.[fn];
+    if (!entry) return { data: null, error: null };
+    if (Array.isArray(entry)) return entry[Math.min(index, entry.length - 1)];
+    return entry;
+  });
 
   const from = vi.fn((table: string) => {
     if (table === "profiles") {
@@ -382,6 +400,187 @@ describe("POST /api/registrations (atomic register)", () => {
         postJson({ ...validBody, policyVersion: "v1" }) as unknown as Request,
       );
       expect(res.status).toBe(400);
+    });
+  });
+});
+
+describe("POST /api/registrations (policy v2 join)", () => {
+  const policyV2Body = {
+    ...validBody,
+    consentAccepted: true,
+    consentSnapshot: {
+      accepted: true,
+      policyVersion: 2,
+      paymentOpeningPolicy: "fixed_cutoff",
+      maximumUnitPrice: 10000,
+      unit: "kg",
+      pickupAddress: "Bandung",
+      paymentOpensAt: TIMELINE.payment_opens_at,
+      paymentClosesAt: TIMELINE.payment_closes_at,
+      pickupStartsAt: TIMELINE.estimated_ready_at,
+      pickupEndsAt: TIMELINE.estimated_ready_at,
+    },
+  };
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(Date.parse("2026-09-01T12:00:00.000Z"));
+    mockGetServerClient.mockReset();
+    mockEnforceRateLimit.mockReset();
+    mockEnforceRateLimit.mockResolvedValue(null as never);
+    incrbyMock.mockReset();
+    evalMock.mockReset();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("registers a new participant and returns the batch volume", async () => {
+    evalMock.mockResolvedValue(35);
+    buildClient({
+      policyVersion: 2,
+      capacityQuantity: 100,
+      rpcResponses: {
+        get_registration_volume_v2: [
+          {
+            data: {
+              quantity: 30,
+              registered: false,
+              registrationId: null,
+              batchClosed: false,
+              phase: "waiting_payment_window",
+              deadlineAt: TIMELINE.registration_closes_at,
+              capabilities: { canWithdraw: false, canPay: false },
+              blockedReason: null,
+            },
+            error: null,
+          },
+          {
+            data: {
+              quantity: 35,
+              registered: true,
+              registrationId: "reg-new",
+              batchClosed: false,
+              phase: "waiting_payment_window",
+              deadlineAt: TIMELINE.registration_closes_at,
+              capabilities: { canWithdraw: true, canPay: false },
+              blockedReason: null,
+            },
+            error: null,
+          },
+        ],
+        join_batch_v2: {
+          data: {
+            quantity: 35,
+            registered: true,
+            registrationId: "reg-new",
+            batchClosed: false,
+            idempotent: false,
+            capabilities: { canWithdraw: true, canPay: false },
+            phase: "waiting_payment_window",
+          },
+          error: null,
+        },
+      },
+    });
+
+    const res = await register(postJson(policyV2Body) as unknown as Request);
+
+    expect(res.status).toBe(201);
+    const body = await res.json();
+    expect(body.ok).toBe(true);
+    expect(body.registrationId).toBe("reg-new");
+    expect(body.count).toBe(35);
+  });
+
+  it("rejects a repeated join with the existing registration instead of a false success", async () => {
+    buildClient({
+      policyVersion: 2,
+      capacityQuantity: 100,
+      rpcResponses: {
+        get_registration_volume_v2: {
+          data: {
+            quantity: 35,
+            registered: true,
+            registrationId: "reg-existing",
+            batchClosed: false,
+            phase: "waiting_payment_window",
+            deadlineAt: TIMELINE.registration_closes_at,
+            capabilities: { canWithdraw: true, canPay: false },
+            blockedReason: null,
+          },
+          error: null,
+        },
+        join_batch_v2: {
+          data: {
+            quantity: 5,
+            registered: true,
+            registrationId: "reg-existing",
+            batchClosed: false,
+            idempotent: true,
+            capabilities: { canWithdraw: true, canPay: false },
+            phase: "waiting_payment_window",
+          },
+          error: null,
+        },
+      },
+    });
+
+    const res = await register(postJson(policyV2Body) as unknown as Request);
+
+    expect(res.status).toBe(409);
+    const body = await res.json();
+    expect(body.code).toBe("REGISTRATION_ALREADY_EXISTS");
+    expect(body.details).toEqual({
+      registrationId: "reg-existing",
+      quantity: 5,
+      canWithdraw: true,
+    });
+  });
+
+  it("reports a locked registration that can no longer be withdrawn", async () => {
+    buildClient({
+      policyVersion: 2,
+      capacityQuantity: 100,
+      rpcResponses: {
+        get_registration_volume_v2: {
+          data: {
+            quantity: 35,
+            registered: true,
+            registrationId: "reg-locked",
+            batchClosed: true,
+            phase: "payment_open",
+            deadlineAt: TIMELINE.payment_closes_at,
+            capabilities: { canWithdraw: false, canPay: true },
+            blockedReason: null,
+          },
+          error: null,
+        },
+        join_batch_v2: {
+          data: {
+            quantity: 5,
+            registered: true,
+            registrationId: "reg-locked",
+            batchClosed: true,
+            idempotent: true,
+            capabilities: { canWithdraw: false, canPay: true },
+            phase: "payment_open",
+          },
+          error: null,
+        },
+      },
+    });
+
+    const res = await register(postJson(policyV2Body) as unknown as Request);
+
+    expect(res.status).toBe(409);
+    const body = await res.json();
+    expect(body.code).toBe("REGISTRATION_ALREADY_EXISTS");
+    expect(body.details).toEqual({
+      registrationId: "reg-locked",
+      quantity: 5,
+      canWithdraw: false,
     });
   });
 });

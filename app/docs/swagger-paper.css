@@ -56,6 +56,7 @@
 .docs-paper-shell .swagger-ui :is(button, select, input, textarea, a):focus-visible { outline: 2px solid var(--color-wesup-red); outline-offset: 2px; }
 .docs-paper-shell .swagger-ui svg { fill: var(--color-wesup-ink); }
 .docs-paper-shell .swagger-ui .opblock-tag { padding: 1rem 0; border-color: rgb(5 5 5 / 0.15); }
+.docs-paper-shell .swagger-ui .opblock-tag small { color: var(--color-wesup-ink-sub); }
 @media (max-width: 639px) {
   .docs-paper-shell .swagger-ui .opblock-summary-control { flex-wrap: wrap; }
   .docs-paper-shell .swagger-ui .opblock .opblock-summary-path { flex-basis: calc(100% - 6rem); }

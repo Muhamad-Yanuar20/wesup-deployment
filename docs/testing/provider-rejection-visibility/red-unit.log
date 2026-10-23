@@ -1,0 +1,163 @@
+[33m(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.[39m
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.11 [39m[90mC:/Codes/Projects/wesup[39m
+
+ [31m❯[39m tests/unit/payment-client-errors.test.ts [2m([22m[2m4 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 22[2mms[22m[39m
+     [32m✓[39m preserves code and request reference while using a friendly admin message[32m 5[2mms[22m[39m
+     [32m✓[39m keeps provider messages and ignores malformed metadata[32m 2[2mms[22m[39m
+[31m     [31m×[31m shows the provider rejection reason to the UMKM[39m[32m 12[2mms[22m[39m
+     [32m✓[39m falls back to a readable rejection message when the provider reason is missing[32m 0[2mms[22m[39m
+ [31m❯[39m tests/unit/midtrans.test.ts [2m([22m[2m3 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 59[2mms[22m[39m
+     [32m✓[39m sends custom expiry in seconds and preserves QR action[32m 45[2mms[22m[39m
+     [32m✓[39m rejects malformed production flag and exposes expire endpoint[32m 3[2mms[22m[39m
+[31m     [31m×[31m keeps the provider rejection reason so the UMKM can be told what failed[39m[32m 8[2mms[22m[39m
+[90mstderr[2m | tests/unit/api-umkm-payment-snap.test.ts[2m > [22m[2mUMKM Snap payment charge[2m > [22m[2mmaps missing Supabase admin configuration separately from Midtrans failures
+[22m[39m[umkm-payment] admin client initialization failed {
+  requestId: [32m'75088ae6-bc49-4306-a864-b8ef2853996e'[39m,
+  operation: [32m'charge.getAdminClient'[39m,
+  errorName: [32m'SupabaseAdminConfigurationError'[39m,
+  code: [32m'PAYMENT_ADMIN_CONFIG_MISSING'[39m
+}
+
+[90mstderr[2m | tests/unit/api-umkm-payment-snap.test.ts[2m > [22m[2mUMKM Snap payment charge[2m > [22m[2mmaps unexpected Supabase admin initialization failures separately
+[22m[39m[umkm-payment] admin client initialization failed {
+  requestId: [32m'7904a48a-3071-43d8-a841-1d4df161411f'[39m,
+  operation: [32m'charge.getAdminClient'[39m,
+  errorName: [32m'Error'[39m,
+  code: [32m'PAYMENT_ADMIN_INIT_FAILED'[39m
+}
+
+ [31m❯[39m tests/unit/api-umkm-payment-snap.test.ts [2m([22m[2m13 tests[22m[2m | [22m[31m2 failed[39m[2m)[22m[32m 70[2mms[22m[39m
+     [32m✓[39m never treats an unreadable attempt relation as permission to create another bill[32m 13[2mms[22m[39m
+     [32m✓[39m keeps an uncertain provider request pending for reconciliation[32m 8[2mms[22m[39m
+     [32m✓[39m does not replace an old unknown checkout with a second bill[32m 4[2mms[22m[39m
+     [32m✓[39m reuses an active Snap session and returns the token without charging twice[32m 6[2mms[22m[39m
+     [32m✓[39m creates a new Snap attempt with a unique provider order id[32m 3[2mms[22m[39m
+     [32m✓[39m rejects checkout during the final five minutes[32m 2[2mms[22m[39m
+     [32m✓[39m maps missing Supabase admin configuration separately from Midtrans failures[32m 4[2mms[22m[39m
+     [32m✓[39m maps unexpected Supabase admin initialization failures separately[32m 6[2mms[22m[39m
+     [32m✓[39m reuses a valid denied Snap session without issuing another payment[32m 4[2mms[22m[39m
+     [32m✓[39m does not create checkout when the invoice is already paid[32m 1[2mms[22m[39m
+[31m     [31m×[31m records the provider reason on the attempt and hands it to the UMKM[39m[32m 10[2mms[22m[39m
+[31m     [31m×[31m does not open a second attempt after a terminal provider rejection[39m[32m 3[2mms[22m[39m
+     [32m✓[39m uses the same supplier-aware RPC under test and production[32m 2[2mms[22m[39m
+[90mstderr[2m | tests/components/UmkmPaymentPanel.test.tsx[2m > [22m[2mUmkmPaymentPanel[2m > [22m[2mexplains that a created checkout still needs a method
+[22m[39mCannot update a component (`UmkmPaymentPanel`) while rendering a different component (`default`). To locate the bad setState() call inside `default`, follow the stack trace as described in https://react.dev/link/setstate-in-render
+
+ [31m❯[39m tests/components/UmkmPaymentPanel.test.tsx [2m([22m[2m8 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[33m 1466[2mms[22m[39m
+     [32m✓[39m shows the real payment closing date while counting down to opening[32m 58[2mms[22m[39m
+     [33m[2m✓[22m[39m keeps the four-check budget across refreshed props, then permits a manual check [33m 943[2mms[22m[39m
+     [32m✓[39m keeps a real provider-check action visible after the deadline[32m 71[2mms[22m[39m
+     [32m✓[39m explains that a created checkout still needs a method[32m 54[2mms[22m[39m
+     [32m✓[39m shows a friendly confirmed method only when payment_type exists[32m 40[2mms[22m[39m
+     [32m✓[39m refreshes once when the waiting window reaches its opening[32m 24[2mms[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 5 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+     [32m✓[39m does not reload a terminal expired payment page[32m 30[2mms[22m[39m
+[41m[1m FAIL [22m[49m tests/components/UmkmPaymentPanel.test.tsx[2m > [22mUmkmPaymentPanel[2m > [22mshows the provider rejection reason and stops offering a retry
+[31m     [31m×[31m shows the provider rejection reason and stops offering a retry[39m[32m 231[2mms[22m[39m
+[31m[1mError[22m: [2mexpect([22m[31melement[31m[2m).toHaveTextContent()[22m
+
+Expected element to have text content:
+[32m  /transaction amount is not equal to the expected total/i[31m
+Received:
+[31m  Pembayaran ditolak provider pembayaran.Coba lagi[31m[39m
+[36m [2m❯[22m tests/components/UmkmPaymentPanel.test.tsx:[2m138:21[22m[39m
+    [90m136|[39m       })[33m;[39m
+    [90m137|[39m       [35mconst[39m alert [33m=[39m [35mawait[39m screen[33m.[39m[34mfindByRole[39m([32m"alert"[39m)[33m;[39m
+    [90m138|[39m       expect(alert).toHaveTextContent(/transaction amount is not equal…
+    [90m   |[39m                     [31m^[39m
+    [90m139|[39m       [34mexpect[39m(alert)[33m.[39m[34mtoHaveTextContent[39m([36m/req-9/[39m)[33m;[39m
+    [90m140|[39m       expect(screen.queryByRole("button", { name: /coba lagi/i })).not…
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/unit/api-umkm-payment-snap.test.ts[2m > [22mprovider rejection visibility[2m > [22mrecords the provider reason on the attempt and hands it to the UMKM
+
+[31m[1mAssertionError[22m: expected 400 to be 502 // Object.is equality[39m
+[2m Test Files [22m [1m[31m4 failed[39m[22m[90m (4)[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 502[39m
+[31m+ 400[39m
+
+[2m      Tests [22m [1m[31m5 failed[39m[22m[2m | [22m[1m[32m23 passed[39m[22m[90m (28)[39m
+[36m [2m❯[22m tests/unit/api-umkm-payment-snap.test.ts:[2m191:29[22m[39m
+[2m   Start at [22m 15:54:24
+    [90m189|[39m     const response = await POST(new NextRequest("http://localhost/api/…
+    [90m190|[39m
+    [90m191|[39m     [34mexpect[39m(response[33m.[39mstatus)[33m.[39m[34mtoBe[39m([34m502[39m)[33m;[39m
+    [90m   |[39m                             [31m^[39m
+    [90m192|[39m     [35mconst[39m body [33m=[39m [35mawait[39m response[33m.[39m[34mjson[39m()[33m;[39m
+    [90m193|[39m     [34mexpect[39m(body)[33m.[39m[34mtoMatchObject[39m({
+[2m   Duration [22m 3.92s[2m (transform 511ms, setup 1.48s, import 657ms, tests 1.62s, environment 1.61s)[22m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/unit/api-umkm-payment-snap.test.ts[2m > [22mprovider rejection visibility[2m > [22mdoes not open a second attempt after a terminal provider rejection
+
+[31m[1mAssertionError[22m: expected 201 to be 502 // Object.is equality[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 502[39m
+[31m+ 201[39m
+
+[36m [2m❯[22m tests/unit/api-umkm-payment-snap.test.ts:[2m223:29[22m[39m
+    [90m221|[39m     const response = await POST(new NextRequest("http://localhost/api/…
+    [90m222|[39m
+    [90m223|[39m     [34mexpect[39m(response[33m.[39mstatus)[33m.[39m[34mtoBe[39m([34m502[39m)[33m;[39m
+    [90m   |[39m                             [31m^[39m
+    [90m224|[39m     [34mexpect[39m([35mawait[39m response[33m.[39m[34mjson[39m())[33m.[39m[34mtoMatchObject[39m({
+    [90m225|[39m       code[33m:[39m [32m"PAYMENT_PROVIDER_REJECTED"[39m[33m,[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/unit/midtrans.test.ts[2m > [22mMidtrans QRIS adapter[2m > [22mkeeps the provider rejection reason so the UMKM can be told what failed
+[31m[1mAssertionError[22m: expected undefined to be 'Transaction amount is not equal to th…' // Object.is equality[39m
+
+[32m- Expected:[39m
+"Transaction amount is not equal to the expected total."
+
+[31m+ Received:[39m
+undefined
+
+[36m [2m❯[22m tests/unit/midtrans.test.ts:[2m35:43[22m[39m
+    [90m 33|[39m     [34mexpect[39m(error)[33m.[39m[34mtoBeInstanceOf[39m([33mMidtransProviderError[39m)[33m;[39m
+    [90m 34|[39m     [35mconst[39m providerError [33m=[39m error [35mas[39m [33mMidtransProviderError[39m[33m;[39m
+    [90m 35|[39m     expect(providerError.providerMessage).toBe("Transaction amount is …
+    [90m   |[39m                                           [31m^[39m
+    [90m 36|[39m     expect(providerError.errorMessages).toEqual(["Transaction amount i…
+    [90m 37|[39m     [34mexpect[39m(providerError[33m.[39mrequestId)[33m.[39m[34mtoBe[39m([32m"req-abc-123"[39m)[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/unit/payment-client-errors.test.ts[2m > [22mpayment API client errors[2m > [22mshows the provider rejection reason to the UMKM
+[31m[1mAssertionError[22m: expected { …(3) } to deeply equal { …(3) }[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[2m    "code": "PAYMENT_PROVIDER_REJECTED",[22m
+[32m-   "message": "Pembayaran ditolak provider pembayaran. Alasan provider: Transaction amount is not equal to the expected total.",[39m
+[31m+   "message": "Pembayaran ditolak provider pembayaran.",[39m
+[2m    "requestId": "req-1",[22m
+[2m  }[22m
+
+[36m [2m❯[22m tests/unit/payment-client-errors.test.ts:[2m27:30[22m[39m
+    [90m 25|[39m       requestId[33m:[39m [32m"req-1"[39m[33m,[39m
+    [90m 26|[39m       details: { providerMessage: "Transaction amount is not equal to …
+    [90m 27|[39m     }[33m,[39m [32m"Pembayaran gagal."[39m))[33m.[39m[34mtoEqual[39m({
+    [90m   |[39m                              [31m^[39m
+    [90m 28|[39m       message: "Pembayaran ditolak provider pembayaran. Alasan provide…
+    [90m 29|[39m       code[33m:[39m [32m"PAYMENT_PROVIDER_REJECTED"[39m[33m,[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯[22m[39m
+

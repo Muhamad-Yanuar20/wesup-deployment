@@ -154,6 +154,33 @@ describe("guided supplier offer", () => {
     expect(localStorage.getItem("wesup:offer:supplier-test:draft:other-offer")).toBe("keep another offer");
     expect(localStorage.getItem("wesup:offer:other-supplier:draft:published-offer")).toBe("keep another supplier");
   });
+  it("opens the requested device recovery at its last step and saves with the newest server revision", async () => {
+    const key = "wesup:offer:supplier-test:draft:saved-one";
+    localStorage.setItem(key, JSON.stringify({ id: "", revision: 1, step: 2, draft: { title: "Perubahan lokal" }, schedule: { openingMode: "immediate", collectionDays: 1, pickupStartsAt: "", pickupEndsAt: "" } }));
+    render(<OfferWizard ownerId="supplier-test" recoveryKey={key} savedDraft={{ id: "saved-one", revision: 5, step: 1, payload: { title: "Versi server" } }} />);
+    await waitFor(() => expect(screen.getByLabelText("Langkah pembuatan penawaran").querySelector('[aria-current="step"]')).toHaveTextContent("2. Harga"));
+    expect(screen.getByRole("status")).toHaveTextContent("Foto yang belum tersimpan perlu dipilih kembali");
+    fireEvent.click(screen.getByRole("button", { name: "Simpan Draft" }));
+    await waitFor(() => expect(fetch).toHaveBeenCalled());
+    const body = vi.mocked(fetch).mock.calls[0][1]?.body as FormData;
+    expect(body.get("id")).toBe("saved-one"); expect(body.get("revision")).toBe("5");
+    expect(JSON.parse(String(body.get("payload"))).title).toBe("Perubahan lokal");
+  });
+  it("refuses a recovery belonging to another supplier", async () => {
+    const key = "wesup:offer:other-supplier:draft:private";
+    localStorage.setItem(key, JSON.stringify({ id: "", step: 1, draft: { title: "Private" }, schedule: { openingMode: "immediate", collectionDays: 1, pickupStartsAt: "", pickupEndsAt: "" } }));
+    render(<OfferWizard ownerId="supplier-test" recoveryKey={key} />);
+    expect(await screen.findByRole("alert")).toHaveTextContent("Draft perangkat tidak tersedia");
+    expect(screen.getByLabelText(/Nama Produk/)).toHaveValue(""); expect(fetch).not.toHaveBeenCalled();
+    expect(localStorage.getItem(key)).toContain("Private");
+  });
+  it("opens a selected copy recovery without restoring the review consent", async () => {
+    const key = "wesup:offer:supplier-test:copy:source:draft:copy-one";
+    localStorage.setItem(key, JSON.stringify({ id: "", step: 4, draft: { title: "Salinan pilihan" }, schedule: { openingMode: "immediate", collectionDays: 1, pickupStartsAt: "", pickupEndsAt: "" } }));
+    render(<OfferWizard ownerId="supplier-test" recoveryKey={key} copySourceId="source" />);
+    expect(await screen.findByRole("heading", { name: "Salinan pilihan" })).toBeVisible();
+    expect(screen.getByRole("checkbox")).not.toBeChecked(); expect(screen.getByRole("button", { name: "Terbitkan penawaran" })).toBeDisabled();
+  });
   it("defaults the manual target to capacity and keeps an explicit lower target", async () => {
     render(<OfferWizard ownerId="supplier-test" />);
     const capacity = screen.getByLabelText(/Kapasitas maksimum/);

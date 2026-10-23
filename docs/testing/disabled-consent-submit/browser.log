@@ -1,0 +1,25 @@
+# Browser verification — disabled submit affordance (Fix 3)
+
+Date: 2026-10-22. App: http://localhost:3000 (dev). Batch detail page
+/marketplace/1fd8e6b0-529a-425a-b1fd-29504bd33243, account ryan@gmail.com
+(test-only), no consent checked.
+
+## Computed style (live DOM)
+
+label: "Konfirmasi ikut pesanan"
+disabled: true
+computed cursor: "not-allowed"
+computed backgroundColor: "rgb(234, 232, 227)"  (wesup-paper-sub)
+computed opacity: "1"
+hint present: "Centang persetujuan syarat di atas untuk mengaktifkan tombol konfirmasi."
+
+The button uses the disabled recipe (bg-wesup-paper-sub + text-wesup-ink-sub +
+cursor-not-allowed) instead of relying on opacity alone, so the disabled state is
+readable and the reason is stated next to it.
+
+Screenshot: disabled-submit.png
+
+## TDD logs
+
+- red-unit.log — 2 failed (terms-gate tests).
+- green-unit.log — 2 passed after the fix.

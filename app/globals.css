@@ -1,6 +1,8 @@
 @import "tailwindcss";
 
 :root {
+  --app-header-offset: 6.5rem;
+  --app-bottom-offset: calc(6.25rem + env(safe-area-inset-bottom));
   --background: #f8fafc;
   --foreground: #0f172a;
   --wesup-page: #f8fafc;
@@ -84,6 +86,13 @@ input[type="radio"] {
   min-width: 0;
 }
 
+.app-main { padding-top: var(--app-header-offset); padding-bottom: var(--app-bottom-offset); }
+.app-purchase-dock { bottom: var(--app-bottom-offset); }
+.app-enter { animation: app-enter 650ms var(--wesup-ease, cubic-bezier(0.32, 0.72, 0, 1)) both; }
+@keyframes app-enter { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@media (min-width: 1024px) { .app-main { padding-bottom: 0; } }
+@media (prefers-reduced-motion: reduce) { .app-enter { animation: none; } }
+
 .wesup-app :where(a, button, input, select, textarea, summary):focus-visible {
   outline: 2px solid var(--color-wesup-red);
   outline-offset: 2px;
@@ -92,6 +101,14 @@ input[type="radio"] {
 .wesup-app :where(input[type="number"], time) {
   font-variant-numeric: tabular-nums;
 }
+
+/* Keep touch forms readable without allowing feedback CSS to size page headings. */
+.wesup-app :where(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+  font-size: 1rem;
+  caret-color: var(--color-wesup-red);
+}
+
+.wesup-app :where(td, dd, [role="timer"]) { font-variant-numeric: tabular-nums; }
 
 .wesup-app .lucide { stroke-width: 1.5; }
 

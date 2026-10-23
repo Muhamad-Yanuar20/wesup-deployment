@@ -31,15 +31,33 @@ export interface MidtransSnapTransactionResult {
   raw: Record<string, unknown>;
 }
 
+export interface MidtransProviderDetails {
+  fromProvider: boolean;
+  providerMessage: string | null;
+  errorMessages: string[];
+  requestId: string | null;
+  raw: Record<string, unknown> | null;
+}
+
 export class MidtransProviderError extends Error {
 
   readonly status: number;
   readonly retryable: boolean;
-  constructor(message: string, status = 502, retryable = true) {
+  readonly fromProvider: boolean;
+  readonly providerMessage: string | null;
+  readonly errorMessages: string[];
+  readonly requestId: string | null;
+  readonly raw: Record<string, unknown> | null;
+  constructor(message: string, status = 502, retryable = true, details: Partial<MidtransProviderDetails> = {}) {
     super(message);
     this.name = "MidtransProviderError";
     this.status = status;
     this.retryable = retryable;
+    this.fromProvider = details.fromProvider === true;
+    this.providerMessage = details.providerMessage ?? null;
+    this.errorMessages = details.errorMessages ?? [];
+    this.requestId = details.requestId ?? null;
+    this.raw = details.raw ?? null;
   }
 }
 
@@ -78,8 +96,21 @@ async function request<T>(path: string, init: RequestInit = {}, env?: NodeJS.Pro
     });
     const body = await response.json().catch(() => ({}));
     if (!response.ok) {
-      const message = body && typeof body === "object" && "status_message" in body ? String((body as Record<string, unknown>).status_message) : `Midtrans returned HTTP ${response.status}`;
-      throw new MidtransProviderError(message, response.status >= 500 ? 502 : response.status, response.status >= 500 || response.status === 429);
+      const record = body && typeof body === "object" ? body as Record<string, unknown> : {};
+      const errorMessages = Array.isArray(record.error_messages)
+        ? record.error_messages.filter((entry): entry is string => typeof entry === "string" && entry.trim().length > 0)
+        : [];
+      const statusMessage = typeof record.status_message === "string" && record.status_message.trim().length > 0 ? record.status_message.trim() : "";
+      const providerMessage = errorMessages[0] ?? (statusMessage || null);
+      const requestId = typeof record.request_id === "string" && record.request_id.trim().length > 0 ? record.request_id : null;
+      const message = providerMessage ?? `Midtrans returned HTTP ${response.status}`;
+      throw new MidtransProviderError(message, response.status >= 500 ? 502 : response.status, response.status >= 500 || response.status === 429, {
+        fromProvider: true,
+        providerMessage,
+        errorMessages,
+        requestId,
+        raw: record,
+      });
     }
     return body as T;
   } catch (error) {

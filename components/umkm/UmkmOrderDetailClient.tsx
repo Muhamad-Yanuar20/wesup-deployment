@@ -4,6 +4,7 @@ import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { ArrowLeft, CheckCircle2, Copy, MapPin, QrCode, ShieldAlert, ShieldCheck, Star, Upload } from "lucide-react";
 import type { UmkmOrderDetail } from "@/lib/orders/api-types";
+import { encodePickupQr } from "@/lib/supplier-fulfillment/qr-payload";
 import PickupQrBlock from "@/components/orders/PickupQrBlock";
 import { compressImage } from "@/lib/image-compression";
 import type { MidtransSnapConfig } from "@/components/payments/MidtransSnapLoader";
@@ -115,7 +116,7 @@ function PickupPanel({ order }: { order: UmkmOrderDetail }) {
   const generating = useRef(false);
   const [request, setRequest] = useState(0), [pending, setPending] = useState(false);
   useEffect(() => {
-    if (!order.capabilities.canViewPickup || pickup?.qrCodeToken || pickup?.usedAt) return;
+    if (order.status !== "paid" || !order.capabilities.canViewPickup || pickup?.qrCodeToken || pickup?.usedAt) return;
     let active = true; generating.current = true; queueMicrotask(() => { if (active) { setPending(true); setMessage(""); } });
     void fetch(`/api/pickups/${order.id}/code`, { method: "POST" }).then(async response => {
       const body = await response.json().catch(() => ({}));
@@ -124,11 +125,12 @@ function PickupPanel({ order }: { order: UmkmOrderDetail }) {
     }).catch(reason => { if (active) setMessage(feedbackError(reason, "Kode pengambilan belum dapat dimuat.")); })
       .finally(() => { generating.current = false; if (active) setPending(false); });
     return () => { active = false; };
-  }, [order.id, order.capabilities.canViewPickup, order.pickup?.address, pickup?.qrCodeToken, pickup?.usedAt, request]);
+  }, [order.id, order.status, order.capabilities.canViewPickup, order.pickup?.address, pickup?.qrCodeToken, pickup?.usedAt, request]);
   const [copied, setCopied] = useState(false);
   useEffect(() => { if (!copied) return; const timer = window.setTimeout(() => setCopied(false), 3000); return () => window.clearTimeout(timer); }, [copied]);
   const copy = async () => { if (!pickup?.pinCode) return; try { await navigator.clipboard.writeText(pickup.pinCode); setCopied(true); } catch { setMessage("PIN belum tersalin. Anda tetap bisa menunjukkan PIN di layar."); } };
   if (!order.capabilities.canViewPickup) return <section className={`${panel} p-6 text-center text-sm text-wesup-ink-sub`}>{order.presentation?.blockedReason ?? "Kode QR dan PIN tersedia setelah pembayaran lunas."}</section>;
+  if (["picked_up", "completed"].includes(order.status) || pickup?.usedAt) return <SuccessState title="Serah terima selesai" description="Pesanan sudah diambil. Kode QR dan PIN telah digunakan." />;
   const deadline = order.timeline.pickupDeadlineAt;
   return (
     <div className="space-y-6">
@@ -136,7 +138,7 @@ function PickupPanel({ order }: { order: UmkmOrderDetail }) {
         <section className="bg-wesup-paper p-5">
           <h2 className={`${panelHeading} flex items-center gap-2`}><QrCode className="size-5 text-wesup-red" strokeWidth={1.5} aria-hidden="true" />Kode QR Pengambilan</h2>
           <p className="mt-1 text-xs leading-5 text-wesup-ink-sub">Perlihatkan kode ini ke Supplier saat tiba di titik kumpul.</p>
-          {pickup?.qrCodeToken ? <div className="mt-4"><PickupQrBlock seed={pickup.qrCodeToken} /></div> : pending ? <ContentSkeleton variant="detail" label="Menyiapkan kode pengambilan…" /> : <ErrorState title="Kode belum dapat dimuat." description={message || "Coba periksa kode pengambilan kembali."} action={<AsyncButton onClick={() => setRequest(value => value + 1)}>Coba lagi</AsyncButton>} />}
+          {pickup?.qrCodeToken ? <div className="mt-4"><PickupQrBlock seed={encodePickupQr(order.id, pickup.qrCodeToken)} /></div> : pending ? <ContentSkeleton variant="detail" label="Menyiapkan kode pengambilan…" /> : <ErrorState title="Kode belum dapat dimuat." description={message || "Coba periksa kode pengambilan kembali."} action={<AsyncButton onClick={() => setRequest(value => value + 1)}>Coba lagi</AsyncButton>} />}
         </section>
         <section className="bg-wesup-paper p-5">
           <h2 className={`${panelHeading} flex items-center gap-2`}><ShieldCheck className="size-5 text-wesup-ink-sub" strokeWidth={1.5} aria-hidden="true" />PIN 4-digit Cadangan</h2>
@@ -255,15 +257,15 @@ function RefundPanel({ order, onReload }: { order: UmkmOrderDetail; onReload: ()
 
 export default function UmkmOrderDetailClient({ orderId, mode, snapConfig }: { orderId: string; mode: UmkmOrderDetailMode; snapConfig?: MidtransSnapConfig }) {
   const { order, loading, error, reload } = useOrderDetail(orderId);
-  if (loading) return <ContentSkeleton variant="detail" label="Memuat detail pesanan…" />;
-  if ((error && !order) || !order) return <ErrorState title="Pesanan tidak ditemukan." description={error || "Muat ulang untuk mencoba lagi."} action={<AsyncButton onClick={reload}>Coba lagi</AsyncButton>} />;
+  if (loading || (order && order.id !== orderId && !error)) return <ContentSkeleton variant="detail" label="Memuat detail pesanan…" />;
+  if ((error && (!order || order.id !== orderId)) || !order) return <ErrorState title="Pesanan tidak ditemukan." description={error || "Muat ulang untuk mencoba lagi."} action={<AsyncButton onClick={reload}>Coba lagi</AsyncButton>} />;
   return (
     <div className="mx-auto w-full max-w-4xl space-y-8">
       <PageHeader order={order} mode={mode} />
       {error && <Alert tone="warning" action={<AsyncButton onClick={reload}>Coba lagi</AsyncButton>}>Detail terakhir ditampilkan; pembaruan belum berhasil.</Alert>}
-      {mode === "overview" && <TransactionOverview order={order} onReload={reload}>{!order.invoice && <Summary order={order}/>} {(order.invoice || ["waiting_payment_window","payment_open","payment_verifying","payment_expired"].includes(order.phase)) && <UmkmPaymentPanel order={order} onReload={reload} snapConfig={snapConfig}/>} {order.phase === "ready_for_pickup" && <PickupPanel order={order}/>} {order.capabilities.canSubmitRefundAccount && <RefundPanel order={order} onReload={reload}/>} {order.capabilities.canTrackDispute && <DisputePanel order={order}/>} {(order.capabilities.canComplain || order.capabilities.canRate) && <details className={`${panel} p-4`}><summary className="cursor-pointer text-sm font-semibold text-wesup-ink">Periksa barang, ulasan, dan komplain</summary><div className="mt-4 space-y-5">{order.capabilities.canComplain && <ComplaintPanel order={order}/>} {order.capabilities.canRate && <RatingPanel order={order} onReload={reload}/>}</div></details>}</TransactionOverview>}
+      {mode === "overview" && <TransactionOverview order={order} onReload={reload}>{!order.invoice && <Summary order={order}/>} {(order.invoice || ["waiting_payment_window","payment_open","payment_verifying","payment_expired"].includes(order.phase)) && <UmkmPaymentPanel order={order} onReload={reload} snapConfig={snapConfig}/>} {order.phase === "ready_for_pickup" && <PickupPanel key={`${order.id}:${order.status}:${order.pickup?.usedAt ?? ""}`} order={order}/>} {order.capabilities.canSubmitRefundAccount && <RefundPanel order={order} onReload={reload}/>} {order.capabilities.canTrackDispute && <DisputePanel order={order}/>} {(order.capabilities.canComplain || order.capabilities.canRate) && <details className={`${panel} p-4`}><summary className="cursor-pointer text-sm font-semibold text-wesup-ink">Periksa barang, ulasan, dan komplain</summary><div className="mt-4 space-y-5">{order.capabilities.canComplain && <ComplaintPanel order={order}/>} {order.capabilities.canRate && <RatingPanel order={order} onReload={reload}/>}</div></details>}</TransactionOverview>}
       {mode === "payment" && <UmkmPaymentPanel order={order} onReload={reload} snapConfig={snapConfig} />}
-      {mode === "pickup" && <PickupPanel order={order} />}
+      {mode === "pickup" && <PickupPanel key={`${order.id}:${order.status}:${order.pickup?.usedAt ?? ""}`} order={order} />}
       {mode === "complaint" && <><Summary order={order} /><ComplaintPanel order={order} /></>}
       {mode === "dispute" && <><Summary order={order} /><DisputePanel order={order} /></>}
       {mode === "rating" && <><Summary order={order} /><RatingPanel order={order} onReload={reload} /></>}

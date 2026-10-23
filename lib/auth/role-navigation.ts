@@ -5,6 +5,16 @@ export interface RoleNavigationItem {
   label: string;
 }
 
+export function getDashboardPath(accessState: UserAccessState): string {
+  if (accessState.role === "admin") {
+    return "/admin";
+  }
+  if (accessState.role === "supplier") {
+    return accessState.verificationStatus === "approved" ? "/supplier" : "/supplier/status";
+  }
+  return "/umkm";
+}
+
 export function getActiveNavigationIndex(items: RoleNavigationItem[], pathname: string): number {
   let activeIndex = -1;
   items.forEach((item, index) => {

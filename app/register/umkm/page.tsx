@@ -2,6 +2,7 @@ import "leaflet/dist/leaflet.css";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { AuthHeader } from "@/components/auth/AuthHeader";
+import { AppPanel } from "@/components/layout/AppPanel";
 import UmkmSignupForm from "@/components/auth/UmkmSignupForm";
 import { getViewerAccessState, resolveHomePath, sanitizeReturnTo } from "@/lib/auth/access-state";
 
@@ -29,9 +30,9 @@ export default async function UmkmRegistrationPage({
       <div className="mx-auto w-full max-w-2xl">
         <AuthHeader title="Mulai belanja bersama" eyebrow="Pendaftaran / UMKM" description="Buat akun singkat sekarang. Profil usaha dan lokasi pickup bisa Anda lengkapi saat ingin bergabung batch." backHref="/register" backLabel="← Pilih role lain" />
 
-        <div className="border border-wesup-ink/15 bg-wesup-paper-sub p-1.5"><div className="border border-wesup-ink/10 bg-wesup-paper p-5 sm:p-9">
+        <AppPanel panelClassName="sm:!p-9">
           <UmkmSignupForm returnTo={returnTo} />
-        </div></div>
+        </AppPanel>
       </div>
     </main>
   );
