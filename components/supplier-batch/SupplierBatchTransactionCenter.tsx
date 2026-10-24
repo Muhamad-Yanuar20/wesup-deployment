@@ -15,6 +15,7 @@ import TransactionSupport from "@/components/orders/TransactionSupport";
 import { ContentSkeleton } from "@/components/feedback";
 import { ConfirmDialog } from "@/components/feedback/ConfirmDialog";
 import { feedbackError } from "@/lib/feedback/errors";
+import SupplierBatchDetailClient from "./SupplierBatchDetailClient";
 
 const money = new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 });
 const dates = new Intl.DateTimeFormat("id-ID", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Jakarta" });
@@ -83,6 +84,9 @@ export default function SupplierBatchTransactionCenter({ batchId }: { batchId: s
     {status === "published" && context?.earlyPayment && <EarlyPaymentPanel key={`${context.earlyPayment.minimumQuantity}:${context.earlyPayment.proposal?.id ?? "none"}`} batchId={batchId} capacity={capacity ?? minQuantity} unit={String(batch.unit ?? "pcs")} context={context.earlyPayment} onReload={load} />}
     {delayed&&snapshot.orders.some(o=>o.status==='paid')&&<PickupReplacementForm batchId={batchId} onSaved={load}/>}
     {error && !confirm && <p role="alert" className=" border border-wesup-red/40 bg-wesup-paper px-4 py-3 text-sm text-wesup-red">{error}{errorRequestId && <span className="mt-1 block text-xs text-wesup-ink-sub">Referensi: {errorRequestId}</span>}</p>}
+
+    <summary className="cursor-pointer  border bg-wesup-paper p-4 font-semibold">Detail produk dan pengaturan penawaran</summary><SupplierBatchDetailClient batchId={batchId} />
+
     <section className=" border border-wesup-ink/15 bg-wesup-paper p-5 "><div className="flex items-center justify-between"><div><p className="text-xs font-semibold uppercase tracking-wide text-wesup-ink-sub">Kapasitas batch</p><p className="mt-1 text-2xl font-bold text-wesup-ink">{totalQuantity.toLocaleString("id-ID")} / {capacity ? capacity.toLocaleString("id-ID") : "∞"} {String(batch.unit ?? "pcs")}</p></div><Package className="text-wesup-red" /></div><div className="mt-3 h-3 overflow-hidden  bg-wesup-paper-sub"><div className="h-full  bg-wesup-ink transition-all" style={{ width: `${progress}%` }} /></div><div className="mt-3 grid gap-3 text-sm text-wesup-ink-sub sm:grid-cols-4"><Metric label="Terdaftar" value={snapshot.summary.registered} /><Metric label="Menunggu bayar" value={snapshot.summary.pendingPayment} /><Metric label="Lunas" value={snapshot.summary.paid} /><Metric label="Diambil" value={snapshot.summary.pickedUp} /></div></section>
     <TransactionSupport batchId={batchId}/>
     <section className="flex flex-wrap gap-1  border border-wesup-ink/15 bg-wesup-paper p-1">{filterItems.map(([key, label, count]) => <button key={key} type="button" onClick={() => setFilter(key)} aria-pressed={filter === key} className={` px-3 py-2 text-xs font-semibold ${filter === key ? "bg-wesup-ink text-wesup-paper" : "text-wesup-ink-sub hover:bg-wesup-paper-sub"}`}>{label} <span className="opacity-70">({count})</span></button>)}</section>
