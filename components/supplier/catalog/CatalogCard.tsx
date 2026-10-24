@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
-import { AlertCircle, CheckCircle2, Clock3, Package, Users } from "lucide-react";
+import { AlertCircle, CheckCircle2, Clock3, Package, TrendingDown, Users } from "lucide-react";
 import type { SupplierBatchDetail, SupplierBatchStatus } from "@/lib/supplier-batch/types";
 import { isAllowedSupplierProductImageUrl } from "@/lib/supplier-catalog/image";
 
@@ -27,6 +27,46 @@ function isAlert(status: SupplierBatchStatus): boolean {
   return status === "CANCELLED_BY_SUPPLIER" || status === "TAKEDOWN";
 }
 
+interface TierPrice {
+  minimumQuantity: number;
+  pricePerUnit: number;
+}
+
+interface PriceState {
+  price: number;
+  next: TierPrice | undefined;
+  locked: boolean;
+}
+
+function priceState(batch: SupplierBatchDetail): PriceState {
+  if (batch.lockedUnitPrice != null) {
+    return { price: batch.lockedUnitPrice, next: undefined, locked: true };
+  }
+  const sorted = [...batch.tiers].sort((a, b) => a.minimumQuantity - b.minimumQuantity);
+  if (sorted.length === 0) {
+    return { price: batch.basePrice, next: undefined, locked: false };
+  }
+  
+  let effective = sorted[0];
+  for (const tier of sorted) {
+    if (batch.registeredQuantity >= tier.minimumQuantity) effective = tier;
+  }
+
+  const nextTier = sorted.find(
+    (tier) => 
+      tier.minimumQuantity > batch.registeredQuantity && 
+      tier.pricePerUnit < effective.pricePerUnit
+  );
+
+  return {
+    price: effective.pricePerUnit,
+    next: nextTier
+      ? { minimumQuantity: nextTier.minimumQuantity, pricePerUnit: nextTier.pricePerUnit }
+      : undefined,
+    locked: false,
+  };
+}
+
 export interface CatalogCardProps { batch: SupplierBatchDetail; }
 
 export default function CatalogCard({ batch }: CatalogCardProps) {
@@ -35,9 +75,14 @@ export default function CatalogCard({ batch }: CatalogCardProps) {
   const canRenderImage = isAllowedSupplierProductImageUrl(imageUrl) && failedImageUrl !== imageUrl;
   const inactive = batch.status !== "PUBLISHED";
   const progress = progressFor(batch.registeredQuantity, batch.targetQuantity);
-  const lowest = batch.tiers.at(-1)?.pricePerUnit ?? batch.basePrice;
   const date = new Date(batch.timeline.registrationOpensAt);
   const StatusIcon = isAlert(batch.status) ? AlertCircle : batch.status === "DRAFT" ? Clock3 : batch.status === "PUBLISHED" ? CheckCircle2 : Package;
+
+  const { price, next, locked } = priceState(batch);
+  const showStrikethrough = !locked && price < batch.basePrice;
+
+  const showNextTier = !locked && batch.status === "PUBLISHED";
+  const nextTier = showNextTier ? next : undefined;
 
   return (
     <Link href={`/supplier/batch/${batch.id}`} className="group block bg-wesup-paper transition-colors duration-300 wesup-ease hover:bg-wesup-paper-sub focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-wesup-red">
@@ -72,10 +117,23 @@ export default function CatalogCard({ batch }: CatalogCardProps) {
         <div className="mt-3">
           <span className="font-landing-display text-xl font-medium tabular-nums tracking-tight text-wesup-ink">
             <span aria-hidden="true" className="mb-3 block h-px w-6 bg-wesup-red" />
-            {money.format(lowest)}
+            {money.format(price)}
           </span>
-          {lowest < batch.basePrice && (
-            <span className="ml-2 text-xs text-wesup-ink-sub line-through">{money.format(batch.basePrice)}</span>
+          
+          {showStrikethrough && (
+            <span className="ml-2 text-xs text-wesup-ink-sub line-through">
+              {money.format(batch.basePrice)}
+            </span>
+          )}
+
+          {/* UI BARU UNTUK NEXT TIER */}
+          {nextTier && (
+            <div className="mt-1.5 flex items-center gap-1.5 text-[0.7rem] text-wesup-ink-sub">
+              <TrendingDown size={13} className="text-wesup-red" />
+              <span>
+                Jadi <strong className="font-semibold text-wesup-ink">{money.format(nextTier.pricePerUnit)}</strong> mulai <span className="tabular-nums font-semibold">{nextTier.minimumQuantity}</span> {batch.unit}
+              </span>
+            </div>
           )}
         </div>
         <div className="mt-4">
