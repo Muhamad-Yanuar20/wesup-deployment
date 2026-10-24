@@ -18,6 +18,8 @@ const item: MarketplaceItem = {
   registeredQuantity: 5,
   targetQuantity: 20,
   status: "ACTIVE",
+  availability: { canRegister: true, reason: null, remainingQuantity: 70 },
+  serverTime: "2026-09-01T00:00:00Z",
   registrationClosesAt: "2026-09-30T00:00:00.000Z",
   pickupLatitude: -6.914744,
   pickupLongitude: 107.60981,

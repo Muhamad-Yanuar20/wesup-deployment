@@ -52,6 +52,8 @@ function getSupabaseProductImagePattern(): URL {
   );
 }
 const nextConfig: NextConfig = {
+  // Browser fixtures keep their cache separate from the developer's running app.
+  distDir: process.env.MARKETPLACE_ISOLATED_E2E === "1" ? ".next-marketplace-qa" : ".next",
   images: {
     remotePatterns: [getSupabaseProductImagePattern()],
   },

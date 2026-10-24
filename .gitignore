@@ -21,6 +21,7 @@
 
 # next.js
 /.next/
+/.next-marketplace-qa/
 /out/
 
 # production

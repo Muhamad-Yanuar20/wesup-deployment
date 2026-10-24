@@ -19,6 +19,8 @@ const ITEM: MarketplaceItem = {
   registeredQuantity: 30,
   targetQuantity: 50,
   status: "ACTIVE",
+  availability: { canRegister: true, reason: null, remainingQuantity: 70 },
+  serverTime: "2026-09-01T00:00:00Z",
   registrationClosesAt: "2099-09-15T10:00:00.000Z",
   pickupLatitude: -6.9175,
   pickupLongitude: 107.6191,
@@ -32,6 +34,7 @@ const ITEM: MarketplaceItem = {
 describe("MarketplaceDetailClient live registration", () => {
   it("updates the tier count immediately after the registration API succeeds", async () => {
     const user = userEvent.setup();
+    let registeredQuantity = 30;
     const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input);
       if (url.includes("/api/batches/") && url.endsWith("/progress")) {
@@ -39,15 +42,16 @@ describe("MarketplaceDetailClient live registration", () => {
           JSON.stringify({
             batchId: ITEM.id,
             status: "published",
-            registeredQuantity: 30,
+            availability: { canRegister: true, reason: null, remainingQuantity: 70 },
+            registeredQuantity,
             tiers: ITEM.tiers,
             tierProgress: {
               currentTierNumber: 1,
               currentPricePerUnit: 25000,
               nextTierNumber: 2,
               nextTierMinVolume: 50,
-              remainingToNextTier: 20,
-              progressPercent: 60,
+              remainingToNextTier: 50 - registeredQuantity,
+              progressPercent: registeredQuantity * 2,
             },
             registrationClosesAt: ITEM.registrationClosesAt,
             serverTime: new Date().toISOString(),
@@ -55,6 +59,7 @@ describe("MarketplaceDetailClient live registration", () => {
           { status: 200 },
         );
       }
+      registeredQuantity = 35;
       return new Response(JSON.stringify({ ok: true, count: 35, registrationId: "reg-1" }), {
         status: 201,
       });

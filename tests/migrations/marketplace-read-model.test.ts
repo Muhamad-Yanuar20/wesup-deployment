@@ -39,7 +39,8 @@ describe("marketplace dynamic read model migration", () => {
       const body = functionBody(allSql, name);
       expect(body).toMatch(/security\s+definer/i);
       expect(body).toMatch(/set\s+search_path\s*=\s*public/i);
-      expect(body).toMatch(/b\.status\s*=\s*'published'/i);
+      expect(body).toMatch(/private\.marketplace_availability/);
+      expect(body).toMatch(/published/);
     },
   );
 
@@ -47,8 +48,8 @@ describe("marketplace dynamic read model migration", () => {
     const body = functionBody(allSql, "search_batches");
     expect(body).toMatch(/p_min_price\s+numeric/i);
     expect(body).toMatch(/p_max_price\s+numeric/i);
-    expect(body).toMatch(/sum\(r\.quantity\)/i);
-    expect(body).toMatch(/r\.status\s+in\s*\(\s*'registered'\s*,\s*'pending_payment'\s*\)/i);
+    expect(allSql).toMatch(/sum\(r\.quantity\)/i);
+    expect(allSql).toMatch(/r\.status\s+in\s*\(\s*'registered'\s*,\s*'pending_payment'\s*\)/i);
     expect(body).toMatch(/current_price_per_unit/i);
     expect(body).toMatch(/count\(\*\)\s+over/i);
   });

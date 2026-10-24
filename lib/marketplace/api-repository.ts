@@ -6,6 +6,10 @@ import type {
   MarketplaceSearchResponse,
 } from "./types";
 
+export class MarketplaceReadError extends Error {
+  constructor(message: string, public readonly retryAfterMs: number) { super(message); }
+}
+
 export async function readApiError(response: Response): Promise<string> {
  return (await readFeedbackError(response, "Penawaran belum dapat dimuat. Coba lagi.")).message;
 }
@@ -31,7 +35,12 @@ export const marketplaceApiRepository: MarketplaceRepository = {
       signal,
       cache: "no-store",
     });
-    if (!response.ok) throw new Error(await readApiError(response));
+    if (!response.ok) {
+      const retry = response.headers.get("retry-after");
+      const seconds = retry == null ? NaN : Number(retry);
+      const retryAfterMs = Number.isFinite(seconds) ? Math.max(0, seconds * 1000) : Math.max(0, Date.parse(retry ?? "") - Date.now());
+      throw new MarketplaceReadError(await readApiError(response), Number.isFinite(retryAfterMs) ? retryAfterMs : 0);
+    }
     return (await response.json()) as MarketplaceSearchResponse;
   },
 };

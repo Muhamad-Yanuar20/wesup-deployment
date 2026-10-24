@@ -18,6 +18,8 @@ export interface MarketplaceStoreState {
   total: number;
   totalPages: number;
   loading: boolean;
+  refreshing: boolean;
+  refreshError: string | null;
   error: string | null;
   activeRequestId: number;
   retryRevision: number;
@@ -35,10 +37,11 @@ export interface MarketplaceStoreState {
   applyDrawerFilters(): void;
   resetAllFilters(): void;
   retry(): void;
-  beginRequest(): number;
+  beginRequest(background?: boolean): number;
+  expireItems(serverNowMs: number): void;
   blockRequest(): void;
   resolveRequest(requestId: number, result: MarketplaceSearchResponse): void;
-  rejectRequest(requestId: number, message: string): void;
+  rejectRequest(requestId: number, message: string, background?: boolean): void;
 }
 
 export type MarketplaceStoreApi = StoreApi<MarketplaceStoreState>;
@@ -71,6 +74,8 @@ export function createMarketplaceStore(): MarketplaceStoreApi {
     total: 0,
     totalPages: 0,
     loading: true,
+    refreshing: false,
+    refreshError: null,
     error: null,
     origin: null,
     activeRequestId: 0,
@@ -125,12 +130,17 @@ export function createMarketplaceStore(): MarketplaceStoreApi {
       drawerFilters: createDefaultFilters(),
     }),
     retry: () => set((state) => ({ error: null, retryRevision: state.retryRevision + 1 })),
-    beginRequest: () => {
+    beginRequest: (background = false) => {
       const requestId = get().activeRequestId + 1;
-      set({ activeRequestId: requestId, loading: true, error: null });
+      set({ activeRequestId: requestId, loading: !background, refreshing: background, error: null, refreshError: null });
       return requestId;
     },
     blockRequest: () => set((state) => ({ activeRequestId: state.activeRequestId + 1, loading: false })),
+    expireItems: (serverNowMs) => set(state => {
+      const items = state.items.filter(item => Date.parse(item.registrationClosesAt) > serverNowMs);
+      const total = Math.max(0, state.total - (state.items.length - items.length));
+      return { items, total, totalPages: Math.ceil(total / 12) };
+    }),
     resolveRequest: (requestId, result) => {
       if (requestId !== get().activeRequestId) return;
       set({
@@ -140,12 +150,14 @@ export function createMarketplaceStore(): MarketplaceStoreApi {
         total: result.total,
         totalPages: result.totalPages,
         loading: false,
+        refreshing: false,
+        refreshError: null,
         error: null,
       });
     },
-    rejectRequest: (requestId, message) => {
+    rejectRequest: (requestId, message, background = false) => {
       if (requestId !== get().activeRequestId) return;
-      set({ loading: false, error: message });
+      set({ loading: false, refreshing: false, ...(background ? { refreshError: message } : { error: message }) });
     },
   }));
 }

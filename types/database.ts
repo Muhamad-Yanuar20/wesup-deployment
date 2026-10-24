@@ -1328,6 +1328,13 @@ export interface LegacyDatabase {
           registration_closes_at: string | null;
           distance_km: number | null;
           total_count: number;
+          batch_status: string;
+          registration_opens_at: string | null;
+          capacity_quantity: number | null;
+          can_register: boolean;
+          unavailable_reason: string | null;
+          remaining_quantity: number | null;
+          server_time: string;
         }[];
       };
       get_marketplace_batch: {
@@ -1353,6 +1360,13 @@ export interface LegacyDatabase {
           registration_closes_at: string | null;
           distance_km: number | null;
           total_count: number;
+          batch_status: string;
+          registration_opens_at: string | null;
+          capacity_quantity: number | null;
+          can_register: boolean;
+          unavailable_reason: string | null;
+          remaining_quantity: number | null;
+          server_time: string;
         }[];
       };
       cut_off_batch: {

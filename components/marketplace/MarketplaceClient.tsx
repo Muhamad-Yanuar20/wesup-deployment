@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ListFilter, Search } from "lucide-react";
 import { SEARCH_DEFAULT_RADIUS_KM } from "@/lib/catalog/categories";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
-import { marketplaceApiRepository } from "@/lib/marketplace/api-repository";
+import { marketplaceApiRepository, MarketplaceReadError } from "@/lib/marketplace/api-repository";
 import { validateMarketplaceFilters } from "@/lib/marketplace/query";
 import type { MarketplaceFilterValue } from "@/lib/marketplace/types";
 import { MarketplaceStoreProvider, useMarketplaceStore } from "@/store/marketplace-provider";
@@ -48,6 +48,9 @@ function MarketplaceController() {
   const totalPages = useMarketplaceStore((state) => state.totalPages);
   const loading = useMarketplaceStore((state) => state.loading);
   const error = useMarketplaceStore((state) => state.error);
+  const refreshError = useMarketplaceStore(state => state.refreshError);
+  const expireItems = useMarketplaceStore(state => state.expireItems);
+  const retryAtRef = useRef(0);
   const retryRevision = useMarketplaceStore((state) => state.retryRevision);
   const setDraftQuery = useMarketplaceStore((state) => state.setDraftQuery);
   const setDebouncedQuery = useMarketplaceStore((state) => state.setDebouncedQuery);
@@ -102,32 +105,76 @@ function MarketplaceController() {
       return;
     }
 
-    const controller = new AbortController();
-    const requestId = beginRequest();
-    void marketplaceApiRepository
-      .search(
-        { query: debouncedQuery, ...requestFilters, page: currentPage, pageSize: PAGE_SIZE },
-        { signal: controller.signal },
-      )
-      .then((result) => resolveRequest(requestId, result))
-      .catch((reason: unknown) => {
-        if (reason instanceof DOMException && reason.name === "AbortError") return;
-        rejectRequest(
-          requestId,
-          reason instanceof Error ? reason.message : "Gagal memuat penawaran.",
+    let controller: AbortController | null = null;
+    let disposed = false;
+    let deadlineTimer: ReturnType<typeof setTimeout> | undefined;
+    let retryTimer: ReturnType<typeof setTimeout> | undefined;
+    let serverMs = NaN;
+    let synchronizedAt = 0;
+    let hasResult = false;
+    let deadlines: number[] = [];
+    const expire = () => {
+      if (Number.isFinite(serverMs)) expireItems(serverMs + performance.now() - synchronizedAt);
+    };
+    const armDeadline = () => {
+      clearTimeout(deadlineTimer);
+      if (!Number.isFinite(serverMs)) return;
+      const now = serverMs + performance.now() - synchronizedAt;
+      const next = deadlines.find(value => value > now);
+      if (next !== undefined && next - now < 2_147_483_647) {
+        deadlineTimer = setTimeout(() => { expire(); armDeadline(); void run(true); }, Math.ceil(next - now));
+      }
+    };
+    const run = async (background: boolean) => {
+      if (disposed || controller || (background && document.visibilityState === "hidden")) return;
+      const wait = retryAtRef.current - performance.now();
+      if (wait > 0) {
+        clearTimeout(retryTimer);
+        retryTimer = setTimeout(() => void run(background), wait);
+        return;
+      }
+      const active = new AbortController();
+      controller = active;
+      const startedAt = performance.now();
+      const quiet = background && hasResult;
+      const requestId = beginRequest(quiet);
+      try {
+        const result = await marketplaceApiRepository.search(
+          { query: debouncedQuery, ...requestFilters, page: currentPage, pageSize: PAGE_SIZE },
+          { signal: active.signal },
         );
-      });
-    return () => controller.abort();
-  }, [
-    debouncedQuery,
-    requestFilters,
-    currentPage,
-    retryRevision,
-    beginRequest,
-    blockRequest,
-    resolveRequest,
-    rejectRequest,
-  ]);
+        if (disposed || active.signal.aborted) return;
+        if (!result.items.length && currentPage > 1) { setPage(1); return; }
+        serverMs = Date.parse(result.serverTime ?? result.items[0]?.serverTime ?? "");
+        synchronizedAt = startedAt;
+        resolveRequest(requestId, result);
+        hasResult = true;
+        expire();
+        deadlines = result.items.map(item => Date.parse(item.registrationClosesAt)).filter(Number.isFinite).sort((a, b) => a - b);
+        armDeadline();
+      } catch (reason) {
+        if (disposed || active.signal.aborted) return;
+        if (reason instanceof MarketplaceReadError) retryAtRef.current = performance.now() + reason.retryAfterMs;
+        rejectRequest(requestId, reason instanceof Error ? reason.message : "Gagal memuat penawaran.", quiet);
+      } finally { if (controller === active) controller = null; }
+    };
+    void run(false);
+    const interval = setInterval(() => { expire(); void run(true); }, 15_000);
+    const visible = () => {
+      if (document.visibilityState !== "hidden") { expire(); void run(true); }
+    };
+    document.addEventListener("visibilitychange", visible);
+    window.addEventListener("focus", visible);
+    return () => {
+      disposed = true;
+      controller?.abort();
+      clearInterval(interval);
+      clearTimeout(deadlineTimer);
+      clearTimeout(retryTimer);
+      document.removeEventListener("visibilitychange", visible);
+      window.removeEventListener("focus", visible);
+    };
+  }, [debouncedQuery, requestFilters, currentPage, retryRevision, beginRequest, blockRequest, resolveRequest, rejectRequest, expireItems, setPage]);
 
   const updateAppliedFilters = useCallback(
     (nextValue: MarketplaceFilterValue) => {
@@ -246,6 +293,7 @@ function MarketplaceController() {
                   </button>
                 ) : null}
               </div>
+              {refreshError && <div role="status" className="mb-5 border-l-2 border-wesup-red pl-4 text-sm leading-7"><p>Pembaruan belum berhasil. Ketersediaan terakhir ditampilkan. {refreshError}</p><button type="button" onClick={retry} className="min-h-11 font-semibold underline underline-offset-4">Coba lagi</button></div>}
               <MarketplaceResults
                 items={items}
                 total={total}

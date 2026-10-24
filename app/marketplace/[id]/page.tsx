@@ -57,6 +57,7 @@ export default async function MarketplaceDetailPage({
         </Link>
         <div className="mt-4">
           <MarketplaceDetailClient
+            key={item.id}
             item={item}
             canonicalUrl={canonicalUrl}
             viewerRole={viewerRole}

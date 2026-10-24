@@ -7,6 +7,7 @@ import type { MarketplaceProgressResponse } from "@/lib/marketplace/types";
 const INITIAL: MarketplaceProgressResponse = {
   batchId: "44444444-4444-4444-8444-444444444444",
   status: "published",
+  availability: { canRegister: true, reason: null, remainingQuantity: 70 },
   registeredQuantity: 30,
   tiers: [
     { tierNumber: 1, minVolume: 1, maxVolume: 49, pricePerUnit: 25000 },
@@ -116,5 +117,56 @@ describe("useTierProgress", () => {
       vi.advanceTimersByTime(8000);
     });
     expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("expires at the exact server deadline even with a wrong device clock and failed refresh", async () => {
+    const initial = { ...INITIAL, registrationClosesAt: "2026-09-01T12:00:02.000Z" };
+    fetchMock.mockRejectedValue(new Error("Koneksi terputus"));
+    const { result } = renderHook(() => useTierProgress(initial.batchId, initial));
+    await act(async () => { await vi.advanceTimersByTimeAsync(1999); });
+    expect(result.current.progress.availability?.canRegister).toBe(true);
+    await act(async () => { await vi.advanceTimersByTimeAsync(1); });
+    expect(result.current.progress.availability).toMatchObject({ canRegister: false, reason: "expired" });
+  });
+
+  it("does not fetch again when a closed snapshot was already loaded by the server", () => {
+    const initial = { ...INITIAL, status: "closed", availability: { canRegister: false, reason: "closed" as const, remainingQuantity: 0 } };
+    renderHook(() => useTierProgress(initial.batchId, initial));
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("rechecks a full but still published batch after withdrawal restores capacity", async () => {
+    const initial = { ...INITIAL, availability: { canRegister: false, reason: "full" as const, remainingQuantity: 0 } };
+    fetchMock.mockResolvedValue(response());
+    const { result } = renderHook(() => useTierProgress(initial.batchId, initial));
+    await act(async () => { await Promise.resolve(); });
+    expect(result.current.progress.availability?.canRegister).toBe(true);
+  });
+
+  it("starts a fresh explicit recheck instead of returning null during polling", async () => {
+    fetchMock.mockImplementationOnce(() => new Promise(() => {})).mockResolvedValue(response());
+    const { result } = renderHook(() => useTierProgress(INITIAL.batchId, INITIAL));
+    await act(async () => { await result.current.refresh(); });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(result.current.error).toBeNull();
+  });
+
+  it("does not let a pre-registration snapshot overwrite the last-slot result", async () => {
+    let resolveOld!: (response: Response) => void;
+    fetchMock.mockImplementationOnce(() => new Promise<Response>(resolve => { resolveOld = resolve; })).mockImplementation(() => new Promise(() => {}));
+    const initial = { ...INITIAL, availability: { canRegister: true, reason: null, remainingQuantity: 1 } };
+    const { result } = renderHook(() => useTierProgress(initial.batchId, initial));
+    await act(async () => { result.current.applyRegistration(31); });
+    await act(async () => { resolveOld(response()); });
+    expect(result.current.progress.availability).toMatchObject({ canRegister: false, reason: "full" });
+    expect(result.current.progress.registeredQuantity).toBe(31);
+  });
+
+  it("ignores a response for a different batch", async () => {
+    fetchMock.mockResolvedValue(response({ batchId: "another-batch" }));
+    const { result } = renderHook(() => useTierProgress(INITIAL.batchId, INITIAL));
+    await act(async () => { await Promise.resolve(); });
+    expect(result.current.error).not.toBeNull();
+    expect(result.current.progress.batchId).toBe(INITIAL.batchId);
   });
 });

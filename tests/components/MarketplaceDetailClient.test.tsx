@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { MarketplaceItem } from "@/lib/marketplace/types";
@@ -19,6 +19,8 @@ const DEFAULT_ITEM: MarketplaceItem = {
   registeredQuantity: 30,
   targetQuantity: 50,
   status: "ACTIVE",
+  availability: { canRegister: true, reason: null, remainingQuantity: 70 },
+  serverTime: "2026-09-01T00:00:00Z",
   registrationClosesAt: "2026-09-15T10:00:00.000Z",
   pickupLatitude: -6.9175,
   pickupLongitude: 107.6191,
@@ -38,6 +40,9 @@ function renderDetail(itemOverrides: Partial<MarketplaceItem> = {}, viewerRole: 
     />,
   );
 }
+
+beforeEach(() => vi.stubGlobal("fetch", vi.fn(() => new Promise(() => {}))));
+afterEach(() => vi.unstubAllGlobals());
 
 describe("MarketplaceDetailClient", () => {
   it("places the purchase decision before the detailed route in reading order", () => {
@@ -95,8 +100,8 @@ describe("MarketplaceDetailClient", () => {
       expect(screen.getByText(/Rp\s*22\.000/)).toBeInTheDocument();
     });
 
-    it("displays basePrice with strikethrough", () => {
-      renderDetail();
+    it("displays basePrice with strikethrough for an achieved discounted tier", () => {
+      renderDetail({ tiers: [{ tierNumber: 1, minVolume: 1, maxVolume: 24, pricePerUnit: 25000 }, { tierNumber: 2, minVolume: 25, maxVolume: null, pricePerUnit: 22000 }] });
       const strikeEl = screen.getByText(/Rp\s*25\.000/);
       expect(strikeEl.className).toContain("line-through");
     });

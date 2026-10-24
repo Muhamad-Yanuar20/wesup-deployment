@@ -255,9 +255,20 @@ describe.skipIf(noDbUrl)("live batch cancellation & search (pg)", () => {
 
     // Search fixtures spread around Bandung. (No id tracking needed —
     // purgeData clears every batch owned by the fixture supplier.)
-    await createBatch(supplierId, "Gula Pasir Premium", "Sayur & Buah", -6.9148, 107.6099);
-    await createBatch(supplierId, "Ikan Segar Nusantara", "Daging & Ikan", -6.98, 107.63);
-    await createBatch(supplierId, "Kerajinan Bambu Serut", "Kerajinan", -7.4, 108.2);
+    const searchBatchIds = [
+      await createBatch(supplierId, "Gula Pasir Premium", "Sayur & Buah", -6.9148, 107.6099),
+      await createBatch(supplierId, "Ikan Segar Nusantara", "Daging & Ikan", -6.98, 107.63),
+      await createBatch(supplierId, "Kerajinan Bambu Serut", "Kerajinan", -7.4, 108.2),
+    ];
+    // Cancellation fixtures stay historical; searchable offers must still be open.
+    await sql(
+      `update public.batch_timeline set registration_closes_at = now() + interval '1 day',
+         payment_opens_at = now() + interval '1 day',
+         payment_closes_at = now() + interval '2 days',
+         estimated_ready_at = now() + interval '3 days'
+       where batch_id = any($1::uuid[])`,
+      [searchBatchIds],
+    );
     await createBatch(
       supplierId,
       "Gula Aren Draft",
@@ -454,7 +465,7 @@ describe.skipIf(noDbUrl)("live batch cancellation & search (pg)", () => {
     expect(page2.length).toBeLessThanOrEqual(2);
     // Every page reports the same, full filtered-set size.
     expect(Number(page1[0].total_count)).toBe(all.length);
-    expect(Number(page2[0].total_count)).toBe(all.length);
+    for (const row of page2) expect(Number(row.total_count)).toBe(all.length);
     // Pages partition the result without overlap and stay a subset of
     // the full filtered set (which may exceed the two fetched pages).
     const seen = new Set(page1.map((r) => r.id));

@@ -56,7 +56,7 @@ function mockSearchClient(options: {
     error: null,
   }));
   const rpc = vi.fn(async (_method: string, _params: Record<string, unknown>) => ({
-    data: (options.rows ?? []) as unknown[],
+    data: (options.rows ?? []).map(row => ({ can_register: true, server_time: "2026-10-24T00:00:00Z", ...row })) as unknown[],
     error: options.rpcError ?? null,
   }));
   const from = vi.fn((table: string) => {
