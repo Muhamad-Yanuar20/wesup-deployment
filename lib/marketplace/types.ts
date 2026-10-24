@@ -2,6 +2,12 @@ import type { BatchCategory } from "@/lib/catalog/categories";
 
 export type MarketplaceItemStatus = "ACTIVE" | "CLOSED" | "CANCELLED_BY_SUPPLIER";
 
+export interface MarketplaceAvailability {
+  canRegister: boolean;
+  reason: "not_open" | "expired" | "full" | "closed" | null;
+  remainingQuantity: number | null;
+}
+
 export interface MarketplaceTier {
   tierNumber: number;
   minVolume: number;
@@ -49,6 +55,8 @@ export interface TierProgress {
 }
 
 export interface MarketplaceProgressResponse {
+  availability?: MarketplaceAvailability;
+  registrationOpensAt?: string;
   batchId: string;
   status: string;
   registeredQuantity: number;
@@ -59,6 +67,9 @@ export interface MarketplaceProgressResponse {
 }
 
 export interface MarketplaceItem {
+  availability?: MarketplaceAvailability;
+  registrationOpensAt?: string;
+  serverTime?: string;
   earlyPayment?: import("@/lib/transactions/early-payment").EarlyPaymentContext;
   paymentOpeningPolicy?:string;policyVersion?:number;capacityQuantity?:number|null;unit?:string;paymentOpensAt?:string;paymentClosesAt?:string;pickupStartsAt?:string;pickupEndsAt?:string|null;
   id: string;
@@ -104,6 +115,7 @@ export interface MarketplaceSearchResult {
 }
 
 export interface MarketplaceSearchResponse extends MarketplaceSearchResult {
+  serverTime?: string;
   origin: MarketplaceOrigin;
 }
 

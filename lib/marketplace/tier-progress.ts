@@ -1,5 +1,11 @@
 import type { MarketplaceTier, TierProgress } from "./types";
 
+/** Reaching a later tier alone is not evidence of an actual price reduction. */
+export function hasTierDiscount(basePrice: number, currentPrice: number, tierNumber: number): boolean {
+  return tierNumber >= 2 && Number.isFinite(basePrice) && Number.isFinite(currentPrice)
+    && currentPrice > 0 && currentPrice < basePrice;
+}
+
 export function deriveTierProgress(
   tiers: readonly MarketplaceTier[],
   registeredQuantity: number,

@@ -112,6 +112,47 @@ input[type="radio"] {
 
 .wesup-app .lucide { stroke-width: 1.5; }
 
+/* A generous hit area around a precise rail, not a filled input-sized slab. */
+.marketplace-radius-slider {
+  display: block;
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  height: 2.75rem;
+  min-height: 2.75rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  touch-action: pan-y;
+}
+.marketplace-radius-slider::-webkit-slider-runnable-track {
+  height: 3px;
+  background: linear-gradient(to right, var(--color-wesup-red) 0% var(--radius-progress), rgb(5 5 5 / 0.15) var(--radius-progress) 100%);
+}
+.marketplace-radius-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  margin-top: -7.5px;
+  border: 3px solid var(--color-wesup-paper);
+  border-radius: 0;
+  outline: 1px solid var(--color-wesup-red);
+  background: var(--color-wesup-red);
+}
+.marketplace-radius-slider::-moz-range-track { height: 3px; background: rgb(5 5 5 / 0.15); }
+.marketplace-radius-slider::-moz-range-progress { height: 3px; background: var(--color-wesup-red); }
+.marketplace-radius-slider::-moz-range-thumb {
+  box-sizing: border-box;
+  width: 18px;
+  height: 18px;
+  border: 3px solid var(--color-wesup-paper);
+  border-radius: 0;
+  outline: 1px solid var(--color-wesup-red);
+  background: var(--color-wesup-red);
+}
+.marketplace-radius-slider:focus-visible { outline: 2px solid var(--color-wesup-red); outline-offset: 3px; }
+
 /* Leaflet controls follow the app chrome; geographic tile imagery is preserved. */
 .wesup-app .leaflet-container { background: var(--color-wesup-paper-sub); font-family: var(--font-geist-sans), sans-serif; }
 .wesup-app :is(.leaflet-bar, .leaflet-bar a, .leaflet-popup-content-wrapper, .leaflet-popup-tip, .leaflet-control-attribution) {

@@ -2,6 +2,13 @@ import { isBatchCategory, type BatchCategory } from "@/lib/catalog/categories";
 import type { MarketplaceItem, MarketplaceTier } from "./types";
 
 export interface MarketplaceRpcRow {
+  batch_status?: unknown;
+  can_register?: unknown;
+  unavailable_reason?: unknown;
+  remaining_quantity?: unknown;
+  capacity_quantity?: unknown;
+  registration_opens_at?: unknown;
+  server_time?: unknown;
   id?: unknown;
   supplier_name?: unknown;
   title?: unknown;
@@ -107,7 +114,18 @@ export function mapMarketplaceRpcRow(row: MarketplaceRpcRow): MarketplaceItem {
     currentTierPrice,
     registeredQuantity: Math.max(0, Math.trunc(finiteNumber(row.registered_quantity, 0))),
     targetQuantity: Math.max(1, Math.trunc(finiteNumber(row.min_quantity, 1))),
-    status: "ACTIVE",
+    status: row.batch_status && row.batch_status !== "published" ? "CLOSED" : "ACTIVE",
+    ...(typeof row.can_register === "boolean" ? {
+      availability: {
+        canRegister: row.can_register,
+        reason: ["not_open", "expired", "full", "closed"].includes(String(row.unavailable_reason))
+          ? row.unavailable_reason as "not_open" | "expired" | "full" | "closed" : null,
+        remainingQuantity: nullableFiniteNumber(row.remaining_quantity),
+      },
+      capacityQuantity: nullableFiniteNumber(row.capacity_quantity),
+      registrationOpensAt: typeof row.registration_opens_at === "string" ? row.registration_opens_at : undefined,
+      serverTime: typeof row.server_time === "string" ? row.server_time : undefined,
+    } : {}),
     registrationClosesAt:
       typeof row.registration_closes_at === "string"
         ? row.registration_closes_at

@@ -46,8 +46,8 @@ describe("ProductCard", () => {
     expect(screen.getByText(/Rp\s*22\.000/)).toBeInTheDocument();
   });
 
-  it("renders basePrice with strikethrough", () => {
-    render(<ProductCard item={makeItem()} />);
+  it("renders basePrice with strikethrough for an achieved discounted tier", () => {
+    render(<ProductCard item={makeItem({ tiers: [{ tierNumber: 1, minVolume: 1, maxVolume: 24, pricePerUnit: 25000 }, { tierNumber: 2, minVolume: 25, maxVolume: null, pricePerUnit: 22000 }] })} />);
     const strikethrough = screen.getByText(/Rp\s*25\.000/);
     expect(strikethrough).toBeInTheDocument();
     expect(strikethrough.className).toContain("line-through");

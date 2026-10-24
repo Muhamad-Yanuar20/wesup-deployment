@@ -36,6 +36,27 @@ export const schemas: OpenAPIV3.ComponentsObject["schemas"] = {
       registeredQuantity: { type: "integer", minimum: 0 },
     },
   },
+  MarketplaceAvailability: {
+    type: "object",
+    required: ["canRegister", "reason", "remainingQuantity"],
+    properties: {
+      canRegister: { type: "boolean" },
+      reason: { type: "string", nullable: true, enum: ["not_open", "expired", "full", "closed", null] },
+      remainingQuantity: { type: "integer", nullable: true, minimum: 0 },
+    },
+  },
+  MarketplaceOffer: {
+    allOf: [{ $ref: "#/components/schemas/Batch" }, {
+      type: "object",
+      properties: {
+        availability: { $ref: "#/components/schemas/MarketplaceAvailability" },
+        registrationOpensAt: { type: "string", format: "date-time" },
+        registrationClosesAt: { type: "string", format: "date-time" },
+        serverTime: { type: "string", format: "date-time" },
+      },
+    }],
+    description: "Snapshot penawaran publik. Batch tertutup tetap menjelaskan alasan tanpa mengizinkan pendaftaran.",
+  },
   Order: {
     type: "object",
     description: "Ringkasan order UMKM/Supplier; field tambahan dapat berubah sesuai read model.",

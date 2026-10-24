@@ -1,195 +1,31 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { GET as getProgress } from "@/app/api/batches/[id]/progress/route";
+import { GET } from "@/app/api/batches/[id]/progress/route";
 import { getServerClient } from "@/lib/supabase/server";
-import { getAdminClient } from "@/lib/supabase/admin";
-
-vi.mock("@/lib/supabase/server", () => ({
-  getServerClient: vi.fn(),
-}));
-
-vi.mock("@/lib/supabase/admin", () => ({
-  getAdminClient: vi.fn(),
-}));
-
-const { getMock, setMock } = vi.hoisted(() => ({
-  getMock: vi.fn(),
-  setMock: vi.fn(),
-}));
-
-vi.mock("@/lib/redis", () => ({
-  redis: { get: getMock, set: setMock },
-}));
-
-const mockGetServerClient = vi.mocked(getServerClient);
-const mockGetAdminClient = vi.mocked(getAdminClient);
-
-const BATCH_ID = "44444444-4444-4444-8444-444444444444";
-
-const TIERS = [
-  { tier_number: 2, min_volume: 50, max_volume: 99, price_per_unit: 9000 },
-  { tier_number: 1, min_volume: 1, max_volume: 49, price_per_unit: 10000 },
-];
-
-const TIMELINE = {
-  registration_closes_at: "2026-09-02T00:00:00.000Z",
-};
-
-interface BuildOptions {
-  batchStatus?: string;
-  batchMissing?: boolean;
-  timeline?: typeof TIMELINE | null;
-  tiers?: typeof TIERS | null;
-  registeredTotal?: number | null;
-  registrationError?: Error | null;
+vi.mock("@/lib/supabase/server", () => ({ getServerClient: vi.fn() }));
+const id = "44444444-4444-4444-8444-444444444444";
+const row = { id, batch_status: "published", can_register: true, unavailable_reason: null, remaining_quantity: 7, registered_quantity: 3, registration_opens_at: "2026-10-23T00:00:00Z", registration_closes_at: "2026-10-25T00:00:00Z", server_time: "2026-10-24T00:00:00Z", tiers: [{ tier_number: 1, min_volume: 1, max_volume: null, price_per_unit: 10000 }] };
+function mock(rows: unknown[] | null = [row], error: unknown = null) {
+  const rpc = vi.fn().mockResolvedValue({ data: rows, error });
+  vi.mocked(getServerClient).mockResolvedValue({ rpc } as never);
+  return rpc;
 }
-
-function routeParams(id: string) {
-  return { params: Promise.resolve({ id }) };
-}
-
-function buildClients(options: BuildOptions = {}) {
-  const batchSingle = vi.fn(async () =>
-    options.batchMissing
-      ? { data: null, error: null }
-      : { data: { status: options.batchStatus ?? "published" }, error: null },
-  );
-  const timelineSingle = vi.fn(async () =>
-    options.timeline === null
-      ? { data: null, error: null }
-      : { data: options.timeline ?? TIMELINE, error: null },
-  );
-  const tiersSelect = vi.fn(async () =>
-    options.tiers === null
-      ? { data: null, error: null }
-      : { data: options.tiers ?? TIERS, error: null },
-  );
-
-  const from = vi.fn((table: string) => {
-    if (table === "batches") {
-      return { select: vi.fn(() => ({ eq: vi.fn(() => ({ single: batchSingle })) })) };
-    }
-    if (table === "batch_timeline") {
-      return { select: vi.fn(() => ({ eq: vi.fn(() => ({ single: timelineSingle })) })) };
-    }
-    if (table === "batch_tiers") {
-      return { select: vi.fn(() => ({ eq: tiersSelect })) };
-    }
-    throw new Error(`unexpected table ${table}`);
+const request = (batch = id) => GET(new Request("http://localhost"), { params: Promise.resolve({ id: batch }) });
+beforeEach(() => vi.mocked(getServerClient).mockReset());
+describe("marketplace progress durable availability", () => {
+  it("rejects invalid ids without a database read", async () => { expect((await request("invalid")).status).toBe(400); expect(getServerClient).not.toHaveBeenCalled(); });
+  it("keeps missing or hidden batches private", async () => { mock([]); expect((await request()).status).toBe(404); });
+  it("returns availability and tier data in one public aggregate read", async () => {
+    const rpc = mock(); const response = await request();
+    expect(response.status).toBe(200);
+    expect(response.headers.get("cache-control")).toBe("no-store");
+    expect(await response.json()).toMatchObject({ batchId: id, registeredQuantity: 3, availability: { canRegister: true, reason: null, remainingQuantity: 7 }, registrationOpensAt: row.registration_opens_at, serverTime: row.server_time });
+    expect(rpc).toHaveBeenCalledExactlyOnceWith("get_marketplace_batch", { p_batch_id: id, p_lat: null, p_lng: null });
   });
-  const client = { from };
-  mockGetServerClient.mockResolvedValue(client as never);
-
-  const rpc = vi.fn(async () => ({
-    data: options.registeredTotal ?? null,
-    error: options.registrationError ?? null,
-  }));
-  const adminFrom = vi.fn((table: string) => {
-    throw new Error(`unexpected table ${table}`);
+  it.each(["full", "expired", "closed"])("returns %s instead of a 404 that leaves the old form active", async reason => {
+    mock([{ ...row, batch_status: "closed", can_register: false, unavailable_reason: reason }]);
+    expect(await (await request()).json()).toMatchObject({ status: "closed", availability: { canRegister: false, reason } });
   });
-  mockGetAdminClient.mockReturnValue({ from: adminFrom, rpc } as never);
-
-  return { from, adminFrom, rpc };
-}
-
-describe("GET /api/batches/[id]/progress", () => {
-  beforeEach(() => {
-    mockGetServerClient.mockReset();
-    mockGetAdminClient.mockReset();
-    getMock.mockReset();
-    setMock.mockReset();
-  });
-
-  it("rejects an invalid batch id before accessing Supabase or Redis", async () => {
-    const res = await getProgress(new Request("http://localhost"), routeParams("not-a-uuid"));
-    expect(res.status).toBe(400);
-    expect(mockGetServerClient).not.toHaveBeenCalled();
-    expect(getMock).not.toHaveBeenCalled();
-  });
-
-  it("returns 404 for a missing batch", async () => {
-    buildClients({ batchMissing: true });
-    const res = await getProgress(new Request("http://localhost"), routeParams(BATCH_ID));
-    expect(res.status).toBe(404);
-    expect(getMock).not.toHaveBeenCalled();
-  });
-
-  it("does not expose progress for an unpublished batch", async () => {
-    buildClients({ batchStatus: "draft" });
-    const res = await getProgress(new Request("http://localhost"), routeParams(BATCH_ID));
-    expect(res.status).toBe(404);
-    expect(getMock).not.toHaveBeenCalled();
-  });
-
-  it("fails closed when Redis is unavailable", async () => {
-    buildClients();
-    getMock.mockRejectedValue(new Error("redis down"));
-    const res = await getProgress(new Request("http://localhost"), routeParams(BATCH_ID));
-    expect(res.status).toBe(503);
-  });
-
-  it("returns the live counter, sorted tiers, tier progress, and server time", async () => {
-    buildClients();
-    getMock.mockResolvedValue(17);
-
-    const res = await getProgress(new Request("http://localhost"), routeParams(BATCH_ID));
-    expect(res.status).toBe(200);
-    const body = await res.json();
-
-    expect(body.batchId).toBe(BATCH_ID);
-    expect(body.status).toBe("published");
-    expect(body.registeredQuantity).toBe(17);
-    expect(body.registrationClosesAt).toBe(TIMELINE.registration_closes_at);
-    expect(body.tiers.map((tier: { tierNumber: number }) => tier.tierNumber)).toEqual([1, 2]);
-    expect(body.tierProgress).toEqual({
-      currentTierNumber: 1,
-      currentPricePerUnit: 10000,
-      nextTierNumber: 2,
-      nextTierMinVolume: 50,
-      remainingToNextTier: 33,
-      progressPercent: 34,
-    });
-    expect(Number.isNaN(Date.parse(body.serverTime))).toBe(false);
-    expect(mockGetAdminClient).not.toHaveBeenCalled();
-  });
-
-  it("hydrates a missing Redis counter from the database aggregate", async () => {
-    buildClients({ registeredTotal: 12 });
-    getMock.mockResolvedValue(null);
-    setMock.mockResolvedValue("OK");
-
-    const res = await getProgress(new Request("http://localhost"), routeParams(BATCH_ID));
-    expect(res.status).toBe(200);
-    expect((await res.json()).registeredQuantity).toBe(12);
-    expect(setMock).toHaveBeenCalledWith(`batch:${BATCH_ID}:count`, 12);
-  });
-
-  it("reconciles through one aggregate call and fetches no registration rows", async () => {
-    const { rpc, adminFrom } = buildClients({ registeredTotal: 4 });
-    getMock.mockResolvedValue(null);
-    setMock.mockResolvedValue("OK");
-
-    await getProgress(new Request("http://localhost"), routeParams(BATCH_ID));
-
-    expect(rpc).toHaveBeenCalledTimes(1);
-    expect(rpc).toHaveBeenCalledWith("sum_registered_quantity", { p_batch_id: BATCH_ID });
-    expect(adminFrom).not.toHaveBeenCalled();
-  });
-
-  it("treats a null aggregate as zero rather than leaking NaN", async () => {
-    buildClients({ registeredTotal: null });
-    getMock.mockResolvedValue(null);
-    setMock.mockResolvedValue("OK");
-
-    const res = await getProgress(new Request("http://localhost"), routeParams(BATCH_ID));
-    expect(res.status).toBe(200);
-    expect((await res.json()).registeredQuantity).toBe(0);
-  });
-
-  it("returns 503 when the authoritative fallback query fails", async () => {
-    buildClients({ registrationError: new Error("db down") });
-    getMock.mockResolvedValue(null);
-
-    const res = await getProgress(new Request("http://localhost"), routeParams(BATCH_ID));
-    expect(res.status).toBe(503);
-  });
+  it("fails safely on an old schema rather than assuming an offer is open", async () => { mock([{ id, tiers: row.tiers }]); expect((await request()).status).toBe(503); });
+  it("does not turn database failures into zero quantity", async () => { mock(null, new Error("database unavailable")); const response = await request(); expect(response.status).toBe(503); expect(await response.json()).not.toHaveProperty("registeredQuantity"); });
+  it("treats an actual zero as data", async () => { mock([{ ...row, registered_quantity: 0 }]); expect(await (await request()).json()).toMatchObject({ registeredQuantity: 0 }); });
 });

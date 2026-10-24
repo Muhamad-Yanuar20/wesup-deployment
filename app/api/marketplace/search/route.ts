@@ -220,6 +220,9 @@ async function search(req: Request, timing: RequestTiming) {
   }
 
   const rows = (data ?? []) as MarketplaceRpcRow[];
+  if (rows.some(row => typeof row.can_register !== "boolean")) {
+    return NextResponse.json({ error: "Marketplace sedang disiapkan. Coba lagi sebentar.", code: "MARKETPLACE_SCHEMA_OUTDATED" }, { status: 503 });
+  }
   const items = await timing.measure("enrichment", () => enrichMarketplaceList(client as unknown as MarketplaceListContextClient, mapMarketplaceRpcRows(rows)));
   const total = rows.length > 0 ? Math.max(0, Number(rows[0].total_count ?? 0)) : 0;
   const totalPages = total === 0 ? 0 : Math.ceil(total / limit);
@@ -231,5 +234,6 @@ async function search(req: Request, timing: RequestTiming) {
     pageSize: limit,
     totalPages,
     origin,
-  });
+    serverTime: rows[0]?.server_time ?? new Date().toISOString(),
+  }, { headers: { "cache-control": "no-store" } });
 }

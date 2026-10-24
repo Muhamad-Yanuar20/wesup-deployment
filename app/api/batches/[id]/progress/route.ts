@@ -1,145 +1,35 @@
 import { NextResponse } from "next/server";
 import { isUuid } from "@/lib/admin/validation";
 import { getServerClient } from "@/lib/supabase/server";
-import { getAdminClient } from "@/lib/supabase/admin";
-import {
-  getVolumeCounter,
-  restoreVolumeCounter,
-} from "@/lib/orders/registration-counter";
+import { fetchMarketplaceSnapshot } from "@/lib/marketplace/server-repository";
 import { deriveTierProgress } from "@/lib/marketplace/tier-progress";
-import type { MarketplaceTier } from "@/lib/marketplace/types";
 
 export const dynamic = "force-dynamic";
 
-interface BatchRow {
-  status: string;
-}
-
-interface TimelineRow {
-  registration_closes_at: string;
-}
-
-interface TierRow {
-  tier_number: number;
-  min_volume: number;
-  max_volume: number | null;
-  price_per_unit: number;
-}
-
-interface QueryResult<T> {
-  data: T | null;
-  error: Error | null;
-}
-
-interface SingleQuery<T> {
-  select: (columns: string) => {
-    eq: (column: string, value: string) => {
-      single: () => PromiseLike<QueryResult<T>>;
-    };
-  };
-}
-
-interface ListQuery<T> {
-  select: (columns: string) => {
-    eq: (column: string, value: string) => PromiseLike<QueryResult<T[]>>;
-  };
-}
-
-export async function GET(
-  _req: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  if (!isUuid(id)) {
-    return NextResponse.json({ error: "Invalid batch id" }, { status: 400 });
-  }
-
-  const client = await getServerClient();
-  const batchQuery = client.from("batches") as unknown as SingleQuery<BatchRow>;
-  const { data: batch, error: batchError } = await batchQuery
-    .select("status")
-    .eq("id", id)
-    .single();
-
-  // Draft and otherwise unpublished batches must not be discoverable through
-  // this public endpoint, even when a caller knows their UUID.
-  if (batchError || !batch || batch.status !== "published") {
-    return NextResponse.json({ error: "Batch not found" }, { status: 404 });
-  }
-
-  const timelineQuery = client.from("batch_timeline") as unknown as SingleQuery<TimelineRow>;
-  const { data: timeline, error: timelineError } = await timelineQuery
-    .select("registration_closes_at")
-    .eq("batch_id", id)
-    .single();
-  if (timelineError || !timeline) {
-    return NextResponse.json({ error: "Batch timeline not found" }, { status: 500 });
-  }
-
-  const tiersQuery = client.from("batch_tiers") as unknown as ListQuery<TierRow>;
-  const { data: tierRows, error: tiersError } = await tiersQuery
-    .select("tier_number,min_volume,max_volume,price_per_unit")
-    .eq("batch_id", id);
-  if (tiersError || !tierRows || tierRows.length === 0) {
-    return NextResponse.json({ error: "Batch tiers not found" }, { status: 500 });
-  }
-
-  const tiers: MarketplaceTier[] = tierRows
-    .map((tier) => ({
-      tierNumber: Number(tier.tier_number),
-      minVolume: Number(tier.min_volume),
-      maxVolume: tier.max_volume === null ? null : Number(tier.max_volume),
-      pricePerUnit: Number(tier.price_per_unit),
-    }))
-    .sort((a, b) => a.minVolume - b.minVolume);
-
-  if (
-    tiers.some(
-      (tier) =>
-        !Number.isFinite(tier.tierNumber) ||
-        !Number.isFinite(tier.minVolume) ||
-        (tier.maxVolume !== null && !Number.isFinite(tier.maxVolume)) ||
-        !Number.isFinite(tier.pricePerUnit),
-    )
-  ) {
-    return NextResponse.json({ error: "Invalid batch tiers" }, { status: 500 });
-  }
-
-  let registeredQuantity: number;
+  if (!isUuid(id)) return NextResponse.json({ error: "Invalid batch id" }, { status: 400 });
   try {
-    const cachedQuantity = await getVolumeCounter(id);
-    if (cachedQuantity !== null) {
-      registeredQuantity = Math.max(0, cachedQuantity);
-    } else {
-      // Redis is the fast path and stays authoritative when present. Only on a
-      // miss do we reconcile from the durable table, and that reconciliation is
-      // a single aggregate rather than a full row fetch reduced in JS.
-      // The status filter lives inside the RPC so it tracks cut_off_batch.
-      const adminClient = getAdminClient();
-      const { data: total, error: totalError } = await adminClient.rpc(
-        "sum_registered_quantity",
-        { p_batch_id: id },
-      );
-      if (totalError) throw totalError;
-
-      const reconciled = Number(total ?? 0);
-      registeredQuantity = Number.isFinite(reconciled) && reconciled > 0 ? reconciled : 0;
-      await restoreVolumeCounter(id, registeredQuantity);
+    const client = await getServerClient();
+    // Durable availability must not be reopened by a stale Redis counter.
+    // Redis reservations and all registration locks remain unchanged.
+    const item = await fetchMarketplaceSnapshot(client as never, id);
+    if (!item) return NextResponse.json({ error: "Batch not found" }, { status: 404 });
+    if (!item.availability || !item.serverTime || !item.tiers?.length) {
+      return NextResponse.json({ error: "Ketersediaan penawaran belum dapat diperiksa." }, { status: 503 });
     }
+    return NextResponse.json({
+      batchId: id,
+      status: item.status === "ACTIVE" ? "published" : "closed",
+      registeredQuantity: item.registeredQuantity,
+      tiers: item.tiers,
+      tierProgress: deriveTierProgress(item.tiers, item.registeredQuantity),
+      registrationClosesAt: item.registrationClosesAt,
+      registrationOpensAt: item.registrationOpensAt,
+      availability: item.availability,
+      serverTime: item.serverTime,
+    }, { headers: { "cache-control": "no-store" } });
   } catch {
     return NextResponse.json({ error: "Service unavailable" }, { status: 503 });
   }
-
-  return NextResponse.json(
-    {
-      batchId: id,
-      status: batch.status,
-      registeredQuantity,
-      tiers,
-      tierProgress: deriveTierProgress(tiers, registeredQuantity),
-      registrationClosesAt: timeline.registration_closes_at,
-      serverTime: new Date().toISOString(),
-    },
-    { headers: { "cache-control": "no-store" } },
-  );
 }

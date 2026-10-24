@@ -4,7 +4,7 @@ import { FormEvent, useState, useEffect } from "react";
 import Link from "next/link";
 import { readApiError } from "@/lib/marketplace/api-repository";
 import { feedbackError } from "@/lib/feedback/errors";
-import type { MarketplaceItem } from "@/lib/marketplace/types";
+import type { MarketplaceItem, MarketplaceProgressResponse } from "@/lib/marketplace/types";
 
 import { useRouter } from "next/navigation";
 import { formatTransactionDate } from "@/lib/transactions/schedule";
@@ -30,6 +30,8 @@ export interface JoinBatchFormProps {
   consentGiven: boolean;
   viewerLocation?: ViewerLocation | null;
   onSuccess: (result: RegistrationResult) => void;
+  availabilityBlocked?: boolean;
+  onAvailabilityCheck?: () => Promise<MarketplaceProgressResponse | null>;
 }
 
 export default function JoinBatchForm({
@@ -37,6 +39,8 @@ export default function JoinBatchForm({
   consentGiven,
   viewerLocation = null,
   onSuccess,
+  availabilityBlocked = false,
+  onAvailabilityCheck,
 }: JoinBatchFormProps) {
   const router=useRouter();
   const [terms,setTerms]=useState(false);
@@ -46,8 +50,19 @@ export default function JoinBatchForm({
   const [error, setError] = useState<string | null>(null);
   const [succeeded, setSucceeded] = useState(false);
   const [conflict, setConflict] = useState<RegistrationConflict | null>(null);
+  const [failedAvailability, setFailedAvailability] = useState<MarketplaceItem["availability"] | null>(null);
+  const verificationFailed = failedAvailability !== null && failedAvailability === item.availability;
+  const remaining = item.availability?.remainingQuantity;
+  const tooMany = remaining != null && typeof quantity === "number" && quantity > remaining;
   const termsRequired = item.policyVersion === 2 || item.earlyPayment?.proposal?.status === "pending" || earlyMinimum != null;
-  const submitDisabled = !consentGiven || submitting || (termsRequired && !terms) || (conflict != null && !conflict.canWithdraw);
+  const submitDisabled = availabilityBlocked || verificationFailed || item.availability?.canRegister === false || tooMany || !consentGiven || submitting || (termsRequired && !terms) || (conflict != null && !conflict.canWithdraw);
+
+  async function checkAvailability() {
+    if (!onAvailabilityCheck) return null;
+    const snapshot = await onAvailabilityCheck();
+    setFailedAvailability(snapshot ? null : item.availability);
+    return snapshot;
+  }
 
   useEffect(()=>{ const timer=setTimeout(()=>{try{const stored=Number(sessionStorage.getItem(`wesup:join:${item.id}`));if(Number.isSafeInteger(stored)&&stored>0)setQuantity(stored);}catch{}},0);return()=>clearTimeout(timer);},[item.id]);
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -97,8 +112,11 @@ export default function JoinBatchForm({
           setConflict(duplicate);
           return;
         }
-        throw new Error(feedbackError(body?.error, "Anda sudah terdaftar pada penawaran ini"));
+        const snapshot = await checkAvailability();
+        const available = snapshot?.availability?.remainingQuantity;
+        throw new Error(available != null && available > 0 ? `Sisa kuota ${available} ${item.unit ?? "porsi"}. Sesuaikan jumlah pesanan Anda.` : feedbackError(body?.error, "Penawaran berubah. Periksa ketersediaan terbaru."));
       }
+      if (response.status === 403) await checkAvailability();
       if (!response.ok) throw new Error(await readApiError(response));
       const result = (await response.json()) as Partial<RegistrationResult>;
       if (
@@ -186,6 +204,7 @@ export default function JoinBatchForm({
           name="quantity"
           type="number"
           min={1}
+          max={remaining ?? undefined}
           step={1}
           value={quantity}
           onChange={(event) => {
@@ -198,6 +217,9 @@ export default function JoinBatchForm({
           className="w-full border border-wesup-ink/15 bg-wesup-paper px-3 py-2 text-sm text-wesup-ink focus:border-wesup-ink/20 focus:outline-none"
         />
       </div>
+
+      {remaining != null && <p className="text-xs leading-6 text-wesup-ink-sub" role="status">Sisa kuota: {remaining.toLocaleString("id-ID")} {item.unit ?? "porsi"}.{tooMany ? " Sesuaikan jumlah pesanan Anda." : ""}</p>}
+      {(verificationFailed || availabilityBlocked) && onAvailabilityCheck && <button type="button" disabled={submitting} onClick={() => void checkAvailability()} className="min-h-11 text-left text-sm font-semibold underline underline-offset-4">Periksa ketersediaan lagi</button>}
 
       {termsRequired && <section className="space-y-3 border bg-wesup-paper p-4 text-sm"><p>Jumlah: {quantity || 0} {item.unit}. Total maksimum: <strong>{new Intl.NumberFormat("id-ID",{style:"currency",currency:"IDR",maximumFractionDigits:0}).format(Number(quantity)*item.basePrice)}</strong></p><p>Estimasi saat ini: {new Intl.NumberFormat("id-ID",{style:"currency",currency:"IDR",maximumFractionDigits:0}).format(Number(quantity)*item.currentTierPrice)}. Harga belum final.</p>{item.paymentOpeningPolicy==="capacity_or_cutoff"?<p>Pembayaran dibuka segera ketika kapasitas penuh, atau paling lambat {formatTransactionDate(item.paymentOpensAt)}. Batas bayar 24 jam sejak pengumpulan ditutup. Jadwal pengambilan tetap.</p>:<p>Bayar {formatTransactionDate(item.paymentOpensAt)} sampai {formatTransactionDate(item.paymentClosesAt)}.</p>}{earlyMinimum != null && <p>Supplier dapat menutup pendaftaran setelah terkumpul minimal {earlyMinimum} {item.unit}. Pembayaran berlangsung 24 jam sejak pendaftaran ditutup. Jadwal pengambilan tetap.</p>}{item.earlyPayment?.proposal?.status === "pending" && <p>Dengan bergabung, Anda menyetujui usulan pembukaan lebih awal revisi {item.earlyPayment.proposal.revision}. Seluruh peserta aktif harus setuju; supplier tetap mengonfirmasi pembukaan.</p>}<p>Ambil di {item.pickupAddress}, {formatTransactionDate(item.pickupStartsAt)} sampai {formatTransactionDate(item.pickupEndsAt)}.</p><label className="flex items-start gap-3 font-mono text-[0.6875rem] uppercase tracking-[0.18em] tabular-nums"><input className="mt-1 size-5 shrink-0 font-sans normal-case tracking-normal" type="checkbox" checked={terms} onChange={e=>setTerms(e.target.checked)}/>Saya memahami harga dapat berubah sampai batas ikut; saya boleh batal tanpa penalti selama pengumpulan masih dibuka. {item.paymentOpeningPolicy === "capacity_or_cutoff" ? "Pengumpulan dapat ditutup lebih awal ketika kapasitas penuh. " : ""}Sesudahnya harga final terkunci dan saya wajib membayar. Tidak membayar dapat memicu peringatan, suspend 7 hari, lalu permanen. Tidak mengambil pada jadwal yang disetujui saat supplier siap membuat dana diberikan kepada supplier.</label>{!terms && <p className="text-xs font-medium text-wesup-ink-sub">Centang persetujuan syarat di atas untuk mengaktifkan tombol konfirmasi.</p>}</section>}
       {conflict ? (

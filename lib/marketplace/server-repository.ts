@@ -17,6 +17,18 @@ export async function fetchMarketplaceDetail(
     longitude: null,
   },
 ): Promise<MarketplaceItem | null> {
+  const item = await fetchMarketplaceSnapshot(client, batchId, coordinates);
+  // A published full/future offer can recover without navigation; keep its
+  // reviewed schedules and consent context ready before the form becomes active.
+  return item?.status === "ACTIVE" && item.availability?.reason !== "expired" ? enrichOffer(client, item) : item;
+}
+
+/** One durable snapshot shared by detail and progress. */
+export async function fetchMarketplaceSnapshot(
+  client: MarketplaceDetailRpcClient,
+  batchId: string,
+  coordinates: { latitude: number | null; longitude: number | null } = { latitude: null, longitude: null },
+): Promise<MarketplaceItem | null> {
   const { data, error } = await client.rpc("get_marketplace_batch", {
     p_batch_id: batchId,
     p_lat: coordinates.latitude,
@@ -24,5 +36,5 @@ export async function fetchMarketplaceDetail(
   });
   if (error) throw error;
   const row = (data?.[0] ?? null) as MarketplaceRpcRow | null;
-  return row ? enrichOffer(client, mapMarketplaceRpcRow(row)) : null;
+  return row ? mapMarketplaceRpcRow(row) : null;
 }

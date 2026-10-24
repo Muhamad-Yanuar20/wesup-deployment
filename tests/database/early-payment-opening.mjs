@@ -150,6 +150,13 @@ try {
   const fullProposal = (await context(full)).proposal;
   await join(full, "c", 60, { earlyPaymentProposalId: fullProposal.id, earlyPaymentProposalRevision: fullProposal.revision });
   check((await q("select status from batches where id=$1", [full]))[0].status === "closed", "original full-capacity policy closes despite pending optional proposal");
+  const lastSlot = await batch({ policy: "capacity_or_cutoff" });
+  await join(lastSlot, "a", 99);
+  await join(lastSlot, "c", 1);
+  await q("update profiles set status='active' where id=$1", [users.b]);
+  await fail(() => join(lastSlot, "b", 1), "next contender cannot join after the final slot commits");
+  check((await q("select coalesce(sum(quantity),0)::int total from registrations where batch_id=$1", [lastSlot]))[0].total === 100, "final-slot contenders cannot exceed capacity");
+  check((await q("select count(*)::int total from payments p join registrations r on r.id=p.registration_id where r.batch_id=$1", [lastSlot]))[0].total === 2, "rejected contender creates no additional invoice");
   const legacy = await batch({ version: 1 }); await user("a");
   const legacyReg = (await q("insert into registrations(batch_id,umkm_id,quantity,consent_terms) values($1,$2,40,'{}') returning id", [legacy, users.a]))[0].id;
   await user("owner"); const legacyProposal = (await rpc("configure_early_payment", [legacy, 40, crypto.randomUUID()])).proposal;
