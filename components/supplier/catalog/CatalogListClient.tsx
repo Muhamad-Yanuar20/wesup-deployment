@@ -13,7 +13,6 @@ type LoadPhase = "loading" | "success" | "error";
 
 const FILTER_TABS: { value: FilterTab; label: string }[] = [
   { value: "ALL", label: "Semua" },
-  { value: "DRAFT", label: "Draft" },
   { value: "PUBLISHED", label: "Aktif" },
   { value: "COMPLETED", label: "Selesai" },
   { value: "CANCELLED_BY_SUPPLIER", label: "Dibatalkan" },
