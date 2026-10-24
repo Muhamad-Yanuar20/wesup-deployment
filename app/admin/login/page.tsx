@@ -1,3 +1,5 @@
+
+import { BrandLogo } from "@/components/brand/BrandLogo";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { sanitizeReturnTo } from "@/lib/auth/access-state";
@@ -24,8 +26,7 @@ export default async function AdminLoginPage({
       <div className="mx-auto w-full max-w-xl">
         <header className="mb-8 text-center">
           <Link href="/" className="inline-flex items-center gap-2 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-sm font-extrabold text-white">W</span>
-            <span className="text-lg font-extrabold tracking-tight">Wesup Admin</span>
+            <BrandLogo inverted admin />
           </Link>
           <p className="mt-8 text-sm font-semibold uppercase tracking-[0.18em] text-blue-300">Area terbatas</p>
           <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-white sm:text-4xl">Login Admin</h1>

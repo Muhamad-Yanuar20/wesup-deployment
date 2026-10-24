@@ -1,8 +1,10 @@
 "use client";
 
+import { BrandLogo } from "@/components/brand/BrandLogo";
+
 import { useEffect, useId, useState, type CSSProperties } from "react";
 import Link from "next/link";
-import { ArrowRight, Menu, ShoppingBag, X } from "lucide-react";
+import { ArrowRight, Menu, X } from "lucide-react";
 import { useNavigationSession } from "@/components/auth/NavigationSessionProvider";
 import { getDashboardPath } from "@/lib/auth/role-navigation";
 
@@ -51,14 +53,10 @@ export function SiteHeader() {
         >
           <Link
             href="/"
+            aria-label="Wesup - Kembali ke beranda"
             className="group flex items-center gap-2.5 py-1 pl-1 pr-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-wesup-red"
           >
-            <span className="flex h-8 w-8 items-center justify-center border border-wesup-ink/20 bg-wesup-paper transition-transform duration-500 wesup-ease group-hover:-rotate-6">
-              <ShoppingBag className="h-4 w-4 text-wesup-red" strokeWidth={1.5} aria-hidden="true" />
-            </span>
-            <span className="font-landing-display text-xl font-medium tracking-[-0.02em] text-wesup-ink">
-              Wesup
-            </span>
+            <BrandLogo className="[&>span:last-child]:hidden sm:[&>span:last-child]:inline" />
           </Link>
 
           <nav className="hidden items-center gap-1 md:flex" aria-label="Navigasi utama">
