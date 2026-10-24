@@ -1,3 +1,5 @@
+
+import { BrandLogo } from "@/components/brand/BrandLogo";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import Link from "next/link";
@@ -24,10 +26,7 @@ export default async function RegisterPage() {
             className="inline-flex min-h-11 items-center gap-2 text-wesup-ink transition-colors duration-500 wesup-ease hover:opacity-80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wesup-red"
             aria-label="Wesup - Kembali ke beranda"
           >
-            <span className="flex h-9 w-9 items-center justify-center border border-wesup-ink/20 text-sm font-bold text-wesup-red" aria-hidden="true">
-              W
-            </span>
-            <span className="font-landing-display text-xl tracking-[-0.02em]">Wesup</span>
+            <BrandLogo />
           </Link>
           <Link
             href="/marketplace"

@@ -1,12 +1,13 @@
 "use client";
 
+import { BrandLogo } from "@/components/brand/BrandLogo";
+
 import { LogoutAction } from "@/components/auth/LogoutAction";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { getActiveNavigationIndex, getRoleNavigationItems, type RoleNavigationItem } from "@/lib/auth/role-navigation";
 import { useNavigationSession } from "@/components/auth/NavigationSessionProvider";
-import { ShoppingBag } from "lucide-react";
 
 function IconHome() {
     return <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M3 12l9-9 9 9M4 10v10a1 1 0 001 1h5V14h4v7h5a1 1 0 001-1V10" /></svg>;
@@ -49,8 +50,7 @@ export function NavigationBar({ brandHref = "/" }: { brandHref?: string | null }
 
     const brandContent = (
         <>
-            <span className="flex h-9 w-9 items-center justify-center border border-wesup-ink/20 bg-wesup-paper text-wesup-red" aria-hidden="true"><ShoppingBag className="size-4" strokeWidth={1.5} /></span>
-            <span className="font-landing-display text-xl tracking-[-0.02em]">Wesup</span>
+            <BrandLogo />
         </>
     );
 
